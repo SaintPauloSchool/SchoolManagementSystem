@@ -225,4 +225,20 @@ public class BaseController
     {
         return getSysUser().getLoginName();
     }
+
+    /**
+     * 获取用户名
+     */
+    public String getUsername()
+    {
+        return getSysUser().getUserName();
+    }
+
+    /**
+     * 获取用户类型
+     */
+    public String getUserType()
+    {
+        return getSysUser().getUserType();
+    }
 }

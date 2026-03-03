@@ -12,4 +12,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
+// 全局配置Element Plus消息提示
+app.config.globalProperties.$message = ElementPlus.Message
+
 app.mount('#app')

@@ -1,7 +1,7 @@
 {
   "name": "student-handbook-vue",
   "version": "1.0.0",
-  "description": "学生手册管理系统Vue前端",
+  "description": "學生後台管理系統Vue前端",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,8 @@
     "vue": "^3.2.0",
     "axios": "^0.24.0",
     "element-plus": "^2.2.28",
-    "@element-plus/icons-vue": "^2.0.10"
+    "@element-plus/icons-vue": "^2.0.10",
+    "dayjs": "^1.11.7"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^1.6.0",

@@ -1,0 +1,431 @@
+<template>
+  <div class="notification-list">
+    <!-- 搜索欄 -->
+    <div class="search-bar">
+      <el-input
+        v-model="searchQuery"
+        placeholder="搜索通知標題或發送人..."
+        clearable
+        prefix-icon="Search"
+        class="search-input"
+      />
+      <div class="filter-actions">
+        <el-select 
+          v-model="statusFilter" 
+          placeholder="狀態篩選" 
+          clearable
+          class="status-select"
+        >
+          <el-option label="草稿" value="0" />
+          <el-option label="已發布" value="1" />
+          <el-option label="已撤回" value="2" />
+        </el-select>
+        <el-button type="primary" @click="handleSearch">
+          <el-icon><Search /></el-icon>
+          搜索
+        </el-button>
+      </div>
+    </div>
+
+    <!-- 列表頭部 -->
+    <div class="list-header">
+      <div class="header-info">
+        <el-icon class="header-icon"><List /></el-icon>
+        <span class="header-title">通知列表</span>
+        <el-tag type="info" size="small" class="count-tag">
+          {{ filteredNotifications.length }} 條記錄
+        </el-tag>
+      </div>
+      <el-button plain @click="$emit('refresh')">
+        <el-icon><Refresh /></el-icon>
+        刷新
+      </el-button>
+    </div>
+
+    <!-- 表格 -->
+    <div class="table-container">
+      <el-table 
+        :data="filteredNotifications" 
+        style="width: 100%"
+        v-loading="loading"
+        stripe
+      >
+        <el-table-column prop="title" label="通知標題" min-width="200">
+          <template #default="scope">
+            <el-link 
+              type="primary" 
+              @click="viewNotification(scope.row)" 
+              class="title-link"
+              :underline="false"
+            >
+              {{ scope.row.title }}
+            </el-link>
+          </template>
+        </el-table-column>
+        <el-table-column prop="senderName" label="發送人" width="120" />
+        <el-table-column label="狀態" width="100">
+          <template #default="scope">
+            <el-tag 
+              :type="getStatusTagType(scope.row.status)"
+              size="small"
+              round
+            >
+              {{ getStatusText(scope.row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="發布時間" width="180" />
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="scope">
+            <div class="action-buttons">
+              <el-button 
+                size="small" 
+                type="primary" 
+                link
+                @click="viewNotification(scope.row)"
+              >
+                <el-icon><View /></el-icon>
+                查看
+              </el-button>
+              
+              <el-button 
+                v-if="type === 'mySend' && scope.row.status === '1'"
+                size="small" 
+                type="warning" 
+                link
+                @click="withdrawNotification(scope.row)"
+              >
+                <el-icon><Close /></el-icon>
+                撤回
+              </el-button>
+              
+              <el-button 
+                v-if="type === 'mySend'"
+                size="small" 
+                type="danger" 
+                link
+                @click="deleteNotification(scope.row)"
+              >
+                <el-icon><Delete /></el-icon>
+                刪除
+              </el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <!-- 分頁 -->
+    <div class="pagination-area">
+      <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="pagination.currentPage"
+        :page-sizes="[10, 20, 50]"
+        :page-size="pagination.pageSize"
+        layout="total, sizes, prev, pager, next"
+        :total="pagination.total"
+        background
+      />
+    </div>
+
+    <!-- 詳情對話框 -->
+    <el-dialog
+      v-model="detailDialogVisible"
+      title="通知詳情"
+      width="60%"
+      :before-close="handleDetailClose"
+    >
+      <NotificationDetail 
+        v-if="selectedNotification"
+        :notification="selectedNotification"
+      />
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import { Search, Refresh, View, Close, Delete, List } from '@element-plus/icons-vue'
+import NotificationDetail from './NotificationDetail.vue'
+
+export default {
+  name: 'NotificationList',
+  components: {
+    NotificationDetail
+  },
+  props: {
+    notifications: {
+      type: Array,
+      default: () => []
+    },
+    type: {
+      type: String,
+      default: 'ccToMe'
+    }
+  },
+  emits: ['refresh'],
+  data() {
+    return {
+      loading: false,
+      searchQuery: '',
+      statusFilter: '',
+      pagination: {
+        currentPage: 1,
+        pageSize: 10,
+        total: 0
+      },
+      detailDialogVisible: false,
+      selectedNotification: null
+    }
+  },
+  computed: {
+    filteredNotifications() {
+      let result = [...this.notifications]
+      
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase()
+        result = result.filter(n => 
+          n.title.toLowerCase().includes(query) ||
+          n.senderName.toLowerCase().includes(query)
+        )
+      }
+      
+      if (this.statusFilter) {
+        result = result.filter(n => n.status === this.statusFilter)
+      }
+      
+      this.pagination.total = result.length
+      
+      const start = (this.pagination.currentPage - 1) * this.pagination.pageSize
+      const end = start + this.pagination.pageSize
+      return result.slice(start, end)
+    }
+  },
+  methods: {
+    getStatusTagType(status) {
+      const typeMap = {
+        '0': 'info',
+        '1': 'success',
+        '2': 'warning'
+      }
+      return typeMap[status] || 'info'
+    },
+
+    getStatusText(status) {
+      const statusMap = {
+        '0': '草稿',
+        '1': '已發布',
+        '2': '已撤回'
+      }
+      return statusMap[status] || '未知'
+    },
+
+    handleSearch() {
+      this.pagination.currentPage = 1
+    },
+
+    handleSizeChange(val) {
+      this.pagination.pageSize = val
+      this.pagination.currentPage = 1
+    },
+
+    handleCurrentChange(val) {
+      this.pagination.currentPage = val
+    },
+
+    async viewNotification(notification) {
+      try {
+        console.log('查看通知详情:', notification.notificationId)
+        this.selectedNotification = notification
+        this.detailDialogVisible = true
+      } catch (error) {
+        console.error('獲取詳情失敗:', error)
+        this.$message.error('獲取詳情失敗')
+      }
+    },
+
+    async withdrawNotification(notification) {
+      try {
+        await this.$confirm('確認撤回此通知嗎？', '提示', {
+          confirmButtonText: '確定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+        
+        // await axios.put(`/api/system/notification/withdraw/${notification.notificationId}`)
+        this.$message.success('撤回成功')
+        this.$emit('refresh')
+      } catch (error) {
+        if (error !== 'cancel') {
+          console.error('撤回失敗:', error)
+          this.$message.error('撤回失敗')
+        }
+      }
+    },
+
+    async deleteNotification(notification) {
+      try {
+        await this.$confirm('確認刪除嗎？刪除後無法恢復！', '警告', {
+          confirmButtonText: '確定',
+          cancelButtonText: '取消',
+          type: 'error'
+        })
+        
+        // await axios.delete(`/api/system/notification/${notification.notificationId}`)
+        this.$message.success('刪除成功')
+        this.$emit('refresh')
+      } catch (error) {
+        if (error !== 'cancel') {
+          console.error('刪除失敗:', error)
+          this.$message.error('刪除失敗')
+        }
+      }
+    },
+
+    handleDetailClose() {
+      this.detailDialogVisible = false
+      this.selectedNotification = null
+    }
+  }
+}
+</script>
+
+<style scoped>
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+/* 搜索欄 */
+.search-bar {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+}
+
+.search-input {
+  flex: 1;
+  max-width: 400px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.status-select {
+  width: 140px;
+}
+
+/* 列表頭部 */
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-icon {
+  color: #3b82f6;
+  font-size: 18px;
+}
+
+.header-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.count-tag {
+  margin-left: 4px;
+}
+
+/* 表格區域 */
+.table-container {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+
+.table-container :deep(.el-table) {
+  border: none;
+}
+
+.title-link {
+  font-weight: 500;
+  color: #3b82f6;
+  transition: all 0.2s ease;
+}
+
+.title-link:hover {
+  color: #2563eb;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* 分頁區域 */
+.pagination-area {
+  padding: 16px 24px;
+  background-color: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 響應式設計 */
+@media (max-width: 1200px) {
+  .search-bar {
+    flex-wrap: wrap;
+    padding: 16px 20px;
+  }
+  
+  .search-input {
+    max-width: 100%;
+  }
+  
+  .filter-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-bar {
+    padding: 12px 16px;
+  }
+  
+  .list-header {
+    padding: 14px 16px;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .pagination-area {
+    padding: 12px 16px;
+    justify-content: center;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+}
+</style>
