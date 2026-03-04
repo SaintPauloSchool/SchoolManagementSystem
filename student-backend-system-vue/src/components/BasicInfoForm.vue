@@ -1,4 +1,4 @@
-1，<template>
+<template>
   <div class="basic-info-form">
     <el-form
       ref="formRef"
@@ -69,11 +69,6 @@
               <el-icon class="btn-icon"><Upload /></el-icon>
               <span class="btn-text">點擊上傳附件</span>
             </el-button>
-            <template #tip>
-              <div class="el-upload__tip">
-                支持上傳 jpg/png/gif/pdf/doc/docx/xls/xlsx 文件，最多 5 個文件，單個文件不超過 10MB
-              </div>
-            </template>
           </el-upload>
         </div>
       </el-form-item>

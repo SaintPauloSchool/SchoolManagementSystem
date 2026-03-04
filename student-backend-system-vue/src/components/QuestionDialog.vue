@@ -160,7 +160,7 @@
 </template>
 
 <script>
-import { Plus, Delete, ChatDotRound, Check, InfoFilled, CircleCheck, Checked, Edit, Paperclip, Share, List, Bell, Close } from '@element-plus/icons-vue'
+import { Plus, Delete, ChatDotRound, Check, CircleCheck, Edit, Paperclip, Share, List, Bell, Close } from '@element-plus/icons-vue'
 
 export default {
   name: 'QuestionDialog',
@@ -169,9 +169,7 @@ export default {
     Delete,
     ChatDotRound,
     Check,
-    InfoFilled,
     CircleCheck,
-    Checked,
     Edit,
     Paperclip,
     Share,
