@@ -3,15 +3,9 @@
     <!-- 側邊欄 -->
     <aside class="sidebar" :class="{ 'collapsed': isCollapsed, 'mobile-visible': isMobileMenuOpen }">
       <div class="sidebar-header">
-        <div class="logo">
-          <div class="logo-icon">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
-              <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2"/>
-              <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2"/>
-            </svg>
-          </div>
-          <span v-show="!isCollapsed" class="logo-text">學生後台系統</span>
+        <div class="logo-wrapper">
+          <img src="@/logo/sp.jpg" alt="School Logo" class="logo-icon" />
+          <span class="logo-text" v-show="!isCollapsed">學生後台系統</span>
         </div>
         <el-button 
           v-if="!isMobile" 
@@ -20,32 +14,73 @@
           @click="toggleCollapse"
         >
           <el-icon><Fold /></el-icon>
+          <span class="collapse-text" v-show="!isCollapsed">收起</span>
         </el-button>
       </div>
 
       <nav class="sidebar-nav">
+        <!-- 家校通知 -->
         <div class="nav-section">
-          <div class="nav-section-title">
+          <div class="nav-section-title" @click="toggleSection('homeSchool')">
             <el-icon><Bell /></el-icon>
             <span v-show="!isCollapsed">家校通知</span>
+            <el-icon v-show="!isCollapsed" class="expand-icon">
+              <ArrowRight v-if="!expandedSections.homeSchool" />
+              <ArrowDown v-else />
+            </el-icon>
           </div>
           
-          <ul class="nav-list">
-              <li 
-                v-for="item in menuItems" 
-                :key="item.index"
-                class="nav-item"
-                :class="{ active: activeMenu === item.index }"
-                @click="handleMenuSelect(item.index)"
-              >
-                <el-icon class="nav-icon"><component :is="item.icon" /></el-icon>
-                <span v-show="!isCollapsed" class="nav-text">{{ item.title }}</span>
+          <ul v-show="!isCollapsed && expandedSections.homeSchool" class="nav-list nav-sublist">
+            <li 
+              v-for="item in menuItems" 
+              :key="item.index"
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === item.index }"
+              @click="handleMenuSelect(item.index)"
+            >
+              <el-icon class="nav-icon"><component :is="item.icon" /></el-icon>
+              <span class="nav-text">{{ item.title }}</span>
               <el-badge 
                 v-if="item.badge" 
-                :value="item.badge" 
-                :hidden="!badgeVisible"
+                :value="item.badge"
                 class="nav-badge"
               />
+            </li>
+          </ul>
+        </div>
+        
+        <!-- 占位大类 1 -->
+        <div class="nav-section">
+          <div class="nav-section-title" @click="toggleSection('system')">
+            <el-icon><Setting /></el-icon>
+            <span v-show="!isCollapsed">系统管理</span>
+            <el-icon v-show="!isCollapsed" class="expand-icon">
+              <ArrowRight v-if="!expandedSections.system" />
+              <ArrowDown v-else />
+            </el-icon>
+          </div>
+          
+          <ul v-show="!isCollapsed && expandedSections.system" class="nav-list nav-sublist">
+            <li class="nav-item-placeholder">
+              <span class="placeholder-text">功能開發中...</span>
+            </li>
+          </ul>
+        </div>
+        
+        <!-- 占位大类 2 -->
+        <div class="nav-section">
+          <div class="nav-section-title" @click="toggleSection('report')">
+            <el-icon><Document /></el-icon>
+            <span v-show="!isCollapsed">数据报表</span>
+            <el-icon v-show="!isCollapsed" class="expand-icon">
+              <ArrowRight v-if="!expandedSections.report" />
+              <ArrowDown v-else />
+            </el-icon>
+          </div>
+          
+          <ul v-show="!isCollapsed && expandedSections.report" class="nav-list nav-sublist">
+            <li class="nav-item-placeholder">
+              <span class="placeholder-text">功能開發中...</span>
             </li>
           </ul>
         </div>
@@ -54,32 +89,6 @@
 
     <!-- 主內容區 -->
     <main class="main-content">
-      <!-- 頂部導航 -->
-      <header class="top-header">
-        <div class="header-left">
-          <el-button 
-            v-if="isMobile" 
-            link 
-            class="mobile-menu-btn" 
-            @click="toggleMobileMenu"
-          >
-            <el-icon><Menu /></el-icon>
-          </el-button>
-          <div class="breadcrumb-area">
-            <h1 class="page-title">{{ pageTitle }}</h1>
-            <el-breadcrumb separator="/">
-              <el-breadcrumb-item>{{ currentPage }}</el-breadcrumb-item>
-            </el-breadcrumb>
-          </div>
-        </div>
-        <div class="header-right">
-          <el-button type="primary" plain @click="refreshData">
-            <el-icon><Refresh /></el-icon>
-            <span v-if="!isMobile">刷新數據</span>
-          </el-button>
-        </div>
-      </header>
-
       <!-- 內容區域 -->
       <div class="content-wrapper">
         <transition name="fade" mode="out-in">
@@ -114,7 +123,7 @@
 </template>
 
 <script>
-import { Bell, Promotion, Edit, Refresh, Message, Menu, Fold } from '@element-plus/icons-vue'
+import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
 
@@ -132,30 +141,16 @@ export default {
       isCollapsed: false,
       isMobileMenuOpen: false,
       isMobile: false,
-      badgeVisible: true,
+      expandedSections: {
+        homeSchool: true,
+        system: false,
+        report: false
+      },
       menuItems: [
         { index: '1-1', title: '抄送我的', icon: 'Message', badge: 2 },
         { index: '1-2', title: '我發送的', icon: 'Promotion' },
         { index: '1-3', title: '發布通知', icon: 'Edit' }
       ]
-    }
-  },
-  computed: {
-    pageTitle() {
-      const titles = {
-        '1-1': '抄送給我的通知',
-        '1-2': '我發送的通知',
-        '1-3': '發布新通知'
-      }
-      return titles[this.activeMenu] || '學生後台系統'
-    },
-    currentPage() {
-      const pages = {
-        '1-1': '抄送我的',
-        '1-2': '我發送的',
-        '1-3': '發布通知'
-      }
-      return pages[this.activeMenu] || '家校通知'
     }
   },
   mounted() {
@@ -184,6 +179,13 @@ export default {
     
     toggleMobileMenu() {
       this.isMobileMenuOpen = !this.isMobileMenuOpen
+    },
+    
+    toggleSection(sectionName) {
+      if (this.isCollapsed) {
+        this.isCollapsed = false
+      }
+      this.expandedSections[sectionName] = !this.expandedSections[sectionName]
     },
     
     handleMenuSelect(index) {
@@ -244,14 +246,6 @@ export default {
       this.$message.success('通知發布成功')
       this.activeMenu = '1-2'
       this.loadMySendNotifications()
-    },
-
-    refreshData() {
-      if (this.activeMenu === '1-1') {
-        this.loadCcToMeNotifications()
-      } else if (this.activeMenu === '1-2') {
-        this.loadMySendNotifications()
-      }
     }
   }
 }
@@ -261,77 +255,138 @@ export default {
 .notification-system {
   display: flex;
   height: 100vh;
-  background-color: #f9fafb;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
   overflow: hidden;
 }
 
 /* 側邊欄樣式 */
 .sidebar {
   width: 260px;
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-  color: #ffffff;
+  background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
+  color: #fff;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.25, 1);
   flex-shrink: 0;
   position: relative;
   z-index: 100;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1), 4px 0 16px rgba(59, 130, 246, 0.15);
 }
 
 .sidebar.collapsed {
-  width: 70px;
+  width: 72px;
 }
 
 .sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
+  padding: 24px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.logo {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  background: rgba(30, 64, 175, 0.3);
+  backdrop-filter: blur(12px);
+  min-height: 88px;
 }
 
-.logo-icon {
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  border-radius: 10px;
+.sidebar.collapsed .sidebar-header {
+  gap: 12px;
+  padding: 20px 16px;
+  min-height: 80px;
+}
+
+.logo-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  flex-shrink: 0;
-}
-
-.logo-icon svg {
-  width: 22px;
-  height: 22px;
-}
-
-.logo-text {
-  font-size: 16px;
-  font-weight: 700;
-  white-space: nowrap;
-  background: linear-gradient(135deg, #60a5fa, #3b82f6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.25, 1);
+  width: 100%;
 }
 
 .collapse-btn {
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.75) !important;
+  font-size: 13px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.25, 1);
+  padding: 8px 12px !important;
+  border-radius: 8px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(8px);
+  align-self: center;
+  opacity: 0.9;
+}
+
+.collapse-btn .el-icon {
   font-size: 18px;
-  transition: all 0.2s ease;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.25, 1);
 }
 
 .collapse-btn:hover {
-  color: #ffffff;
-  transform: scale(1.1);
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  opacity: 1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.sidebar.collapsed .collapse-btn {
+  padding: 10px !important;
+  margin-top: 4px;
+}
+
+.sidebar.collapsed .collapse-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  transform: translateY(-1px) scale(1.05);
+}
+
+.sidebar.collapsed .collapse-btn .collapse-text {
+  display: none;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.25, 1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px;
+}
+
+.sidebar.collapsed .logo-icon {
+  margin: 0 auto;
+  transform: scale(1.05);
+  filter: drop-shadow(0 4px 16px rgba(255, 255, 255, 0.3));
+}
+
+.logo-text {
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #fff;
+  text-align: center;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.25, 1);
+  opacity: 1;
+}
+
+.sidebar.collapsed .logo-text {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  transform: translateX(-10px);
 }
 
 /* 導航欄樣式 */
@@ -339,74 +394,226 @@ export default {
   flex: 1;
   padding: 16px 12px;
   overflow-y: auto;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  transition: background 0.25s ease;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
 }
 
 .nav-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+}
+
+.nav-section:last-child {
+  margin-bottom: 0;
 }
 
 .nav-section-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.25, 1);
+  user-select: none;
+  position: relative;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+}
+
+.nav-section-title:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .nav-section-title .el-icon {
-  font-size: 14px;
+  font-size: 16px;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.expand-icon {
+  margin-left: auto;
+  font-size: 12px;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.25, 1);
+  opacity: 0.6;
+}
+
+.nav-section-title:hover .expand-icon {
+  opacity: 1;
+  transform: translateX(2px);
 }
 
 .nav-list {
   list-style: none;
-  padding: 0;
+  padding: 0 6px;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  margin-bottom: 4px;
-  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 0;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  color: #cbd5e1;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.25, 1);
+  color: rgba(255, 255, 255, 0.75);
   position: relative;
+  font-size: 14px;
+  border: 1px solid transparent;
+  font-weight: 400;
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  width: 4px;
+  height: 60%;
+  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+  border-radius: 0 4px 4px 0;
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.25, 1);
 }
 
 .nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  padding-left: 16px;
+}
+
+.nav-item:hover::before {
+  opacity: 1;
+  transform: translateY(-50%) scaleY(1);
+  height: 70%;
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  color: #fff;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.85) 0%, rgba(37, 99, 235, 0.75) 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  font-weight: 500;
+  border-color: rgba(255, 255, 255, 0.25);
+  padding-left: 16px;
+}
+
+.nav-item.active::before {
+  opacity: 1;
+  transform: translateY(-50%) scaleY(1);
+  height: 70%;
+  background: linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%);
 }
 
 .nav-icon {
   font-size: 18px;
   flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.25, 1);
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.2));
+}
+
+.nav-item.active .nav-icon {
+  transform: scale(1.15);
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.35));
 }
 
 .nav-text {
   flex: 1;
-  font-size: 14px;
-  font-weight: 500;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.3px;
 }
 
 .nav-badge {
   position: absolute;
   right: 12px;
+  transform: scale(0.9);
+  z-index: 1;
+}
+
+.nav-sublist {
+  margin-top: 6px;
+  padding: 8px 8px 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nav-sublist .nav-item {
+  margin-bottom: 0;
+  padding: 9px 13px;
+  font-size: 13.5px;
+  border-radius: 6px;
+}
+
+.nav-sublist .nav-item::before {
+  width: 3px;
+  height: 40%;
+}
+
+.nav-sublist .nav-item:hover {
+  padding-left: 15px;
+}
+
+.nav-sublist .nav-item.active {
+  padding-left: 15px;
+}
+
+.nav-item-placeholder {
+  padding: 10px 14px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+  font-style: italic;
+  text-align: center;
+  letter-spacing: 0.5px;
 }
 
 /* 主內容區 */
@@ -415,50 +622,29 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-color: #f9fafb;
-}
-
-.top-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 32px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex: 1;
-}
-
-.mobile-menu-btn {
-  font-size: 20px;
-  color: #6b7280;
-}
-
-.breadcrumb-area {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: #111827;
-  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.04);
 }
 
 .content-wrapper {
   flex: 1;
-  padding: 24px 32px;
+  padding: 28px 32px;
   overflow-y: auto;
   overflow-x: hidden;
+  background: transparent;
+}
+
+.content-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .overlay {
@@ -469,63 +655,45 @@ export default {
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 99;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
 }
 
 /* 響應式設計 */
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
-    left: -260px;
+    left: -272px;
     top: 0;
     bottom: 0;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.25, 1);
   }
   
   .sidebar.mobile-visible {
-    transform: translateX(260px);
+    transform: translateX(272px);
+  }
+  
+  .sidebar.collapsed {
+    width: 272px;
   }
   
   .main-content {
     margin-left: 0;
   }
   
-  .top-header {
-    padding: 16px 20px;
-  }
-  
   .content-wrapper {
-    padding: 16px 20px;
-  }
-  
-  .page-title {
-    font-size: 18px;
-  }
-}
-
-@media (max-width: 576px) {
-  .top-header {
-    padding: 12px 16px;
-  }
-  
-  .content-wrapper {
-    padding: 12px 16px;
-  }
-  
-  .page-title {
-    font-size: 16px;
+    padding: 20px 24px;
   }
 }
 
 /* 動畫效果 */
 .fade-enter-active,
 .fade-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.25, 1);
 }
 
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(15px);
 }
 </style>
