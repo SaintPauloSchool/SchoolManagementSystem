@@ -68,6 +68,12 @@
             <artifactId>sp-system</artifactId>
         </dependency>
 
+        <!-- 通用工具模块-->
+        <dependency>
+            <groupId>com.sp</groupId>
+            <artifactId>sp-common</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

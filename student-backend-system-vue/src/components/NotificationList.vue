@@ -50,7 +50,7 @@
         v-loading="loading"
         stripe
       >
-        <el-table-column prop="title" label="通知標題" min-width="200">
+        <el-table-column prop="title" label="通知標題" min-width="220" show-overflow-tooltip>
           <template #default="scope">
             <el-link 
               type="primary" 
@@ -62,8 +62,8 @@
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="senderName" label="發送人" width="120" />
-        <el-table-column label="狀態" width="100">
+        <el-table-column prop="senderName" label="發送人" width="120" align="center" />
+        <el-table-column label="狀態" width="100" align="center">
           <template #default="scope">
             <el-tag 
               :type="getStatusTagType(scope.row.status)"
@@ -74,8 +74,8 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="發布時間" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column prop="createTime" label="發布時間" width="180" align="center" />
+        <el-table-column label="操作" width="220" fixed="right" align="center">
           <template #default="scope">
             <div class="action-buttons">
               <el-button 
@@ -406,6 +406,20 @@ export default {
 
 .table-container :deep(.el-table) {
   border: none;
+}
+
+/* 表格列對齊優化 */
+.table-container :deep(.el-table__header th) {
+  text-align: center;
+}
+
+.table-container :deep(.el-table__body td) {
+  text-align: center;
+}
+
+/* 標題列保持左對齊 */
+.table-container :deep(.el-table__body tr td:first-child) {
+  text-align: left;
 }
 
 .title-link {

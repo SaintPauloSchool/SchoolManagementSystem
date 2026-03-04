@@ -51,41 +51,41 @@
 
       <!-- 附件上傳 -->
       <el-form-item label="附件/圖片">
-        <el-upload
-          class="upload-demo"
-          :action="uploadUrl"
-          :headers="uploadHeaders"
-          :file-list="fileList"
-          :on-success="handleUploadSuccess"
-          :on-remove="handleUploadRemove"
-          :before-upload="beforeUpload"
-          multiple
-          :limit="5"
-        >
-          <el-button size="small" type="primary">
-            <el-icon><Upload /></el-icon>
-            點擊上傳
-          </el-button>
-          <template #tip>
-            <div class="el-upload__tip">
-              支持上傳 jpg/png/gif/pdf/doc/docx/xls/xlsx 文件，最多 5 個文件，單個文件不超過 10MB
-            </div>
-          </template>
-        </el-upload>
+        <div class="upload-section">
+          <el-upload
+            class="upload-demo"
+            :action="uploadUrl"
+            :headers="uploadHeaders"
+            :file-list="fileList"
+            :on-success="handleUploadSuccess"
+            :on-error="handleUploadError"
+            :on-remove="handleUploadRemove"
+            :before-upload="beforeUpload"
+            :on-change="handleChange"
+            multiple
+            :limit="5"
+          >
+            <el-button class="custom-upload-btn" size="large">
+              <el-icon class="btn-icon"><Upload /></el-icon>
+              <span class="btn-text">點擊上傳附件</span>
+            </el-button>
+            <template #tip>
+              <div class="el-upload__tip">
+                支持上傳 jpg/png/gif/pdf/doc/docx/xls/xlsx 文件，最多 5 個文件，單個文件不超過 10MB
+              </div>
+            </template>
+          </el-upload>
+        </div>
       </el-form-item>
 
       <!-- 問題設置 -->
       <el-form-item label="問題設置">
         <div class="questions-section">
           <div class="questions-header">
-            <span>已添加的問題 ({{ localFormData.questions.length }})</span>
-            <el-button 
-              type="primary" 
-              size="small" 
-              @click="addQuestion"
-            >
-              <el-icon><Plus /></el-icon>
-              添加問題
+            <span class="section-title">已添加的問題 ({{ localFormData.questions.length }})</span>
+            <el-button class="add-question-btn" size="large" @click="addQuestion">
+              <el-icon class="btn-icon"><Plus /></el-icon>
+              <span class="btn-text">添加問題</span>
             </el-button>
           </div>
           
@@ -265,15 +265,47 @@ export default {
     handleUploadSuccess(response, file) {
       if (response.code === 0) {
         const url = response.data.url
-        this.localFormData.attachmentUrls.push(url)
-        this.fileList.push({
-          name: file.name,
-          url: url
-        })
+        // 更新已上传文件的 URL
+        const uploadedFile = this.fileList.find(f => f.uid === file.uid)
+        if (uploadedFile) {
+          uploadedFile.url = url
+          uploadedFile.name = file.name || uploadedFile.name
+        } else {
+          this.fileList.push({
+            name: file.name,
+            url: url,
+            uid: file.uid
+          })
+        }
+        
+        // 同步到 formData
+        const urls = this.fileList.map(f => f.url).filter(url => url)
+        this.localFormData.attachmentUrls = urls
+        
         ElMessage.success('上傳成功')
       } else {
         ElMessage.error(response.msg || '上傳失敗')
+        // 上传失败时从列表中移除
+        const index = this.fileList.findIndex(f => f.uid === file.uid)
+        if (index > -1) {
+          this.fileList.splice(index, 1)
+        }
       }
+    },
+
+    handleUploadError(error, file) {
+      console.error('上传失败:', error)
+      ElMessage.error('上傳失敗，請重試')
+      // 上传失败时从列表中移除
+      const index = this.fileList.findIndex(f => f.uid === file.uid)
+      if (index > -1) {
+        this.fileList.splice(index, 1)
+      }
+    },
+
+    handleChange(file, fileList) {
+      // 更新文件列表，确保上传中的文件也能显示
+      this.fileList = fileList.filter(f => f.status !== 'removed')
     },
 
     handleUploadRemove(file) {
@@ -390,31 +422,30 @@ export default {
   font-weight: 500;
 }
 
-.questions-section {
-  width: 100%;
-}
-
 .questions-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-  border-radius: 12px;
-  border: 2px solid #e5e7eb;
-  transition: all 0.3s ease;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #60a5fa 0%, #60a5fa 100%);
+  border-radius: 16px;
+  border: 2px solid #60a5fa;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .questions-header:hover {
-  border-color: #60a5fa;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
 }
 
 .questions-header span {
   font-weight: 700;
-  color: #111827;
-  font-size: 15px;
+  color: #ffffff;
+  font-size: 16px;
+  letter-spacing: 0.5px;
 }
 
 .questions-list {
@@ -426,33 +457,31 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  background: transparent;
   border-radius: 12px;
   margin-bottom: 12px;
   border: 2px solid #e5e7eb;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .question-item:hover {
   background: #f9fafb;
   border-color: #60a5fa;
   box-shadow: 0 6px 16px rgba(59, 130, 246, 0.2);
-  transform: translateX(4px);
 }
 
 .question-info {
   display: flex;
   align-items: center;
-  gap: 12px;
   flex: 1;
 }
 
 .question-number {
   font-weight: 700;
   color: #3b82f6;
-  font-size: 16px;
-  min-width: 28px;
+  font-size: 15px;
+  min-width: 32px;
   text-align: center;
+  margin-right: 8px;
 }
 
 .question-title {
@@ -460,16 +489,36 @@ export default {
   color: #374151;
   flex: 1;
   font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .question-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .question-actions .el-button {
   border-radius: 8px;
   font-weight: 600;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+/* 问题类型标签 - 全新现代样式 */
+.question-type-tag.el-tag {
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-left: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.question-type-tag.el-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .no-questions {
@@ -480,7 +529,6 @@ export default {
   background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
   border-radius: 12px;
   border: 2px dashed #e5e7eb;
-  transition: all 0.3s ease;
 }
 
 .no-questions:hover {
@@ -493,59 +541,141 @@ export default {
   padding-top: 28px;
   border-top: 2px solid #e5e7eb;
   text-align: right;
-  transition: all 0.3s ease;
 }
 
 .form-actions:hover {
   border-color: #60a5fa;
 }
 
+/* 上傳區域 - 與問題設置協調的風格 */
+.upload-section {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
 .upload-demo {
   width: 100%;
 }
 
-.upload-demo :deep(.el-upload-dragger) {
+.upload-demo :deep(.el-upload) {
+  width: auto;
+  display: inline-block;
+}
+
+.upload-demo :deep(.el-form-item__content) {
+  display: flex;
+  align-items: center;
+}
+
+/* 上傳按鈕 - 與問題設置一致的漸變藍色風格 */
+.custom-upload-btn.el-button {
+  height: 40px;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.5px;
+}
+
+.custom-upload-btn.el-button:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 5px 16px rgba(59, 130, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+.custom-upload-btn.el-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+}
+
+/* 上傳提示文字 */
+.el-upload__tip {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 12px;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+/* 添加問題按鈕 - 與問題設置頭部完全一致 */
+.add-question-btn.el-button {
+  height: 42px;
+  padding: 0 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  border: none;
   border-radius: 12px;
-  border: 2px dashed #d1d5db;
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.5px;
+  margin-left: 16px;
 }
 
-.upload-demo :deep(.el-upload-dragger:hover) {
-  border-color: #3b82f6;
-  background-color: #eff6ff;
+.add-question-btn.el-button:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+  transform: translateY(-2px);
 }
 
-.question-type-tag.el-tag {
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 6px;
+.add-question-btn.el-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+/* 按鈕圖標樣式 - 更柔和的動畫 */
+.btn-icon {
+  font-size: 17px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-upload-btn.el-button:hover .btn-icon,
+.add-question-btn.el-button:hover .btn-icon {
+  transform: scale(1.08) rotate(3deg);
+}
+
+.btn-text {
   font-weight: 600;
 }
 
-/* 響應式設計 */
-@media (max-width: 768px) {
-  .form-container {
-    padding: 0;
-  }
-  
-  .questions-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .question-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .question-actions {
-    width: 100%;
-  }
-  
-  .form-actions {
-    text-align: center;
-  }
+/* 上傳區域的拖拽區域樣式 */
+.upload-demo :deep(.el-upload-dragger) {
+  border-radius: 12px;
+  border: 2px dashed #d1d5db;
+  background-color: #f9fafb;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.upload-demo :deep(.el-upload-dragger:hover) {
+  border-color: #60a5fa;
+  background-color: #eff6ff;
+}
+
+/* 已上傳文件列表 */
+.upload-demo :deep(.el-upload-list) {
+  margin-top: 12px;
+}
+
+.upload-demo :deep(.el-upload-list__item) {
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.upload-demo :deep(.el-upload-list__item:hover) {
+  background-color: #f3f4f6;
+}
+
 </style>

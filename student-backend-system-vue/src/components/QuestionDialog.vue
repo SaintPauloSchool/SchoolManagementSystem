@@ -382,13 +382,57 @@ export default {
 
 .remove-btn {
   flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+}
+
+/* 移除按钮红色美化 */
+.remove-btn.el-button--danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+  transition: all 0.3s ease;
+}
+
+.remove-btn.el-button--danger:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+  transform: scale(1.05);
+}
+
+.remove-btn.el-button--danger:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.2);
 }
 
 .add-option-btn {
   width: 100%;
   margin-top: 8px;
-  border-radius: 8px;
+  height: 42px;
+  font-size: 14px;
   font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(59, 130, 246, 0.25);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: 0.5px;
+}
+
+.add-option-btn:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 5px 18px rgba(59, 130, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+.add-option-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
 }
 
 .required-switch {

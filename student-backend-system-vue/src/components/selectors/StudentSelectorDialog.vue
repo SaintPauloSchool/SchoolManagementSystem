@@ -46,13 +46,13 @@
           max-height="300"
           @selection-change="handleSelectionChange"
         >
-          <el-table-column type="selection" width="55" />
-          <el-table-column prop="studentId" label="學號" width="100" />
-          <el-table-column prop="name" label="學生姓名" width="120" />
-          <el-table-column prop="grade" label="年級" width="100" />
-          <el-table-column prop="className" label="班級" width="120" />
-          <el-table-column prop="parentName" label="家長姓名" />
-          <el-table-column prop="phone" label="聯繫電話" width="120" />
+          <el-table-column type="selection" width="55" align="center" />
+          <el-table-column prop="studentId" label="學號" width="100" align="center" />
+          <el-table-column prop="name" label="學生姓名" width="120" align="center" />
+          <el-table-column prop="grade" label="年級" width="100" align="center" />
+          <el-table-column prop="className" label="班級" width="120" align="center" />
+          <el-table-column prop="parentName" label="家長姓名" align="center" />
+          <el-table-column prop="phone" label="聯繫電話" width="120" align="center" />
         </el-table>
         
         <div v-if="filteredStudents.length === 0" class="no-data">

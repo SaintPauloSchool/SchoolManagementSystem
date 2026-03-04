@@ -22,7 +22,7 @@
     <!-- 表單內容 -->
     <div class="form-wrapper">
       <transition name="slide" mode="out-in">
-        <component :is="currentStep === 0 ? 'div' : 'div'" :key="currentStep" class="step-content">
+        <div :key="currentStep" class="step-content">
           <BasicInfoForm 
             v-if="currentStep === 0"
             ref="basicFormRef"
@@ -36,7 +36,7 @@
             @prev="handlePrev"
             @submit="handleSubmit"
           />
-        </component>
+        </div>
       </transition>
     </div>
   </div>
