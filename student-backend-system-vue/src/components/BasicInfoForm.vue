@@ -1,4 +1,4 @@
-<template>
+1，<template>
   <div class="basic-info-form">
     <el-form
       ref="formRef"
@@ -82,7 +82,7 @@
             <el-button 
               type="primary" 
               size="small" 
-              @click="showQuestionDialog = true"
+              @click="addQuestion"
             >
               <el-icon><Plus /></el-icon>
               添加問題
@@ -142,6 +142,7 @@
       :question="editingQuestion"
       :question-type="questionType"
       @save="saveQuestion"
+      @validate-error="handleValidateError"
     />
   </div>
 </template>
@@ -149,6 +150,7 @@
 <script>
 import { Upload, Plus, Edit, Delete, ArrowRight } from '@element-plus/icons-vue'
 import QuestionDialog from './QuestionDialog.vue'
+import { ElMessage } from 'element-plus'
 
 export default {
   name: 'BasicInfoForm',
@@ -247,14 +249,14 @@ export default {
         Object.assign(this.formData, this.localFormData)
         this.$emit('next')
       }).catch(() => {
-        this.$message.warning('請完善基本信息')
+        ElMessage.warning('請完善基本信息')
       })
     },
 
     beforeUpload(file) {
       const isLt10M = file.size / 1024 / 1024 < 10
       if (!isLt10M) {
-        this.$message.error('上傳文件大小不能超過 10MB!')
+        ElMessage.error('上傳文件大小不能超過 10MB!')
         return false
       }
       return true
@@ -268,9 +270,9 @@ export default {
           name: file.name,
           url: url
         })
-        this.$message.success('上傳成功')
+        ElMessage.success('上傳成功')
       } else {
-        this.$message.error(response.msg || '上傳失敗')
+        ElMessage.error(response.msg || '上傳失敗')
       }
     },
 
@@ -309,9 +311,23 @@ export default {
     },
 
     editQuestion(index) {
+      console.log('编辑问题索引:', index)
       this.editingQuestion = { ...this.localFormData.questions[index] }
       this.questionType = this.editingQuestion.type
       this.showQuestionDialog = true
+      console.log('对话框打开:', this.showQuestionDialog)
+    },
+
+    addQuestion() {
+      console.log('添加新问题')
+      this.editingQuestion = null
+      this.questionType = ''
+      this.showQuestionDialog = true
+      console.log('对话框状态:', this.showQuestionDialog)
+    },
+
+    handleValidateError(message) {
+      ElMessage.warning(message)
     },
 
     removeQuestion(index) {
@@ -321,24 +337,35 @@ export default {
         type: 'warning'
       }).then(() => {
         this.localFormData.questions.splice(index, 1)
-        this.$message.success('刪除成功')
+        ElMessage.success('刪除成功')
       }).catch(() => {})
     },
 
     saveQuestion(question) {
+      console.log('保存问题:', question)
+      console.log('当前编辑:', this.editingQuestion)
+      
       if (this.editingQuestion) {
         const index = this.localFormData.questions.findIndex(q => q.id === this.editingQuestion.id)
         if (index > -1) {
-          this.localFormData.questions.splice(index, 1, question)
+          this.$set(this.localFormData.questions, index, question)
+          console.log('更新问题索引:', index)
         }
       } else {
         question.id = Date.now()
         this.localFormData.questions.push(question)
+        console.log('新增问题，当前总数:', this.localFormData.questions.length)
       }
       
+      // 同步到 formData
+      Object.assign(this.formData, this.localFormData)
+      
+      // 重要：重置编辑状态
       this.editingQuestion = null
       this.showQuestionDialog = false
-      this.$message.success('保存成功')
+      
+      console.log('对话框关闭:', this.showQuestionDialog)
+      ElMessage.success('保存成功')
     }
   }
 }
@@ -350,15 +377,17 @@ export default {
 }
 
 .form-container .el-form-item__label {
-  font-weight: 600;
+  font-weight: 700;
   color: #374151;
+  font-size: 14px;
 }
 
 .form-tip {
-  font-size: 12px;
+  font-size: 13px;
   color: #6b7280;
-  margin-top: 4px;
-  line-height: 1.5;
+  margin-top: 6px;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
 .questions-section {
@@ -369,58 +398,68 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding: 14px 18px;
+  margin-bottom: 20px;
+  padding: 16px 20px;
   background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.questions-header:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
 }
 
 .questions-header span {
-  font-weight: 600;
+  font-weight: 700;
   color: #111827;
+  font-size: 15px;
 }
 
 .questions-list {
-  min-height: 80px;
+  min-height: 100px;
 }
 
 .question-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 18px;
+  padding: 16px 20px;
   background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-  border-radius: 8px;
-  margin-bottom: 10px;
-  border: 1px solid #e5e7eb;
-  transition: all 0.2s ease;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .question-item:hover {
   background: #f9fafb;
-  border-color: #d1d5db;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-color: #60a5fa;
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.2);
+  transform: translateX(4px);
 }
 
 .question-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex: 1;
 }
 
 .question-number {
   font-weight: 700;
   color: #3b82f6;
-  font-size: 14px;
-  min-width: 24px;
+  font-size: 16px;
+  min-width: 28px;
+  text-align: center;
 }
 
 .question-title {
-  font-size: 14px;
+  font-size: 15px;
   color: #374151;
   flex: 1;
+  font-weight: 600;
 }
 
 .question-actions {
@@ -428,30 +467,59 @@ export default {
   gap: 8px;
 }
 
+.question-actions .el-button {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
 .no-questions {
   text-align: center;
   color: #6b7280;
-  padding: 32px;
+  padding: 40px;
   font-size: 14px;
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  border-radius: 12px;
+  border: 2px dashed #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.no-questions:hover {
+  border-color: #60a5fa;
   background: #f9fafb;
-  border-radius: 8px;
-  border: 1px dashed #e5e7eb;
 }
 
 .form-actions {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid #e5e7eb;
+  margin-top: 28px;
+  padding-top: 28px;
+  border-top: 2px solid #e5e7eb;
   text-align: right;
+  transition: all 0.3s ease;
+}
+
+.form-actions:hover {
+  border-color: #60a5fa;
 }
 
 .upload-demo {
   width: 100%;
 }
 
+.upload-demo :deep(.el-upload-dragger) {
+  border-radius: 12px;
+  border: 2px dashed #d1d5db;
+  transition: all 0.3s ease;
+}
+
+.upload-demo :deep(.el-upload-dragger:hover) {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
 .question-type-tag.el-tag {
   font-size: 12px;
-  padding: 2px 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
 }
 
 /* 響應式設計 */
@@ -463,13 +531,13 @@ export default {
   .questions-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
   }
   
   .question-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
   }
   
   .question-actions {

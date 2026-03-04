@@ -135,6 +135,8 @@
       title="通知詳情"
       width="60%"
       :before-close="handleDetailClose"
+      class="notification-detail-dialog"
+      top="10vh"
     >
       <NotificationDetail 
         v-if="selectedNotification"
@@ -304,10 +306,15 @@ export default {
 /* 搜索欄 */
 .search-bar {
   display: flex;
-  gap: 12px;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
+  gap: 16px;
+  padding: 24px 28px;
+  border-bottom: 2px solid #e5e7eb;
   background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  transition: all 0.3s ease;
+}
+
+.search-bar:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
 }
 
 .search-input {
@@ -315,13 +322,28 @@ export default {
   max-width: 400px;
 }
 
+.search-input :deep(.el-input__wrapper) {
+  border-radius: 10px;
+  font-weight: 600;
+}
+
 .filter-actions {
   display: flex;
   gap: 12px;
 }
 
+.filter-actions .el-button {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
 .status-select {
   width: 140px;
+}
+
+.status-select :deep(.el-input__wrapper) {
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 /* 列表頭部 */
@@ -329,30 +351,49 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 24px;
-  background-color: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 28px;
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  border-bottom: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.list-header:hover {
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
 }
 
 .header-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .header-icon {
   color: #3b82f6;
-  font-size: 18px;
+  font-size: 20px;
+  animation: iconFloat 3s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .header-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: #111827;
+  letter-spacing: 0.3px;
 }
 
 .count-tag {
-  margin-left: 4px;
+  margin-left: 8px;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 4px 12px;
 }
 
 /* 表格區域 */
@@ -360,6 +401,7 @@ export default {
   flex: 1;
   overflow: auto;
   padding: 0;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
 }
 
 .table-container :deep(.el-table) {
@@ -367,13 +409,14 @@ export default {
 }
 
 .title-link {
-  font-weight: 500;
+  font-weight: 600;
   color: #3b82f6;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .title-link:hover {
   color: #2563eb;
+  transform: translateX(4px);
 }
 
 .action-buttons {
@@ -381,20 +424,49 @@ export default {
   gap: 8px;
 }
 
+.action-buttons .el-button {
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.action-buttons .el-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 對話框樣式優化 */
+.notification-detail-dialog :deep(.el-dialog) {
+  border-radius: 24px;
+}
+
+.notification-detail-dialog :deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.notification-detail-dialog :deep(.el-dialog__title) {
+  color: #1e40af;
+}
+
 /* 分頁區域 */
 .pagination-area {
-  padding: 16px 24px;
-  background-color: #f9fafb;
-  border-top: 1px solid #e5e7eb;
+  padding: 20px 28px;
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  border-top: 2px solid #e5e7eb;
   display: flex;
   justify-content: flex-end;
+  transition: all 0.3s ease;
+}
+
+.pagination-area:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
 }
 
 /* 響應式設計 */
 @media (max-width: 1200px) {
   .search-bar {
     flex-wrap: wrap;
-    padding: 16px 20px;
+    padding: 20px 24px;
   }
   
   .search-input {
@@ -409,18 +481,18 @@ export default {
 
 @media (max-width: 768px) {
   .search-bar {
-    padding: 12px 16px;
+    padding: 16px 20px;
   }
   
   .list-header {
-    padding: 14px 16px;
+    padding: 16px 20px;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     align-items: flex-start;
   }
   
   .pagination-area {
-    padding: 12px 16px;
+    padding: 16px 20px;
     justify-content: center;
   }
   
