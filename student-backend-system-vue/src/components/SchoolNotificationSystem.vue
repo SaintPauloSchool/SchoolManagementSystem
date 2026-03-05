@@ -142,9 +142,7 @@ export default {
       isMobileMenuOpen: false,
       isMobile: false,
       expandedSections: {
-        homeSchool: true,
-        system: false,
-        report: false
+        homeSchool: true
       },
       menuItems: [
         { index: '1-1', title: '發布通知', icon: 'Edit' },

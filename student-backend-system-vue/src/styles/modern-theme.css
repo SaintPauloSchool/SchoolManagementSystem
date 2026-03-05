@@ -774,17 +774,6 @@ body {
   }
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* 对话框遮罩层优化 */
 .v-modal {
   background: rgba(0, 0, 0, 0.5);
@@ -813,9 +802,3 @@ body {
 .el-table__row {
   animation: fadeIn 0.3s ease;
 }
-
-.el-table__row:nth-child(1) { animation-delay: 0.05s; }
-.el-table__row:nth-child(2) { animation-delay: 0.1s; }
-.el-table__row:nth-child(3) { animation-delay: 0.15s; }
-.el-table__row:nth-child(4) { animation-delay: 0.2s; }
-.el-table__row:nth-child(5) { animation-delay: 0.25s; }

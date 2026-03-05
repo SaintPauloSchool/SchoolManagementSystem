@@ -206,21 +206,43 @@ export default {
             ? JSON.parse(this.localFormData.attachmentUrls)
             : this.localFormData.attachmentUrls
             
-          // 保留原有文件名，不覆盖
+          // 只在 fileList 为空或有变化时才初始化，保留已有的文件名
           if (!this.fileList || this.fileList.length === 0) {
+            // 如果是空的，创建新的 fileList，使用默认名称
             this.fileList = urls.map((url, index) => ({
               name: `附件${index + 1}`,
               url: url
             }))
           } else {
-            // 更新现有 fileList 中的 url，但保留 name
-            this.fileList.forEach((file, index) => {
-              if (index < urls.length) {
-                file.url = urls[index]
+            // 如果 fileList 已有数据，只更新 URL，不改变文件名
+            const newFileList = []
+            urls.forEach((url, index) => {
+              // 查找是否有相同 URL 的文件
+              const existingFile = this.fileList.find(f => f.url === url)
+              if (existingFile) {
+                // 保留原有文件名和 uid
+                newFileList.push({
+                  ...existingFile,
+                  url: url
+                })
+              } else if (index < this.fileList.length) {
+                // 如果没有找到匹配的 URL，但索引存在，保留原文件名
+                newFileList.push({
+                  ...this.fileList[index],
+                  url: url
+                })
+              } else {
+                // 如果是新增的 URL，使用默认名称
+                newFileList.push({
+                  name: `附件${index + 1}`,
+                  url: url
+                })
               }
             })
+            this.fileList = newFileList
           }
         } catch (e) {
+          console.error('初始化文件列表失败:', e)
           this.fileList = []
         }
       } else {
@@ -254,7 +276,10 @@ export default {
         const uploadedFile = this.fileList.find(f => f.uid === file.uid)
         if (uploadedFile) {
           uploadedFile.url = url
-          uploadedFile.name = file.name || uploadedFile.name
+          // 保留原始文件名，不要覆盖
+          if (!uploadedFile.name || uploadedFile.name.startsWith('附件')) {
+            uploadedFile.name = file.name
+          }
         } else {
           this.fileList.push({
             name: file.name,
@@ -286,7 +311,14 @@ export default {
     },
 
     handleChange(file, fileList) {
-      this.fileList = fileList.filter(f => f.status !== 'removed')
+      // 保留原始文件名，不要用 Element Plus 的默认名称
+      this.fileList = fileList.filter(f => f.status !== 'removed').map(f => {
+        // 如果是新添加的文件且名字是默认的，使用原始文件名
+        if (!f.name || f.name === file.name && f.raw && f.raw.name) {
+          f.name = f.raw.name
+        }
+        return f
+      })
     },
 
     handleUploadRemove(file) {
@@ -445,8 +477,19 @@ export default {
 .question-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   flex-shrink: 0;
+}
+
+.question-type-tag.el-tag {
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
 .question-number {
@@ -472,17 +515,6 @@ export default {
 
 .question-actions .el-button {
   margin: 0 !important;
-}
-
-/* 问题类型标签 - 全新现代样式 */
-.question-type-tag.el-tag {
-  font-size: 12px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
 }
 
 .question-type-tag.el-tag:hover {

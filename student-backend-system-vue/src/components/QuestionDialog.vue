@@ -358,70 +358,7 @@ export default {
   background: linear-gradient(to bottom, #3b82f6, #2563eb);
 }
 
-/* 頂部提示區域 - 全新設計 */
-.info-banner {
-  margin-bottom: 28px;
-  padding: 18px 20px;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-radius: 14px;
-  border-left: 4px solid #3b82f6;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.12);
-  animation: slideDown 0.4s ease;
-}
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.banner-inner {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.banner-icon {
-  font-size: 24px;
-  color: #3b82f6;
-  flex-shrink: 0;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-}
-
-.banner-text-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.banner-title {
-  font-weight: 700;
-  color: #1e40af;
-  font-size: 15px;
-  letter-spacing: 0.3px;
-}
-
-.banner-text {
-  color: #3b82f6;
-  font-size: 14px;
-  line-height: 1.5;
-}
 
 /* 題型選擇器 - 全新設計 */
 .type-selector {
@@ -777,6 +714,10 @@ export default {
 }
 
 /* 必答設置 - 開關美化 */
+.required-setting {
+  width: 100%;
+}
+
 .required-toggle {
   display: flex;
   align-items: center;
@@ -854,6 +795,8 @@ export default {
   font-size: 15px;
   letter-spacing: 0.5px;
   padding-left: 4px;
+  width: 90px !important;
+  text-align: left;
 }
 
 /* 底部按鈕區 - 緊湊設計 */

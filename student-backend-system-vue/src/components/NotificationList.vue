@@ -254,7 +254,6 @@ export default {
           type: 'warning'
         })
         
-        // await axios.put(`/api/system/notification/withdraw/${notification.notificationId}`)
         this.$message.success('撤回成功')
         this.$emit('refresh')
       } catch (error) {
@@ -273,7 +272,6 @@ export default {
           type: 'error'
         })
         
-        // await axios.delete(`/api/system/notification/${notification.notificationId}`)
         this.$message.success('刪除成功')
         this.$emit('refresh')
       } catch (error) {
