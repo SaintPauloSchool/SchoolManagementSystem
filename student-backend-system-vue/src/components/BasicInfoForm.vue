@@ -91,25 +91,29 @@
               class="question-item"
             >
               <div class="question-info">
-                <span class="question-number">{{ index + 1 }}.</span>
-                <span class="question-title">{{ question.title }}</span>
-                <el-tag 
-                  size="small" 
-                  :type="getQuestionTypeColor(question.type)"
-                  class="question-type-tag"
-                >
-                  {{ getQuestionTypeText(question.type) }}
-                </el-tag>
-              </div>
-              <div class="question-actions">
-                <el-button size="small" @click="editQuestion(index)">
-                  <el-icon><Edit /></el-icon>
-                  編輯
-                </el-button>
-                <el-button size="small" type="danger" @click="removeQuestion(index)">
-                  <el-icon><Delete /></el-icon>
-                  刪除
-                </el-button>
+                <div class="question-left">
+                  <span class="question-number">{{ index + 1 }}.</span>
+                  <span class="question-title" style="margin-right: 16px;">{{ question.title }}</span>
+                </div>
+                <div class="question-right">
+                  <el-tag 
+                    size="small" 
+                    :type="getQuestionTypeColor(question.type)"
+                    class="question-type-tag"
+                  >
+                    {{ getQuestionTypeText(question.type) }}
+                  </el-tag>
+                  <div class="question-actions">
+                    <el-button size="small" @click="editQuestion(index)">
+                      <el-icon><Edit /></el-icon>
+                      編輯
+                    </el-button>
+                    <el-button size="small" type="danger" @click="removeQuestion(index)">
+                      <el-icon><Delete /></el-icon>
+                      刪除
+                    </el-button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -214,37 +218,14 @@ export default {
       }
     },
 
-    validate() {
-      return new Promise((resolve, reject) => {
-        this.$refs.formRef.validate((valid) => {
-          if (valid) {
-            resolve()
-          } else {
-            reject()
-          }
-        })
-      })
-    },
-
-    resetForm() {
-      this.$refs.formRef.resetFields()
-      this.fileList = []
-      this.localFormData = {
-        title: '',
-        content: '',
-        senderName: '',
-        jumpUrl: '',
-        attachmentUrls: [],
-        questions: []
-      }
-    },
-
     goToNext() {
-      this.validate().then(() => {
-        Object.assign(this.formData, this.localFormData)
-        this.$emit('next')
-      }).catch(() => {
-        ElMessage.warning('請完善基本信息')
+      this.$refs.formRef.validate((valid) => {
+        if (valid) {
+          Object.assign(this.formData, this.localFormData)
+          this.$emit('next')
+        } else {
+          ElMessage.warning('請完善基本信息')
+        }
       })
     },
 
@@ -260,7 +241,6 @@ export default {
     handleUploadSuccess(response, file) {
       if (response.code === 0) {
         const url = response.data.url
-        // 更新已上传文件的 URL
         const uploadedFile = this.fileList.find(f => f.uid === file.uid)
         if (uploadedFile) {
           uploadedFile.url = url
@@ -273,14 +253,12 @@ export default {
           })
         }
         
-        // 同步到 formData
         const urls = this.fileList.map(f => f.url).filter(url => url)
         this.localFormData.attachmentUrls = urls
         
         ElMessage.success('上傳成功')
       } else {
         ElMessage.error(response.msg || '上傳失敗')
-        // 上传失败时从列表中移除
         const index = this.fileList.findIndex(f => f.uid === file.uid)
         if (index > -1) {
           this.fileList.splice(index, 1)
@@ -291,7 +269,6 @@ export default {
     handleUploadError(error, file) {
       console.error('上传失败:', error)
       ElMessage.error('上傳失敗，請重試')
-      // 上传失败时从列表中移除
       const index = this.fileList.findIndex(f => f.uid === file.uid)
       if (index > -1) {
         this.fileList.splice(index, 1)
@@ -299,7 +276,6 @@ export default {
     },
 
     handleChange(file, fileList) {
-      // 更新文件列表，确保上传中的文件也能显示
       this.fileList = fileList.filter(f => f.status !== 'removed')
     },
 
@@ -338,19 +314,15 @@ export default {
     },
 
     editQuestion(index) {
-      console.log('编辑问题索引:', index)
       this.editingQuestion = { ...this.localFormData.questions[index] }
       this.questionType = this.editingQuestion.type
       this.showQuestionDialog = true
-      console.log('对话框打开:', this.showQuestionDialog)
     },
 
     addQuestion() {
-      console.log('添加新问题')
       this.editingQuestion = null
       this.questionType = ''
       this.showQuestionDialog = true
-      console.log('对话框状态:', this.showQuestionDialog)
     },
 
     handleValidateError(message) {
@@ -369,29 +341,21 @@ export default {
     },
 
     saveQuestion(question) {
-      console.log('保存问题:', question)
-      console.log('当前编辑:', this.editingQuestion)
-      
       if (this.editingQuestion) {
         const index = this.localFormData.questions.findIndex(q => q.id === this.editingQuestion.id)
         if (index > -1) {
-          this.$set(this.localFormData.questions, index, question)
-          console.log('更新问题索引:', index)
+          this.localFormData.questions[index] = question
         }
       } else {
         question.id = Date.now()
         this.localFormData.questions.push(question)
-        console.log('新增问题，当前总数:', this.localFormData.questions.length)
       }
       
-      // 同步到 formData
       Object.assign(this.formData, this.localFormData)
       
-      // 重要：重置编辑状态
       this.editingQuestion = null
       this.showQuestionDialog = false
       
-      console.log('对话框关闭:', this.showQuestionDialog)
       ElMessage.success('保存成功')
     }
   }
@@ -429,22 +393,17 @@ export default {
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.questions-header:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-  transform: translateY(-2px);
-  transition: all 0.3s ease;
-}
-
-.questions-header span {
+.questions-header .section-title {
   font-weight: 700;
   color: #ffffff;
   font-size: 16px;
   letter-spacing: 0.5px;
 }
 
-.questions-list {
-  min-height: 100px;
+.question-item:hover {
+  background: #f9fafb;
+  border-color: #60a5fa;
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.2);
 }
 
 .question-item {
@@ -458,25 +417,34 @@ export default {
   border: 2px solid #e5e7eb;
 }
 
-.question-item:hover {
-  background: #f9fafb;
-  border-color: #60a5fa;
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.2);
-}
-
 .question-info {
   display: flex;
+  justify-content: space-between;
   align-items: center;
+  width: 100%;
+}
+
+.question-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex: 1;
+  min-width: 0;
+}
+
+.question-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
 }
 
 .question-number {
   font-weight: 700;
   color: #3b82f6;
   font-size: 15px;
-  min-width: 32px;
+  min-width: 28px;
   text-align: center;
-  margin-right: 8px;
 }
 
 .question-title {
@@ -489,14 +457,11 @@ export default {
 
 .question-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px !important;
 }
 
 .question-actions .el-button {
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 13px;
-  padding: 6px 12px;
+  margin: 0 !important;
 }
 
 /* 问题类型标签 - 全新现代样式 */
@@ -506,7 +471,6 @@ export default {
   border-radius: 20px;
   font-weight: 700;
   letter-spacing: 0.5px;
-  margin-left: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
 }
@@ -538,10 +502,6 @@ export default {
   text-align: right;
 }
 
-.form-actions:hover {
-  border-color: #60a5fa;
-}
-
 /* 上傳區域 - 與問題設置協調的風格 */
 .upload-section {
   width: 100%;
@@ -556,11 +516,6 @@ export default {
 .upload-demo :deep(.el-upload) {
   width: auto;
   display: inline-block;
-}
-
-.upload-demo :deep(.el-form-item__content) {
-  display: flex;
-  align-items: center;
 }
 
 /* 上傳按鈕 - 與問題設置一致的漸變藍色風格 */
@@ -590,15 +545,6 @@ export default {
 .custom-upload-btn.el-button:active {
   transform: translateY(0);
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
-}
-
-/* 上傳提示文字 */
-.el-upload__tip {
-  font-size: 13px;
-  color: #6b7280;
-  margin-top: 12px;
-  line-height: 1.6;
-  font-weight: 500;
 }
 
 /* 添加問題按鈕 - 與問題設置頭部完全一致 */
@@ -631,7 +577,6 @@ export default {
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
-/* 按鈕圖標樣式 - 更柔和的動畫 */
 .btn-icon {
   font-size: 17px;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -642,11 +587,6 @@ export default {
   transform: scale(1.08) rotate(3deg);
 }
 
-.btn-text {
-  font-weight: 600;
-}
-
-/* 上傳區域的拖拽區域樣式 */
 .upload-demo :deep(.el-upload-dragger) {
   border-radius: 12px;
   border: 2px dashed #d1d5db;

@@ -92,9 +92,15 @@
       <!-- 內容區域 -->
       <div class="content-wrapper">
         <transition name="fade" mode="out-in">
+          <!-- 發布通知 -->
+          <PublishNotification 
+            v-if="activeMenu === '1-1'"
+            @publish-success="handlePublishSuccess" 
+          />
+          
           <!-- 抄送我的 -->
           <NotificationList 
-            v-if="activeMenu === '1-1'"
+            v-else-if="activeMenu === '1-2'"
             :notifications="ccToMeNotifications" 
             @refresh="loadCcToMeNotifications"
             type="ccToMe"
@@ -102,16 +108,10 @@
           
           <!-- 我發送的 -->
           <NotificationList 
-            v-else-if="activeMenu === '1-2'"
+            v-else-if="activeMenu === '1-3'"
             :notifications="mySendNotifications" 
             @refresh="loadMySendNotifications"
             type="mySend"
-          />
-          
-          <!-- 發布通知 -->
-          <PublishNotification 
-            v-else-if="activeMenu === '1-3'"
-            @publish-success="handlePublishSuccess" 
           />
         </transition>
       </div>
@@ -147,9 +147,9 @@ export default {
         report: false
       },
       menuItems: [
-        { index: '1-1', title: '抄送我的', icon: 'Message', badge: 2 },
-        { index: '1-2', title: '我發送的', icon: 'Promotion' },
-        { index: '1-3', title: '發布通知', icon: 'Edit' }
+        { index: '1-1', title: '發布通知', icon: 'Edit' },
+        { index: '1-2', title: '抄送我的', icon: 'Message', badge: 2 },
+        { index: '1-3', title: '我發送的', icon: 'Promotion' }
       ]
     }
   },
@@ -194,8 +194,10 @@ export default {
         this.isMobileMenuOpen = false
       }
       if (index === '1-1') {
-        this.loadCcToMeNotifications()
+        // 發布通知，无需加载数据
       } else if (index === '1-2') {
+        this.loadCcToMeNotifications()
+      } else if (index === '1-3') {
         this.loadMySendNotifications()
       }
     },
