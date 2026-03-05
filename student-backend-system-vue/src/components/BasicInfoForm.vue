@@ -206,10 +206,20 @@ export default {
             ? JSON.parse(this.localFormData.attachmentUrls)
             : this.localFormData.attachmentUrls
             
-          this.fileList = urls.map((url, index) => ({
-            name: `附件${index + 1}`,
-            url: url
-          }))
+          // 保留原有文件名，不覆盖
+          if (!this.fileList || this.fileList.length === 0) {
+            this.fileList = urls.map((url, index) => ({
+              name: `附件${index + 1}`,
+              url: url
+            }))
+          } else {
+            // 更新现有 fileList 中的 url，但保留 name
+            this.fileList.forEach((file, index) => {
+              if (index < urls.length) {
+                file.url = urls[index]
+              }
+            })
+          }
         } catch (e) {
           this.fileList = []
         }
@@ -505,8 +515,17 @@ export default {
 /* 上傳區域 - 與問題設置協調的風格 */
 .upload-section {
   width: 100%;
-  display: flex;
-  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  border-radius: 16px;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.upload-section:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.15);
 }
 
 .upload-demo {
