@@ -11,18 +11,10 @@ import java.util.List;
  */
 public interface NotificationQuestionMapper extends BaseMapper<NotificationQuestion> {
     /**
-     * 根据通知ID查询问题列表
+     * 根据通知 ID 查询问题列表
      *
-     * @param notificationId 通知ID
+     * @param notificationId 通知 ID
      * @return 问题集合
      */
     List<NotificationQuestion> selectByNotificationId(Long notificationId);
-
-    /**
-     * 根据父问题ID查询子问题列表
-     *
-     * @param parentQuestionId 父问题ID
-     * @return 子问题集合
-     */
-    List<NotificationQuestion> selectByParentQuestionId(Long parentQuestionId);
 }

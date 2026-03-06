@@ -32,11 +32,16 @@ public class NotificationQuestion implements Serializable {
     @TableField("question_title")
     private String questionTitle;
 
-    /** 问题类型（1单选 2多选 3填空 4附件上传 5分支） */
+    /** 问题类型（1 单选 2 多选 3 填空 4 附件上传 5 分支） */
     @TableField("question_type")
     private String questionType;
-
-    /** 选项列表(JSON格式，适用于单选、多选） */
+    
+    /** 选项列表 (JSON 格式，适用于单选、多选、分支)
+     * 分支题型选项格式：[
+     *   {"text": "选项文字", "action": "continue/end", "nextQuestionId": 下一题 ID},
+     *   {"text": "选项文字", "action": "continue/end"}
+     * ]
+     */
     @TableField("options")
     private String options;
 

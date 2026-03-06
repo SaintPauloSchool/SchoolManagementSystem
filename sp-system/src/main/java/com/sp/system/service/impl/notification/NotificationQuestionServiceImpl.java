@@ -20,41 +20,13 @@ public class NotificationQuestionServiceImpl extends ServiceImpl<NotificationQue
     private NotificationQuestionMapper notificationQuestionMapper;
 
     /**
-     * 根据通知ID查询问题列表
+     * 根据通知 ID 查询问题列表
      *
-     * @param notificationId 通知ID
+     * @param notificationId 通知 ID
      * @return 问题集合
      */
     @Override
     public List<NotificationQuestion> selectByNotificationId(Long notificationId) {
         return notificationQuestionMapper.selectByNotificationId(notificationId);
-    }
-
-    /**
-     * 根据父问题ID查询子问题列表
-     *
-     * @param parentQuestionId 父问题ID
-     * @return 子问题集合
-     */
-    @Override
-    public List<NotificationQuestion> selectByParentQuestionId(Long parentQuestionId) {
-        return notificationQuestionMapper.selectByParentQuestionId(parentQuestionId);
-    }
-
-    /**
-     * 根据通知ID删除问题
-     *
-     * @param notificationId 通知ID
-     * @return 结果
-     */
-    @Override
-    public int deleteByNotificationId(Long notificationId) {
-        List<NotificationQuestion> questions = selectByNotificationId(notificationId);
-        if (questions != null && !questions.isEmpty()) {
-            return notificationQuestionMapper.deleteBatchIds(
-                questions.stream().map(NotificationQuestion::getQuestionId).collect(java.util.stream.Collectors.toList())
-            );
-        }
-        return 0;
     }
 }

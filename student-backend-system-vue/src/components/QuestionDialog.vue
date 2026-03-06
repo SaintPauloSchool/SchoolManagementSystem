@@ -123,6 +123,257 @@
           </div>
         </transition>
 
+        <!-- 分支题型选项设置 -->
+        <transition name="slide-fade">
+          <div v-if="form.type === '5'">
+            <el-form-item label="分支选项" required>
+              <div class="branch-options-container">
+                <div class="branch-options-header">
+                  <span class="branch-options-label">
+                    <el-icon class="label-icon"><Share /></el-icon>
+                    請設定兩個分支選項
+                  </span>
+                  <el-tag type="info" size="small" effect="light">
+                    一個選項繼續，另一個選項結束
+                  </el-tag>
+                </div>
+                
+                <div class="branch-option-item">
+                  <div class="branch-option-content">
+                    <span class="branch-option-index">選項 1</span>
+                    <el-input
+                      v-model="branchForm.option1Text"
+                      placeholder="请输入选项文字"
+                      class="branch-option-input"
+                      clearable
+                      size="default"
+                    />
+                  </div>
+                  <div class="branch-action-row">
+                    <transition name="slide-down">
+                      <div v-if="branchForm.option1Action === 'continue'" class="next-question-full-wrapper">
+                        <div class="next-question-label">
+                          <el-icon class="label-icon"><ArrowRight /></el-icon>
+                          <span>下一題：</span>
+                        </div>
+                        <el-input
+                          v-model="branchForm.option1NextTitle"
+                          placeholder="请输入下一题的題目內容"
+                          clearable
+                          size="large"
+                          class="next-title-input-large"
+                          @keyup.enter="handleCreateNext(1)"
+                        >
+                          <template #prefix>
+                            <el-icon><ChatDotRound /></el-icon>
+                          </template>
+                          <template #append>
+                            <el-button 
+                              type="primary" 
+                              size="default"
+                              @click="handleCreateNext(1)"
+                              class="create-next-btn-large"
+                            >
+                              <el-icon><Plus /></el-icon>
+                              繼續編輯此題
+                            </el-button>
+                          </template>
+                        </el-input>
+                      </div>
+                    </transition>
+                    <el-radio-group v-model="branchForm.option1Action" size="default">
+                      <el-radio value="end">結束</el-radio>
+                      <el-radio value="continue">繼續下一題</el-radio>
+                    </el-radio-group>
+                  </div>
+                </div>
+
+                <el-divider />
+
+                <div class="branch-option-item">
+                  <div class="branch-option-content">
+                    <span class="branch-option-index">選項 2</span>
+                    <el-input
+                      v-model="branchForm.option2Text"
+                      placeholder="请输入选项文字"
+                      class="branch-option-input"
+                      clearable
+                      size="default"
+                    />
+                  </div>
+                  <div class="branch-action-row">
+                    <transition name="slide-down">
+                      <div v-if="branchForm.option2Action === 'continue'" class="next-question-full-wrapper">
+                        <div class="next-question-label">
+                          <el-icon class="label-icon"><ArrowRight /></el-icon>
+                          <span>下一題：</span>
+                        </div>
+                        <el-input
+                          v-model="branchForm.option2NextTitle"
+                          placeholder="请输入下一题的題目內容"
+                          clearable
+                          size="large"
+                          class="next-title-input-large"
+                          @keyup.enter="handleCreateNext(2)"
+                        >
+                          <template #prefix>
+                            <el-icon><ChatDotRound /></el-icon>
+                          </template>
+                          <template #append>
+                            <el-button 
+                              type="primary" 
+                              size="default"
+                              @click="handleCreateNext(2)"
+                              class="create-next-btn-large"
+                            >
+                              <el-icon><Plus /></el-icon>
+                              繼續編輯此題
+                            </el-button>
+                          </template>
+                        </el-input>
+                      </div>
+                    </transition>
+                    <el-radio-group v-model="branchForm.option2Action" size="default">
+                      <el-radio value="end">結束</el-radio>
+                      <el-radio value="continue">繼續下一題</el-radio>
+                    </el-radio-group>
+                  </div>
+                </div>
+
+                <el-alert
+                  :title="validationMessage"
+                  :type="isValidBranch ? 'success' : 'warning'"
+                  :closable="false"
+                  show-icon
+                  class="branch-validation-alert"
+                />
+                
+                <!-- 展开的题目链 -->
+                <transition-group name="slide-fade">
+                  <div v-for="(question, qIndex) in questionChain" :key="qIndex" class="expanded-next-question">
+                    <el-divider>
+                      <el-tag type="success" size="small" effect="plain">
+                        第 {{ qIndex + 2 }} 題（上一題的選項 {{ question.parentOptionIndex }} 繼續）
+                      </el-tag>
+                    </el-divider>
+                    
+                    <div class="next-question-content">
+                      <div class="next-question-title">
+                        <el-icon class="title-icon"><ChatDotRound /></el-icon>
+                        <span>題目：{{ question.title }}</span>
+                      </div>
+                      
+                      <div class="next-question-options-setting">
+                        <el-alert
+                          :title="`設置第 ${qIndex + 2} 題的選項`"
+                          type="info"
+                          :closable="false"
+                          show-icon
+                          class="mb-3"
+                        />
+                        
+                        <!-- 选项 1 -->
+                        <div class="next-option-item">
+                          <el-input
+                            v-model="question.options[0]"
+                            placeholder="選項 1 文字"
+                            size="default"
+                            class="option-input"
+                            clearable
+                          />
+                          <div class="option-action-row">
+                            <transition name="fade">
+                              <div v-if="question.actions[0] === 'continue'" class="next-next-input-full">
+                                <div class="next-question-label">
+                                  <el-icon class="label-icon"><ArrowRight /></el-icon>
+                                  <span>下一題：</span>
+                                </div>
+                                <el-input
+                                  v-model="question.nextTitle1"
+                                  placeholder="请输入下一題的題目內容"
+                                  size="large"
+                                  clearable
+                                  class="next-title-input-large"
+                                >
+                                  <template #prefix>
+                                    <el-icon><ChatDotRound /></el-icon>
+                                  </template>
+                                  <template #append>
+                                    <el-button 
+                                      type="primary" 
+                                      size="default"
+                                      @click="handleCreateNextFromChain(qIndex, 1)"
+                                      class="create-next-btn-large"
+                                    >
+                                      <el-icon><Plus /></el-icon>
+                                      繼續編輯此題
+                                    </el-button>
+                                  </template>
+                                </el-input>
+                              </div>
+                            </transition>
+                            <el-radio-group v-model="question.actions[0]" size="default" @change="handleNextActionChange(qIndex, 0)">
+                              <el-radio value="end">結束</el-radio>
+                              <el-radio value="continue">繼續下一題</el-radio>
+                            </el-radio-group>
+                          </div>
+                        </div>
+                        
+                        <!-- 选项 2 -->
+                        <div class="next-option-item">
+                          <el-input
+                            v-model="question.options[1]"
+                            placeholder="選項 2 文字"
+                            size="default"
+                            class="option-input"
+                            clearable
+                          />
+                          <div class="option-action-row">
+                            <transition name="fade">
+                              <div v-if="question.actions[1] === 'continue'" class="next-next-input-full">
+                                <div class="next-question-label">
+                                  <el-icon class="label-icon"><ArrowRight /></el-icon>
+                                  <span>下一題：</span>
+                                </div>
+                                <el-input
+                                  v-model="question.nextTitle2"
+                                  placeholder="请输入下一題的題目內容"
+                                  size="large"
+                                  clearable
+                                  class="next-title-input-large"
+                                >
+                                  <template #prefix>
+                                    <el-icon><ChatDotRound /></el-icon>
+                                  </template>
+                                  <template #append>
+                                    <el-button 
+                                      type="primary" 
+                                      size="default"
+                                      @click="handleCreateNextFromChain(qIndex, 2)"
+                                      class="create-next-btn-large"
+                                    >
+                                      <el-icon><Plus /></el-icon>
+                                      繼續編輯此題
+                                    </el-button>
+                                  </template>
+                                </el-input>
+                              </div>
+                            </transition>
+                            <el-radio-group v-model="question.actions[1]" size="default" @change="handleNextActionChange(qIndex, 1)">
+                              <el-radio value="end">結束</el-radio>
+                              <el-radio value="continue">繼續下一題</el-radio>
+                            </el-radio-group>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </transition-group>
+              </div>
+            </el-form-item>
+          </div>
+        </transition>
+
         <!-- 必答设置 -->
         <el-form-item label="必填" prop="required">
           <div class="required-setting">
@@ -160,7 +411,7 @@
 </template>
 
 <script>
-import { Plus, Delete, ChatDotRound, Check, CircleCheck, Edit, Paperclip, Share, List, Bell, Close } from '@element-plus/icons-vue'
+import { Plus, Delete, ChatDotRound, Check, CircleCheck, Edit, Paperclip, Share, List, Bell, Close, ArrowRight } from '@element-plus/icons-vue'
 
 export default {
   name: 'QuestionDialog',
@@ -175,7 +426,8 @@ export default {
     Share,
     List,
     Bell,
-    Close
+    Close,
+    ArrowRight
   },
   props: {
     visible: {
@@ -200,6 +452,17 @@ export default {
         options: ['', ''],
         required: false
       },
+      branchForm: {
+        option1Text: '',
+        option1Action: 'continue',
+        option1NextTitle: '',
+        option2Text: '',
+        option2Action: 'end',
+        option2NextTitle: ''
+      },
+      expandedNextQuestions: [], // 存储已展开的下一题索引
+      nextQuestionData: {}, // 存储下一题的数据 {1: {options: ['', ''], actions: ['continue', 'end'], nextTitle1: '', nextTitle2: ''}, 2: {...}}
+      questionChain: [], // 存储题目链，用于递归展示 [{level: 0, title: '', options: [], actions: []}, {level: 1, ...}]
       rules: {
         type: [
           { required: true, message: '请选择问题类型', trigger: 'change' }
@@ -222,6 +485,24 @@ export default {
     },
     dialogTitle() {
       return this.question ? '編輯問題' : '添加問題'
+    },
+    validationMessage() {
+      if (this.form.type !== '5') {
+        return ''
+      }
+      
+      const valid = this.validateBranchOptions()
+      if (valid) {
+        return '分支選項設置正確：一個繼續，一個結束'
+      } else {
+        return '請注意：兩個選項中，必須一個是「繼續下一題」，另一個是「結束」'
+      }
+    },
+    isValidBranch() {
+      if (this.form.type !== '5') {
+        return true
+      }
+      return this.validateBranchOptions()
     }
   },
   watch: {
@@ -256,12 +537,36 @@ export default {
           options: this.question.options ? [...this.question.options] : ['', ''],
           required: this.question.required || false
         }
+        
+        // 如果是分支题型，解析选项
+        if (this.question.type === '5' && this.question.branchOptions) {
+          const branchOptions = this.question.branchOptions
+          if (branchOptions.length >= 2) {
+            this.branchForm.option1Text = branchOptions[0].text || ''
+            this.branchForm.option1Action = branchOptions[0].action || 'continue'
+            this.branchForm.option1NextTitle = branchOptions[0].nextTitle || ''
+            this.branchForm.option2Text = branchOptions[1].text || ''
+            this.branchForm.option2Action = branchOptions[1].action || 'end'
+            this.branchForm.option2NextTitle = branchOptions[1].nextTitle || ''
+          }
+        }
       } else {
         this.form = {
           type: this.questionType || '',
           title: '',
           options: ['', ''],
           required: false
+        }
+        // 初始化分支选项的默认值
+        if (this.questionType === '5') {
+          this.branchForm = {
+            option1Text: '',
+            option1Action: 'continue',
+            option1NextTitle: '',
+            option2Text: '',
+            option2Action: 'end',
+            option2NextTitle: ''
+          }
         }
       }
       // 确保选项数组正确初始化
@@ -306,6 +611,37 @@ export default {
               return
             }
           }
+          
+          // 分支题型特殊处理
+          if (this.form.type === '5') {
+            if (!this.validateBranchOptions()) {
+              this.$emit('validate-error', '分支题的两个选项中，必须一个是「继续下一题」，另一个是「结束」')
+              return
+            }
+            
+            // 构建分支选项 JSON
+            const branchOptions = [
+              {
+                text: this.branchForm.option1Text,
+                action: this.branchForm.option1Action,
+                nextTitle: this.branchForm.option1Action === 'continue' ? this.branchForm.option1NextTitle : null
+              },
+              {
+                text: this.branchForm.option2Text,
+                action: this.branchForm.option2Action,
+                nextTitle: this.branchForm.option2Action === 'continue' ? this.branchForm.option2NextTitle : null
+              }
+            ]
+            
+            // 验证 continue 选项是否有填写下一题题目
+            const continueOption = branchOptions.find(opt => opt.action === 'continue')
+            if (continueOption && !continueOption.nextTitle?.trim()) {
+              this.$emit('validate-error', '选择「继续下一题」的选项必须填写下一题的题目内容')
+              return
+            }
+            
+            options = branchOptions
+          }
     
           const questionData = {
             type: this.form.type,
@@ -319,6 +655,134 @@ export default {
           this.$emit('update:visible', false)
         }
       })
+    },
+    
+    validateBranchOptions() {
+      if (this.form.type !== '5') {
+        return true
+      }
+      
+      // 验证两个选项不能相同
+      if (this.branchForm.option1Action === this.branchForm.option2Action) {
+        return false
+      }
+      
+      // 验证文字不能为空
+      if (!this.branchForm.option1Text.trim() || !this.branchForm.option2Text.trim()) {
+        return false
+      }
+      
+      // 验证 continue 类型的选项必须填写下一题题目
+      if (this.branchForm.option1Action === 'continue' && !this.branchForm.option1NextTitle?.trim()) {
+        return false
+      }
+      if (this.branchForm.option2Action === 'continue' && !this.branchForm.option2NextTitle?.trim()) {
+        return false
+      }
+      
+      return true
+    },
+    
+    handleBranchActionChange() {
+      // 当动作类型改变时，清空对应的下一题题目
+      if (this.branchForm.option1Action === 'end') {
+        this.branchForm.option1NextTitle = null
+      }
+      if (this.branchForm.option2Action === 'end') {
+        this.branchForm.option2NextTitle = null
+      }
+    },
+    
+    getNextQuestionData(index) {
+      // 确保数据存在（Vue 3 不需要 $set，直接赋值即可）
+      if (!this.nextQuestionData[index]) {
+        this.nextQuestionData[index] = {
+          options: ['', ''],
+          actions: ['continue', 'end'],
+          nextTitle1: '',
+          nextTitle2: ''
+        }
+      }
+      return this.nextQuestionData[index]
+    },
+    
+    handleNextActionChange(questionIndex, optionIndex) {
+      // 当下一题的选项动作改变时，清空对应的下一题题目
+      const data = this.questionChain[questionIndex]
+      if (optionIndex === 0) {
+        if (data.actions[0] === 'end') {
+          data.nextTitle1 = ''
+        }
+      } else {
+        if (data.actions[1] === 'end') {
+          data.nextTitle2 = ''
+        }
+      }
+    },
+    
+    handleCreateNextFromChain(questionIndex, optionIndex) {
+      console.log('=== 从题目链点击继续编辑 ===')
+      console.log('题目索引:', questionIndex)
+      console.log('选项索引:', optionIndex)
+      
+      const question = this.questionChain[questionIndex]
+      const nextTitle = optionIndex === 1 ? question.nextTitle1 : question.nextTitle2
+      
+      if (!nextTitle?.trim()) {
+        this.$message.warning('请输入下一题的题目内容')
+        return
+      }
+      
+      // 添加到题目链的末尾
+      this.questionChain.push({
+        level: this.questionChain.length,
+        title: nextTitle,
+        parentOptionIndex: optionIndex,
+        options: ['', ''],
+        actions: ['continue', 'end'],
+        nextTitle1: '',
+        nextTitle2: ''
+      })
+      
+      console.log('已添加到题目链，当前层级:', this.questionChain.length)
+      this.$message.success(`已展開第 ${this.questionChain.length + 1} 題的設置`)
+    },
+    
+    handleCreateNext(optionIndex) {
+      console.log('=== 点击继续编辑此题 ===')
+      console.log('选项索引:', optionIndex)
+          
+      // 获取当前层级的题目数据
+      const currentLevel = this.questionChain.length
+      const parentData = currentLevel === 0 ? this.branchForm : this.nextQuestionData[currentLevel]
+      const nextTitle = optionIndex === 1 
+        ? (currentLevel === 0 ? this.branchForm.option1NextTitle : this.nextQuestionData[currentLevel].nextTitle1)
+        : (currentLevel === 0 ? this.branchForm.option2NextTitle : this.nextQuestionData[currentLevel].nextTitle2)
+          
+      if (!nextTitle?.trim()) {
+        this.$message.warning('请输入下一题的题目内容')
+        return
+      }
+          
+      // 验证当前题目是否填写完整
+      if (currentLevel === 0 && !this.validateBranchOptions()) {
+        this.$message.warning('请先完善当前题目的选项设置')
+        return
+      }
+          
+      // 添加到题目链
+      this.questionChain.push({
+        level: currentLevel + 1,
+        title: nextTitle,
+        parentOptionIndex: optionIndex,
+        options: ['', ''],
+        actions: ['continue', 'end'],
+        nextTitle1: '',
+        nextTitle2: ''
+      })
+          
+      console.log('已添加到题目链，当前层级:', this.questionChain.length)
+      this.$message.success(`已展開第 ${currentLevel + 2} 題的設置`)
     },
   }
 }
@@ -946,5 +1410,421 @@ export default {
     height: 40px;
     font-size: 14px;
   }
+}
+
+/* 分支選項樣式 */
+.branch-options-container {
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 16px;
+  border: 2px solid #bae6fd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.branch-options-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid #bae6fd;
+}
+
+.branch-options-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #0369a1;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+}
+
+.branch-option-item {
+  margin: 16px 0;
+  padding: 16px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  border: 2px solid #e0f2fe;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.branch-option-item:hover {
+  border-color: #7dd3fc;
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.15);
+  transform: translateY(-2px);
+}
+
+.branch-option-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.branch-option-index {
+  font-weight: 700;
+  color: #0284c7;
+  font-size: 15px;
+  min-width: 70px;
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.15);
+}
+
+.branch-option-input {
+  flex: 1;
+}
+
+.branch-option-input :deep(.el-input__wrapper) {
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  box-shadow: none;
+}
+
+.branch-option-input :deep(.el-input__wrapper:hover) {
+  border-color: #7dd3fc;
+}
+
+.branch-option-input :deep(.el-input__wrapper.is-focus) {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+.branch-action-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e0f2fe;
+}
+
+.branch-action-row :deep(.el-radio-group) {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.branch-action-row :deep(.el-radio) {
+  margin: 0;
+  font-weight: 500;
+}
+
+.next-question-full-wrapper {
+  width: 100%;
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.next-question-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.next-question-label .label-icon {
+  color: #0ea5e9;
+  font-size: 16px;
+  animation: bounceRight 2s ease-in-out infinite;
+}
+
+@keyframes bounceRight {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+}
+
+.next-question-label span {
+  font-weight: 600;
+  color: #0369a1;
+  font-size: 14px;
+}
+
+.next-title-input-large {
+  width: 100%;
+}
+
+.next-title-input-large :deep(.el-input__wrapper) {
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.next-title-input-large :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.2);
+  border-color: #7dd3fc;
+}
+
+.next-title-input-large :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+.create-next-btn-large {
+  height: 40px;
+  padding: 0 20px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #ffffff !important;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.create-next-btn-large:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.55);
+  transform: translateX(-2px);
+}
+
+.create-next-btn-large:active:not(:disabled) {
+  transform: translateX(0) scale(0.96);
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+}
+
+.create-next-btn-large .el-icon {
+  margin-right: 4px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-5px);
+}
+
+.branch-validation-alert {
+  margin-top: 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #fcd34d;
+}
+
+.branch-validation-alert :deep(.el-alert__content) {
+  font-weight: 600;
+  color: #92400e;
+}
+
+.branch-validation-alert :deep(.el-alert__icon) {
+  font-size: 18px;
+}
+
+.expanded-next-question {
+  margin-top: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-radius: 12px;
+  border: 2px solid #86efac;
+  animation: slideDown 0.3s ease;
+}
+
+.next-question-content {
+  margin-top: 16px;
+}
+
+.next-question-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 8px;
+  border-left: 4px solid #10b981;
+}
+
+.next-question-title .title-icon {
+  color: #10b981;
+  font-size: 18px;
+}
+
+.next-question-title span {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 15px;
+}
+
+.next-question-options-setting {
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.placeholder-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.option-input {
+  width: 100%;
+}
+
+.mb-3 {
+  margin-bottom: 12px;
+}
+
+.next-option-item {
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: 10px;
+  border: 2px solid #e0f2fe;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.next-option-item:hover {
+  border-color: #7dd3fc;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1);
+}
+
+.option-action-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e0f2fe;
+}
+
+.option-action-row :deep(.el-radio-group) {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.option-action-row :deep(.el-radio) {
+  margin: 0;
+  font-weight: 500;
+}
+
+.next-next-input-full {
+  width: 100%;
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.next-question-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.next-question-label .label-icon {
+  color: #0ea5e9;
+  font-size: 16px;
+  animation: bounceRight 2s ease-in-out infinite;
+}
+
+@keyframes bounceRight {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+}
+
+.next-question-label span {
+  font-weight: 600;
+  color: #0369a1;
+  font-size: 14px;
+}
+
+.next-title-input-large {
+  width: 100%;
+}
+
+.next-title-input-large :deep(.el-input__wrapper) {
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.next-title-input-large :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.2);
+  border-color: #7dd3fc;
+}
+
+.next-title-input-large :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+.create-next-btn-large {
+  height: 40px;
+  padding: 0 20px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #ffffff !important;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.create-next-btn-large:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.55);
+  transform: translateX(-2px);
+}
+
+.create-next-btn-large:active:not(:disabled) {
+  transform: translateX(0) scale(0.96);
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+}
+
+.create-next-btn-large .el-icon {
+  margin-right: 4px;
+  font-size: 16px;
+  font-weight: bold;
 }
 </style>

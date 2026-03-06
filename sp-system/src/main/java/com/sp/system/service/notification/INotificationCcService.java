@@ -11,18 +11,10 @@ import java.util.List;
  */
 public interface INotificationCcService extends IService<NotificationCc> {
     /**
-     * 根据通知ID查询抄送对象列表
+     * 根据通知 ID 查询抄送对象列表
      *
-     * @param notificationId 通知ID
+     * @param notificationId 通知 ID
      * @return 抄送对象集合
      */
     List<NotificationCc> selectByNotificationId(Long notificationId);
-
-    /**
-     * 根据通知ID删除抄送对象
-     *
-     * @param notificationId 通知ID
-     * @return 结果
-     */
-    int deleteByNotificationId(Long notificationId);
 }

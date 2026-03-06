@@ -20,30 +20,13 @@ public class NotificationReceiverServiceImpl extends ServiceImpl<NotificationRec
     private NotificationReceiverMapper notificationReceiverMapper;
 
     /**
-     * 根据通知ID查询接收对象列表
+     * 根据通知 ID 查询接收对象列表
      *
-     * @param notificationId 通知ID
+     * @param notificationId 通知 ID
      * @return 接收对象集合
      */
     @Override
     public List<NotificationReceiver> selectByNotificationId(Long notificationId) {
         return notificationReceiverMapper.selectByNotificationId(notificationId);
-    }
-
-    /**
-     * 根据通知ID删除接收对象
-     *
-     * @param notificationId 通知ID
-     * @return 结果
-     */
-    @Override
-    public int deleteByNotificationId(Long notificationId) {
-        List<NotificationReceiver> receivers = selectByNotificationId(notificationId);
-        if (receivers != null && !receivers.isEmpty()) {
-            return notificationReceiverMapper.deleteBatchIds(
-                receivers.stream().map(NotificationReceiver::getReceiverId).collect(java.util.stream.Collectors.toList())
-            );
-        }
-        return 0;
     }
 }

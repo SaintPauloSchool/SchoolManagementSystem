@@ -33,8 +33,7 @@ create table notification_receiver (
                                        receive_ids           text            not null                   comment '接收对象ID列表(JSON格式)',
                                        receive_names         text            not null                   comment '接收对象名称列表(JSON格式)',
                                        create_time           datetime                                   comment '创建时间',
-                                       primary key (receiver_id),
-                                       foreign key (notification_id) references notification(notification_id) on delete cascade
+                                       primary key (receiver_id)
 ) engine=innodb auto_increment=1 comment = '通知接收对象表';
 
 -- ----------------------------
@@ -48,8 +47,7 @@ create table notification_cc (
                                  cc_ids                text            not null                   comment '抄送对象ID列表(JSON格式)',
                                  cc_names              text            not null                   comment '抄送对象名称列表(JSON格式)',
                                  create_time           datetime                                   comment '创建时间',
-                                 primary key (cc_id),
-                                 foreign key (notification_id) references notification(notification_id) on delete cascade
+                                 primary key (cc_id)
 ) engine=innodb auto_increment=1 comment = '通知抄送对象表';
 
 -- ----------------------------
@@ -57,18 +55,19 @@ create table notification_cc (
 -- ----------------------------
 drop table if exists notification_question;
 create table notification_question (
-                                       question_id           bigint(20)      not null auto_increment    comment '问题ID',
-                                       notification_id       bigint(20)      not null                   comment '通知ID',
-                                       parent_question_id    bigint(20)      default null               comment '父问题ID（用于分支问题）',
+                                       question_id           bigint(20)      not null auto_increment    comment '问题 ID',
+                                       notification_id       bigint(20)      not null                   comment '通知 ID',
+                                       parent_question_id    bigint(20)      default null               comment '父问题 ID（用于分支问题，记录上一题的选项继续后指向此题）',
                                        question_title        varchar(500)    not null                   comment '问题标题',
-                                       question_type         char(1)         not null                   comment '问题类型（1单选 2多选 3填空 4附件上传 5分支）',
-                                       options               text            default null               comment '选项列表(JSON格式，适用于单选、多选)',
-                                       is_required           char(1)         default '0'                comment '是否必答（0否 1是）',
+                                       question_type         char(1)         not null                   comment '问题类型（1 单选 2 多选 3 填空 4 附件上传 5 分支）',
+                                       options               text            default null               comment '选项列表 (JSON 格式)
+                                                                                - 单选/多选：["选项 1","选项 2",...]
+                                                                                - 分支题型：[{"text":"选项文字","action":"continue/end","nextTitle":"下一题题目内容"},...]
+                                                                                注意：分支题型的 nextTitle 在保存时会被后端转换为实际的 nextQuestionId',
+                                       is_required           char(1)         default '0'                comment '是否必答（0 否 1 是）',
                                        sort_order            int(4)          default 0                  comment '排序',
                                        create_time           datetime                                   comment '创建时间',
-                                       primary key (question_id),
-                                       foreign key (notification_id) references notification(notification_id) on delete cascade,
-                                       foreign key (parent_question_id) references notification_question(question_id) on delete cascade
+                                       primary key (question_id)
 ) engine=innodb auto_increment=1 comment = '通知问题表';
 
 -- ----------------------------
@@ -86,8 +85,7 @@ create table user_notification_read (
                                         reply_time            datetime        default null               comment '回复时间',
                                         create_time           datetime                                   comment '创建时间',
                                         primary key (read_id),
-                                        unique key uk_notification_user (notification_id, user_id),
-                                        foreign key (notification_id) references notification(notification_id) on delete cascade
+                                        unique key uk_notification_user (notification_id, user_id)
 ) engine=innodb auto_increment=1 comment = '用户通知阅读状态表';
 
 -- ----------------------------
@@ -103,9 +101,7 @@ create table notification_answer (
                                      answer_content        text            default null               comment '答案内容',
                                      attachment_urls       text            default null               comment '附件URL列表(JSON格式)',
                                      create_time           datetime                                   comment '创建时间',
-                                     primary key (answer_id),
-                                     foreign key (notification_id) references notification(notification_id) on delete cascade,
-                                     foreign key (question_id) references notification_question(question_id) on delete cascade
+                                     primary key (answer_id)
 ) engine=innodb auto_increment=1 comment = '通知回答表';
 
 -- ----------------------------
@@ -123,6 +119,9 @@ insert into notification_cc values(1, 1, '1', '[201,202]', '["李主任","王副
 insert into notification_cc values(2, 1, '2', '[301]', '["校长办公室"]', NOW());
 
 -- 示例问题数据
-insert into notification_question values(1, 1, null, '是否参加运动会？', '5', null, '1', 1, NOW());
-insert into notification_question values(2, 1, 1, '如果参加，请选择参赛项目', '2', '["跑步","跳远","投掷"]', '0', 2, NOW());
-insert into notification_question values(3, 1, 1, '请留下联系方式', '3', null, '1', 3, NOW());
+-- 分支题型：第一个问题
+insert into notification_question values(1, 1, null, '您是否支持举办运动会？', '5', '[{"text":"支持，我会积极参加","action":"continue","nextTitle":"请选择您想参加的项目"},{"text":"不支持","action":"end"}]', '1', 1, NOW());
+-- 如果选择支持，继续问第二个问题（由上一题的 nextTitle 生成）
+insert into notification_question values(2, 1, 1, '请选择您想参加的项目（可多选）', '2', '["跑步","跳远","投掷","其他"]', '0', 2, NOW());
+-- 第三个问题：填空题
+insert into notification_question values(3, 1, null, '请留下您的联系方式', '3', null, '1', 3, NOW());

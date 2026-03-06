@@ -28,10 +28,4 @@
         order by sort_order asc, create_time asc
     </select>
 
-    <select id="selectByParentQuestionId" parameterType="Long" resultMap="NotificationQuestionResult">
-        <include refid="selectNotificationQuestionVo"/>
-        where parent_question_id = #{parentQuestionId}
-        order by sort_order asc, create_time asc
-    </select>
-
 </mapper>

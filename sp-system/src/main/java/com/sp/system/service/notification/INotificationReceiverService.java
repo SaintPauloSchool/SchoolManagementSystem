@@ -11,18 +11,10 @@ import java.util.List;
  */
 public interface INotificationReceiverService extends IService<NotificationReceiver> {
     /**
-     * 根据通知ID查询接收对象列表
+     * 根据通知 ID 查询接收对象列表
      *
-     * @param notificationId 通知ID
+     * @param notificationId 通知 ID
      * @return 接收对象集合
      */
     List<NotificationReceiver> selectByNotificationId(Long notificationId);
-
-    /**
-     * 根据通知ID删除接收对象
-     *
-     * @param notificationId 通知ID
-     * @return 结果
-     */
-    int deleteByNotificationId(Long notificationId);
 }
