@@ -370,6 +370,45 @@
           </div>
         </transition>
 
+        <!-- 附件题型上传设置 -->
+        <transition name="slide-fade">
+          <div v-if="form.type === '4'">
+            <el-form-item label="附件上传" required>
+              <div class="attachment-upload-container">
+                <div class="attachment-upload-header">
+                  <span class="attachment-upload-label">
+                    <el-icon class="label-icon"><Paperclip /></el-icon>
+                    請上傳附件文件
+                  </span>
+                  <el-tag type="info" size="small" effect="light">
+                    支持多文件上傳，最多 5 個
+                  </el-tag>
+                </div>
+                
+                <div class="upload-section">
+                  <el-upload
+                    class="question-upload-demo"
+                    :action="uploadUrl"
+                    :headers="uploadHeaders"
+                    :file-list="attachmentFileList"
+                    :on-success="handleAttachmentUploadSuccess"
+                    :on-error="handleAttachmentUploadError"
+                    :on-remove="handleAttachmentRemove"
+                    :before-upload="beforeAttachmentUpload"
+                    :limit="5"
+                    multiple
+                  >
+                    <el-button class="custom-upload-btn" size="large">
+                      <el-icon class="btn-icon"><Upload /></el-icon>
+                      <span class="btn-text">點擊上傳附件</span>
+                    </el-button>
+                  </el-upload>
+                </div>
+              </div>
+            </el-form-item>
+          </div>
+        </transition>
+
         <!-- 必答设置 -->
         <el-form-item label="必填" prop="required">
           <div class="required-setting">
@@ -407,7 +446,7 @@
 </template>
 
 <script>
-import { Plus, Delete, ChatDotRound, Check, CircleCheck, Edit, Paperclip, Share, List, Bell, Close, ArrowRight } from '@element-plus/icons-vue'
+import { Plus, Delete, ChatDotRound, Check, CircleCheck, Edit, Paperclip, Share, List, Bell, Close, ArrowRight, Upload, Document } from '@element-plus/icons-vue'
 
 export default {
   name: 'QuestionDialog',
@@ -423,7 +462,9 @@ export default {
     List,
     Bell,
     Close,
-    ArrowRight
+    ArrowRight,
+    Upload,
+    Document
   },
   props: {
     visible: {
@@ -459,6 +500,11 @@ export default {
       expandedNextQuestions: [], // 存储已展开的下一题索引
       nextQuestionData: {}, // 存储下一题的数据 {1: {options: ['', ''], actions: ['continue', 'end'], nextTitle1: '', nextTitle2: ''}, 2: {...}}
       questionChain: [], // 存储题目链，用于递归展示 [{level: 0, title: '', options: [], actions: []}, {level: 1, ...}]
+      attachmentFileList: [], // 附件文件列表
+      uploadUrl: '/api/common/upload', // 上传接口
+      uploadHeaders: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
       rules: {
         type: [
           { required: true, message: '请选择问题类型', trigger: 'change' }
@@ -534,6 +580,17 @@ export default {
           required: this.question.required || false
         }
         
+        // 如果是附件题型，初始化附件列表
+        if (this.question.type === '4' && this.question.attachments) {
+          this.attachmentFileList = this.question.attachments.map((att, index) => ({
+            name: att.name,
+            url: att.url,
+            status: 'success'
+          }))
+        } else {
+          this.attachmentFileList = []
+        }
+        
         // 如果是分支题型，解析选项
         if (this.question.type === '5' && this.question.branchOptions) {
           const branchOptions = this.question.branchOptions
@@ -553,6 +610,7 @@ export default {
           options: ['', ''],
           required: false
         }
+        this.attachmentFileList = []
         // 初始化分支选项的默认值
         if (this.questionType === '5') {
           this.branchForm = {
@@ -643,7 +701,11 @@ export default {
             type: this.form.type,
             title: this.form.title,
             options: options,
-            required: this.form.required
+            required: this.form.required,
+            attachments: this.form.type === '4' ? this.attachmentFileList.map(file => ({
+              name: file.name,
+              url: file.url || file.response?.data?.url
+            })) : null
           }
     
           this.$emit('save', questionData)
@@ -779,6 +841,35 @@ export default {
           
       console.log('已添加到题目链，当前层级:', this.questionChain.length)
       this.$message.success(`已展開第 ${currentLevel + 2} 題的設置`)
+    },
+     
+    // 附件上传相关方法
+    beforeAttachmentUpload(file) {
+      const maxSize = 50 * 1024 * 1024 // 50MB
+      if (file.size > maxSize) {
+        this.$message.error('文件大小不能超过 50MB')
+        return false
+      }
+      return true
+    },
+    
+    handleAttachmentUploadSuccess(response, file, fileList) {
+      if (response.code === 0 || response.code === 200) {
+        this.$message.success('上传成功')
+        // 過濾出已成功上傳的文件，避免顯示重複
+        this.attachmentFileList = fileList.filter(f => f.status === 'success' || f.response?.code === 0 || f.response?.code === 200)
+      } else {
+        this.$message.error(response.msg || '上传失败')
+      }
+    },
+    
+    handleAttachmentUploadError(error, file, fileList) {
+      console.error('上传错误:', error)
+      this.$message.error('上传失败：' + (error.message || '未知错误'))
+    },
+    
+    handleAttachmentRemove(file, fileList) {
+      this.attachmentFileList = fileList
     },
   }
 }
@@ -1922,5 +2013,175 @@ export default {
   50% {
     transform: scale(1.1);
   }
+}
+
+/* 附件上传区域样式 */
+.attachment-upload-container {
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-radius: 16px;
+  border: 2px solid #bfdbfe;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.attachment-upload-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 2px dashed #bfdbfe;
+}
+
+.attachment-upload-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #1e40af;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+}
+
+.attachment-upload-label .label-icon {
+  color: #3b82f6;
+  font-size: 18px;
+  animation: shake 2s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+}
+
+.upload-section {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.question-upload-demo {
+  width: 100%;
+}
+
+.question-upload-demo :deep(.el-upload) {
+  width: 100%;
+}
+
+.custom-upload-btn {
+  width: 100%;
+  height: 56px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  letter-spacing: 0.8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.custom-upload-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.custom-upload-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.custom-upload-btn:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.45);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.custom-upload-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.2);
+}
+
+.btn-icon {
+  font-size: 20px;
+  animation: uploadBounce 2s ease-in-out infinite;
+}
+
+@keyframes uploadBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.btn-text {
+  letter-spacing: 0.5px;
+}
+
+.attachment-list {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px dashed #bfdbfe;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+  border-radius: 10px;
+  border: 2px solid #dbeafe;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+}
+
+.attachment-item:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  transform: translateX(4px);
+}
+
+.attachment-icon {
+  font-size: 20px;
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.attachment-name {
+  flex: 1;
+  font-size: 14px;
+  color: #1e3a8a;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.attachment-status {
+  flex-shrink: 0;
+  font-weight: 600;
 }
 </style>
