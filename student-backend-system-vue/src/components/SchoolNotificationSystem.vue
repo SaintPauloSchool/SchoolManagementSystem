@@ -647,16 +647,7 @@ export default {
   background: rgba(0, 0, 0, 0.15);
 }
 
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 99;
-  backdrop-filter: blur(3px);
-}
+
 
 /* 響應式設計 */
 @media (max-width: 768px) {

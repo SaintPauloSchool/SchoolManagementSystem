@@ -156,29 +156,28 @@
                           <el-icon class="label-icon"><ArrowRight /></el-icon>
                           <span>下一題：</span>
                         </div>
-                        <el-input
-                          v-model="branchForm.option1NextTitle"
-                          placeholder="请输入下一题的題目內容"
-                          clearable
-                          size="large"
-                          class="next-title-input-large"
-                          @keyup.enter="handleCreateNext(1)"
-                        >
-                          <template #prefix>
-                            <el-icon><ChatDotRound /></el-icon>
-                          </template>
-                          <template #append>
-                            <el-button 
-                              type="primary" 
-                              size="default"
-                              @click="handleCreateNext(1)"
-                              class="create-next-btn-large"
-                            >
-                              <el-icon><Plus /></el-icon>
-                              繼續編輯此題
-                            </el-button>
-                          </template>
-                        </el-input>
+                        <div class="input-with-button">
+                          <el-input
+                            v-model="branchForm.option1NextTitle"
+                            placeholder="请输入下一题的題目內容"
+                            clearable
+                            size="large"
+                            class="next-title-input-large"
+                            @keyup.enter="handleCreateNext(1)"
+                          >
+                            <template #prefix>
+                              <el-icon><ChatDotRound /></el-icon>
+                            </template>
+                          </el-input>
+                          <el-button 
+                            type="primary" 
+                            @click="handleCreateNext(1)"
+                            class="create-next-btn-large"
+                          >
+                            <el-icon><Plus /></el-icon>
+                            繼續編輯此題
+                          </el-button>
+                        </div>
                       </div>
                     </transition>
                     <el-radio-group v-model="branchForm.option1Action" size="default">
@@ -208,29 +207,28 @@
                           <el-icon class="label-icon"><ArrowRight /></el-icon>
                           <span>下一題：</span>
                         </div>
-                        <el-input
-                          v-model="branchForm.option2NextTitle"
-                          placeholder="请输入下一题的題目內容"
-                          clearable
-                          size="large"
-                          class="next-title-input-large"
-                          @keyup.enter="handleCreateNext(2)"
-                        >
-                          <template #prefix>
-                            <el-icon><ChatDotRound /></el-icon>
-                          </template>
-                          <template #append>
-                            <el-button 
-                              type="primary" 
-                              size="default"
-                              @click="handleCreateNext(2)"
-                              class="create-next-btn-large"
-                            >
-                              <el-icon><Plus /></el-icon>
-                              繼續編輯此題
-                            </el-button>
-                          </template>
-                        </el-input>
+                        <div class="input-with-button">
+                          <el-input
+                            v-model="branchForm.option2NextTitle"
+                            placeholder="请输入下一题的題目內容"
+                            clearable
+                            size="large"
+                            class="next-title-input-large"
+                            @keyup.enter="handleCreateNext(2)"
+                          >
+                            <template #prefix>
+                              <el-icon><ChatDotRound /></el-icon>
+                            </template>
+                          </el-input>
+                          <el-button 
+                            type="primary" 
+                            @click="handleCreateNext(2)"
+                            class="create-next-btn-large"
+                          >
+                            <el-icon><Plus /></el-icon>
+                            繼續編輯此題
+                          </el-button>
+                        </div>
                       </div>
                     </transition>
                     <el-radio-group v-model="branchForm.option2Action" size="default">
@@ -288,28 +286,27 @@
                                   <el-icon class="label-icon"><ArrowRight /></el-icon>
                                   <span>下一題：</span>
                                 </div>
-                                <el-input
-                                  v-model="question.nextTitle1"
-                                  placeholder="请输入下一題的題目內容"
-                                  size="large"
-                                  clearable
-                                  class="next-title-input-large"
-                                >
-                                  <template #prefix>
-                                    <el-icon><ChatDotRound /></el-icon>
-                                  </template>
-                                  <template #append>
-                                    <el-button 
-                                      type="primary" 
-                                      size="default"
-                                      @click="handleCreateNextFromChain(qIndex, 1)"
-                                      class="create-next-btn-large"
-                                    >
-                                      <el-icon><Plus /></el-icon>
-                                      繼續編輯此題
-                                    </el-button>
-                                  </template>
-                                </el-input>
+                                <div class="input-with-button">
+                                  <el-input
+                                    v-model="question.nextTitle1"
+                                    placeholder="请输入下一題的題目內容"
+                                    size="large"
+                                    clearable
+                                    class="next-title-input-large"
+                                  >
+                                    <template #prefix>
+                                      <el-icon><ChatDotRound /></el-icon>
+                                    </template>
+                                  </el-input>
+                                  <el-button 
+                                    type="primary" 
+                                    @click="handleCreateNextFromChain(qIndex, 1)"
+                                    class="create-next-btn-large"
+                                  >
+                                    <el-icon><Plus /></el-icon>
+                                    繼續編輯此題
+                                  </el-button>
+                                </div>
                               </div>
                             </transition>
                             <el-radio-group v-model="question.actions[0]" size="default" @change="handleNextActionChange(qIndex, 0)">
@@ -335,28 +332,27 @@
                                   <el-icon class="label-icon"><ArrowRight /></el-icon>
                                   <span>下一題：</span>
                                 </div>
-                                <el-input
-                                  v-model="question.nextTitle2"
-                                  placeholder="请输入下一題的題目內容"
-                                  size="large"
-                                  clearable
-                                  class="next-title-input-large"
-                                >
-                                  <template #prefix>
-                                    <el-icon><ChatDotRound /></el-icon>
-                                  </template>
-                                  <template #append>
-                                    <el-button 
-                                      type="primary" 
-                                      size="default"
-                                      @click="handleCreateNextFromChain(qIndex, 2)"
-                                      class="create-next-btn-large"
-                                    >
-                                      <el-icon><Plus /></el-icon>
-                                      繼續編輯此題
-                                    </el-button>
-                                  </template>
-                                </el-input>
+                                <div class="input-with-button">
+                                  <el-input
+                                    v-model="question.nextTitle2"
+                                    placeholder="请输入下一題的題目內容"
+                                    size="large"
+                                    clearable
+                                    class="next-title-input-large"
+                                  >
+                                    <template #prefix>
+                                      <el-icon><ChatDotRound /></el-icon>
+                                    </template>
+                                  </el-input>
+                                  <el-button 
+                                    type="primary" 
+                                    @click="handleCreateNextFromChain(qIndex, 2)"
+                                    class="create-next-btn-large"
+                                  >
+                                    <el-icon><Plus /></el-icon>
+                                    繼續編輯此題
+                                  </el-button>
+                                </div>
                               </div>
                             </transition>
                             <el-radio-group v-model="question.actions[1]" size="default" @change="handleNextActionChange(qIndex, 1)">
@@ -1566,6 +1562,56 @@ export default {
   width: 100%;
 }
 
+/* 输入框和按钮的容器 */
+.input-with-button {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+}
+
+.input-with-button .next-title-input-large {
+  flex: 1;
+}
+
+.input-with-button .next-title-input-large :deep(.el-input__wrapper) {
+  border-radius: 8px 0 0 8px;
+  border-right: none;
+}
+
+.input-with-button .next-title-input-large :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.2);
+  border-color: #7dd3fc;
+}
+
+.input-with-button .next-title-input-large :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+.create-next-btn-large {
+  height: 42px;
+  padding: 0 24px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #ffffff !important;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none !important;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 去掉输入框 append 部分的边框 */
+.next-title-input-large :deep(.el-input-group__append) {
+  border: none !important;
+  background: transparent !important;
+  padding: 0;
+}
+
 .next-title-input-large :deep(.el-input__wrapper) {
   border-radius: 8px;
   background: #ffffff;
@@ -1573,45 +1619,46 @@ export default {
   transition: all 0.3s ease;
 }
 
-.next-title-input-large :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.2);
-  border-color: #7dd3fc;
+.create-next-btn-large::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%);
+  transition: left 0.5s ease;
 }
 
-.next-title-input-large :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
-}
-
-.create-next-btn-large {
-  height: 40px;
-  padding: 0 20px;
-  font-weight: 700;
-  font-size: 14px;
-  color: #ffffff !important;
-  white-space: nowrap;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: none;
-  border-radius: 0 8px 8px 0;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
+.create-next-btn-large:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .create-next-btn-large:hover:not(:disabled) {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.55);
-  transform: translateX(-2px);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 6px 25px rgba(59, 130, 246, 0.5), 0 0 0 3px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
 }
 
 .create-next-btn-large:active:not(:disabled) {
-  transform: translateX(0) scale(0.96);
-  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.25);
 }
 
 .create-next-btn-large .el-icon {
-  margin-right: 4px;
-  font-size: 16px;
+  margin-right: 6px;
+  font-size: 17px;
   font-weight: bold;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 @keyframes fadeIn {
@@ -1780,8 +1827,16 @@ export default {
   width: 100%;
 }
 
+.next-title-input-large :deep(.el-input-group__prepend),
+.next-title-input-large :deep(.el-input-group__append) {
+  border: none !important;
+  background: transparent !important;
+  padding: 0;
+  min-width: auto;
+}
+
 .next-title-input-large :deep(.el-input__wrapper) {
-  border-radius: 8px;
+  border-radius: 8px 0 0 8px;
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
@@ -1797,34 +1852,75 @@ export default {
 }
 
 .create-next-btn-large {
-  height: 40px;
-  padding: 0 20px;
+  height: 42px;
+  padding: 0 24px;
   font-weight: 700;
   font-size: 14px;
   color: #ffffff !important;
   white-space: nowrap;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: none;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none !important;
   border-radius: 0 8px 8px 0;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 去掉输入框 append 部分的边框 */
+.next-title-input-large :deep(.el-input-group__append) {
+  border: none !important;
+  background: transparent !important;
+  padding: 0;
+}
+
+.next-title-input-large :deep(.el-input__wrapper) {
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.create-next-btn-large::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%);
+  transition: left 0.5s ease;
+}
+
+.create-next-btn-large:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .create-next-btn-large:hover:not(:disabled) {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.55);
-  transform: translateX(-2px);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 6px 25px rgba(59, 130, 246, 0.5), 0 0 0 3px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
 }
 
 .create-next-btn-large:active:not(:disabled) {
-  transform: translateX(0) scale(0.96);
-  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.25);
 }
 
 .create-next-btn-large .el-icon {
-  margin-right: 4px;
-  font-size: 16px;
+  margin-right: 6px;
+  font-size: 17px;
   font-weight: bold;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 </style>
