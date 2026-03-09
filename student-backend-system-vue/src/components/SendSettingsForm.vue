@@ -11,20 +11,20 @@
         <template #header>
           <div class="card-header">
             <el-icon><User /></el-icon>
-            <span>接收对象设置</span>
+            <span>接收對象設置</span>
           </div>
         </template>
-
+      
         <div class="receivers-section">
-          <!-- 班级选择 -->
-          <el-form-item label="选择班级">
+          <!-- 班級選擇 -->
+          <el-form-item label="選擇班級">
             <div class="selection-item">
               <el-button 
                 type="primary" 
                 @click="openClassSelector"
                 plain
               >
-                已选择 {{ selectedClasses.length }} 个班级
+                已選擇 {{ selectedClasses.length }} 個班級
                 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
               </el-button>
               <div v-if="selectedClasses.length > 0" class="selected-tags">
@@ -40,16 +40,16 @@
               </div>
             </div>
           </el-form-item>
-
-          <!-- 学生/家长选择 -->
-          <el-form-item label="选择学生/家长">
+      
+          <!-- 學生/家長選擇 -->
+          <el-form-item label="選擇學生/家長">
             <div class="selection-item">
               <el-button 
                 type="success" 
                 @click="openStudentSelector"
                 plain
               >
-                已选择 {{ selectedStudents.length }} 位学生/家长
+                已選擇 {{ selectedStudents.length }} 位學生/家長
                 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
               </el-button>
               <div v-if="selectedStudents.length > 0" class="selected-tags">
@@ -65,16 +65,16 @@
               </div>
             </div>
           </el-form-item>
-
+      
           <!-- 教職員工選擇 -->
-          <el-form-item label="选择教职员工">
+          <el-form-item label="選擇教職員工">
             <div class="selection-item">
               <el-button 
                 type="warning" 
                 @click="openStaffSelector"
                 plain
               >
-                已选择 {{ selectedStaff.length }} 位教职员工
+                已選擇 {{ selectedStaff.length }} 位教職員工
                 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
               </el-button>
               <div v-if="selectedStaff.length > 0" class="selected-tags">
@@ -98,20 +98,20 @@
         <template #header>
           <div class="card-header">
             <el-icon><Message /></el-icon>
-            <span>抄送设置</span>
+            <span>抄送設置</span>
           </div>
         </template>
 
         <div class="cc-section">
-          <!-- 抄送教职员工 -->
-          <el-form-item label="抄送教职员工">
+          <!-- 抄送教職員工 -->
+          <el-form-item label="抄送教職員工">
             <div class="selection-item">
               <el-button 
                 type="info" 
                 @click="openCcStaffSelector"
                 plain
               >
-                已抄送 {{ selectedCcStaff.length }} 位教职员工
+                已抄送 {{ selectedCcStaff.length }} 位教職員工
                 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
               </el-button>
               <div v-if="selectedCcStaff.length > 0" class="selected-tags">
@@ -128,15 +128,15 @@
             </div>
           </el-form-item>
 
-          <!-- 抄送学校通讯录 -->
-          <el-form-item label="抄送学校通讯录">
+          <!-- 抄送學校通訊錄 -->
+          <el-form-item label="抄送學校通訊錄">
             <div class="selection-item">
               <el-button 
                 type="danger" 
                 @click="openCcDirectorySelector"
                 plain
               >
-                已抄送 {{ selectedCcDirectory.length }} 个通讯录
+                已抄送 {{ selectedCcDirectory.length }} 個通訊錄
                 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
               </el-button>
               <div v-if="selectedCcDirectory.length > 0" class="selected-tags">
@@ -160,34 +160,34 @@
         <template #header>
           <div class="card-header">
             <el-icon><Setting /></el-icon>
-            <span>发送设置</span>
+            <span>發送設置</span>
           </div>
         </template>
 
         <div class="send-options">
-          <el-form-item label="回复截止时间">
+          <el-form-item label="回覆截止時間">
             <el-date-picker
               v-model="localFormData.replyDeadline"
               type="datetime"
-              placeholder="请选择回复截止时间"
+              placeholder="請選擇回覆截止時間"
               format="YYYY-MM-DD HH:mm:ss"
               value-format="YYYY-MM-DD HH:mm:ss"
               :disabled-date="disabledDate"
             />
           </el-form-item>
 
-          <el-form-item label="发送提醒">
+          <el-form-item label="發送提醒">
             <el-switch
               v-model="sendRemind"
-              active-text="开启"
-              inactive-text="关闭"
+              active-text="開啟"
+              inactive-text="關閉"
             />
-            <div class="form-tip">开启后将在发送前发送提醒通知</div>
+            <div class="form-tip">開啟後將在發送前發送提醒通知</div>
           </el-form-item>
         </div>
       </el-card>
 
-      <!-- 操作按钮 -->
+      <!-- 操作按鈕 -->
       <el-form-item class="form-actions">
         <el-button @click="goToPrev">
           <el-icon><ArrowLeft /></el-icon>
@@ -195,12 +195,12 @@
         </el-button>
         <el-button type="primary" @click="handleSubmit">
           <el-icon><Promotion /></el-icon>
-          提交发布
+          提交發布
         </el-button>
       </el-form-item>
     </el-form>
 
-    <!-- 选择器对话框 -->
+    <!-- 選擇器對話框 -->
     <ClassSelectorDialog
       v-model:visible="classSelectorVisible"
       :selected-classes="selectedClasses"
@@ -222,7 +222,7 @@
     <StaffSelectorDialog
       v-model:visible="ccStaffSelectorVisible"
       :selected-staff="selectedCcStaff"
-      title="选择抄送教职员工"
+      title="選擇抄送教職員工"
       @confirm="handleCcStaffSelect"
     />
 
@@ -316,7 +316,7 @@ export default {
               }
             })
           } catch (e) {
-            console.error('解析接收对象数据失败:', e)
+            console.error('解析接收對象數據失敗:', e)
           }
         })
       }
@@ -343,7 +343,7 @@ export default {
               }
             })
           } catch (e) {
-            console.error('解析抄送对象数据失败:', e)
+            console.error('解析抄送對象數據失敗:', e)
           }
         })
       }
@@ -356,7 +356,7 @@ export default {
                            this.selectedStaff.length > 0
         
         if (!hasReceivers) {
-          this.$message.warning('请至少选择一个接收对象')
+          this.$message.warning('請至少選擇一個接收對象')
           reject()
           return
         }
@@ -365,7 +365,7 @@ export default {
           const deadline = dayjs(this.localFormData.replyDeadline)
           const now = dayjs()
           if (deadline.isBefore(now)) {
-            this.$message.warning('回复截止时间不能早于当前时间')
+            this.$message.warning('回覆截止時間不能早於當前時間')
             reject()
             return
           }
@@ -539,75 +539,84 @@ export default {
   width: 100%;
 }
 
-.form-container .el-form-item__label {
-  font-weight: 600;
-  color: #374151;
+.form-container .el-form-item {
+  margin-bottom: 24px;
 }
 
+/* 卡片容器 */
 .settings-card {
   margin-bottom: 20px;
-  border: none;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-.settings-card .el-card__header {
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-  border-bottom: 1px solid #e5e7eb;
-  padding: 16px 20px;
-}
-
-.card-header {
+/* 選擇區域佈局 */
+.receivers-section,
+.cc-section {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: #111827;
-  font-size: 15px;
-}
-
-.card-header .el-icon {
-  color: #3b82f6;
-  font-size: 18px;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .selection-item {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .selected-tags {
-  margin-top: 12px;
+  width: 100%;
+}
+
+/* 發送選項佈局 */
+.send-options {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px;
-  background: #f9fafb;
-  border-radius: 8px;
-  min-height: 40px;
-  align-items: center;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.tag-item {
-  margin: 0;
-}
-
-.form-actions {
-  text-align: right;
-  padding-top: 24px;
-  margin-top: 24px;
-  border-top: 1px solid #e5e7eb;
-}
-
+/* 表單提示文字 */
 .form-tip {
   font-size: 12px;
   color: #6b7280;
-  margin-top: 4px;
+  margin-top: 6px;
   line-height: 1.5;
 }
 
+/* 日期選擇器 */
 .el-date-picker {
   width: 100%;
+}
+
+/* 開關組樣式優化 */
+.el-form-item[label="發送提醒"] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* 操作按鈕區域 */
+.form-actions {
+  text-align: right;
+  padding-top: 20px;
+  margin-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.form-actions .el-button {
+  min-width: 120px;
+  height: 38px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.form-actions .el-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* 響應式設計 */
@@ -616,19 +625,30 @@ export default {
     padding: 0;
   }
   
+  .receivers-section,
+  .cc-section {
+    gap: 12px;
+  }
+  
   .selected-tags {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: 6px;
   }
   
   .form-actions {
     text-align: center;
+    flex-direction: column;
+    gap: 10px;
   }
   
   .form-actions .el-button {
-    margin: 4px;
-    width: calc(50% - 10px);
+    width: 100%;
+    margin: 0;
+  }
+  
+  .selection-item .el-button {
+    width: 100%;
   }
 }
 </style>

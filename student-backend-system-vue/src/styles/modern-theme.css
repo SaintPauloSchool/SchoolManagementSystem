@@ -802,3 +802,199 @@ body {
 .el-table__row {
   animation: fadeIn 0.3s ease;
 }
+
+/* 接收對象設置區域 - 簡潔清爽風格 */
+.send-settings-form .settings-card {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.send-settings-form .settings-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.send-settings-form .card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 15px;
+}
+
+.send-settings-form .card-header .el-icon {
+  color: #3b82f6;
+  font-size: 18px;
+}
+
+/* 選擇框按鈕 - 簡約風格 */
+.send-settings-form .selection-item .el-button {
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  border-width: 1px;
+  min-width: 160px;
+}
+
+.send-settings-form .selection-item .el-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 班級選擇按鈕 */
+.send-settings-form .selection-item .el-button--primary {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.send-settings-form .selection-item .el-button--primary:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+/* 學生選擇按鈕 */
+.send-settings-form .selection-item .el-button--success {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+}
+
+.send-settings-form .selection-item .el-button--success:hover {
+  background: #059669;
+  border-color: #059669;
+}
+
+/* 教職員工選擇按鈕 */
+.send-settings-form .selection-item .el-button--warning {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: #ffffff;
+}
+
+.send-settings-form .selection-item .el-button--warning:hover {
+  background: #d97706;
+  border-color: #d97706;
+}
+
+/* 抄送教職員工按鈕 */
+.send-settings-form .selection-item .el-button--info {
+  background: #6b7280;
+  border-color: #6b7280;
+  color: #ffffff;
+}
+
+.send-settings-form .selection-item .el-button--info:hover {
+  background: #4b5563;
+  border-color: #4b5563;
+}
+
+/* 抄送通訊錄按鈕 */
+.send-settings-form .selection-item .el-button--danger {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+.send-settings-form .selection-item .el-button--danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+/* 已選擇的標籤區域 */
+.send-settings-form .selected-tags {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  min-height: 40px;
+}
+
+.send-settings-form .tag-item .el-tag {
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-weight: 500;
+  font-size: 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+/* 班級標籤 */
+.send-settings-form .tag-item .el-tag--primary {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+.send-settings-form .tag-item .el-tag--primary:hover {
+  background: #dbeafe;
+}
+
+/* 學生標籤 */
+.send-settings-form .tag-item .el-tag--success {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.send-settings-form .tag-item .el-tag--success:hover {
+  background: #d1fae5;
+}
+
+/* 教職員工標籤 */
+.send-settings-form .tag-item .el-tag--warning {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+
+.send-settings-form .tag-item .el-tag--warning:hover {
+  background: #fef3c7;
+}
+
+/* 抄送教職員工標籤 */
+.send-settings-form .tag-item .el-tag--info {
+  background: #f9fafb;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.send-settings-form .tag-item .el-tag--info:hover {
+  background: #f3f4f6;
+}
+
+/* 抄送通訊錄標籤 */
+.send-settings-form .tag-item .el-tag--danger {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.send-settings-form .tag-item .el-tag--danger:hover {
+  background: #fee2e2;
+}
+
+/* 表單標籤樣式 */
+.send-settings-form .el-form-item__label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 13px;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+  .send-settings-form .selection-item .el-button {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .send-settings-form .selected-tags {
+    padding: 8px;
+  }
+}
