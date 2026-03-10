@@ -136,25 +136,23 @@
     </el-form>
 
     <!-- 添加/編輯問題對話框 -->
-    <QuestionDialog
+    <AddQuestionWizard
       v-model:visible="showQuestionDialog"
       :question="editingQuestion"
-      :question-type="questionType"
       @save="saveQuestion"
-      @validate-error="handleValidateError"
     />
   </div>
 </template>
 
 <script>
 import { Upload, Plus, Edit, Delete, ArrowRight } from '@element-plus/icons-vue'
-import QuestionDialog from './QuestionDialog.vue'
+import AddQuestionWizard from './AddQuestionWizard.vue'
 import { ElMessage } from 'element-plus'
 
 export default {
   name: 'BasicInfoForm',
   components: {
-    QuestionDialog
+    AddQuestionWizard
   },
   props: {
     formData: {
@@ -173,7 +171,6 @@ export default {
       },
       showQuestionDialog: false,
       editingQuestion: null,
-      questionType: '',
       rules: {
         title: [
           { required: true, message: '請輸入通知標題', trigger: 'blur' },
@@ -357,18 +354,12 @@ export default {
 
     editQuestion(index) {
       this.editingQuestion = { ...this.localFormData.questions[index] }
-      this.questionType = this.editingQuestion.type
       this.showQuestionDialog = true
     },
 
     addQuestion() {
       this.editingQuestion = null
-      this.questionType = ''
       this.showQuestionDialog = true
-    },
-
-    handleValidateError(message) {
-      ElMessage.warning(message)
     },
 
     removeQuestion(index) {
