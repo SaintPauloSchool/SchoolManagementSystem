@@ -59,7 +59,7 @@
         </div>
       </div>
 
-      <!-- 附件 -->
+      <!-- 附加题 -->
       <div 
         class="type-card"
         :class="{ selected: selectedType === '4' }"
@@ -68,25 +68,9 @@
         <div class="card-icon attachment">
           <el-icon :size="40"><Paperclip /></el-icon>
         </div>
-        <h4 class="card-title">附件題</h4>
-        <p class="card-desc">上傳文件或圖片</p>
+        <h4 class="card-title">附加题</h4>
+        <p class="card-desc">上传附件文件</p>
         <div class="selected-indicator" v-if="selectedType === '4'">
-          <el-icon :size="24"><Check /></el-icon>
-        </div>
-      </div>
-
-      <!-- 分支 -->
-      <div 
-        class="type-card"
-        :class="{ selected: selectedType === '5' }"
-        @click="selectType('5')"
-      >
-        <div class="card-icon branch">
-          <el-icon :size="40"><Share /></el-icon>
-        </div>
-        <h4 class="card-title">分支題</h4>
-        <p class="card-desc">根據選擇進入不同路徑</p>
-        <div class="selected-indicator" v-if="selectedType === '5'">
           <el-icon :size="24"><Check /></el-icon>
         </div>
       </div>
@@ -102,7 +86,7 @@
 </template>
 
 <script>
-import { CircleCheck, Checked, Edit, Paperclip, Share, Check, List, ArrowRight } from '@element-plus/icons-vue'
+import { CircleCheck, Checked, Edit, Paperclip, Check, List, ArrowRight } from '@element-plus/icons-vue'
 
 export default {
   name: 'QuestionTypeSelector',
@@ -111,7 +95,6 @@ export default {
     Checked,
     Edit,
     Paperclip,
-    Share,
     Check,
     List,
     ArrowRight
@@ -244,12 +227,6 @@ export default {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-}
-
-.card-icon.branch {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 .type-card.selected .card-icon {

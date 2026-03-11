@@ -78,16 +78,10 @@
         <div class="questions-section">
           <div class="questions-header">
             <span class="section-title">已添加的問題 ({{ localFormData.questions.length }})</span>
-            <div class="header-buttons">
-              <el-button class="add-question-btn" size="large" @click="addQuestion">
-                <el-icon class="btn-icon"><Plus /></el-icon>
-                <span class="btn-text">添加問題</span>
-              </el-button>
-              <el-button class="add-branch-question-btn" size="large" @click="addBranchQuestion">
-                <el-icon class="btn-icon"><Share /></el-icon>
-                <span class="btn-text">添加分支問題</span>
-              </el-button>
-            </div>
+            <el-button class="add-question-btn" size="large" @click="addQuestion">
+              <el-icon class="btn-icon"><Plus /></el-icon>
+              <span class="btn-text">添加問題</span>
+            </el-button>
           </div>
           
           <div v-if="localFormData.questions.length > 0" class="questions-list">
@@ -145,14 +139,13 @@
     <AddQuestionWizard
       v-model:visible="showQuestionDialog"
       :question="editingQuestion"
-      :is-branch-question="isBranchQuestion"
       @save="saveQuestion"
     />
   </div>
 </template>
 
 <script>
-import { Upload, Plus, Edit, Delete, ArrowRight, Share } from '@element-plus/icons-vue'
+import { Upload, Plus, Edit, Delete, ArrowRight } from '@element-plus/icons-vue'
 import AddQuestionWizard from './AddQuestionWizard.vue'
 import { ElMessage } from 'element-plus'
 
@@ -178,7 +171,6 @@ export default {
       },
       showQuestionDialog: false,
       editingQuestion: null,
-      isBranchQuestion: false,
       rules: {
         title: [
           { required: true, message: '請輸入通知標題', trigger: 'blur' },
@@ -343,23 +335,9 @@ export default {
         '1': '單選',
         '2': '多選',
         '3': '填空',
-        '4': '附件',
-        '5': '分支'
+        '4': '附件'
       }
       return typeMap[type] || '未知'
-    },
-
-    addBranchQuestion() {
-      // 直接创建分支题型
-      this.editingQuestion = {
-        type: '5',
-        title: '',
-        options: null,
-        required: false,
-        attachments: null
-      }
-      this.isBranchQuestion = true
-      this.showQuestionDialog = true
     },
 
     getQuestionTypeColor(type) {
@@ -367,8 +345,7 @@ export default {
         '1': 'primary',
         '2': 'success',
         '3': 'warning',
-        '4': 'danger',
-        '5': 'info'
+        '4': 'danger'
       }
       return colorMap[type] || 'info'
     },
@@ -380,7 +357,6 @@ export default {
 
     addQuestion() {
       this.editingQuestion = null
-      this.isBranchQuestion = false
       this.showQuestionDialog = true
     },
 
@@ -609,40 +585,6 @@ export default {
 .custom-upload-btn.el-button:active {
   transform: translateY(0);
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
-}
-
-.header-buttons {
-  display: flex;
-  gap: 12px;
-}
-
-/* 添加分支問題按鈕 - 與添加問題按鈕樣式完全一致 */
-.add-branch-question-btn.el-button {
-  height: 42px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  letter-spacing: 0.5px;
-}
-
-.add-branch-question-btn.el-button:hover {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
-  transform: translateY(-2px);
-}
-
-.add-branch-question-btn.el-button:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
 /* 添加問題按鈕 - 與問題設置頭部完全一致 */

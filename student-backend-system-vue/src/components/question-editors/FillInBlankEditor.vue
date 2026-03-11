@@ -66,22 +66,11 @@
         </div>
       </el-form-item>
     </el-form>
-
-    <div class="action-buttons">
-      <el-button @click="$emit('prev')" class="prev-btn">
-        <el-icon><ArrowLeft /></el-icon>
-        <span class="btn-text">上一步</span>
-      </el-button>
-      <el-button type="primary" @click="handleSave" class="save-btn">
-        <el-icon><Check /></el-icon>
-        <span class="btn-text">儲存題目</span>
-      </el-button>
-    </div>
   </div>
 </template>
 
 <script>
-import { ChatDotRound, Check, InfoFilled, Bell, ArrowLeft } from '@element-plus/icons-vue'
+import { ChatDotRound, Check, InfoFilled, Bell } from '@element-plus/icons-vue'
 
 export default {
   name: 'FillInBlankEditor',
@@ -89,8 +78,7 @@ export default {
     ChatDotRound,
     Check,
     InfoFilled,
-    Bell,
-    ArrowLeft
+    Bell
   },
   props: {
     questionData: {
@@ -98,7 +86,7 @@ export default {
       required: true
     }
   },
-  emits: ['prev', 'save', 'update:questionData'],
+  emits: ['save', 'update:questionData'],
   data() {
     return {
       localQuestionData: {
