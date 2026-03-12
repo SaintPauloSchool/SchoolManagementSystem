@@ -2,7 +2,7 @@
   <el-dialog
     v-model="dialogVisible"
     :title="dialogTitle"
-    width="850px"
+    width="1000px"
     :before-close="handleClose"
     class="add-question-dialog"
     top="5vh"
