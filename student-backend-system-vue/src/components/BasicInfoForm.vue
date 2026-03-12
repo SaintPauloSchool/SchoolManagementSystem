@@ -78,10 +78,16 @@
         <div class="questions-section">
           <div class="questions-header">
             <span class="section-title">已添加的問題 ({{ localFormData.questions.length }})</span>
-            <el-button class="add-question-btn" size="large" @click="addQuestion">
-              <el-icon class="btn-icon"><Plus /></el-icon>
-              <span class="btn-text">添加問題</span>
-            </el-button>
+            <div class="buttons-wrapper">
+              <el-button class="add-question-btn" size="large" @click="addQuestion">
+                <el-icon class="btn-icon"><Plus /></el-icon>
+                <span class="btn-text">添加問題</span>
+              </el-button>
+              <el-button class="add-form-question-btn" size="large" @click="addFormQuestion">
+                <el-icon class="btn-icon"><Edit /></el-icon>
+                <span class="btn-text">添加表單問題</span>
+              </el-button>
+            </div>
           </div>
           
           <div v-if="localFormData.questions.length > 0" class="questions-list">
@@ -107,6 +113,10 @@
                     <el-button size="small" @click="editQuestion(index)">
                       <el-icon><Edit /></el-icon>
                       編輯
+                    </el-button>
+                    <el-button size="small" @click="editFormQuestion(index)">
+                      <el-icon><Edit /></el-icon>
+                      表單編輯
                     </el-button>
                     <el-button size="small" type="danger" @click="removeQuestion(index)">
                       <el-icon><Delete /></el-icon>
@@ -141,18 +151,27 @@
       :question="editingQuestion"
       @save="saveQuestion"
     />
+    
+    <!-- 表單問題編輯對話框 -->
+    <FormQuestionDialog
+      v-model:visible="showFormQuestionDialog"
+      :question="editingFormQuestion"
+      @save="saveFormQuestion"
+    />
   </div>
 </template>
 
 <script>
 import { Upload, Plus, Edit, Delete, ArrowRight } from '@element-plus/icons-vue'
 import AddQuestionWizard from './AddQuestionWizard.vue'
+import FormQuestionDialog from './FormQuestionDialog.vue'
 import { ElMessage } from 'element-plus'
 
 export default {
   name: 'BasicInfoForm',
   components: {
-    AddQuestionWizard
+    AddQuestionWizard,
+    FormQuestionDialog
   },
   props: {
     formData: {
@@ -170,7 +189,9 @@ export default {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       },
       showQuestionDialog: false,
+      showFormQuestionDialog: false,
       editingQuestion: null,
+      editingFormQuestion: null,
       rules: {
         title: [
           { required: true, message: '請輸入通知標題', trigger: 'blur' },
@@ -359,6 +380,35 @@ export default {
       this.editingQuestion = null
       this.showQuestionDialog = true
     },
+    
+    addFormQuestion() {
+      this.editingFormQuestion = null
+      this.showFormQuestionDialog = true
+    },
+    
+    editFormQuestion(index) {
+      this.editingFormQuestion = { ...this.localFormData.questions[index] }
+      this.showFormQuestionDialog = true
+    },
+    
+    saveFormQuestion(question) {
+      if (this.editingFormQuestion) {
+        const index = this.localFormData.questions.findIndex(q => q.id === this.editingFormQuestion.id)
+        if (index > -1) {
+          this.localFormData.questions[index] = question
+        }
+      } else {
+        question.id = Date.now()
+        this.localFormData.questions.push(question)
+      }
+      
+      Object.assign(this.formData, this.localFormData)
+      
+      this.editingFormQuestion = null
+      this.showFormQuestionDialog = false
+      
+      ElMessage.success('保存成功')
+    },
 
     removeQuestion(index) {
       this.$confirm('確認刪除此問題嗎？', '提示', {
@@ -422,6 +472,11 @@ export default {
   border-radius: 16px;
   border: 2px solid #60a5fa;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.questions-header .buttons-wrapper {
+  display: flex;
+  gap: 12px;
 }
 
 .questions-header .section-title {
@@ -588,7 +643,8 @@ export default {
 }
 
 /* 添加問題按鈕 - 與問題設置頭部完全一致 */
-.add-question-btn.el-button {
+.add-question-btn.el-button,
+.add-form-question-btn.el-button {
   height: 42px;
   padding: 0 16px;
   font-size: 14px;
@@ -603,7 +659,11 @@ export default {
   align-items: center;
   gap: 8px;
   letter-spacing: 0.5px;
-  margin-left: 16px;
+  white-space: nowrap;
+}
+
+.add-form-question-btn.el-button {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
 .add-question-btn.el-button:hover {
@@ -612,7 +672,14 @@ export default {
   transform: translateY(-2px);
 }
 
-.add-question-btn.el-button:active {
+.add-form-question-btn.el-button:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+  transform: translateY(-2px);
+}
+
+.add-question-btn.el-button:active,
+.add-form-question-btn.el-button:active {
   transform: translateY(0);
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
