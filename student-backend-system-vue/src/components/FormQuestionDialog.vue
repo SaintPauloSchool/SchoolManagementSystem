@@ -531,7 +531,10 @@ export default {
       this.questionList.push(question)
       this.selectedQuestionId = question.id
       
-      ElMessage.success('已添加題目')
+      ElMessage.success({
+        message: '已添加題目',
+        offset: 100
+      })
     },
 
     getDefaultOptions(type) {
@@ -572,7 +575,10 @@ export default {
       if (this.selectedQuestionId === deletedId) {
         this.selectedQuestionId = null
       }
-      ElMessage.success('刪除成功')
+      ElMessage.success({
+        message: '刪除成功',
+        offset: 100
+      })
     },
 
     addOption() {
@@ -697,7 +703,10 @@ export default {
           question.content = tempDiv.textContent || tempDiv.innerText || ''
       }
       
-      ElMessage.success('已添加填空')
+      ElMessage.success({
+        message: '已添加填空',
+        offset: 100
+      })
     },
 
     onContentInput() {
@@ -814,7 +823,10 @@ export default {
     },
 
     scrollToLeftPanel() {
-      ElMessage.info('請從左側面板選擇題型添加題目')
+      ElMessage.info({
+        message: '請從左側面板選擇題型添加題目',
+        offset: 100
+      })
     },
 
     handleClose() {
@@ -831,7 +843,10 @@ export default {
       for (let i = 0; i < this.questionList.length; i++) {
         const q = this.questionList[i]
         if (!q.title?.trim()) {
-          ElMessage.warning(`第 ${i + 1} 題的題目內容不能為空`)
+          ElMessage.warning({
+            message: `第 ${i + 1} 題的題目內容不能為空`,
+            offset: 100
+          })
           this.selectedQuestionId = q.id
           return
         }
@@ -840,7 +855,10 @@ export default {
         if (this.hasOptionType(q.type)) {
           const validOptions = q.options.filter(opt => opt.trim())
           if (validOptions.length < 2) {
-            ElMessage.warning(`第 ${i + 1} 題至少需要 2 個選項`)
+            ElMessage.warning({
+              message: `第 ${i + 1} 題至少需要 2 個選項`,
+              offset: 100
+            })
             this.selectedQuestionId = q.id
             return
           }
@@ -853,7 +871,10 @@ export default {
               const blank = q.fillBlanks[j]
               const userAnswer = q.userAnswers ? q.userAnswers[j] : ''
               if (blank.required && (!userAnswer || !userAnswer.trim())) {
-                ElMessage.warning(`第 ${i + 1} 題的第 ${j + 1} 個填空不能為空`)
+                ElMessage.warning({
+                  message: `第 ${i + 1} 題的第 ${j + 1} 個填空不能為空`,
+                  offset: 100
+                })
                 this.selectedQuestionId = q.id
                 return
               }
@@ -867,7 +888,10 @@ export default {
         questions: this.questionList
       })
       this.$emit('update:visible', false)
-      ElMessage.success('保存成功')
+      ElMessage.success({
+        message: '保存成功',
+        offset: 100
+      })
     }
   }
 }
@@ -882,7 +906,7 @@ export default {
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
-  z-index: 9999;
+  z-index: 2000; /* 降低 z-index，让 ElMessage 能正常显示 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2199,4 +2223,5 @@ export default {
     max-height: none; /* 移動設備上取消高度限制 */
   }
 }
+
 </style>
