@@ -297,83 +297,21 @@
                       />
                     </el-form-item>
 
-                    <el-form-item label="題目說明">
-                      <el-input
-                        v-model="selectedQuestion.description"
-                        placeholder="請輸入題目說明/提示"
-                      />
-                    </el-form-item>
-
-                    <el-form-item label="別名">
-                      <el-input
-                        v-model="selectedQuestion.alias"
-                        placeholder="請輸入別名"
-                      />
-                    </el-form-item>
-
                     <el-form-item label="必答設置">
                       <el-checkbox v-model="selectedQuestion.required">必答題</el-checkbox>
                     </el-form-item>
-
-                    <el-form-item label="敏感信息收集題">
-                      <el-checkbox v-model="selectedQuestion.sensitive">敏感信息收集題</el-checkbox>
-                      <div class="form-tip">如身份證號、手機號等敏感信息</div>
-                    </el-form-item>
                   </el-form>
                 </div>
 
-                <div class="settings-section">
-                  <div class="section-header">顯示設置</div>
-                  <el-form label-position="top" size="default">
-                    <el-form-item label="每行顯示">
-                      <el-select v-model="selectedQuestion.perLine" placeholder="選擇每行顯示數量">
-                        <el-option label="1" value="1" />
-                        <el-option label="2" value="2" />
-                        <el-option label="3" value="3" />
-                        <el-option label="4" value="4" />
-                        <el-option label="5" value="5" />
-                      </el-select>
-                    </el-form-item>
 
-                    <el-form-item label="選項順序隨機">
-                      <el-switch v-model="selectedQuestion.randomOrder" />
-                    </el-form-item>
-                  </el-form>
-                </div>
 
-                <div class="settings-section">
-                  <div class="section-header">邏輯</div>
-                  <el-form label-position="top" size="default">
-                    <el-form-item label="邏輯設置">
-                      <el-button class="logic-btn" size="small">
-                        <el-icon><Connection /></el-icon>
-                        設置顯示/跳轉邏輯
-                      </el-button>
-                    </el-form-item>
 
-                    <el-form-item label="選項引用">
-                      <el-switch v-model="selectedQuestion.optionQuote" />
-                      <div class="form-tip">引用其他題目的選項</div>
-                    </el-form-item>
-                  </el-form>
-                </div>
               </div>
 
               <!-- 选项设置 -->
               <div v-show="activeTab === 'options'">
                 <div class="settings-section">
                   <div class="section-header">選項設置</div>
-                  <el-alert
-                    title="點擊選項可設置【添加填空】,【選項別名】"
-                    type="info"
-                    :closable="false"
-                    show-icon
-                    class="mb-3"
-                  >
-                    <template #default>
-                      <el-link type="primary" @click="startOptionSettings">開始設置</el-link>
-                    </template>
-                  </el-alert>
 
                   <div v-if="hasOptionType(selectedQuestion.type)" class="options-editor">
                     <div 
@@ -410,14 +348,7 @@
                   </div>
                 </div>
 
-                <div class="settings-section">
-                  <div class="section-header">選項配額設置</div>
-                  <el-button class="quota-btn" size="small">
-                    <el-icon><Grid /></el-icon>
-                    開啟配額
-                  </el-button>
-                  <el-link type="primary" class="settings-link">設置</el-link>
-                </div>
+
 
                 <div v-if="['7', '8'].includes(selectedQuestion.type)" class="settings-section">
                   <div class="section-header">圖片</div>
@@ -671,7 +602,7 @@ export default {
     },
 
     startOptionSettings() {
-      ElMessage.info('點擊選項後可設置添加填空和選項別名')
+      // 已移除
     },
 
     handleFillBlankAnswer(index, value, question) {
@@ -1077,12 +1008,14 @@ export default {
   padding: 12px;
   overflow: hidden;
   background: #f5f7fa;
+  min-height: 0; /* 防止 flex 子項溢出 */
 }
 
 /* 左側面板 */
 .left-panel {
   width: 320px;
   flex-shrink: 0;
+  min-width: 280px; /* 設置最小寬度防止過度壓縮 */
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
@@ -1231,9 +1164,10 @@ export default {
 /* 中間面板 */
 .center-panel {
   flex: 1;
-  min-width: 0;
+  min-width: 0; /* 允許 flex 子項縮小到內容以下 */
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* 防止溢出 */
 }
 
 .questionnaire-preview {
@@ -1244,6 +1178,7 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0; /* 防止 flex 子項溢出 */
 }
 
 .questionnaire-header {
@@ -1332,6 +1267,7 @@ export default {
   overflow-y: auto;
   padding: 20px 24px;
   background: #f0f2f5;
+  min-height: 0; /* 允許滾動區域正常滾動 */
 }
 
 .questionnaire-body::-webkit-scrollbar {
@@ -1653,6 +1589,7 @@ export default {
 .right-panel {
   width: 340px;
   flex-shrink: 0;
+  min-width: 300px; /* 設置最小寬度防止過度壓縮 */
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
@@ -2207,10 +2144,12 @@ export default {
 @media (max-width: 1400px) {
   .left-panel {
     width: 280px;
+    min-width: 260px;
   }
   
   .right-panel {
     width: 300px;
+    min-width: 280px;
   }
 }
 
@@ -2222,7 +2161,13 @@ export default {
   .left-panel,
   .right-panel {
     width: 100%;
+    min-width: auto;
     max-height: 200px;
+    flex-shrink: 1; /* 允許壓縮 */
+  }
+  
+  .center-panel {
+    min-height: 400px; /* 確保中間區域有足夠高度 */
   }
   
   .type-grid {
@@ -2247,6 +2192,11 @@ export default {
   
   .questionnaire-preview {
     border-radius: 4px;
+  }
+  
+  .left-panel,
+  .right-panel {
+    max-height: none; /* 移動設備上取消高度限制 */
   }
 }
 </style>

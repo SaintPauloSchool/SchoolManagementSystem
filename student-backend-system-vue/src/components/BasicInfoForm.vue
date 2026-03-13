@@ -482,6 +482,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 20px;
   padding: 20px 24px;
   background: linear-gradient(135deg, #60a5fa 0%, #60a5fa 100%);
@@ -500,8 +502,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-shrink: 0;
-  margin-left: 40px;
+  flex-wrap: wrap;
 }
 
 .questions-header .section-title {
