@@ -162,9 +162,9 @@
                         class="option-row"
                       >
                         <div class="option-prefix">
-                          <span class="option-label">選項</span>
                           <el-radio v-if="question.type === '1' || question.type === '7'" :label="optIndex" />
                           <el-checkbox v-else :label="optIndex" />
+                          <span class="option-label">{{ getOptionLabel(optIndex) }}</span>
                         </div>
                         <el-input 
                           v-model="question.options[optIndex]" 
@@ -1048,102 +1048,70 @@ export default {
 .questionnaire-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 32px;
-  background: #fafafa;
+  padding: 20px 24px;
+  background: #f0f2f5;
 }
 
 .questionnaire-body::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .questionnaire-body::-webkit-scrollbar-thumb {
-  background: #dcdfe6;
-  border-radius: 4px;
+  background: #c0c4cc;
+  border-radius: 3px;
 }
 
 /* 题目卡片 */
 .question-card {
-  background: white;
-  border: 2px solid #e4e7ed;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
+  background: #ffffff;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
-}
-
-.question-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: linear-gradient(180deg, #409EFF 0%, #67c23a 100%);
-  transform: scaleY(0);
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.question-card:hover::before {
-  transform: scaleY(1);
 }
 
 .question-card:hover {
   border-color: #409EFF;
-  box-shadow: 0 8px 24px rgba(64, 158, 255, 0.15);
-  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.12);
+  transform: translateY(-2px);
 }
 
 .question-card.active {
   border-color: #409EFF;
-  box-shadow: 0 8px 32px rgba(64, 158, 255, 0.25);
-  background: linear-gradient(135deg, #ecf5ff 0%, #f5f7fa 100%);
-  transform: translateY(-4px);
-}
-
-.question-card.active::before {
-  transform: scaleY(1);
+  box-shadow: 0 4px 20px rgba(64, 158, 255, 0.2);
+  background: #ecf5ff;
 }
 
 .question-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .question-number {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 16px;
-  font-weight: 700;
-  color: #303133;
-  min-width: 28px;
+  justify-content: center;
+  gap: 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  min-width: 24px;
+  height: 24px;
   background: linear-gradient(135deg, #409EFF 0%, #67c23a 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .required-mark {
   color: #f56c6c;
   font-weight: 700;
-  font-size: 18px;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
+  font-size: 16px;
+  margin-right: 2px;
 }
 
 .question-title-input {
@@ -1151,30 +1119,43 @@ export default {
 }
 
 .question-title-input :deep(.el-input__inner) {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   color: #303133;
-  border: none;
   background: transparent;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: all 0.3s ease;
+  padding: 6px 10px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.question-title-input :deep(.el-input) {
+  border: none;
+  transition: all 0.2s ease;
 }
 
 .question-title-input:hover :deep(.el-input__inner) {
   background: #f5f7fa;
 }
 
+.question-title-input:hover :deep(.el-input) {
+  border-color: #dcdfe6;
+}
+
 .question-card.active .question-title-input:hover :deep(.el-input__inner) {
-  background: white;
+  background: #ffffff;
+}
+
+.question-card.active .question-title-input:hover :deep(.el-input) {
+  border-color: #409EFF;
 }
 
 .question-actions {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .question-card:hover .question-actions {
@@ -1182,13 +1163,14 @@ export default {
 }
 
 .question-actions .el-button {
-  padding: 6px 10px;
-  border-radius: 6px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: all 0.2s ease;
 }
 
 .question-actions .el-button:hover {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 /* 删除按钮样式 */
@@ -1214,7 +1196,10 @@ export default {
 
 /* 题目内容 */
 .question-content {
-  padding-left: 40px;
+  padding-left: 36px;
+  background: #fafafa;
+  border-radius: 6px;
+  padding: 12px;
 }
 
 .placeholder-input {
@@ -1225,11 +1210,12 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 16px;
-  background: #fafafa;
+  padding: 12px;
+  background: #f5f7fa;
   border: 2px dashed #dcdfe6;
-  border-radius: 6px;
+  border-radius: 4px;
   color: #909399;
+  font-size: 13px;
 }
 
 .branch-preview {
@@ -1248,10 +1234,76 @@ export default {
   flex: 1;
 }
 
+/* 选项列表样式 */
+.options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: #ffffff;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.option-row:hover {
+  background: #f5f7fa;
+}
+
+.option-prefix {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 50px;
+}
+
+.option-prefix :deep(.el-radio__label),
+.option-prefix :deep(.el-checkbox__label) {
+  display: none !important;
+}
+
+.option-prefix :deep(.el-radio),
+.option-prefix :deep(.el-checkbox) {
+  margin-right: 0;
+}
+
+.option-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #606266;
+  min-width: 18px;
+  text-align: center;
+}
+
+.option-input {
+  flex: 1;
+}
+
+.option-input :deep(.el-input__inner) {
+  font-size: 13px;
+  padding: 6px 10px;
+  border-color: #e4e7ed;
+  transition: all 0.2s ease;
+}
+
+.option-input :deep(.el-input__inner):hover {
+  border-color: #409EFF;
+}
+
+.option-input :deep(.el-input__inner):focus {
+  border-color: #409EFF;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+}
+
 .questionnaire-footer {
-  padding: 20px 32px;
-  border-top: 1px solid #ebeef5;
-  background: #fafafa;
+  padding: 16px 24px;
+  border-top: 1px solid #e4e7ed;
+  background: #f0f2f5;
   text-align: center;
 }
 
@@ -1259,10 +1311,17 @@ export default {
   border: 2px dashed #409EFF;
   background: #ecf5ff;
   color: #409EFF;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
 .add-question-tips:hover {
-  background: #f5f7fa;
+  background: #d9ecff;
+  border-color: #67c23a;
+  color: #67c23a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
 }
 
 /* 空状态 */
@@ -1270,7 +1329,10 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
+  min-height: 300px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 2px dashed #e4e7ed;
 }
 
 /* 右侧面板 */
