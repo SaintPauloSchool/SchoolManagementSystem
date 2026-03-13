@@ -6,30 +6,8 @@
         <div class="toolbar-left">
           <h2 class="toolbar-title">
             <el-icon class="title-icon"><Edit /></el-icon>
-            表單設計器
+            編輯表單問題
           </h2>
-          <el-divider direction="vertical" />
-          <span class="toolbar-subtitle">{{ isEdit ? '編輯模式' : '新增模式' }}</span>
-        </div>
-        <div class="toolbar-center">
-          <el-button-group class="view-mode-group">
-            <el-button 
-              :type="viewMode === 'edit' ? 'primary' : ''" 
-              @click="viewMode = 'edit'"
-              size="small"
-            >
-              <el-icon><Edit /></el-icon>
-              編輯
-            </el-button>
-            <el-button 
-              :type="viewMode === 'preview' ? 'primary' : ''" 
-              @click="viewMode = 'preview'"
-              size="small"
-            >
-              <el-icon><View /></el-icon>
-              預覽
-            </el-button>
-          </el-button-group>
         </div>
         <div class="toolbar-right">
           <el-button @click="handleClose" class="close-btn">
@@ -53,34 +31,22 @@
           </div>
           <div class="panel-content">
             <!-- 题目类型 -->
-            <div class="题型-section">
+            <div class="question-type-section">
               <div class="section-title">題目類型</div>
               <div class="type-grid">
-                <div 
-                  class="type-btn"
-                  @click="addQuestion('1')"
-                >
+                <div class="type-btn" @click="addQuestion('1')">
                   <el-icon><CircleCheck /></el-icon>
                   <span>單選</span>
                 </div>
-                <div 
-                  class="type-btn"
-                  @click="addQuestion('2')"
-                >
+                <div class="type-btn" @click="addQuestion('2')">
                   <el-icon><Checked /></el-icon>
                   <span>多選</span>
                 </div>
-                <div 
-                  class="type-btn"
-                  @click="addQuestion('10')"
-                >
+                <div class="type-btn" @click="addQuestion('10')">
                   <el-icon><Notebook /></el-icon>
                   <span>多項填空</span>
                 </div>
-                <div 
-                  class="type-btn"
-                  @click="addQuestion('6')"
-                >
+                <div class="type-btn" @click="addQuestion('6')">
                   <el-icon><Download /></el-icon>
                   <span>下拉</span>
                 </div>
@@ -98,7 +64,7 @@
                 <span class="header-label">標題:</span>
                 <el-input
                   v-model="questionnaireData.title"
-                  placeholder="请输入问卷标题"
+                  placeholder="請輸入標題"
                   class="questionnaire-title-input"
                   size="large"
                 />
@@ -130,7 +96,7 @@
                   </div>
                   <el-input
                     v-model="question.title"
-                    placeholder="请输入题目内容"
+                    placeholder="請輸入題目內容"
                     class="question-title-input"
                     @click.stop
                   />
@@ -153,8 +119,8 @@
 
                 <!-- 题目内容预览 -->
                 <div class="question-content">
-                  <!-- 单选/多选 -->
-                  <div v-if="['1', '2', '6', '7', '8'].includes(question.type)">
+                  <!-- 单选/多选/下拉 -->
+                  <div v-if="hasOptionType(question.type)">
                     <div class="options-container">
                       <div 
                         v-for="(option, optIndex) in question.options" 
@@ -162,22 +128,53 @@
                         class="option-row"
                       >
                         <div class="option-prefix">
-                          <el-radio v-if="question.type === '1' || question.type === '7'" :label="optIndex" />
+                          <el-radio v-if="isSingleChoice(question.type)" :label="optIndex" />
                           <el-checkbox v-else :label="optIndex" />
                           <span class="option-label">{{ getOptionLabel(optIndex) }}</span>
                         </div>
                         <el-input 
                           v-model="question.options[optIndex]" 
-                          placeholder="请输入选项内容"
+                          placeholder="請輸入選項內容"
                           class="option-input"
                           @click.stop
                         />
+                        <div class="option-actions">
+                          <el-button 
+                            size="small" 
+                            type="primary"
+                            @click.stop="addOptionAtIndex(question, optIndex + 1)"
+                            circle
+                          >
+                            <el-icon><Plus /></el-icon>
+                          </el-button>
+                          <el-button 
+                            size="small" 
+                            type="danger"
+                            @click.stop="removeOptionAtIndex(question, optIndex)"
+                            :disabled="question.options.length <= 2"
+                            circle
+                          >
+                            <el-icon><Delete /></el-icon>
+                          </el-button>
+                        </div>
+                      </div>
+                      <!-- 底部添加选项按钮 -->
+                      <div class="add-option-row">
+                        <el-button 
+                          size="small" 
+                          type="primary" 
+                          plain
+                          @click.stop="addOptionToQuestion(question)"
+                        >
+                          <el-icon><Plus /></el-icon>
+                          添加選項
+                        </el-button>
                       </div>
                     </div>
                   </div>
 
                   <!-- 填空/文本 -->
-                  <div v-if="['3', '9', '10'].includes(question.type)">
+                  <div v-else-if="['3', '9', '10'].includes(question.type)">
                     <el-input
                       v-model="question.placeholder"
                       placeholder="设置占位文字"
@@ -187,19 +184,19 @@
                   </div>
 
                   <!-- 附件 -->
-                  <div v-if="question.type === '4'">
+                  <div v-else-if="question.type === '4'">
                     <div class="attachment-placeholder">
                       <el-icon><Upload /></el-icon>
-                      <span>点击上传附件 (最多 5 个)</span>
+                      <span>點擊上傳附件 (最多 5 個)</span>
                     </div>
                   </div>
 
                   <!-- 分支 -->
-                  <div v-if="question.type === '5'">
+                  <div v-else-if="question.type === '5'">
                     <div class="branch-preview">
                       <div v-for="(branch, bi) in question.branchOptions" :key="bi" class="branch-item">
-                        <el-input v-model="branch.text" placeholder="选项文字" size="small" />
-                        <el-tag size="small">{{ branch.action === 'continue' ? '继续' : '结束' }}</el-tag>
+                        <el-input v-model="branch.text" placeholder="選項文字" size="small" />
+                        <el-tag size="small">{{ branch.action === 'continue' ? '繼續' : '結束' }}</el-tag>
                       </div>
                     </div>
                   </div>
@@ -237,21 +234,21 @@
               <!-- 题目设置 -->
               <div v-show="activeTab === 'question'">
                 <div class="settings-section">
-                  <div class="section-header">題目</div>
+                  <div class="section-header">題目類型</div>
                   <el-select
                     v-model="selectedQuestion.type"
-                    placeholder="选择题型"
+                    placeholder="選擇題型"
                     class="type-select"
                     disabled
                   >
-                    <el-option label="单选" value="1" />
-                    <el-option label="多选" value="2" />
+                    <el-option label="單選" value="1" />
+                    <el-option label="多選" value="2" />
                     <el-option label="下拉" value="6" />
-                    <el-option label="图片单选" value="7" />
-                    <el-option label="图片多选" value="8" />
-                    <el-option label="单行文本" value="9" />
+                    <el-option label="圖片單選" value="7" />
+                    <el-option label="圖片多選" value="8" />
+                    <el-option label="單行文本" value="9" />
                     <el-option label="多行文本" value="3" />
-                    <el-option label="多项填空" value="10" />
+                    <el-option label="多項填空" value="10" />
                     <el-option label="附件" value="4" />
                     <el-option label="分支" value="5" />
                   </el-select>
@@ -265,21 +262,21 @@
                         v-model="selectedQuestion.title"
                         type="textarea"
                         :rows="2"
-                        placeholder="请输入题目内容"
+                        placeholder="請輸入題目內容"
                       />
                     </el-form-item>
 
                     <el-form-item label="題目說明">
                       <el-input
                         v-model="selectedQuestion.description"
-                        placeholder="请输入题目说明/提示"
+                        placeholder="請輸入題目說明/提示"
                       />
                     </el-form-item>
 
                     <el-form-item label="別名">
                       <el-input
                         v-model="selectedQuestion.alias"
-                        placeholder="请输入别名"
+                        placeholder="請輸入別名"
                       />
                     </el-form-item>
 
@@ -289,7 +286,7 @@
 
                     <el-form-item label="敏感信息收集題">
                       <el-checkbox v-model="selectedQuestion.sensitive">敏感信息收集題</el-checkbox>
-                      <div class="form-tip">如身份证号、手机号等敏感信息</div>
+                      <div class="form-tip">如身份證號、手機號等敏感信息</div>
                     </el-form-item>
                   </el-form>
                 </div>
@@ -298,7 +295,7 @@
                   <div class="section-header">顯示設置</div>
                   <el-form label-position="top" size="default">
                     <el-form-item label="每行顯示">
-                      <el-select v-model="selectedQuestion.perLine" placeholder="选择每行显示数量">
+                      <el-select v-model="selectedQuestion.perLine" placeholder="選擇每行顯示數量">
                         <el-option label="1" value="1" />
                         <el-option label="2" value="2" />
                         <el-option label="3" value="3" />
@@ -325,7 +322,7 @@
 
                     <el-form-item label="選項引用">
                       <el-switch v-model="selectedQuestion.optionQuote" />
-                      <div class="form-tip">引用其他题目的选项</div>
+                      <div class="form-tip">引用其他題目的選項</div>
                     </el-form-item>
                   </el-form>
                 </div>
@@ -336,18 +333,18 @@
                 <div class="settings-section">
                   <div class="section-header">選項設置</div>
                   <el-alert
-                    title="点击选项可设置【添加填空】,【选项别名】"
+                    title="點擊選項可設置【添加填空】,【選項別名】"
                     type="info"
                     :closable="false"
                     show-icon
                     class="mb-3"
                   >
                     <template #default>
-                      <el-link type="primary" @click="startOptionSettings">开始设置</el-link>
+                      <el-link type="primary" @click="startOptionSettings">開始設置</el-link>
                     </template>
                   </el-alert>
 
-                  <div v-if="['1', '2', '6', '7', '8'].includes(selectedQuestion.type)" class="options-editor">
+                  <div v-if="hasOptionType(selectedQuestion.type)" class="options-editor">
                     <div 
                       v-for="(option, index) in selectedQuestion.options" 
                       :key="index"
@@ -356,7 +353,7 @@
                       <span class="option-label">{{ getOptionLabel(index) }}</span>
                       <el-input
                         v-model="selectedQuestion.options[index]"
-                        placeholder="选项内容"
+                        placeholder="選項內容"
                         size="small"
                       />
                       <el-button
@@ -388,19 +385,19 @@
                     <el-icon><Grid /></el-icon>
                     開啟配額
                   </el-button>
-                  <el-link type="primary" class="settings-link">设置</el-link>
+                  <el-link type="primary" class="settings-link">設置</el-link>
                 </div>
 
                 <div v-if="['7', '8'].includes(selectedQuestion.type)" class="settings-section">
                   <div class="section-header">圖片</div>
                   <el-form label-position="top" size="default">
                     <el-form-item label="默認圖片寬度">
-                      <el-input v-model="selectedQuestion.imageWidth" placeholder="请输入">
+                      <el-input v-model="selectedQuestion.imageWidth" placeholder="請輸入">
                         <template #append>像素</template>
                       </el-input>
                     </el-form-item>
                     <el-button class="apply-image-btn" size="small">
-                      应用到本题所有图片
+                      應用到本題所有圖片
                     </el-button>
                   </el-form>
                 </div>
@@ -418,11 +415,8 @@
 
 <script>
 import { 
-  Edit, Close, Check, Menu, CircleCheck, Checked, EditPen, 
-  Paperclip, Share, Delete, Plus, Bell, Upload, View, 
-  Download, Picture, PictureFilled, Document, Notebook, Grid, 
-  TrendCharts, Coin, Star, StarFilled, Sort, Connection, 
-  Calendar, Location, ScaleToOriginal, ChatLineRound, Setting,
+  Edit, Close, Check, Menu, CircleCheck, Checked, 
+  Delete, Plus, Upload, View, Download, Notebook, Grid, Connection,
   ArrowUp, ArrowDown
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -430,11 +424,8 @@ import { ElMessage } from 'element-plus'
 export default {
   name: 'FormQuestionDialog',
   components: {
-    Edit, Close, Check, Menu, CircleCheck, Checked, EditPen, 
-    Paperclip, Share, Delete, Plus, Bell, Upload, View,
-    Download, Picture, PictureFilled, Document, Notebook, Grid,
-    TrendCharts, Coin, Star, StarFilled, Sort, Connection,
-    Calendar, Location, ScaleToOriginal, ChatLineRound, Setting,
+    Edit, Close, Check, Menu, CircleCheck, Checked, 
+    Delete, Plus, Upload, View, Download, Notebook, Grid, Connection,
     ArrowUp, ArrowDown
   },
   props: {
@@ -462,9 +453,6 @@ export default {
     }
   },
   computed: {
-    isEdit() {
-      return !!this.question
-    },
     selectedQuestion() {
       return this.questionList.find(q => q.id === this.selectedQuestionId) || null
     }
@@ -480,14 +468,21 @@ export default {
     getOptionLabel(index) {
       return String.fromCharCode(65 + index)
     },
+  
+    isSingleChoice(type) {
+      // 單選類：1=單選，7=圖片單選
+      return ['1', '7'].includes(type)
+    },
+  
+    hasOptionType(type) {
+      // 需要選項的題型：1=單選，2=多選，6=下拉，7=圖片單選，8=圖片多選
+      return ['1', '2', '6', '7', '8'].includes(type)
+    },
 
     initForm() {
       if (this.question) {
-        // 如果是编辑模式，加载现有数据
-        this.questionnaireData = {
-          title: '問卷調查',
-          description: ''
-        }
+        // 編輯模式：加載現有數據
+        this.questionnaireData = { title: '問卷調查', description: '' }
         this.questionList = [{
           ...this.question,
           id: this.question.id || Date.now(),
@@ -497,19 +492,17 @@ export default {
           validation: this.question.validation || [],
           randomOrder: this.question.randomOrder || false
         }]
-        if (this.questionList.length > 0) {
-          this.selectedQuestionId = this.questionList[0].id
-        }
+        this.selectedQuestionId = this.questionList[0].id
       } else {
-        // 新增模式，初始化空数据
-        this.questionList = []
-        this.questionnaireData = {
-          title: '',
-          description: ''
-        }
-        this.selectedQuestionId = null
-        this.nextId = 1
+        this.resetForm()
       }
+    },
+
+    resetForm() {
+      this.questionList = []
+      this.questionnaireData = { title: '', description: '' }
+      this.selectedQuestionId = null
+      this.nextId = 1
     },
 
     addQuestion(type) {
@@ -539,11 +532,8 @@ export default {
     },
 
     getDefaultOptions(type) {
-      // 需要选项的题型
-      if (['1', '2', '6', '7', '8'].includes(type)) {
-        return ['', '']
-      }
-      return null
+      // 需要選項的題型返回初始選項
+      return ['1', '2', '6', '7', '8'].includes(type) ? ['', ''] : null
     },
 
     selectQuestion(id) {
@@ -575,18 +565,18 @@ export default {
       ElMessage.success('刪除成功')
     },
 
-    deleteSelectedQuestion() {
-      if (!this.selectedQuestionId) return
-      const index = this.questionList.findIndex(q => q.id === this.selectedQuestionId)
-      if (index > -1) {
-        this.deleteQuestion(index)
-      }
-    },
-
     addOption() {
       if (this.selectedQuestion) {
         this.selectedQuestion.options.push('')
       }
+    },
+
+    addOptionToQuestion(question) {
+      question.options.push('')
+    },
+
+    addOptionAtIndex(question, index) {
+      question.options.splice(index, 0, '')
     },
 
     removeOption(index) {
@@ -595,12 +585,17 @@ export default {
       }
     },
 
+    removeOptionAtIndex(question, index) {
+      if (question.options.length > 2) {
+        question.options.splice(index, 1)
+      }
+    },
+
     startOptionSettings() {
       ElMessage.info('點擊選項後可設置添加填空和選項別名')
     },
 
     scrollToLeftPanel() {
-      // 提示用户从左侧添加题目
       ElMessage.info('請從左側面板選擇題型添加題目')
     },
 
@@ -614,7 +609,7 @@ export default {
         return
       }
 
-      // 验证必填项
+      // 驗證必填項
       for (let i = 0; i < this.questionList.length; i++) {
         const q = this.questionList[i]
         if (!q.title?.trim()) {
@@ -623,8 +618,8 @@ export default {
           return
         }
         
-        // 验证选项
-        if (['1', '2', '6', '7', '8'].includes(q.type)) {
+        // 驗證選項
+        if (this.hasOptionType(q.type)) {
           const validOptions = q.options.filter(opt => opt.trim())
           if (validOptions.length < 2) {
             ElMessage.warning(`第 ${i + 1} 題至少需要 2 個選項`)
@@ -634,13 +629,10 @@ export default {
         }
       }
 
-      // 保存所有题目数据
-      const savedData = {
+      this.$emit('save', {
         questionnaire: this.questionnaireData,
         questions: this.questionList
-      }
-
-      this.$emit('save', savedData)
+      })
       this.$emit('update:visible', false)
       ElMessage.success('保存成功')
     }
@@ -665,8 +657,8 @@ export default {
 }
 
 .form-question-dialog {
-  width: 98vw;
-  height: 96vh;
+  width: 99vw;
+  height: 98vh;
   background: #f5f7fa;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -696,7 +688,7 @@ export default {
   }
 }
 
-/* 顶部工具栏 */
+/* 頂部工具欄 */
 .dialog-toolbar {
   display: flex;
   justify-content: space-between;
@@ -736,19 +728,6 @@ export default {
   border-radius: 4px;
 }
 
-.toolbar-center {
-  display: flex;
-  justify-content: center;
-}
-
-.view-mode-group {
-  display: flex;
-}
-
-.view-mode-group .el-button {
-  padding: 8px 16px;
-}
-
 .toolbar-right {
   display: flex;
   gap: 12px;
@@ -776,18 +755,19 @@ export default {
 }
 
 .save-btn {
-  background: linear-gradient(135deg, #67c23a 0%, #529b33 100%);
+  background: #409EFF;
   color: white;
   border: none;
-  box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
 }
 
 .save-btn:hover {
-  box-shadow: 0 6px 20px rgba(103, 194, 58, 0.4);
+  background: #66b1ff;
+  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.4);
   transform: translateY(-2px);
 }
 
-/* 主体内容区 - 三栏布局 */
+/* 主體內容區 - 三欄佈局 */
 .dialog-main {
   flex: 1;
   display: flex;
@@ -797,7 +777,7 @@ export default {
   background: #f5f7fa;
 }
 
-/* 左侧面板 */
+/* 左側面板 */
 .left-panel {
   width: 320px;
   flex-shrink: 0;
@@ -841,8 +821,8 @@ export default {
   border-radius: 3px;
 }
 
-/* 题型区块 */
-.题型-section {
+/* 題區塊 */
+.question-type-section {
   margin-bottom: 20px;
   padding: 14px;
   background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
@@ -852,7 +832,7 @@ export default {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.题型-section:hover {
+.question-type-section:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
 }
@@ -946,7 +926,7 @@ export default {
   letter-spacing: 0.5px;
 }
 
-/* 中间面板 */
+/* 中間面板 */
 .center-panel {
   flex: 1;
   min-width: 0;
@@ -1061,7 +1041,7 @@ export default {
   border-radius: 3px;
 }
 
-/* 题目卡片 */
+/* 題目卡片 */
 .question-card {
   background: #ffffff;
   border: 1px solid #e4e7ed;
@@ -1102,16 +1082,21 @@ export default {
   color: #ffffff;
   min-width: 24px;
   height: 24px;
-  background: linear-gradient(135deg, #409EFF 0%, #67c23a 100%);
+  background: #409EFF;
   border-radius: 50%;
   flex-shrink: 0;
+  position: relative;
 }
 
 .required-mark {
+  position: absolute;
+  top: -2px;
+  right: -4px;
   color: #f56c6c;
   font-weight: 700;
-  font-size: 16px;
-  margin-right: 2px;
+  font-size: 14px;
+  line-height: 1;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
 }
 
 .question-title-input {
@@ -1173,7 +1158,7 @@ export default {
   transform: scale(1.05);
 }
 
-/* 删除按钮样式 */
+/* 刪除按鈕樣式 */
 .question-actions .el-button.delete-btn {
   background: #fef0f0 !important;
   border: 1px solid #fde2e2 !important;
@@ -1194,7 +1179,7 @@ export default {
   color: white !important;
 }
 
-/* 题目内容 */
+/* 題目內容 */
 .question-content {
   padding-left: 36px;
   background: #fafafa;
@@ -1234,7 +1219,7 @@ export default {
   flex: 1;
 }
 
-/* 选项列表样式 */
+/* 選項列表樣式 */
 .options-container {
   display: flex;
   flex-direction: column;
@@ -1253,6 +1238,33 @@ export default {
 
 .option-row:hover {
   background: #f5f7fa;
+}
+
+.option-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.add-option-row {
+  display: flex;
+  justify-content: center;
+  padding: 12px 8px;
+  border-top: 1px dashed #e4e7ed;
+  margin-top: 8px;
+}
+
+.add-option-row .el-button {
+  width: 100%;
+  background: #ecf5ff;
+  border-color: #409EFF;
+  color: #409EFF;
+}
+
+.add-option-row .el-button:hover {
+  background: #409EFF;
+  border-color: #409EFF;
+  color: #ffffff;
 }
 
 .option-prefix {
@@ -1324,7 +1336,7 @@ export default {
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
 }
 
-/* 空状态 */
+/* 空狀態 */
 .empty-state {
   display: flex;
   justify-content: center;
@@ -1335,7 +1347,7 @@ export default {
   border: 2px dashed #e4e7ed;
 }
 
-/* 右侧面板 */
+/* 右側面板 */
 .right-panel {
   width: 340px;
   flex-shrink: 0;
@@ -1364,7 +1376,7 @@ export default {
   color: #409EFF;
 }
 
-/* 面板标签页 */
+/* 面板標籤頁 */
 .panel-tabs {
   padding: 0;
   background: white;
@@ -1450,7 +1462,7 @@ export default {
   border-radius: 3px;
 }
 
-/* 设置区块 */
+/* 設置區塊 */
 .settings-section {
   margin-bottom: 24px;
   padding: 18px;
@@ -1549,8 +1561,8 @@ export default {
 .option-label {
   font-size: 13px;
   font-weight: 600;
-  color: #909399;
-  min-width: 24px;
+  color: #606266;
+  min-width: 18px;
   text-align: center;
 }
 
@@ -1622,7 +1634,11 @@ export default {
   transform: translateY(-2px);
 }
 
-/* 未选中状态 */
+.settings-form .el-form-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 未選中狀態 */
 .no-selection {
   display: flex;
   justify-content: center;
@@ -1630,7 +1646,7 @@ export default {
   height: 100%;
 }
 
-/* 响应式设计 */
+/* 響應式設計 */
 @media (max-width: 1400px) {
   .left-panel {
     width: 280px;

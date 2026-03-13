@@ -2,11 +2,13 @@
   <el-dialog
     v-model="dialogVisible"
     :title="dialogTitle"
-    width="750px"
+    width="99vw"
     :before-close="handleClose"
-    class="question-dialog"
-    top="8vh"
+    class="question-dialog question-dialog-large"
+    top="1vh"
     destroy-on-close
+    :close-on-click-modal="false"
+    custom-class="question-dialog-large"
   >
     <div class="dialog-content">
       <el-form
@@ -875,18 +877,36 @@ export default {
 }
 </script>
 
+<style>
+/* 強制對話框變大 - 非 scoped 样式，使用最高優先級 */
+.question-dialog-large.el-dialog {
+  width: 99vw !important;
+  max-width: 99vw !important;
+  height: 98vh !important;
+  max-height: 98vh !important;
+  margin-top: 1vh !important;
+}
+
+.question-dialog-large .el-dialog__body {
+  max-height: none !important;
+  overflow-y: auto !important;
+  padding: 32px 36px !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+}
+
+.question-dialog-large .el-dialog__header {
+  padding: 20px 32px !important;
+}
+
+.question-dialog-large .el-dialog__footer {
+  padding: 16px 32px !important;
+}
+</style>
+
 <style scoped>
 /* 對話框主體容器 */
 .dialog-content {
   padding: 8px 0;
-}
-
-/* 強制對話框主體顯示滾動條 */
-:deep(.el-dialog__body) {
-  max-height: 72vh;
-  overflow-y: auto;
-  padding: 32px 36px;
-  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
 }
 
 /* 美化對話框滾動條 */

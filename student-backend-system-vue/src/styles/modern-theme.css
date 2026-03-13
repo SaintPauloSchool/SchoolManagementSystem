@@ -369,7 +369,6 @@ body {
   padding: 36px 32px;
   color: #374151;
   background: #ffffff;
-  max-height: calc(70vh - 180px);
   overflow-y: auto;
   line-height: 1.7;
 }

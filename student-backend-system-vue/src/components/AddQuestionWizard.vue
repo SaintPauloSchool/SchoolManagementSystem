@@ -2,10 +2,10 @@
   <el-dialog
     v-model="dialogVisible"
     :title="dialogTitle"
-    width="1000px"
+    width="90vw"
     :before-close="handleClose"
     class="add-question-dialog"
-    top="5vh"
+    top="1vh"
     destroy-on-close
   >
     <div class="dialog-body">
@@ -271,7 +271,6 @@ export default {
 :deep(.el-dialog__body) {
   padding: 0;
   background: #f9fafb;
-  max-height: 75vh;
   overflow-y: auto;
 }
 

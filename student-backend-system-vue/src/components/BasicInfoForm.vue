@@ -77,7 +77,9 @@
       <el-form-item label="問題設置">
         <div class="questions-section">
           <div class="questions-header">
-            <span class="section-title">已添加的問題 ({{ localFormData.questions.length }})</span>
+            <div class="title-wrapper">
+              <span class="section-title">已添加的問題 ({{ localFormData.questions.length }})</span>
+            </div>
             <div class="buttons-wrapper">
               <el-button class="add-question-btn" size="large" @click="addQuestion">
                 <el-icon class="btn-icon"><Plus /></el-icon>
@@ -474,9 +476,18 @@ export default {
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
+.questions-header .title-wrapper {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 .questions-header .buttons-wrapper {
   display: flex;
+  align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+  margin-left: 40px;
 }
 
 .questions-header .section-title {
@@ -484,6 +495,7 @@ export default {
   color: #ffffff;
   font-size: 16px;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .question-item:hover {
@@ -645,19 +657,19 @@ export default {
 /* 添加問題按鈕 - 與問題設置頭部完全一致 */
 .add-question-btn.el-button,
 .add-form-question-btn.el-button {
-  height: 42px;
-  padding: 0 16px;
+  height: 40px;
+  padding: 0 18px;
   font-size: 14px;
   font-weight: 600;
   color: #fff;
   background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
   border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.25);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   letter-spacing: 0.5px;
   white-space: nowrap;
 }
