@@ -42,14 +42,6 @@
                   <el-icon><Checked /></el-icon>
                   <span>多選</span>
                 </div>
-                <div class="type-btn" @click="addQuestion('10')">
-                  <el-icon><Notebook /></el-icon>
-                  <span>多項填空</span>
-                </div>
-                <div class="type-btn" @click="addQuestion('6')">
-                  <el-icon><Download /></el-icon>
-                  <span>下拉</span>
-                </div>
               </div>
             </div>
           </div>
@@ -174,7 +166,7 @@
                   </div>
 
                   <!-- 填空/文本 -->
-                  <div v-else-if="['3', '9', '10'].includes(question.type)">
+                  <div v-else-if="['3', '9'].includes(question.type)">
                     <el-input
                       v-model="question.placeholder"
                       placeholder="设置占位文字"
@@ -243,12 +235,10 @@
                   >
                     <el-option label="單選" value="1" />
                     <el-option label="多選" value="2" />
-                    <el-option label="下拉" value="6" />
                     <el-option label="圖片單選" value="7" />
                     <el-option label="圖片多選" value="8" />
                     <el-option label="單行文本" value="9" />
                     <el-option label="多行文本" value="3" />
-                    <el-option label="多項填空" value="10" />
                     <el-option label="附件" value="4" />
                     <el-option label="分支" value="5" />
                   </el-select>
@@ -475,8 +465,8 @@ export default {
     },
   
     hasOptionType(type) {
-      // 需要選項的題型：1=單選，2=多選，6=下拉，7=圖片單選，8=圖片多選
-      return ['1', '2', '6', '7', '8'].includes(type)
+      // 需要選項的題型：1=單選，2=多選，7=圖片單選，8=圖片多選
+      return ['1', '2', '7', '8'].includes(type)
     },
 
     initForm() {
@@ -533,7 +523,7 @@ export default {
 
     getDefaultOptions(type) {
       // 需要選項的題型返回初始選項
-      return ['1', '2', '6', '7', '8'].includes(type) ? ['', ''] : null
+      return ['1', '2', '7', '8'].includes(type) ? ['', ''] : null
     },
 
     selectQuestion(id) {
