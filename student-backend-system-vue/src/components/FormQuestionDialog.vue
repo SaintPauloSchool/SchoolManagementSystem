@@ -42,6 +42,10 @@
                   <el-icon><Checked /></el-icon>
                   <span>多選</span>
                 </div>
+                <div class="type-btn" @click="addQuestion('10')">
+                  <el-icon><Edit /></el-icon>
+                  <span>填空</span>
+                </div>
               </div>
             </div>
           </div>
@@ -175,6 +179,42 @@
                     />
                   </div>
 
+                  <!-- 填空題目（拖拽權限控制） -->
+                  <div v-else-if="question.type === '10'">
+                    <div class="fillblank-question-container">
+                      <!-- 题目内容编辑框 -->
+                      <div class="fillblank-editor">
+                        <div class="content-editable-container">
+                          <div 
+                            class="content-editable-div" 
+                            contenteditable="true"
+                            @input="onContentInput"
+                            @keydown="onContentKeydown"
+                            ref="contentEditableDiv"
+                            placeholder="請輸入題目內容，然後點擊「添加填空」在需要填空的位置插入下劃線佔位符"
+                          ></div>
+                        </div>
+                      </div>
+                      
+                      <!-- 添加填空按钮 -->
+                      <div class="fillblank-toolbar">
+                        <el-button 
+                          type="primary" 
+                          size="small" 
+                          @click="addFillBlank(question)"
+                          @mousedown.prevent
+                          class="add-fillblank-btn"
+                        >
+                          <el-icon><Plus /></el-icon>
+                          添加填空
+                        </el-button>
+                        <el-tag type="info" size="small" class="tip-tag">
+                          點擊按鈕將在光標位置插入下劃線佔位符
+                        </el-tag>
+                    </div>
+                    </div>
+                  </div>
+
                   <!-- 附件 -->
                   <div v-else-if="question.type === '4'">
                     <div class="attachment-placeholder">
@@ -241,6 +281,7 @@
                     <el-option label="多行文本" value="3" />
                     <el-option label="附件" value="4" />
                     <el-option label="分支" value="5" />
+                    <el-option label="填空" value="10" />
                   </el-select>
                 </div>
 
@@ -407,7 +448,7 @@
 import { 
   Edit, Close, Check, Menu, CircleCheck, Checked, 
   Delete, Plus, Upload, View, Download, Notebook, Grid, Connection,
-  ArrowUp, ArrowDown
+  ArrowUp, ArrowDown, InfoFilled
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
@@ -416,7 +457,7 @@ export default {
   components: {
     Edit, Close, Check, Menu, CircleCheck, Checked, 
     Delete, Plus, Upload, View, Download, Notebook, Grid, Connection,
-    ArrowUp, ArrowDown
+    ArrowUp, ArrowDown, InfoFilled
   },
   props: {
     visible: {
@@ -452,6 +493,41 @@ export default {
       if (newVal) {
         this.initForm()
       }
+    }
+  },
+  mounted() {
+    // 注册全局删除方法（用于预览区域）
+    window.removeFillBlank = (index) => {
+      if (this.selectedQuestion) {
+        this.removeFillBlank(this.selectedQuestion, index)
+      }
+    }
+    
+    // 初始化 contenteditable div 的事件委托
+    this.$nextTick(() => {
+      let editableDiv = this.$refs.contentEditableDiv
+      // 如果是数组，取第一个元素
+      if (Array.isArray(editableDiv) && editableDiv.length > 0) {
+        editableDiv = editableDiv[0]
+      }
+      
+      if (editableDiv) {
+        editableDiv.addEventListener('click', (e) => {
+          if (e.target.classList.contains('blank-tag-remove')) {
+            const tag = e.target.closest('.editable-blank-tag')
+            if (tag) {
+              const index = parseInt(tag.dataset.index)
+              this.removeFillBlank(this.selectedQuestion, index)
+            }
+          }
+        })
+      }
+    })
+  },
+  beforeDestroy() {
+    // 清理全局方法
+    if (window.removeFillBlank) {
+      delete window.removeFillBlank
     }
   },
   methods: {
@@ -515,6 +591,12 @@ export default {
         ] : null
       }
       
+      // 如果是填空题类型（新增的拖拽权限控制题目）
+      if (type === '10') {
+        question.fillBlanks = [] // 初始为空，由用户动态添加
+        question.correctAnswers = [] // 正确答案数组，与 fillBlanks 对应
+      }
+      
       this.questionList.push(question)
       this.selectedQuestionId = question.id
       
@@ -523,7 +605,14 @@ export default {
 
     getDefaultOptions(type) {
       // 需要選項的題型返回初始選項
-      return ['1', '2', '7', '8'].includes(type) ? ['', ''] : null
+      if (['1', '2', '7', '8'].includes(type)) {
+        return ['', '']
+      }
+      // 填空題類型返回空數組
+      if (type === '10') {
+        return null
+      }
+      return null
     },
 
     selectQuestion(id) {
@@ -585,6 +674,214 @@ export default {
       ElMessage.info('點擊選項後可設置添加填空和選項別名')
     },
 
+    handleFillBlankAnswer(index, value, question) {
+      if (!question.userAnswers) {
+        question.userAnswers = []
+      }
+      question.userAnswers[index] = value
+    },
+
+    addFillBlank(question) {
+      if (!question.fillBlanks) {
+        question.fillBlanks = []
+      }
+      const newBlank = {
+        id: `fillblank-${Date.now()}`,
+        type: 'fillblank',
+        required: true,
+        validate: 'unlimited'
+      }
+      question.fillBlanks.push(newBlank)
+      if (!question.correctAnswers) {
+        question.correctAnswers = []
+      }
+      question.correctAnswers.push('') // 添加空的答案占位
+      
+      // 在 contenteditable div 中插入占位符标签
+      let editableDiv = this.$refs.contentEditableDiv
+      // 如果是数组，取第一个元素
+      if (Array.isArray(editableDiv) && editableDiv.length > 0) {
+        editableDiv = editableDiv[0]
+      }
+      
+      if (editableDiv) {
+        const selection = window.getSelection()
+        let range;
+        
+        if (selection && selection.rangeCount > 0) {
+          range = selection.getRangeAt(0)
+          // 確保光標在編輯區域內，否則默認添加到末尾
+          if (!editableDiv.contains(range.commonAncestorContainer) && editableDiv !== range.commonAncestorContainer) {
+            range = null
+          }
+        }
+        
+        if (!range) {
+          range = document.createRange()
+          range.selectNodeContents(editableDiv)
+          range.collapse(false) // 光標移到最後
+          if (selection) {
+            selection.removeAllRanges()
+            selection.addRange(range)
+          }
+        }
+        
+        // 创建占位符标签
+        const blankIndex = question.fillBlanks.length
+        const blankTag = document.createElement('span')
+        blankTag.className = 'editable-blank-tag'
+        blankTag.contentEditable = 'false'
+        blankTag.style.cssText = 'display:inline-block;position:relative;text-align:center;padding:0 2px 14px 2px;margin:0 2px;vertical-align:baseline;white-space:nowrap;cursor:default;user-select:none;'
+        blankTag.innerHTML = `<span style="display:inline-block;font-size:14px;color:transparent;border-bottom:1px solid #303133;min-width:80px;">____________</span><span style="position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:11px;color:#E6A23C;white-space:nowrap;line-height:1;"><span style="color:#F56C6C;">*</span> 填空${blankIndex}</span>`
+        blankTag.dataset.index = blankIndex - 1
+        
+        // 插入到光标位置（先收合選取範圍，避免刪除已選中的文字）
+        range.collapse(false)
+        
+        // 在佔位符前後插入零寬空格，防止瀏覽器在輸入文字時誤刪非可編輯元素
+        const zwsp = '\u200B'
+        const afterText = document.createTextNode(zwsp)
+        const beforeText = document.createTextNode(zwsp)
+        
+        range.insertNode(afterText)
+        range.insertNode(blankTag)
+        range.insertNode(beforeText)
+        
+        // 光标移到佔位符後面的零寬空格之後
+        range.setStartAfter(afterText)
+        range.setEndAfter(afterText)
+        selection.removeAllRanges()
+        selection.addRange(range)
+          
+          // 同步更新 content
+          let html = editableDiv.innerHTML
+          const tags = editableDiv.querySelectorAll('.editable-blank-tag')
+          tags.forEach((tag) => {
+            const index = parseInt(tag.dataset.index) + 1
+            const placeholder = `{{fillblank-${index}}}`
+            html = html.replace(tag.outerHTML, placeholder)
+          })
+          const tempDiv = document.createElement('div')
+          tempDiv.innerHTML = html
+          question.content = tempDiv.textContent || tempDiv.innerText || ''
+      }
+      
+      ElMessage.success('已添加填空')
+    },
+
+    onContentInput() {
+      // 内容变化时不立即同步，避免光标跳动
+      // 只在保存时才同步
+    },
+
+    onContentKeydown(e) {
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        const selection = window.getSelection()
+        if (!selection || selection.rangeCount === 0) return
+        
+        const range = selection.getRangeAt(0)
+        
+        // 分别处理 Backspace 和 Delete
+        if (e.key === 'Backspace') {
+          // 查找光标前一个节点
+          let prevNode = null
+          if (range.startContainer.nodeType === 3) {
+            // 在文本节点中
+            if (range.startOffset === 0) {
+              prevNode = range.startContainer.previousSibling
+            }
+          } else if (range.startContainer.nodeType === 1) {
+            // 在元素节点中
+            if (range.startOffset > 0) {
+              prevNode = range.startContainer.childNodes[range.startOffset - 1]
+            }
+          }
+          
+          if (prevNode && prevNode.classList && prevNode.classList.contains('editable-blank-tag')) {
+            e.preventDefault()
+            prevNode.remove()
+            return
+          }
+        } 
+        else if (e.key === 'Delete') {
+          // 查找光标后一个节点
+          let nextNode = null
+          if (range.startContainer.nodeType === 3) {
+            // 在文本节点中
+            if (range.startOffset === range.startContainer.length) {
+              nextNode = range.startContainer.nextSibling
+            }
+          } else if (range.startContainer.nodeType === 1) {
+            // 在元素节点中
+            if (range.startOffset < range.startContainer.childNodes.length) {
+              nextNode = range.startContainer.childNodes[range.startOffset]
+            }
+          }
+          
+          if (nextNode && nextNode.classList && nextNode.classList.contains('editable-blank-tag')) {
+            e.preventDefault()
+            nextNode.remove()
+            return
+          }
+        }
+      }
+    },
+
+    removeFillBlank(question, index) {
+      if (question.fillBlanks && question.fillBlanks.length > 0) {
+        question.fillBlanks.splice(index, 1)
+        if (question.correctAnswers && question.correctAnswers.length > index) {
+          question.correctAnswers.splice(index, 1)
+        }
+        ElMessage.success('已刪除填空')
+      }
+    },
+
+    renderFillBlanks(question) {
+      if (!question.content) return ''
+      
+      let html = question.content
+      // 先转义 HTML 特殊字符
+      html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      
+      // 匹配所有可能的占位符格式（包括损坏的）
+      const allPlaceholderPatterns = [
+        /\{\{fillblank-(\d+)\}\}/g,  // 完整格式
+        /\{fillblank-(\d+)\}\}/g,     // 缺少一个 {
+        /\{\{fillblank-(\d+)\}/g,     // 缺少一个 }
+        /\{fillblank-(\d+)\}/g        // 缺少两个 {}
+      ]
+      
+      // 收集所有找到的占位符
+      const foundPlaceholders = new Set()
+      allPlaceholderPatterns.forEach(pattern => {
+        let match
+        while ((match = pattern.exec(html)) !== null) {
+          foundPlaceholders.add(parseInt(match[1]) - 1)
+        }
+      })
+      
+      // 按顺序替换所有找到的占位符
+      const sortedIndices = Array.from(foundPlaceholders).sort((a, b) => a - b)
+      sortedIndices.forEach(index => {
+        // 匹配这个占位符的各种格式
+        const patterns = [
+          new RegExp(`\\{\\{fillblank-${index + 1}\\}\\}`, 'g'),
+          new RegExp(`\\{fillblank-${index + 1}\\}\\}`, 'g'),
+          new RegExp(`\\{\\{fillblank-${index + 1}\\}`, 'g'),
+          new RegExp(`\\{fillblank-${index + 1}\\}`, 'g')
+        ]
+        
+        const underlineBlank = `<span class="underline-placeholder" data-index="${index}"><span class="underline-text">__________</span><i class="remove-blank-icon" onclick="window.removeFillBlank(${index})">×</i></span>`
+        
+        patterns.forEach(pattern => {
+          html = html.replace(pattern, underlineBlank)
+        })
+      })
+      
+      return html
+    },
+
     scrollToLeftPanel() {
       ElMessage.info('請從左側面板選擇題型添加題目')
     },
@@ -615,6 +912,21 @@ export default {
             ElMessage.warning(`第 ${i + 1} 題至少需要 2 個選項`)
             this.selectedQuestionId = q.id
             return
+          }
+        }
+        
+        // 驗證填空題
+        if (q.type === '10') {
+          if (q.fillBlanks && q.fillBlanks.length > 0) {
+            for (let j = 0; j < q.fillBlanks.length; j++) {
+              const blank = q.fillBlanks[j]
+              const userAnswer = q.userAnswers ? q.userAnswers[j] : ''
+              if (blank.required && (!userAnswer || !userAnswer.trim())) {
+                ElMessage.warning(`第 ${i + 1} 題的第 ${j + 1} 個填空不能為空`)
+                this.selectedQuestionId = q.id
+                return
+              }
+            }
           }
         }
       }
@@ -1634,6 +1946,261 @@ export default {
   justify-content: center;
   align-items: center;
   height: 100%;
+}
+
+/* 填空題目樣式 */
+.fillblank-question-container {
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 12px;
+  border: 2px solid #e4e7ed;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.fillblank-editor {
+  margin-bottom: 16px;
+}
+
+.content-textarea {
+  width: 100%;
+}
+
+.content-textarea :deep(.el-textarea__inner) {
+  font-size: 14px;
+  line-height: 1.8;
+  border: 2px solid #409EFF;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.content-textarea :deep(.el-textarea__inner):hover {
+  border-color: #67c23a;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
+}
+
+.content-textarea :deep(.el-textarea__inner):focus {
+  border-color: #67c23a;
+  box-shadow: 0 4px 16px rgba(103, 194, 58, 0.15);
+  background: #ffffff;
+}
+
+.content-editable-wrapper {
+  position: relative;
+}
+
+.editable-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border: 1px dashed #dcdfe6;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #909399;
+}
+
+.editable-hint .el-icon {
+  font-size: 14px;
+  color: #409EFF;
+}
+
+.content-editable-container {
+  position: relative;
+}
+
+.content-editable-div {
+  width: 100%;
+  min-height: 150px;
+  max-height: 400px;
+  padding: 16px 16px;
+  border: 2px solid #e4e7ed;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 3;
+  color: #303133;
+  background: #ffffff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.content-editable-div:hover {
+  border-color: #67c23a;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
+}
+
+.content-editable-div:focus {
+  border-color: #409EFF;
+  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.15);
+  background: #ffffff;
+}
+
+.content-editable-div:empty:before {
+  content: attr(placeholder);
+  color: #909399;
+  opacity: 0.6;
+}
+
+.editable-blank-tag {
+  display: inline-block;
+  position: relative;
+  text-align: center;
+  padding: 0 2px 16px 2px;
+  margin: 0 2px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: default;
+  user-select: none;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.editable-blank-tag:hover .blank-tag-line {
+  border-bottom-color: #409EFF;
+}
+
+.blank-tag-line {
+  font-size: 14px;
+  color: transparent;
+  border-bottom: 1px solid #303133;
+  min-width: 80px;
+  display: inline-block;
+}
+
+.blank-tag-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  font-size: 11px;
+  color: #E6A23C;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.blank-tag-star {
+  color: #F56C6C;
+  font-size: 11px;
+}
+
+.fillblank-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed #dcdfe6;
+}
+
+.tip-tag {
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+.add-fillblank-btn {
+  background: linear-gradient(135deg, #409EFF 0%, #67c23a 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.add-fillblank-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
+}
+
+.fillblank-preview {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 2px solid #e4e7ed;
+}
+
+.preview-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #67c23a;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.preview-label::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: linear-gradient(180deg, #409EFF 0%, #67c23a 100%);
+  border-radius: 2px;
+}
+
+.fillblank-text {
+  line-height: 2.5;
+  font-size: 15px;
+  color: #303133;
+  display: block;
+}
+
+.underline-placeholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  margin: 0 4px;
+}
+
+.underline-text {
+  display: inline-block;
+  color: #409EFF;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 4px 12px 2px;
+  border-bottom: 2px solid #409EFF;
+  min-width: 100px;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.05) 0%, rgba(64, 158, 255, 0.02) 100%);
+  border-radius: 2px 2px 0 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.underline-text:hover {
+  color: #67c23a;
+  border-bottom-color: #67c23a;
+  background: linear-gradient(135deg, rgba(103, 194, 58, 0.08) 0%, rgba(103, 194, 58, 0.03) 100%);
+  transform: translateY(-1px);
+}
+
+.remove-blank-icon {
+  font-size: 14px;
+  cursor: pointer;
+  color: #909399;
+  transition: all 0.2s ease;
+  margin-left: 4px;
+}
+
+.remove-blank-icon:hover {
+  color: #F56C6C;
+  transform: scale(1.2);
+}
+
+.fillblank-tips {
+  margin-top: 16px;
+}
+
+.mt-2 {
+  margin-top: 8px;
 }
 
 /* 響應式設計 */
