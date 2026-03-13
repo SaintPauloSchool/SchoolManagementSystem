@@ -112,13 +112,21 @@
                     {{ getQuestionTypeText(question.type) }}
                   </el-tag>
                   <div class="question-actions">
-                    <el-button size="small" @click="editQuestion(index)">
-                      <el-icon><Edit /></el-icon>
-                      編輯
-                    </el-button>
-                    <el-button size="small" @click="editFormQuestion(index)">
+                    <el-button 
+                      v-if="question.questionType === 'form'" 
+                      size="small" 
+                      @click="editFormQuestion(index)"
+                    >
                       <el-icon><Edit /></el-icon>
                       表單編輯
+                    </el-button>
+                    <el-button 
+                      v-else 
+                      size="small" 
+                      @click="editQuestion(index)"
+                    >
+                      <el-icon><Edit /></el-icon>
+                      編輯
                     </el-button>
                     <el-button size="small" type="danger" @click="removeQuestion(index)">
                       <el-icon><Delete /></el-icon>
@@ -397,10 +405,12 @@ export default {
       if (this.editingFormQuestion) {
         const index = this.localFormData.questions.findIndex(q => q.id === this.editingFormQuestion.id)
         if (index > -1) {
+          question.questionType = 'form'
           this.localFormData.questions[index] = question
         }
       } else {
         question.id = Date.now()
+        question.questionType = 'form'
         this.localFormData.questions.push(question)
       }
       
@@ -427,10 +437,14 @@ export default {
       if (this.editingQuestion) {
         const index = this.localFormData.questions.findIndex(q => q.id === this.editingQuestion.id)
         if (index > -1) {
+          if (!question.questionType) {
+            question.questionType = 'normal'
+          }
           this.localFormData.questions[index] = question
         }
       } else {
         question.id = Date.now()
+        question.questionType = 'normal'
         this.localFormData.questions.push(question)
       }
       

@@ -448,7 +448,7 @@
 </template>
 
 <script>
-import { Plus, Delete, ChatDotRound, Check, CircleCheck, Edit, Paperclip, Share, List, Bell, Close, ArrowRight, Upload, Document } from '@element-plus/icons-vue'
+import { Plus, Delete, ChatDotRound, Check, CircleCheck, Edit, Paperclip, Share, List, Bell, Close, ArrowRight, Upload } from '@element-plus/icons-vue'
 
 export default {
   name: 'QuestionDialog',
@@ -465,8 +465,7 @@ export default {
     Bell,
     Close,
     ArrowRight,
-    Upload,
-    Document
+    Upload
   },
   props: {
     visible: {

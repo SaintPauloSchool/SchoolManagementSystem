@@ -138,7 +138,7 @@
 </template>
 
 <script>
-import { CircleCheck, Checked, EditPen, Paperclip, Check, List, ArrowRight } from '@element-plus/icons-vue'
+import { CircleCheck, Checked, EditPen, Paperclip, Check, List } from '@element-plus/icons-vue'
 import SingleChoiceEditor from './question-editors/SingleChoiceEditor.vue'
 import MultipleChoiceEditor from './question-editors/MultipleChoiceEditor.vue'
 import FillInBlankEditor from './question-editors/FillInBlankEditor.vue'
