@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Arrays;
 
 /**
- * 通知Controller
+ * 通知 Controller
  *
  */
 @RestController
@@ -41,7 +41,7 @@ public class NotificationController extends BaseController {
     private INotificationQuestionService notificationQuestionService;
 
     /**
-     * 查询通知列表
+     * 查詢通知列表
      */
     @PreAuthorize("@ss.hasPermi('system:notification:list')")
     @GetMapping("/list")
@@ -52,14 +52,14 @@ public class NotificationController extends BaseController {
     }
 
     /**
-     * 查询抄送给我的通知列表
+     * 查詢抄送給我的通知列表
      */
     @PreAuthorize("@ss.hasPermi('system:notification:ccToList')")
     @GetMapping("/ccToMe")
     public TableDataInfo ccToMe() {
-        // 获取当前登录用户信息
+        // 獲取當前登錄用戶信息
         Long userId = getUserId();
-        String userType = getUserType(); // 需要在BaseController中实现
+        String userType = getUserType(); // 需要在 BaseController 中實現
         
         startPage();
         List<Notification> list = notificationService.selectCcToMeList(userId, userType);
@@ -67,7 +67,7 @@ public class NotificationController extends BaseController {
     }
 
     /**
-     * 查询我发送的通知列表
+     * 查詢我發送的通知列表
      */
     @PreAuthorize("@ss.hasPermi('system:notification:mySend')")
     @GetMapping("/mySend")
@@ -79,7 +79,7 @@ public class NotificationController extends BaseController {
     }
 
     /**
-     * 获取通知详细信息
+     * 獲取通知詳細信息
      */
     @PreAuthorize("@ss.hasPermi('system:notification:query')")
     @GetMapping(value = "/{notificationId}")
@@ -89,11 +89,11 @@ public class NotificationController extends BaseController {
             return AjaxResult.error("通知不存在");
         }
         
-        // 获取接收对象信息
+        // 獲取接收對象信息
         List<NotificationReceiver> receivers = notificationReceiverService.selectByNotificationId(notificationId);
-        // 获取抄送对象信息
+        // 獲取抄送對象信息
         List<NotificationCc> ccs = notificationCcService.selectByNotificationId(notificationId);
-        // 获取问题信息
+        // 獲取問題信息
         List<NotificationQuestion> questions = notificationQuestionService.selectByNotificationId(notificationId);
         
         AjaxResult result = AjaxResult.success(notification);
@@ -105,18 +105,18 @@ public class NotificationController extends BaseController {
     }
 
     /**
-     * 发布通知
+     * 發布通知
      */
     @PreAuthorize("@ss.hasPermi('system:notification:add')")
     @Log(title = "发布通知", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody Notification notification) {
-        // 设置发送人信息
+        // 設置發送人信息
         notification.setSenderId(getUserId());
-        notification.setSenderName(getUsername()); // 需要在BaseController中实现
+        notification.setSenderName(getUsername()); // 需要在 BaseController 中實現
         
         int result = notificationService.insertNotification(notification);
-        return result > 0 ? AjaxResult.success() : AjaxResult.error("发布失败");
+        return result > 0 ? AjaxResult.success() : AjaxResult.error("發布失敗");
     }
 
     /**
@@ -127,18 +127,18 @@ public class NotificationController extends BaseController {
     @PutMapping
     public AjaxResult edit(@RequestBody Notification notification) {
         int result = notificationService.updateNotification(notification);
-        return result > 0 ? AjaxResult.success() : AjaxResult.error("修改失败");
+        return result > 0 ? AjaxResult.success() : AjaxResult.error("修改失敗");
     }
 
     /**
-     * 删除通知
+     * 刪除通知
      */
     @PreAuthorize("@ss.hasPermi('system:notification:remove')")
     @Log(title = "删除通知", businessType = BusinessType.DELETE)
     @DeleteMapping("/{notificationIds}")
     public AjaxResult remove(@PathVariable Long[] notificationIds) {
         int result = notificationService.deleteNotificationByIds(Arrays.asList(notificationIds));
-        return result > 0 ? AjaxResult.success() : AjaxResult.error("删除失败");
+        return result > 0 ? AjaxResult.success() : AjaxResult.error("刪除失敗");
     }
 
     /**
@@ -153,8 +153,8 @@ public class NotificationController extends BaseController {
             return AjaxResult.error("通知不存在");
         }
         
-        notification.setStatus("2"); // 设置为已撤回状态
+        notification.setStatus("2"); // 設置為已撤回狀態
         int result = notificationService.updateNotification(notification);
-        return result > 0 ? AjaxResult.success() : AjaxResult.error("撤回失败");
+        return result > 0 ? AjaxResult.success() : AjaxResult.error("撤回失敗");
     }
 }

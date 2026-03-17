@@ -31,13 +31,13 @@
       </el-form-item>
 
       <!-- 發送人 -->
-      <el-form-item label="发送人" prop="senderName">
+      <el-form-item label="發送人" prop="senderName">
         <el-input
           v-model="localFormData.senderName"
           disabled
           placeholder="系統自動填充當前登錄用戶"
         />
-        <div class="form-tip">发送人默認為當前登錄用戶，不可修改</div>
+        <div class="form-tip">發送人默認為當前登錄用戶，不可修改</div>
       </el-form-item>
 
       <!-- 跳轉連結 -->

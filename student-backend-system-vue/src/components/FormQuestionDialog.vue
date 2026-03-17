@@ -1,7 +1,7 @@
 1<template>
   <div class="form-question-dialog-overlay" v-if="visible">
     <div class="form-question-dialog">
-      <!-- 顶部工具栏 -->
+      <!-- 頂部工具欄 -->
       <div class="dialog-toolbar">
         <div class="toolbar-left">
           <h2 class="toolbar-title">
@@ -21,13 +21,13 @@
         </div>
       </div>
 
-      <!-- 主体内容区 - 三栏布局 -->
+      <!-- 主體內容區 - 三欄佈局 -->
       <div class="dialog-main">
-        <!-- 左侧：题型选择器 -->
+        <!-- 左側：題型選擇器 -->
         <div class="left-panel">
-          <!-- 可折叠的面板组 -->
+          <!-- 可折疊的面板組 -->
           <el-collapse v-model="activePanels" accordion>
-            <!-- 题型选择面板 -->
+            <!-- 題型選擇面板 -->
             <el-collapse-item name="questionType">
               <template #title>
                 <div class="panel-title-with-icon">
@@ -36,7 +36,7 @@
                 </div>
               </template>
               <div class="panel-content">
-                <!-- 题目类型 -->
+                <!-- 題目類型 -->
                 <div class="question-type-section">
                   <div class="section-title">題目類型</div>
                   <div class="type-grid">
@@ -57,7 +57,7 @@
               </div>
             </el-collapse-item>
 
-            <!-- 逻辑编辑面板 -->
+            <!-- 邏輯編輯面板 -->
             <el-collapse-item name="logicEdit">
               <template #title>
                 <div class="panel-title-with-icon">
@@ -66,18 +66,18 @@
                 </div>
               </template>
               <div class="panel-content">
-                <!-- 逻辑编辑内容 -->
+                <!-- 邏輯編輯內容 -->
                 <div class="logic-edit-section">
                   <div v-if="selectedQuestion" class="logic-editor">
-                    <!-- 题型提示 -->
+                    <!-- 題型提示 -->
                     <div class="question-type-hint">
                       <el-tag :type="getLogicTypeTag(selectedQuestion.type)" size="small">
                         {{ getQuestionTypeName(selectedQuestion.type) }}
                       </el-tag>
-                      <span class="hint-text">此題型支持跳轉邏輯</span>
+                      <span class="hint-text">此題型支援跳轉邏輯</span>
                     </div>
 
-                    <!-- 选项跳转逻辑 -->
+                    <!-- 選項跳轉邏輯 -->
                     <div v-if="hasOptionType(selectedQuestion.type)" class="logic-rules-wrapper">
                       <div class="logic-rules-header">
                         <span class="rules-title">跳轉規則列表</span>
@@ -88,11 +88,11 @@
                           class="add-rule-btn"
                         >
                           <el-icon><Plus /></el-icon>
-                          添加邏輯
+                          新增邏輯
                         </el-button>
                       </div>
 
-                      <!-- 逻辑规则卡片 -->
+                      <!-- 邏輯規則卡片 -->
                       <div 
                         v-for="(rule, ruleIndex) in selectedQuestion.logicRuleList" 
                         :key="rule.id"
@@ -121,7 +121,7 @@
                           </div>
 
                           <div class="rule-row">
-                            <span class="rule-label">选中</span>
+                            <span class="rule-label">選中</span>
                             <el-select 
                               v-model="rule.optionIndex" 
                               placeholder="選擇選項"
@@ -138,7 +138,7 @@
                           </div>
 
                           <div class="rule-row">
-                            <span class="rule-label">则</span>
+                            <span class="rule-label">則</span>
                             <span class="rule-action-label">跳轉至</span>
                             <el-select 
                               v-model="rule.jumpTarget" 
@@ -163,7 +163,7 @@
                             </el-select>
                           </div>
 
-                          <!-- 规则预览标签 -->
+                          <!-- 規則預覽標籤 -->
                           <div class="rule-preview">
                             <el-tag :type="getRulePreviewTag(rule.jumpTarget)" size="small">
                               當選擇 {{ getOptionName(rule.optionIndex) }} 時 → {{ getJumpTargetName(rule.jumpTarget) }}
@@ -172,14 +172,14 @@
                         </div>
                       </div>
 
-                      <!-- 空状态 -->
+                      <!-- 空狀態 -->
                       <div v-if="!selectedQuestion.logicRuleList || selectedQuestion.logicRuleList.length === 0" class="empty-rules">
                         <el-empty description="暫無跳轉規則" :image-size="60" />
-                        <el-tag type="info" size="small">💡 點擊「添加邏輯」開始設置</el-tag>
+                        <el-tag type="info" size="small">💡 點擊「新增邏輯」開始設置</el-tag>
                       </div>
                     </div>
 
-                    <!-- 填空题的逻辑提示 -->
+                    <!-- 填空題的邏輯提示 -->
                     <div v-else-if="['3', '9', '10'].includes(selectedQuestion.type)" class="no-logic-hint">
                       <el-icon><InfoFilled /></el-icon>
                       <div class="hint-content">
@@ -188,14 +188,14 @@
                       </div>
                     </div>
 
-                    <!-- 其他不支持的题型 -->
+                    <!-- 其他不支援的題型 -->
                     <div v-else class="no-logic-hint">
                       <el-icon><CircleClose /></el-icon>
-                      <span>該題型不支持跳轉邏輯</span>
+                      <span>該題型不支援跳轉邏輯</span>
                     </div>
                   </div>
                   <div v-else class="no-selection-logic">
-                    <el-empty description="請在中间区域選擇題目進行邏輯設置" :image-size="80" />
+                    <el-empty description="請在中間區域選擇題目進行邏輯設置" :image-size="80" />
                     <div class="empty-tips">
                       <el-tag type="info" size="small">💡 點擊任意題目即可開始設置邏輯</el-tag>
                     </div>
@@ -206,10 +206,10 @@
           </el-collapse>
         </div>
 
-        <!-- 中间：问卷预览/编辑区 -->
+        <!-- 中間：問卷預覽/編輯區 -->
         <div class="center-panel">
           <div class="questionnaire-preview">
-            <!-- 问卷头部 -->
+            <!-- 問卷頭部 -->
             <div class="questionnaire-header">
               <div class="header-row">
                 <span class="header-label">標題:</span>
@@ -231,7 +231,7 @@
               </div>
             </div>
 
-            <!-- 题目列表 -->
+            <!-- 題目列表 -->
             <div class="questionnaire-body">
               <div
                 v-for="(question, index) in questionList"
@@ -251,7 +251,7 @@
                     class="question-title-input"
                     @click.stop
                   />
-                  <!-- 题型标签 -->
+                  <!-- 題型標籤 -->
                   <el-tag 
                     :type="getQuestionTypeTag(question.type)" 
                     size="small"
@@ -276,9 +276,9 @@
                   </div>
                 </div>
 
-                <!-- 题目内容预览 -->
+                <!-- 題目內容預覽 -->
                 <div class="question-content">
-                  <!-- 单选/多选/下拉 -->
+                  <!-- 單選/多選/下拉 -->
                   <div v-if="hasOptionType(question.type)">
                     <div class="options-container">
                       <div 
@@ -317,7 +317,7 @@
                           </el-button>
                         </div>
                       </div>
-                      <!-- 底部添加选项按钮 -->
+                      <!-- 底部添加選項按鈕 -->
                       <div class="add-option-row">
                         <el-button 
                           size="small" 
@@ -326,7 +326,7 @@
                           @click.stop="addOptionToQuestion(question)"
                         >
                           <el-icon><Plus /></el-icon>
-                          添加選項
+                          新增選項
                         </el-button>
                       </div>
                     </div>
@@ -336,7 +336,7 @@
                   <div v-else-if="['3', '9'].includes(question.type)">
                     <el-input
                       v-model="question.placeholder"
-                      placeholder="设置占位文字"
+                      placeholder="設置佔位文字"
                       size="small"
                       class="placeholder-input"
                     />
@@ -345,7 +345,7 @@
                   <!-- 填空題目（拖拽權限控制） -->
                   <div v-else-if="question.type === '10'">
                     <div class="fillblank-question-container">
-                      <!-- 题目内容编辑框 -->
+                      <!-- 題目內容編輯框 -->
                       <div class="fillblank-editor">
                         <div class="content-editable-container">
                           <div 
@@ -354,12 +354,12 @@
                             @input="onContentInput"
                             @keydown="onContentKeydown"
                             ref="contentEditableDiv"
-                            placeholder="請輸入題目內容，然後點擊「添加填空」在需要填空的位置插入下劃線佔位符"
+                            placeholder="請輸入題目內容，然後點擊「新增填空」在需要填空的位置插入下劃線佔位符"
                           ></div>
                         </div>
                       </div>
                       
-                      <!-- 添加填空按钮 -->
+                      <!-- 添加填空按鈕 -->
                       <div class="fillblank-toolbar">
                         <el-button 
                           type="primary" 
@@ -369,7 +369,7 @@
                           class="add-fillblank-btn"
                         >
                           <el-icon><Plus /></el-icon>
-                          添加填空
+                          新增填空
                         </el-button>
                         <el-tag type="info" size="small" class="tip-tag">
                           點擊按鈕將在光標位置插入下劃線佔位符
@@ -398,25 +398,25 @@
                 </div>
               </div>
 
-              <!-- 空状态 -->
+              <!-- 空狀態 -->
               <div v-if="questionList.length === 0" class="empty-state">
-                <el-empty description="請從左側選擇題型添加題目" />
+                <el-empty description="請從左側選擇題型新增題目" />
               </div>
             </div>
 
-            <!-- 底部添加按钮 -->
+            <!-- 底部新增按鈕 -->
             <div class="questionnaire-footer">
               <el-button class="add-question-tips" size="large" @click="scrollToLeftPanel">
                 <el-icon><Plus /></el-icon>
-                從左側添加題目
+                從左側新增題目
               </el-button>
             </div>
           </div>
         </div>
 
-        <!-- 右侧：属性设置面板 -->
+        <!-- 右側：屬性設置面板 -->
         <div class="right-panel">
-          <!-- 顶部标签页 -->
+          <!-- 頂部標籤頁 -->
           <div class="panel-tabs">
             <el-tabs v-model="activeTab" type="border-card">
               <el-tab-pane label="題目" name="question" />
@@ -426,7 +426,7 @@
           
           <div class="panel-content">
             <div v-if="selectedQuestion" class="settings-form">
-              <!-- 题目设置 -->
+              <!-- 題目設置 -->
               <div v-show="activeTab === 'question'">
                 <div class="settings-section">
                   <div class="section-header">題目類型</div>
@@ -471,7 +471,7 @@
 
               </div>
 
-              <!-- 选项设置 -->
+              <!-- 選項設置 -->
               <div v-show="activeTab === 'options'">
                 <div class="settings-section">
                   <div class="section-header">選項設置</div>
@@ -506,7 +506,7 @@
                       class="add-option-btn"
                     >
                       <el-icon><Plus /></el-icon>
-                      添加選項
+                      新增選項
                     </el-button>
                   </div>
                 </div>
@@ -568,7 +568,7 @@ export default {
     return {
       viewMode: 'edit', // edit | preview
       activeTab: 'question', // question | options
-      activePanels: ['questionType'], // 默认展开题型选择面板
+      activePanels: ['questionType'], // 默認展開題型選擇面板
       selectedQuestionId: null,
       questionList: [],
       questionnaireData: {
@@ -591,17 +591,17 @@ export default {
     }
   },
   mounted() {
-    // 注册全局删除方法（用于预览区域）
+    // 註冊全局刪除方法（用於預覽區域）
     window.removeFillBlank = (index) => {
       if (this.selectedQuestion) {
         this.removeFillBlank(this.selectedQuestion, index)
       }
     }
     
-    // 初始化 contenteditable div 的事件委托
+    // 初始化 contenteditable div 的事件委託
     this.$nextTick(() => {
       let editableDiv = this.$refs.contentEditableDiv
-      // 如果是数组，取第一个元素
+      // 如果是數組，取第一個元素
       if (Array.isArray(editableDiv) && editableDiv.length > 0) {
         editableDiv = editableDiv[0]
       }
@@ -640,7 +640,7 @@ export default {
       return ['1', '2', '7', '8'].includes(type)
     },
 
-    // 获取题型名称
+    // 獲取題型名稱
     getQuestionTypeName(type) {
       const typeMap = {
         '1': '單選題',
@@ -656,7 +656,7 @@ export default {
       return typeMap[type] || '未知題型'
     },
 
-    // 获取题型标签颜色
+    // 獲取題型標籤顏色
     getLogicTypeTag(type) {
       const tagMap = {
         '1': 'success',
@@ -672,7 +672,7 @@ export default {
       return tagMap[type] || 'info'
     },
 
-    // 获取题目类型标签颜色（用于题目列表）
+    // 獲取題目類型標籤顏色（用於題目列表）
     getQuestionTypeTag(type) {
       const tagMap = {
         '1': 'success',
@@ -688,7 +688,7 @@ export default {
       return tagMap[type] || 'info'
     },
 
-    // 获取跳转目标显示名称
+    // 獲取跳轉目標顯示名稱
     getJumpTargetName(target, optionIndex) {
       if (!target) {
         return '未設置'
@@ -699,7 +699,7 @@ export default {
       if (target === 'end') {
         return '結束問卷'
       }
-      // 查找对应的题目
+      // 查找對應的題目
       const question = this.questionList.find(q => q.id === target)
       if (question) {
         const index = this.questionList.findIndex(q => q.id === target)
@@ -708,7 +708,7 @@ export default {
       return '未知目標'
     },
 
-    // 获取跳转类型标签颜色
+    // 獲取跳轉類型標籤顏色
     getJumpTypeTag(target) {
       if (!target) {
         return 'info'
@@ -722,7 +722,7 @@ export default {
       return 'warning'
     },
 
-    // 获取规则预览标签颜色
+    // 獲取規則預覽標籤顏色
     getRulePreviewTag(target) {
       if (!target) {
         return 'info'
@@ -736,7 +736,7 @@ export default {
       return 'warning'
     },
 
-    // 获取选项名称
+    // 獲取選項名稱
     getOptionName(optionIndex) {
       if (optionIndex === null || optionIndex === undefined) {
         return '未選擇'
@@ -748,14 +748,14 @@ export default {
       return `${this.getOptionLabel(optionIndex)}. ${option || '未命名'}`
     },
 
-    // 检查规则是否有错误
+    // 檢查規則是否有錯誤
     hasRuleError(rule) {
       return !rule.optionIndex || !rule.jumpTarget
     },
 
-    // 添加逻辑规则
+    // 新增邏輯規則
     addLogicRule() {
-      console.log('点击了添加逻辑按钮')
+      console.log('點擊了新增邏輯按鈕')
       if (!this.selectedQuestion) {
         ElMessage.warning('請先選擇題目')
         return
@@ -774,12 +774,12 @@ export default {
       this.selectedQuestion.logicRuleList.push(newRule)
       
       ElMessage.success({
-        message: '已添加跳轉規則',
+        message: '已新增跳轉規則',
         offset: 100
       })
     },
 
-    // 删除逻辑规则
+    // 刪除邏輯規則
     removeLogicRule(ruleIndex) {
       if (!this.selectedQuestion || !this.selectedQuestion.logicRuleList) {
         return
@@ -793,7 +793,7 @@ export default {
       })
     },
 
-    // 添加规则条件（用于扩展多条件）
+    // 新增規則條件（用於擴展多條件）
     addRuleCondition(ruleIndex) {
       ElMessage.info({
         message: '多條件功能開發中...',
@@ -813,7 +813,7 @@ export default {
           defaultValue: this.question.defaultValue || '',
           validation: this.question.validation || [],
           randomOrder: this.question.randomOrder || false,
-          logicRuleList: this.question.logicRuleList || [] // 初始化逻辑规则列表
+          logicRuleList: this.question.logicRuleList || [] // 初始化邏輯規則列表
         }]
         this.selectedQuestionId = this.questionList[0].id
       } else {
@@ -826,7 +826,7 @@ export default {
       this.questionnaireData = { title: '', description: '' }
       this.selectedQuestionId = null
       this.nextId = 1
-      this.activePanels = ['questionType'] // 重置为只展开题型选择
+      this.activePanels = ['questionType'] // 重置為只展開題型選擇
     },
 
     addQuestion(type) {
@@ -843,17 +843,17 @@ export default {
         minLength: 0,
         maxLength: 200,
         randomOrder: false,
-        logicRuleList: [], // 逻辑规则列表（支持多条规则）
+        logicRuleList: [], // 邏輯規則列表（支援多條規則）
         branchOptions: type === '5' ? [
           { text: '', action: 'continue', nextTitle: '' },
           { text: '', action: 'end', nextTitle: '' }
         ] : null
       }
       
-      // 如果是填空题类型（新增的拖拽权限控制题目）
+      // 如果是填空題類型（新增的拖拽權限控制題目）
       if (type === '10') {
-        question.fillBlanks = [] // 初始为空，由用户动态添加
-        question.correctAnswers = [] // 正确答案数组，与 fillBlanks 对应
+        question.fillBlanks = [] // 初始為空，由用戶動態新增
+        question.correctAnswers = [] // 正確答案數組，與 fillBlanks 對應
       }
       
       this.questionList.push(question)
@@ -960,11 +960,11 @@ export default {
       if (!question.correctAnswers) {
         question.correctAnswers = []
       }
-      question.correctAnswers.push('') // 添加空的答案占位
+      question.correctAnswers.push('') // 新增空的答案佔位
       
-      // 在 contenteditable div 中插入占位符标签
+      // 在 contenteditable div 中插入佔位符標籤
       let editableDiv = this.$refs.contentEditableDiv
-      // 如果是数组，取第一个元素
+      // 如果是數組，取第一個元素
       if (Array.isArray(editableDiv) && editableDiv.length > 0) {
         editableDiv = editableDiv[0]
       }
@@ -991,7 +991,7 @@ export default {
           }
         }
         
-        // 创建占位符标签
+        // 創建佔位符標籤
         const blankIndex = question.fillBlanks.length
         const blankTag = document.createElement('span')
         blankTag.className = 'editable-blank-tag'
@@ -1032,14 +1032,14 @@ export default {
       }
       
       ElMessage.success({
-        message: '已添加填空',
+        message: '已新增填空',
         offset: 100
       })
     },
 
     onContentInput() {
-      // 内容变化时不立即同步，避免光标跳动
-      // 只在保存时才同步
+      // 內容變化時不立即同步，避免光標跳動
+      // 只在保存時才同步
     },
 
     onContentKeydown(e) {
@@ -1049,17 +1049,17 @@ export default {
         
         const range = selection.getRangeAt(0)
         
-        // 分别处理 Backspace 和 Delete
+        // 分別處理 Backspace 和 Delete
         if (e.key === 'Backspace') {
-          // 查找光标前一个节点
+          // 查找光標前一個節點
           let prevNode = null
           if (range.startContainer.nodeType === 3) {
-            // 在文本节点中
+            // 在文本節點中
             if (range.startOffset === 0) {
               prevNode = range.startContainer.previousSibling
             }
           } else if (range.startContainer.nodeType === 1) {
-            // 在元素节点中
+            // 在元素節點中
             if (range.startOffset > 0) {
               prevNode = range.startContainer.childNodes[range.startOffset - 1]
             }
@@ -1072,15 +1072,15 @@ export default {
           }
         } 
         else if (e.key === 'Delete') {
-          // 查找光标后一个节点
+          // 查找光標後一個節點
           let nextNode = null
           if (range.startContainer.nodeType === 3) {
-            // 在文本节点中
+            // 在文本節點中
             if (range.startOffset === range.startContainer.length) {
               nextNode = range.startContainer.nextSibling
             }
           } else if (range.startContainer.nodeType === 1) {
-            // 在元素节点中
+            // 在元素節點中
             if (range.startOffset < range.startContainer.childNodes.length) {
               nextNode = range.startContainer.childNodes[range.startOffset]
             }
@@ -1109,18 +1109,18 @@ export default {
       if (!question.content) return ''
       
       let html = question.content
-      // 先转义 HTML 特殊字符
+      // 先轉義 HTML 特殊字符
       html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       
-      // 匹配所有可能的占位符格式（包括损坏的）
+      // 匹配所有可能的佔位符格式（包括損壞的）
       const allPlaceholderPatterns = [
         /\{\{fillblank-(\d+)\}\}/g,  // 完整格式
-        /\{fillblank-(\d+)\}\}/g,     // 缺少一个 {
-        /\{\{fillblank-(\d+)\}/g,     // 缺少一个 }
-        /\{fillblank-(\d+)\}/g        // 缺少两个 {}
+        /\{fillblank-(\d+)\}\}/g,     // 缺少一個 {
+        /\{\{fillblank-(\d+)\}/g,     // 缺少一個 }
+        /\{fillblank-(\d+)\}/g        // 缺少兩個 {}
       ]
       
-      // 收集所有找到的占位符
+      // 收集所有找到的佔位符
       const foundPlaceholders = new Set()
       allPlaceholderPatterns.forEach(pattern => {
         let match
@@ -1129,10 +1129,10 @@ export default {
         }
       })
       
-      // 按顺序替换所有找到的占位符
+      // 按順序替換所有找到的佔位符
       const sortedIndices = Array.from(foundPlaceholders).sort((a, b) => a - b)
       sortedIndices.forEach(index => {
-        // 匹配这个占位符的各种格式
+        // 匹配這個佔位符的各種格式
         const patterns = [
           new RegExp(`\\{\\{fillblank-${index + 1}\\}\\}`, 'g'),
           new RegExp(`\\{fillblank-${index + 1}\\}\\}`, 'g'),
@@ -1152,7 +1152,7 @@ export default {
 
     scrollToLeftPanel() {
       ElMessage.info({
-        message: '請從左側面板選擇題型添加題目',
+        message: '請從左側面板選擇題型新增題目',
         offset: 100
       })
     },
@@ -1234,7 +1234,7 @@ export default {
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
-  z-index: 2000; /* 降低 z-index，让 ElMessage 能正常显示 */
+  z-index: 2000; /* 降低 z-index，讓 ElMessage 能正常顯示 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2508,7 +2508,7 @@ export default {
   margin-top: 8px;
 }
 
-/* 逻辑编辑面板样式 */
+/* 邏輯編輯面板樣式 */
 .logic-edit-section {
   padding: 8px;
 }
@@ -2519,7 +2519,7 @@ export default {
   gap: 16px;
 }
 
-/* 题型提示 */
+/* 題型提示 */
 .question-type-hint {
   display: flex;
   align-items: center;
@@ -2537,7 +2537,7 @@ export default {
   font-weight: 500;
 }
 
-/* 逻辑区块 */
+/* 邏輯區塊 */
 .logic-block {
   padding: 16px;
   background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
@@ -2586,14 +2586,14 @@ export default {
   color: #409EFF;
 }
 
-/* 逻辑选项列表 */
+/* 邏輯選項列表 */
 .logic-option-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* 逻辑选项卡片 */
+/* 邏輯選項卡片 */
 .logic-option-card {
   background: #ffffff;
   border-radius: 10px;
@@ -2690,7 +2690,7 @@ export default {
   border-top: 1px dashed #e4e7ed;
 }
 
-/* 无逻辑提示 */
+/* 無邏輯提示 */
 .no-logic-hint {
   display: flex;
   align-items: flex-start;
@@ -2733,7 +2733,7 @@ export default {
   line-height: 1.6;
 }
 
-/* 逻辑规则列表容器 */
+/* 邏輯規則列表容器 */
 .logic-rules-wrapper {
   display: flex;
   flex-direction: column;
@@ -2784,7 +2784,7 @@ export default {
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
 }
 
-/* 逻辑规则卡片 */
+/* 邏輯規則卡片 */
 .logic-rule-card {
   background: #ffffff;
   border-radius: 12px;
@@ -2933,7 +2933,7 @@ export default {
   font-weight: 600;
 }
 
-/* 空规则状态 */
+/* 空規則狀態 */
 .empty-rules {
   display: flex;
   flex-direction: column;
@@ -2945,7 +2945,7 @@ export default {
   border: 2px dashed #dcdfe6;
 }
 
-/* 未选择状态 */
+/* 未選擇狀態 */
 .no-selection-logic {
   display: flex;
   flex-direction: column;
@@ -2960,7 +2960,7 @@ export default {
   gap: 8px;
 }
 
-/* 面板标题样式 */
+/* 面板標題樣式 */
 .panel-title-with-icon {
   display: flex;
   align-items: center;
@@ -2981,7 +2981,7 @@ export default {
   flex-shrink: 0;
 }
 
-/* 强制覆盖 el-collapse 的默认样式 */
+/* 強制覆蓋 el-collapse 的默認樣式 */
 .left-panel :deep(.el-collapse-item__header) {
   padding: 16px 20px !important;
   font-size: 16px !important;
@@ -2998,7 +2998,7 @@ export default {
   border: none !important;
 }
 
-/* 响应式设计 */
+/* 響應式設計 */
 @media (max-width: 1400px) {
   .left-panel {
     width: 280px;
