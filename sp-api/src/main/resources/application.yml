@@ -31,12 +31,6 @@ server:
       # Tomcat 啟動初始化的線程數，默認值 10
       min-spare: 100
  
-# 日誌配置
-logging:
-  level:
-    com.sp: debug
-    org.springframework: warn
-
 # 用戶配置
 user:
   password:
@@ -61,7 +55,8 @@ spring:
     time-zone: GMT+8
     date-format: yyyy-MM-dd HH:mm:ss
   profiles:
-    active: druid
+    # 默認使用開發環境配置（不啟用 logback）
+    active: dev
   # 數據源配置
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource

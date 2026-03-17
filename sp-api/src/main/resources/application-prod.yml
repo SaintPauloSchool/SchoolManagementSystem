@@ -1,0 +1,40 @@
+# 生產環境配置
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    druid:
+      # 主庫數據源
+      url: jdbc:mysql://localhost:3306/student_backend_system?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+      username: root
+      password: root
+      # 初始連接數
+      initialSize: 5
+      # 最小連接池數量
+      minIdle: 10
+      # 最大連接池數量
+      maxActive: 20
+      # 配置獲取連接等待超時的時間
+      maxWait: 60000
+      # 配置連接超時時間
+      connectTimeout: 30000
+      # 配置網絡超時時間
+      socketTimeout: 60000
+      # 配置間隔多久才進行一次檢測，檢測需要關閉的空閒連接，單位是毫秒
+      timeBetweenEvictionRunsMillis: 60000
+      # 配置一個連接在池中最小生存的時間，單位是毫秒
+      minEvictableIdleTimeMillis: 300000
+      # 配置一個連接在池中最大生存的時間，單位是毫秒
+      maxEvictableIdleTimeMillis: 900000
+      # 配置檢測連接是否有效
+      validationQuery: SELECT 1 FROM DUAL
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+
+# 生產環境啟用 logback
+logging:
+  config: classpath:logback-prod.xml
