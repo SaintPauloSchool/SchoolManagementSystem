@@ -974,27 +974,89 @@ export default {
 
     addOption() {
       if (this.selectedQuestion) {
+        const oldOptionsCount = this.selectedQuestion.options.length
         this.selectedQuestion.options.push('')
+        
+        // 如果存在跳轉規則，為新選項添加規則
+        if (this.selectedQuestion.logicRuleList && this.selectedQuestion.logicRuleList.length > 0) {
+          const newRule = {
+            id: `rule-${Date.now()}`,
+            optionIndex: oldOptionsCount,
+            jumpTarget: 'next'
+          }
+          this.selectedQuestion.logicRuleList.push(newRule)
+          ElMessage.success({
+            message: '已為新選項添加跳轉規則',
+            offset: 100
+          })
+        }
       }
     },
 
     addOptionToQuestion(question) {
+      const oldOptionsCount = question.options.length
       question.options.push('')
+      
+      // 如果存在跳轉規則，為新選項添加規則
+      if (question.logicRuleList && question.logicRuleList.length > 0) {
+        const newRule = {
+          id: `rule-${Date.now()}`,
+          optionIndex: oldOptionsCount,
+          jumpTarget: 'next'
+        }
+        question.logicRuleList.push(newRule)
+      }
     },
 
     addOptionAtIndex(question, index) {
       question.options.splice(index, 0, '')
+      
+      // 如果存在跳轉規則，為新選項添加規則並調整後續規則的索引
+      if (question.logicRuleList && question.logicRuleList.length > 0) {
+        // 為新選項添加規則
+        const newRule = {
+          id: `rule-${Date.now()}`,
+          optionIndex: index,
+          jumpTarget: 'next'
+        }
+        question.logicRuleList.splice(index, 0, newRule)
+        
+        // 調整後續規則的 optionIndex
+        for (let i = index + 1; i < question.logicRuleList.length; i++) {
+          question.logicRuleList[i].optionIndex = i
+        }
+      }
     },
 
     removeOption(index) {
       if (this.selectedQuestion && this.selectedQuestion.options.length > 2) {
         this.selectedQuestion.options.splice(index, 1)
+        
+        // 如果存在跳轉規則，刪除對應的規則並調整後續規則的索引
+        if (this.selectedQuestion.logicRuleList && this.selectedQuestion.logicRuleList.length > 0) {
+          this.selectedQuestion.logicRuleList.splice(index, 1)
+          
+          // 調整後續規則的 optionIndex
+          for (let i = index; i < this.selectedQuestion.logicRuleList.length; i++) {
+            this.selectedQuestion.logicRuleList[i].optionIndex = i
+          }
+        }
       }
     },
 
     removeOptionAtIndex(question, index) {
       if (question.options.length > 2) {
         question.options.splice(index, 1)
+        
+        // 如果存在跳轉規則，刪除對應的規則並調整後續規則的索引
+        if (question.logicRuleList && question.logicRuleList.length > 0) {
+          question.logicRuleList.splice(index, 1)
+          
+          // 調整後續規則的 optionIndex
+          for (let i = index; i < question.logicRuleList.length; i++) {
+            question.logicRuleList[i].optionIndex = i
+          }
+        }
       }
     },
 
