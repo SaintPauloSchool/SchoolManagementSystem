@@ -79,6 +79,7 @@
 
                     <!-- 選項跳轉邏輯 -->
                     <div v-if="hasOptionType(selectedQuestion.type)" class="logic-rules-wrapper">
+                      <!-- 標題頭部 - 在頂部 -->
                       <div class="logic-rules-header">
                         <span class="rules-title">跳轉規則列表</span>
                         <el-button 
@@ -92,12 +93,13 @@
                         </el-button>
                       </div>
 
-                      <!-- 邏輯規則卡片 -->
-                      <div 
-                        v-for="(rule, ruleIndex) in selectedQuestion.logicRuleList" 
-                        :key="rule.id"
-                        class="logic-rule-card"
-                      >
+                      <!-- 邏輯規則卡片 - 在標題下方 -->
+                      <div class="rules-grid">
+                        <div 
+                          v-for="(rule, ruleIndex) in selectedQuestion.logicRuleList" 
+                          :key="rule.id"
+                          class="logic-rule-card"
+                        >
                         <div class="rule-card-header">
                           <div class="rule-index">
                             <el-icon><Connection /></el-icon>
@@ -161,11 +163,12 @@
                           </div>
                         </div>
                       </div>
+                      </div>
 
                       <!-- 空狀態 -->
                       <div v-if="!selectedQuestion.logicRuleList || selectedQuestion.logicRuleList.length === 0" class="empty-rules">
                         <el-empty description="暫無跳轉規則" :image-size="60" />
-                        <el-tag type="info" size="small">💡 點擊「新增邏輯」開始設置</el-tag>
+                        <el-tag type="info" size="small">💡 點擊「自動生成規則」開始設置</el-tag>
                       </div>
                     </div>
 
@@ -1436,8 +1439,8 @@ export default {
 
 /* 邏輯面板展開時的左側面板樣式 */
 .left-panel.logic-expanded {
-  width: 520px;
-  min-width: 500px;
+  width: 900px;
+  min-width: 850px;
 }
 
 .left-panel .panel-header {
@@ -2579,7 +2582,7 @@ export default {
 
 /* 邏輯編輯面板樣式 */
 .logic-edit-section {
-  padding: 8px;
+  padding: 0;
 }
 
 .logic-editor {
@@ -2809,9 +2812,15 @@ export default {
 
 /* 邏輯規則列表容器 */
 .logic-rules-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: block; /* 改為 block，讓內容自然垂直排列 */
+  padding: 0 4px;
+}
+
+/* 規則卡片網格容器 - 新增一個包裝容器 */
+.rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
 }
 
 .logic-rules-header {
@@ -2819,10 +2828,12 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
+  margin-bottom: 16px;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   border-radius: 10px;
   border: 1px solid #e4e7ed;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  width: 100%;
 }
 
 .rules-title {
@@ -2861,11 +2872,12 @@ export default {
 /* 邏輯規則卡片 */
 .logic-rule-card {
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 2px solid #e4e7ed;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  min-width: 0; /* 允許網格壓縮 */
 }
 
 .logic-rule-card:hover {
@@ -2883,7 +2895,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px 12px;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   border-bottom: 1px solid #f0f0f0;
 }
@@ -2891,60 +2903,60 @@ export default {
 .rule-index {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 6px;
+  font-size: 12px;
   font-weight: 700;
   color: #303133;
 }
 
 .rule-index .el-icon {
-  font-size: 16px;
+  font-size: 14px;
   color: #409EFF;
 }
 
 .remove-rule-btn {
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: 4px 8px;
+  font-size: 11px;
 }
 
 .rule-card-body {
-  padding: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   background: #ffffff;
 }
 
 .rule-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .rule-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #606266;
-  min-width: 45px;
+  min-width: 40px;
   flex-shrink: 0;
 }
 
 .rule-question-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #303133;
   flex: 1;
-  padding: 6px 12px;
+  padding: 4px 8px;
   background: linear-gradient(135deg, #ecf5ff 0%, #ffffff 100%);
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid #d9ecff;
 }
 
 .rule-action-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #606266;
-  min-width: 70px;
+  min-width: 50px;
   flex-shrink: 0;
 }
 
@@ -2953,10 +2965,10 @@ export default {
 }
 
 .option-select :deep(.el-input__inner) {
-  font-size: 13px;
-  padding: 8px 12px;
+  font-size: 12px;
+  padding: 6px 8px;
   border-color: #dcdfe6;
-  border-radius: 6px;
+  border-radius: 4px;
   transition: all 0.2s ease;
 }
 
@@ -2966,19 +2978,20 @@ export default {
 
 .option-select :deep(.el-input__inner):focus {
   border-color: #409EFF;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
 }
 
 /* 選項標籤樣式 */
 .option-tag {
   flex: 1;
   height: auto;
-  min-height: 32px;
-  padding: 8px 12px;
+  min-height: 28px;
+  padding: 4px 8px;
   display: flex;
   align-items: center;
   font-weight: 600;
-  border-radius: 6px;
+  font-size: 12px;
+  border-radius: 4px;
 }
 
 .jump-select {
@@ -2986,10 +2999,10 @@ export default {
 }
 
 .jump-select :deep(.el-input__inner) {
-  font-size: 13px;
-  padding: 8px 12px;
+  font-size: 12px;
+  padding: 6px 8px;
   border-color: #dcdfe6;
-  border-radius: 6px;
+  border-radius: 4px;
   transition: all 0.2s ease;
 }
 
@@ -2999,7 +3012,7 @@ export default {
 
 .jump-select :deep(.el-input__inner):focus {
   border-color: #409EFF;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
 }
 
 .add-condition-btn {
@@ -3026,6 +3039,7 @@ export default {
   align-items: center;
   gap: 12px;
   padding: 40px 20px;
+  margin-top: 12px;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   border-radius: 12px;
   border: 2px dashed #dcdfe6;
@@ -3092,8 +3106,8 @@ export default {
   }
   
   .left-panel.logic-expanded {
-    width: 480px;
-    min-width: 460px;
+    width: 800px;
+    min-width: 750px;
   }
   
   .right-panel {
@@ -3126,6 +3140,11 @@ export default {
   
   .type-grid {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+  
+  /* 小屏幕下規則卡片改為單列 */
+  .logic-rules-wrapper {
+    grid-template-columns: 1fr;
   }
 }
 
