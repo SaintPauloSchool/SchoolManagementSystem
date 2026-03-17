@@ -29,4 +29,6 @@ public class NotificationCcServiceImpl extends ServiceImpl<NotificationCcMapper,
     public List<NotificationCc> selectByNotificationId(Long notificationId) {
         return notificationCcMapper.selectByNotificationId(notificationId);
     }
+
+
 }
