@@ -82,15 +82,28 @@
                       <!-- 標題頭部 - 在頂部 -->
                       <div class="logic-rules-header">
                         <span class="rules-title">跳轉規則列表</span>
-                        <el-button 
-                          type="primary" 
-                          size="small"
-                          @click="generateLogicRulesForOptions"
-                          class="add-rule-btn"
-                        >
-                          <el-icon><Plus /></el-icon>
-                          自動生成規則
-                        </el-button>
+                        <div class="header-buttons">
+                          <el-button 
+                            v-if="!selectedQuestion.logicRuleList || selectedQuestion.logicRuleList.length === 0"
+                            type="primary" 
+                            size="small"
+                            @click="addLogicRule"
+                            class="add-rule-btn"
+                          >
+                            <el-icon><Plus /></el-icon>
+                            新增規則
+                          </el-button>
+                          <el-button 
+                            v-else
+                            type="danger" 
+                            size="small"
+                            @click="removeAllLogicRules"
+                            class="remove-all-rules-btn"
+                          >
+                            <el-icon><Delete /></el-icon>
+                            刪除所有規則
+                          </el-button>
+                        </div>
                       </div>
 
                       <!-- 邏輯規則卡片 - 在標題下方 -->
@@ -105,15 +118,6 @@
                             <el-icon><Connection /></el-icon>
                             <span>規則 {{ ruleIndex + 1 }}</span>
                           </div>
-                          <el-button 
-                            type="danger" 
-                            size="small"
-                            @click="removeLogicRule(ruleIndex)"
-                            class="remove-rule-btn"
-                          >
-                            <el-icon><Delete /></el-icon>
-                            刪除
-                          </el-button>
                         </div>
 
                         <div class="rule-card-body">
@@ -168,7 +172,7 @@
                       <!-- 空狀態 -->
                       <div v-if="!selectedQuestion.logicRuleList || selectedQuestion.logicRuleList.length === 0" class="empty-rules">
                         <el-empty description="暫無跳轉規則" :image-size="60" />
-                        <el-tag type="info" size="small">💡 點擊「自動生成規則」開始設置</el-tag>
+                        <el-tag type="info" size="small">💡 點擊上方「新增規則」按鈕開始設置</el-tag>
                       </div>
                     </div>
 
@@ -583,12 +587,26 @@ export default {
         this.initForm()
       }
     },
-    // 監聽所選題目的選項變化
+    // 監聽所選題目的選項變化（只同步選項索引，不自動生成規則）
     selectedQuestion: {
       handler(newVal) {
         if (newVal && this.hasOptionType(newVal.type)) {
-          // 檢查是否需要更新邏輯規則
-          this.syncLogicRulesWithOptions()
+          // 只同步現有規則的 optionIndex，不會自動新增規則
+          if (newVal.logicRuleList && newVal.logicRuleList.length > 0) {
+            const optionsCount = newVal.options.length
+            const currentRulesCount = newVal.logicRuleList.length
+            
+            // 如果規則數量大於選項數量，則刪除多餘的規則
+            if (currentRulesCount > optionsCount) {
+              for (let i = currentRulesCount - 1; i >= optionsCount; i--) {
+                newVal.logicRuleList.splice(i, 1)
+              }
+            }
+            // 重新綁定每個規則的 optionIndex
+            newVal.logicRuleList.forEach((rule, index) => {
+              rule.optionIndex = index
+            })
+          }
         }
       },
       deep: true
@@ -771,9 +789,15 @@ export default {
       return !rule.optionIndex || !rule.jumpTarget
     },
 
-    // 為選項自動生成邏輯規則
-    generateLogicRulesForOptions() {
-      if (!this.selectedQuestion || !this.hasOptionType(this.selectedQuestion.type)) {
+    // 新增邏輯規則（一次性生成所有選項的規則）
+    addLogicRule() {
+      if (!this.selectedQuestion) {
+        ElMessage.warning('請先選擇題目')
+        return
+      }
+      
+      if (!this.hasOptionType(this.selectedQuestion.type)) {
+        ElMessage.warning('該題型不需要設置跳轉規則')
         return
       }
       
@@ -781,60 +805,40 @@ export default {
         this.selectedQuestion.logicRuleList = []
       }
       
-      const optionsCount = this.selectedQuestion.options.length
-      const currentRulesCount = this.selectedQuestion.logicRuleList.length
-      
-      // 如果規則數量少於選項數量，則補充新增
-      if (currentRulesCount < optionsCount) {
-        for (let i = currentRulesCount; i < optionsCount; i++) {
-          const newRule = {
-            id: `rule-${Date.now()}-${Math.random()}`,
-            optionIndex: i,  // 自動綁定到對應的選項索引
-            jumpTarget: ''
-          }
-          this.selectedQuestion.logicRuleList.push(newRule)
-        }
-        
-        ElMessage.success({
-          message: `已為 ${optionsCount} 個選項自動生成跳轉規則`,
-          offset: 100
-        })
+      // 如果已經有規則，則不允許重複新增
+      if (this.selectedQuestion.logicRuleList.length > 0) {
+        ElMessage.warning('已經設置了跳轉規則')
+        return
       }
+      
+      // 為所有選項生成規則
+      const optionsCount = this.selectedQuestion.options.length
+      for (let i = 0; i < optionsCount; i++) {
+        const newRule = {
+          id: `rule-${Date.now()}-${i}`,
+          optionIndex: i,
+          jumpTarget: 'next' // 默認跳轉至下一題
+        }
+        this.selectedQuestion.logicRuleList.push(newRule)
+      }
+      
+      ElMessage.success({
+        message: `已為 ${optionsCount} 個選項生成跳轉規則`,
+        offset: 100
+      })
     },
 
-    // 同步邏輯規則與選項數量
-    syncLogicRulesWithOptions() {
-      if (!this.selectedQuestion || !this.hasOptionType(this.selectedQuestion.type)) {
+    // 刪除所有邏輯規則
+    removeAllLogicRules() {
+      if (!this.selectedQuestion || !this.selectedQuestion.logicRuleList) {
         return
       }
       
-      if (!this.selectedQuestion.logicRuleList) {
-        this.selectedQuestion.logicRuleList = []
-      }
+      this.selectedQuestion.logicRuleList = []
       
-      const optionsCount = this.selectedQuestion.options.length
-      const currentRulesCount = this.selectedQuestion.logicRuleList.length
-      
-      // 如果規則數量少於選項數量，則補充新增
-      if (currentRulesCount < optionsCount) {
-        for (let i = currentRulesCount; i < optionsCount; i++) {
-          const newRule = {
-            id: `rule-${Date.now()}-${Math.random()}`,
-            optionIndex: i,
-            jumpTarget: ''
-          }
-          this.selectedQuestion.logicRuleList.push(newRule)
-        }
-      }
-      // 如果規則數量大於選項數量，則刪除多餘的規則（從后往前刪除）
-      else if (currentRulesCount > optionsCount) {
-        for (let i = currentRulesCount - 1; i >= optionsCount; i--) {
-          this.selectedQuestion.logicRuleList.splice(i, 1)
-        }
-      }
-      // 重新綁定每個規則的 optionIndex
-      this.selectedQuestion.logicRuleList.forEach((rule, index) => {
-        rule.optionIndex = index
+      ElMessage.success({
+        message: '已刪除所有跳轉規則',
+        offset: 100
       })
     },
 
@@ -2836,6 +2840,12 @@ export default {
   width: 100%;
 }
 
+.header-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .rules-title {
   font-size: 14px;
   font-weight: 700;
@@ -2867,6 +2877,22 @@ export default {
 .add-rule-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
+}
+
+.remove-all-rules-btn {
+  background: linear-gradient(135deg, #F56C6C 0%, #f56c6c 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(245, 108, 108, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.remove-all-rules-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 108, 108, 0.4);
 }
 
 /* 邏輯規則卡片 */
