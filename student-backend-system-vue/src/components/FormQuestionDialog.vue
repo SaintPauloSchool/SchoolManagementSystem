@@ -24,9 +24,9 @@
       <!-- 主體內容區 - 三欄佈局 -->
       <div class="dialog-main">
         <!-- 左側：題型選擇器 -->
-        <div class="left-panel">
+        <div class="left-panel" :class="{ 'logic-expanded': isLogicPanelExpanded }">
           <!-- 可折疊的面板組 -->
-          <el-collapse v-model="activePanels" accordion>
+          <el-collapse v-model="activePanels" accordion @change="handlePanelChange">
             <!-- 題型選擇面板 -->
             <el-collapse-item name="questionType">
               <template #title>
@@ -84,11 +84,11 @@
                         <el-button 
                           type="primary" 
                           size="small"
-                          @click="addLogicRule"
+                          @click="generateLogicRulesForOptions"
                           class="add-rule-btn"
                         >
                           <el-icon><Plus /></el-icon>
-                          新增邏輯
+                          自動生成規則
                         </el-button>
                       </div>
 
@@ -122,19 +122,9 @@
 
                           <div class="rule-row">
                             <span class="rule-label">選中</span>
-                            <el-select 
-                              v-model="rule.optionIndex" 
-                              placeholder="選擇選項"
-                              size="default"
-                              class="option-select"
-                            >
-                              <el-option 
-                                v-for="(opt, optIndex) in selectedQuestion.options" 
-                                :key="optIndex"
-                                :label="`${getOptionLabel(optIndex)}. ${opt || '未命名'}`"
-                                :value="optIndex"
-                              />
-                            </el-select>
+                            <el-tag :type="getOptionTagType(rule.optionIndex)" size="default" class="option-tag">
+                              {{ getOptionLabel(rule.optionIndex) }}. {{ selectedQuestion.options[rule.optionIndex] || '未命名' }}
+                            </el-tag>
                           </div>
 
                           <div class="rule-row">
@@ -415,7 +405,7 @@
         </div>
 
         <!-- 右側：屬性設置面板 -->
-        <div class="right-panel">
+        <div class="right-panel" :class="{ 'hidden': isLogicPanelExpanded }">
           <!-- 頂部標籤頁 -->
           <div class="panel-tabs">
             <el-tabs v-model="activeTab" type="border-card">
@@ -575,7 +565,8 @@ export default {
         title: '',
         description: ''
       },
-      nextId: 1
+      nextId: 1,
+      isLogicPanelExpanded: false // 邏輯面板是否展開
     }
   },
   computed: {
@@ -588,6 +579,16 @@ export default {
       if (newVal) {
         this.initForm()
       }
+    },
+    // 監聽所選題目的選項變化
+    selectedQuestion: {
+      handler(newVal) {
+        if (newVal && this.hasOptionType(newVal.type)) {
+          // 檢查是否需要更新邏輯規則
+          this.syncLogicRulesWithOptions()
+        }
+      },
+      deep: true
     }
   },
   mounted() {
@@ -626,6 +627,14 @@ export default {
     }
   },
   methods: {
+    // 處理面板展開/收起
+    handlePanelChange(activeNames) {
+      // 檢查邏輯編輯面板是否展開
+      this.isLogicPanelExpanded = Array.isArray(activeNames) 
+        ? activeNames.includes('logicEdit')
+        : activeNames === 'logicEdit'
+    },
+
     getOptionLabel(index) {
       return String.fromCharCode(65 + index)
     },
@@ -748,16 +757,20 @@ export default {
       return `${this.getOptionLabel(optionIndex)}. ${option || '未命名'}`
     },
 
+    // 獲取選項標籤顏色
+    getOptionTagType(optionIndex) {
+      const types = ['success', 'warning', 'primary', 'danger', 'info']
+      return types[optionIndex % types.length] || 'info'
+    },
+
     // 檢查規則是否有錯誤
     hasRuleError(rule) {
       return !rule.optionIndex || !rule.jumpTarget
     },
 
-    // 新增邏輯規則
-    addLogicRule() {
-      console.log('點擊了新增邏輯按鈕')
-      if (!this.selectedQuestion) {
-        ElMessage.warning('請先選擇題目')
+    // 為選項自動生成邏輯規則
+    generateLogicRulesForOptions() {
+      if (!this.selectedQuestion || !this.hasOptionType(this.selectedQuestion.type)) {
         return
       }
       
@@ -765,17 +778,60 @@ export default {
         this.selectedQuestion.logicRuleList = []
       }
       
-      const newRule = {
-        id: `rule-${Date.now()}-${Math.random()}`,
-        optionIndex: null,
-        jumpTarget: ''
+      const optionsCount = this.selectedQuestion.options.length
+      const currentRulesCount = this.selectedQuestion.logicRuleList.length
+      
+      // 如果規則數量少於選項數量，則補充新增
+      if (currentRulesCount < optionsCount) {
+        for (let i = currentRulesCount; i < optionsCount; i++) {
+          const newRule = {
+            id: `rule-${Date.now()}-${Math.random()}`,
+            optionIndex: i,  // 自動綁定到對應的選項索引
+            jumpTarget: ''
+          }
+          this.selectedQuestion.logicRuleList.push(newRule)
+        }
+        
+        ElMessage.success({
+          message: `已為 ${optionsCount} 個選項自動生成跳轉規則`,
+          offset: 100
+        })
+      }
+    },
+
+    // 同步邏輯規則與選項數量
+    syncLogicRulesWithOptions() {
+      if (!this.selectedQuestion || !this.hasOptionType(this.selectedQuestion.type)) {
+        return
       }
       
-      this.selectedQuestion.logicRuleList.push(newRule)
+      if (!this.selectedQuestion.logicRuleList) {
+        this.selectedQuestion.logicRuleList = []
+      }
       
-      ElMessage.success({
-        message: '已新增跳轉規則',
-        offset: 100
+      const optionsCount = this.selectedQuestion.options.length
+      const currentRulesCount = this.selectedQuestion.logicRuleList.length
+      
+      // 如果規則數量少於選項數量，則補充新增
+      if (currentRulesCount < optionsCount) {
+        for (let i = currentRulesCount; i < optionsCount; i++) {
+          const newRule = {
+            id: `rule-${Date.now()}-${Math.random()}`,
+            optionIndex: i,
+            jumpTarget: ''
+          }
+          this.selectedQuestion.logicRuleList.push(newRule)
+        }
+      }
+      // 如果規則數量大於選項數量，則刪除多餘的規則（從后往前刪除）
+      else if (currentRulesCount > optionsCount) {
+        for (let i = currentRulesCount - 1; i >= optionsCount; i--) {
+          this.selectedQuestion.logicRuleList.splice(i, 1)
+        }
+      }
+      // 重新綁定每個規則的 optionIndex
+      this.selectedQuestion.logicRuleList.forEach((rule, index) => {
+        rule.optionIndex = index
       })
     },
 
@@ -1375,6 +1431,13 @@ export default {
   flex-direction: column;
   overflow: hidden;
   border: 1px solid #e8eaed;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 邏輯面板展開時的左側面板樣式 */
+.left-panel.logic-expanded {
+  width: 520px;
+  min-width: 500px;
 }
 
 .left-panel .panel-header {
@@ -1964,6 +2027,12 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 邏輯面板展開時隱藏右側面板 */
+.right-panel.hidden {
+  display: none;
 }
 
 .right-panel .panel-header {
@@ -2519,6 +2588,11 @@ export default {
   gap: 16px;
 }
 
+/* 邏輯面板展開時的提示 */
+.logic-expanded-hint {
+  display: none;
+}
+
 /* 題型提示 */
 .question-type-hint {
   display: flex;
@@ -2895,6 +2969,18 @@ export default {
   box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
 }
 
+/* 選項標籤樣式 */
+.option-tag {
+  flex: 1;
+  height: auto;
+  min-height: 32px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
 .jump-select {
   flex: 1;
 }
@@ -3005,6 +3091,11 @@ export default {
     min-width: 260px;
   }
   
+  .left-panel.logic-expanded {
+    width: 480px;
+    min-width: 460px;
+  }
+  
   .right-panel {
     width: 300px;
     min-width: 280px;
@@ -3022,6 +3113,11 @@ export default {
     min-width: auto;
     max-height: 200px;
     flex-shrink: 1; /* 允許壓縮 */
+  }
+  
+  .left-panel.logic-expanded {
+    width: 100%;
+    max-height: none;
   }
   
   .center-panel {
