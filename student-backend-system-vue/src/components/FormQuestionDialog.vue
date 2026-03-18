@@ -2,12 +2,32 @@
   <div class="form-question-dialog-overlay" v-if="visible">
     <div class="form-question-dialog">
       <!-- 頂部工具欄 -->
-      <div class="dialog-toolbar">
+      <div class="dialog-toolbar" v-if="viewMode === 'edit'">
         <div class="toolbar-left">
           <h2 class="toolbar-title">
             <el-icon class="title-icon"><Edit /></el-icon>
             編輯表單問題
           </h2>
+        </div>
+        <div class="toolbar-center">
+          <el-button 
+            :type="viewMode === 'edit' ? 'primary' : 'info'" 
+            @click="switchViewMode('edit')"
+            class="view-mode-btn"
+            size="default"
+          >
+            <el-icon><Edit /></el-icon>
+            編輯
+          </el-button>
+          <el-button 
+            :type="viewMode === 'preview' ? 'success' : 'info'" 
+            @click="switchViewMode('preview')"
+            class="view-mode-btn"
+            size="default"
+          >
+            <el-icon><View /></el-icon>
+            預覽
+          </el-button>
         </div>
         <div class="toolbar-right">
           <el-button @click="handleClose" class="close-btn">
@@ -21,10 +41,25 @@
         </div>
       </div>
 
+      <!-- 預覽模式工具欄 -->
+      <div class="dialog-toolbar preview-toolbar" v-else>
+        <div class="toolbar-center">
+          <el-button 
+            :type="viewMode === 'edit' ? 'info' : 'primary'" 
+            @click="switchViewMode('edit')"
+            class="view-mode-btn"
+            size="default"
+          >
+            <el-icon><Edit /></el-icon>
+            返回編輯
+          </el-button>
+        </div>
+      </div>
+
       <!-- 主體內容區 - 三欄佈局 -->
-      <div class="dialog-main">
+      <div class="dialog-main" :class="{ 'preview-mode': viewMode === 'preview' }">
         <!-- 左側：題型選擇器 -->
-        <div class="left-panel" :class="{ 'logic-expanded': isLogicPanelExpanded }">
+        <div class="left-panel" :class="{ 'logic-expanded': isLogicPanelExpanded, 'hidden': viewMode === 'preview' }">
           <!-- 可折疊的面板組 -->
           <el-collapse v-model="activePanels" accordion @change="handlePanelChange">
             <!-- 題型選擇面板 -->
@@ -206,8 +241,8 @@
         <!-- 中間：問卷預覽/編輯區 -->
         <div class="center-panel">
           <div class="questionnaire-preview">
-            <!-- 問卷頭部 -->
-            <div class="questionnaire-header">
+            <!-- 問卷頭部 - 只在編輯模式顯示 -->
+            <div class="questionnaire-header" v-if="viewMode === 'edit'">
               <div class="header-row">
                 <span class="header-label">標題:</span>
                 <el-input
@@ -230,13 +265,53 @@
 
             <!-- 題目列表 -->
             <div class="questionnaire-body">
-              <div
-                v-for="(question, index) in questionList"
-                :key="question.id"
-                class="question-card"
-                :class="{ 'active': selectedQuestionId === question.id }"
-                @click="selectQuestion(question.id)"
-              >
+              <!-- 預覽模式：簡化流程圖 -->
+              <div v-if="viewMode === 'preview'" class="preview-flowchart-container">
+                <div 
+                  v-for="(question, index) in questionList" 
+                  :key="question.id"
+                  class="preview-question-flow"
+                >
+                  <div class="preview-question-title">
+                    <span class="q-number">{{ index + 1 }}</span>
+                    <span class="q-text">{{ question.title || '未命名題目' }}</span>
+                    <el-tag :type="getQuestionTypeTag(question.type)" size="small" class="q-type-tag">
+                      {{ getQuestionTypeName(question.type) }}
+                    </el-tag>
+                  </div>
+                  
+                  <!-- 有邏輯規則的題目才顯示流程 -->
+                  <div v-if="hasOptionType(question.type) && question.logicRuleList && question.logicRuleList.length > 0" class="preview-logic-flow">
+                    <div class="flow-simple-row">
+                      <div 
+                        v-for="(rule, ruleIndex) in question.logicRuleList" 
+                        :key="rule.id"
+                        class="simple-flow-item"
+                      >
+                        <span class="option-badge">{{ getOptionLabel(rule.optionIndex) }}</span>
+                        <span class="arrow-right">→</span>
+                        <span class="action-text">{{ getJumpTargetName(rule.jumpTarget) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- 填空/文本題型的簡單提示 -->
+                  <div v-else-if="['3', '9', '10'].includes(question.type)" class="preview-simple-hint">
+                    <el-icon><Edit /></el-icon>
+                    <span>填寫類題目</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 編輯模式：原有樣式 -->
+              <div v-else>
+                <div
+                  v-for="(question, index) in questionList"
+                  :key="question.id"
+                  class="question-card"
+                  :class="{ 'active': selectedQuestionId === question.id }"
+                  @click="selectQuestion(question.id)"
+                >
                 <div class="question-header">
                   <div class="question-number">
                     <span class="required-mark" v-if="question.required">*</span>
@@ -293,8 +368,9 @@
                           placeholder="請輸入選項內容"
                           class="option-input"
                           @click.stop
+                          :disabled="viewMode === 'preview'"
                         />
-                        <div class="option-actions">
+                        <div class="option-actions" v-if="viewMode === 'edit'">
                           <el-button 
                             size="small" 
                             type="primary"
@@ -315,7 +391,7 @@
                         </div>
                       </div>
                       <!-- 底部添加選項按鈕 -->
-                      <div class="add-option-row">
+                      <div class="add-option-row" v-if="viewMode === 'edit'">
                         <el-button 
                           size="small" 
                           type="primary" 
@@ -327,6 +403,42 @@
                         </el-button>
                       </div>
                     </div>
+                    
+                    <!-- 預覽模式下顯示邏輯規則流程圖 -->
+                    <div v-if="viewMode === 'preview' && question.logicRuleList && question.logicRuleList.length > 0" class="logic-flowchart">
+                      <div class="flowchart-title">
+                        <el-icon><Connection /></el-icon>
+                        <span>邏輯流程圖</span>
+                      </div>
+                      <div class="flowchart-content">
+                        <div class="flow-start">
+                          <span class="start-dot"></span>
+                          <span class="start-text">開始</span>
+                        </div>
+                        <div class="flow-steps">
+                          <div 
+                            v-for="(rule, ruleIndex) in question.logicRuleList" 
+                            :key="rule.id"
+                            class="flow-step"
+                          >
+                            <div class="step-condition">
+                              <span class="condition-badge">{{ getOptionLabel(rule.optionIndex) }}</span>
+                              <span class="condition-text">{{ question.options[rule.optionIndex] || '未命名選項' }}</span>
+                            </div>
+                            <div class="step-arrow">↓</div>
+                            <div class="step-action">
+                              <el-tag :type="getRulePreviewTag(rule.jumpTarget)" size="small" effect="dark" round>
+                                {{ getJumpTargetName(rule.jumpTarget) }}
+                              </el-tag>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="flow-end">
+                          <span class="end-dot"></span>
+                          <span class="end-text">結束</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <!-- 填空/文本 -->
@@ -336,6 +448,7 @@
                       placeholder="設置佔位文字"
                       size="small"
                       class="placeholder-input"
+                      :disabled="viewMode === 'preview'"
                     />
                   </div>
 
@@ -343,7 +456,7 @@
                   <div v-else-if="question.type === '10'">
                     <div class="fillblank-question-container">
                       <!-- 題目內容編輯框 -->
-                      <div class="fillblank-editor">
+                      <div class="fillblank-editor" v-if="viewMode === 'edit'">
                         <div class="content-editable-container">
                           <div 
                             class="content-editable-div" 
@@ -356,8 +469,13 @@
                         </div>
                       </div>
                       
+                      <!-- 預覽模式下的題目顯示 -->
+                      <div v-else-if="viewMode === 'preview'" class="fillblank-preview-display">
+                        <div class="preview-text" v-html="renderFillBlankText(question)"></div>
+                      </div>
+                      
                       <!-- 添加填空按鈕 -->
-                      <div class="fillblank-toolbar">
+                      <div class="fillblank-toolbar" v-if="viewMode === 'edit'">
                         <el-button 
                           type="primary" 
                           size="small" 
@@ -394,15 +512,16 @@
                   </div>
                 </div>
               </div>
-
-              <!-- 空狀態 -->
+              
+              <!-- 空狀態 - 編輯模式 -->
               <div v-if="questionList.length === 0" class="empty-state">
                 <el-empty description="請從左側選擇題型新增題目" />
               </div>
+              </div>
             </div>
 
-            <!-- 底部新增按鈕 -->
-            <div class="questionnaire-footer">
+            <!-- 底部新增按鈕 - 編輯模式 -->
+            <div class="questionnaire-footer" v-if="viewMode === 'edit'">
               <el-button class="add-question-tips" size="large" @click="scrollToLeftPanel">
                 <el-icon><Plus /></el-icon>
                 從左側新增題目
@@ -412,7 +531,7 @@
         </div>
 
         <!-- 右側：屬性設置面板 -->
-        <div class="right-panel" :class="{ 'hidden': isLogicPanelExpanded }">
+        <div class="right-panel" :class="{ 'hidden': isLogicPanelExpanded || viewMode === 'preview' }">
           <!-- 頂部標籤頁 -->
           <div class="panel-tabs">
             <el-tabs v-model="activeTab" type="border-card">
@@ -539,7 +658,7 @@
 import { 
   Edit, Close, Check, Menu, CircleCheck, Checked, 
   Delete, Plus, Upload, View, Download, Notebook, Grid, Connection,
-  ArrowUp, ArrowDown, InfoFilled, Warning, List, CircleClose
+  ArrowUp, ArrowDown, InfoFilled, Warning, List, CircleClose, ArrowRight
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
@@ -548,7 +667,7 @@ export default {
   components: {
     Edit, Close, Check, Menu, CircleCheck, Checked, 
     Delete, Plus, Upload, View, Download, Notebook, Grid, Connection,
-    ArrowUp, ArrowDown, InfoFilled, Warning, List, CircleClose
+    ArrowUp, ArrowDown, InfoFilled, Warning, List, CircleClose, ArrowRight
   },
   props: {
     visible: {
@@ -860,6 +979,18 @@ export default {
     addRuleCondition(ruleIndex) {
       ElMessage.info({
         message: '多條件功能開發中...',
+        offset: 100
+      })
+    },
+
+    // 切換視圖模式（編輯/預覽）
+    switchViewMode(mode) {
+      if (mode === this.viewMode) {
+        return
+      }
+      this.viewMode = mode
+      ElMessage.success({
+        message: mode === 'edit' ? '已切換至編輯模式' : '已切換至預覽模式',
         offset: 100
       })
     },
@@ -1275,6 +1406,52 @@ export default {
       return html
     },
 
+    // 預覽模式下渲染填空題目（不含刪除按鈕）
+    renderFillBlankText(question) {
+      if (!question.content) return ''
+      
+      let html = question.content
+      // 先轉義 HTML 特殊字符
+      html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      
+      // 匹配所有可能的佔位符格式
+      const allPlaceholderPatterns = [
+        /\{\{fillblank-(\d+)\}\}/g,
+        /\{fillblank-(\d+)\}\}/g,
+        /\{\{fillblank-(\d+)\}/g,
+        /\{fillblank-(\d+)\}/g
+      ]
+      
+      // 收集所有找到的佔位符
+      const foundPlaceholders = new Set()
+      allPlaceholderPatterns.forEach(pattern => {
+        let match
+        while ((match = pattern.exec(html)) !== null) {
+          foundPlaceholders.add(parseInt(match[1]) - 1)
+        }
+      })
+      
+      // 按順序替換所有找到的佔位符
+      const sortedIndices = Array.from(foundPlaceholders).sort((a, b) => a - b)
+      sortedIndices.forEach(index => {
+        const patterns = [
+          new RegExp(`\\{\\{fillblank-${index + 1}\\}\\}`, 'g'),
+          new RegExp(`\\{fillblank-${index + 1}\\}\\}`, 'g'),
+          new RegExp(`\\{\\{fillblank-${index + 1}\\}`, 'g'),
+          new RegExp(`\\{fillblank-${index + 1}\\}`, 'g')
+        ]
+        
+        // 預覽模式下不顯示刪除按鈕
+        const underlineBlank = `<span class="underline-placeholder-preview"><span class="underline-text-preview">__________</span></span>`
+        
+        patterns.forEach(pattern => {
+          html = html.replace(pattern, underlineBlank)
+        })
+      })
+      
+      return html
+    },
+
     scrollToLeftPanel() {
       ElMessage.info({
         message: '請從左側面板選擇題型新增題目',
@@ -1413,6 +1590,37 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
+}
+
+.toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* 預覽模式工具欄 */
+.preview-toolbar {
+  justify-content: center !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 16px 24px !important;
+}
+
+.view-mode-btn {
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.view-mode-btn .el-icon {
+  margin-right: 6px;
 }
 
 .toolbar-title {
@@ -1487,6 +1695,33 @@ export default {
   background: #f5f7fa;
   min-height: 0; /* 防止 flex 子項溢出 */
 }
+
+/* 預覽模式下的佈局 */
+.dialog-main.preview-mode {
+  padding: 0;
+  background: white;
+}
+
+.dialog-main.preview-mode .center-panel {
+  width: 100%;
+  max-width: 100%;
+}
+
+.dialog-main.preview-mode .questionnaire-preview {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.dialog-main.preview-mode .questionnaire-body {
+  padding: 24px 32px;
+}
+
+/* 左側面板隱藏 */
+.left-panel.hidden {
+  display: none !important;
+}
+
+/* 右側面板已經有 .hidden 樣式 */
 
 /* 左側面板 */
 .left-panel {
@@ -1759,6 +1994,123 @@ export default {
   padding: 20px 24px;
   background: #f0f2f5;
   min-height: 0; /* 允許滾動區域正常滾動 */
+}
+
+/* 預覽模式簡化流程圖容器 */
+.preview-flowchart-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 32px;
+  background: white;
+}
+
+.preview-question-flow {
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.preview-question-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #ecf5ff;
+}
+
+.q-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #409EFF 0%, #67c23a 100%);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.q-text {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.q-type-tag {
+  flex-shrink: 0;
+}
+
+.preview-logic-flow {
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-left: 34px;
+}
+
+.flow-simple-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.simple-flow-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
+  font-size: 12px;
+}
+
+.option-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #409EFF 0%, #67c23a 100%);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.arrow-right {
+  font-size: 14px;
+  color: #409EFF;
+  font-weight: 700;
+}
+
+.action-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #606266;
+  padding: 2px 6px;
+}
+
+.preview-simple-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-left: 34px;
+  color: #909399;
+  font-size: 12px;
+}
+
+.preview-simple-hint .el-icon {
+  font-size: 14px;
 }
 
 .questionnaire-body::-webkit-scrollbar {
@@ -2048,6 +2400,239 @@ export default {
 .option-input :deep(.el-input__inner):focus {
   border-color: #409EFF;
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+}
+
+/* 預覽模式下的邏輯規則流程圖 */
+.logic-flowchart {
+  margin-top: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.flowchart-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #dcdfe6;
+}
+
+.flowchart-title .el-icon {
+  font-size: 16px;
+  color: #409EFF;
+}
+
+.flowchart-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flow-start {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-radius: 6px;
+  border-left: 3px solid #67c23a;
+}
+
+.start-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #67c23a;
+  box-shadow: 0 0 8px rgba(103, 194, 58, 0.4);
+}
+
+.start-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #67c23a;
+}
+
+.flow-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 12px;
+}
+
+.flow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.step-condition {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  width: 100%;
+}
+
+.condition-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #409EFF 0%, #67c23a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+}
+
+.condition-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: #606266;
+  flex: 1;
+}
+
+.step-arrow {
+  font-size: 16px;
+  color: #409EFF;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.step-action {
+  padding: 4px 0;
+}
+
+.step-action .el-tag {
+  font-size: 11px;
+  padding: 4px 12px;
+}
+
+.flow-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-radius: 6px;
+  border-left: 3px solid #f56c6c;
+  margin-top: 4px;
+}
+
+.end-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f56c6c;
+  box-shadow: 0 0 8px rgba(245, 108, 108, 0.4);
+}
+
+.end-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f56c6c;
+}
+
+/* 填空題目預覽模式樣式 */
+.logic-preview-section {
+  margin-top: 16px;
+  padding: 14px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.logic-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #303133;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ecf5ff;
+}
+
+.logic-preview-header .el-icon {
+  font-size: 16px;
+  color: #409EFF;
+}
+
+.logic-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.logic-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
+}
+
+.logic-preview-item .option-tag {
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.logic-preview-item .arrow {
+  font-size: 14px;
+  color: #909399;
+  font-weight: 700;
+}
+
+/* 填空題目預覽模式樣式 */
+.fillblank-preview-display {
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
+  min-height: 80px;
+}
+
+.preview-text {
+  line-height: 2.5;
+  font-size: 15px;
+  color: #303133;
+}
+
+.underline-placeholder-preview {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  margin: 0 4px;
+}
+
+.underline-text-preview {
+  display: inline-block;
+  color: #606266;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 4px 12px 2px;
+  border-bottom: 2px solid #909399;
+  min-width: 100px;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 2px 2px 0 0;
 }
 
 .questionnaire-footer {
