@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.sp.common.core.domain.BaseEntity;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * 通知实体类
@@ -51,6 +52,18 @@ public class Notification extends BaseEntity {
     /** 回复截止时间 */
     @TableField("reply_deadline")
     private Date replyDeadline;
+    
+    /** 接收对象列表（非数据库字段） */
+    @TableField(exist = false)
+    private List<NotificationReceiver> receivers;
+    
+    /** 抄送对象列表（非数据库字段） */
+    @TableField(exist = false)
+    private List<NotificationCc> ccs;
+    
+    /** 问题列表（非数据库字段） */
+    @TableField(exist = false)
+    private List<NotificationQuestion> questions;
 
     // Getters and Setters
     public Long getNotificationId() {
@@ -123,5 +136,29 @@ public class Notification extends BaseEntity {
 
     public void setReplyDeadline(Date replyDeadline) {
         this.replyDeadline = replyDeadline;
+    }
+    
+    public List<NotificationReceiver> getReceivers() {
+        return receivers;
+    }
+    
+    public void setReceivers(List<NotificationReceiver> receivers) {
+        this.receivers = receivers;
+    }
+    
+    public List<NotificationCc> getCcs() {
+        return ccs;
+    }
+    
+    public void setCcs(List<NotificationCc> ccs) {
+        this.ccs = ccs;
+    }
+    
+    public List<NotificationQuestion> getQuestions() {
+        return questions;
+    }
+    
+    public void setQuestions(List<NotificationQuestion> questions) {
+        this.questions = questions;
     }
 }

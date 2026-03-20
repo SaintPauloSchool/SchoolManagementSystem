@@ -66,6 +66,10 @@ create table notification_question (
                                                                                 注意：分支题型的 nextTitle 在保存时会被后端转换为实际的 nextQuestionId',
                                        is_required           char(1)         default '0'                comment '是否必答（0 否 1 是）',
                                        sort_order            int(4)          default 0                  comment '排序',
+                                       logic_rules           text            default null               comment '跳转逻辑规则 (JSON 格式)',
+                                       fill_blanks           text            default null               comment '填空题的填空列表 (JSON 格式)',
+                                       correct_answers       text            default null               comment '填空题的正确答案 (JSON 格式)',
+                                       content               text            default null               comment '题目内容（富文本/HTML）',
                                        create_time           datetime                                   comment '创建时间',
                                        primary key (question_id)
 ) engine=innodb auto_increment=1 comment = '通知问题表';

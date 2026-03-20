@@ -52,6 +52,22 @@ public class NotificationQuestion implements Serializable {
     /** 排序 */
     @TableField("sort_order")
     private Integer sortOrder;
+    
+    /** 跳轉邏輯規則 (JSON 格式) */
+    @TableField("logic_rules")
+    private String logicRules;
+    
+    /** 填空題的填空列表 (JSON 格式) */
+    @TableField("fill_blanks")
+    private String fillBlanks;
+    
+    /** 填空題的正確答案 (JSON 格式) */
+    @TableField("correct_answers")
+    private String correctAnswers;
+    
+    /** 題目內容（富文本/HTML） */
+    @TableField("content")
+    private String content;
 
     /** 创建时间 */
     @TableField("create_time")
@@ -125,8 +141,40 @@ public class NotificationQuestion implements Serializable {
     public Date getCreateTime() {
         return createTime;
     }
-
+    
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
+    }
+    
+    public String getLogicRules() {
+        return logicRules;
+    }
+    
+    public void setLogicRules(String logicRules) {
+        this.logicRules = logicRules;
+    }
+    
+    public String getFillBlanks() {
+        return fillBlanks;
+    }
+    
+    public void setFillBlanks(String fillBlanks) {
+        this.fillBlanks = fillBlanks;
+    }
+    
+    public String getCorrectAnswers() {
+        return correctAnswers;
+    }
+    
+    public void setCorrectAnswers(String correctAnswers) {
+        this.correctAnswers = correctAnswers;
+    }
+    
+    public String getContent() {
+        return content;
+    }
+    
+    public void setContent(String content) {
+        this.content = content;
     }
 }

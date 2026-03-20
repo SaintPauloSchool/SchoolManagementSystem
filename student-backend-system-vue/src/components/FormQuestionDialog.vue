@@ -1,4 +1,4 @@
-1<template>
+<template>
   <div class="form-question-dialog-overlay" v-if="visible">
     <div class="form-question-dialog">
       <!-- 頂部工具欄 -->
@@ -59,7 +59,7 @@
       <!-- 主體內容區 - 三欄佈局 -->
       <div class="dialog-main" :class="{ 'preview-mode': viewMode === 'preview' }">
         <!-- 左側：題型選擇器 -->
-        <div class="left-panel" :class="{ 'logic-expanded': isLogicPanelExpanded, 'hidden': viewMode === 'preview' }">
+        <div class="left-panel" :class="{ 'hidden': viewMode === 'preview' }">
           <!-- 可折疊的面板組 -->
           <el-collapse v-model="activePanels" accordion @change="handlePanelChange">
             <!-- 題型選擇面板 -->
@@ -92,149 +92,6 @@
               </div>
             </el-collapse-item>
 
-            <!-- 邏輯編輯面板 -->
-            <el-collapse-item name="logicEdit">
-              <template #title>
-                <div class="panel-title-with-icon">
-                  <el-icon><Connection /></el-icon>
-                  <span>邏輯編輯</span>
-                </div>
-              </template>
-              <div class="panel-content">
-                <!-- 邏輯編輯內容 -->
-                <div class="logic-edit-section">
-                  <div v-if="selectedQuestion" class="logic-editor">
-                    <!-- 題型提示 -->
-                    <div class="question-type-hint">
-                      <el-tag :type="getLogicTypeTag(selectedQuestion.type)" size="small">
-                        {{ getQuestionTypeName(selectedQuestion.type) }}
-                      </el-tag>
-                      <span class="hint-text">此題型支援跳轉邏輯</span>
-                    </div>
-
-                    <!-- 選項跳轉邏輯 -->
-                    <div v-if="hasOptionType(selectedQuestion.type)" class="logic-rules-wrapper">
-                      <!-- 標題頭部 - 在頂部 -->
-                      <div class="logic-rules-header">
-                        <span class="rules-title">跳轉規則列表</span>
-                        <div class="header-buttons">
-                          <el-button 
-                            v-if="!selectedQuestion.logicRuleList || selectedQuestion.logicRuleList.length === 0"
-                            type="primary" 
-                            size="small"
-                            @click="addLogicRule"
-                            class="add-rule-btn"
-                          >
-                            <el-icon><Plus /></el-icon>
-                            新增規則
-                          </el-button>
-                          <el-button 
-                            v-else
-                            type="danger" 
-                            size="small"
-                            @click="removeAllLogicRules"
-                            class="remove-all-rules-btn"
-                          >
-                            <el-icon><Delete /></el-icon>
-                            刪除所有規則
-                          </el-button>
-                        </div>
-                      </div>
-
-                      <!-- 邏輯規則卡片 - 在標題下方 -->
-                      <div class="rules-grid">
-                        <div 
-                          v-for="(rule, ruleIndex) in selectedQuestion.logicRuleList" 
-                          :key="rule.id"
-                          class="logic-rule-card"
-                        >
-                        <div class="rule-card-header">
-                          <div class="rule-index">
-                            <el-icon><Connection /></el-icon>
-                            <span>規則 {{ ruleIndex + 1 }}</span>
-                          </div>
-                        </div>
-
-                        <div class="rule-card-body">
-                          <div class="rule-row">
-                            <span class="rule-label">如果</span>
-                            <span class="rule-question-name">{{ selectedQuestion.title || '本題' }}</span>
-                          </div>
-
-                          <div class="rule-row">
-                            <span class="rule-label">選中</span>
-                            <el-tag :type="getOptionTagType(rule.optionIndex)" size="default" class="option-tag">
-                              {{ getOptionLabel(rule.optionIndex) }}. {{ selectedQuestion.options[rule.optionIndex] || '未命名' }}
-                            </el-tag>
-                          </div>
-
-                          <div class="rule-row">
-                            <span class="rule-label">則</span>
-                            <span class="rule-action-label">跳轉至</span>
-                            <el-select 
-                              v-model="rule.jumpTarget" 
-                              placeholder="選擇跳轉目標"
-                              size="default"
-                              class="jump-select"
-                              clearable
-                            >
-                              <el-option-group label="常用選項">
-                                <el-option label="➡️ 下一題" value="next" />
-                                <el-option label="⏹️ 結束問卷" value="end" />
-                              </el-option-group>
-                              <el-option-group label="題目列表">
-                                <el-option 
-                                  v-for="(q, qIndex) in questionList" 
-                                  :key="q.id"
-                                  :label="`${qIndex + 1}. ${q.title || '未命名題目'}${q.id === selectedQuestion.id ? ' (當前題目)' : ''}`"
-                                  :value="q.id"
-                                  :disabled="q.id === selectedQuestion.id"
-                                />
-                              </el-option-group>
-                            </el-select>
-                          </div>
-
-                          <!-- 規則預覽標籤 -->
-                          <div class="rule-preview">
-                            <el-tag :type="getRulePreviewTag(rule.jumpTarget)" size="small">
-                              當選擇 {{ getOptionName(rule.optionIndex) }} 時 → {{ getJumpTargetName(rule.jumpTarget) }}
-                            </el-tag>
-                          </div>
-                        </div>
-                      </div>
-                      </div>
-
-                      <!-- 空狀態 -->
-                      <div v-if="!selectedQuestion.logicRuleList || selectedQuestion.logicRuleList.length === 0" class="empty-rules">
-                        <el-empty description="暫無跳轉規則" :image-size="60" />
-                        <el-tag type="info" size="small">💡 點擊上方「新增規則」按鈕開始設置</el-tag>
-                      </div>
-                    </div>
-
-                    <!-- 填空題的邏輯提示 -->
-                    <div v-else-if="['3', '9', '10'].includes(selectedQuestion.type)" class="no-logic-hint">
-                      <el-icon><InfoFilled /></el-icon>
-                      <div class="hint-content">
-                        <span class="hint-title">填空/文本類題型</span>
-                        <span class="hint-desc">此類題型通常不需要設置選項跳轉，可直接使用顯示邏輯</span>
-                      </div>
-                    </div>
-
-                    <!-- 其他不支援的題型 -->
-                    <div v-else class="no-logic-hint">
-                      <el-icon><CircleClose /></el-icon>
-                      <span>該題型不支援跳轉邏輯</span>
-                    </div>
-                  </div>
-                  <div v-else class="no-selection-logic">
-                    <el-empty description="請在中間區域選擇題目進行邏輯設置" :image-size="80" />
-                    <div class="empty-tips">
-                      <el-tag type="info" size="small">💡 點擊任意題目即可開始設置邏輯</el-tag>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </el-collapse-item>
           </el-collapse>
         </div>
 
@@ -265,41 +122,42 @@
 
             <!-- 題目列表 -->
             <div class="questionnaire-body">
-              <!-- 預覽模式：簡化流程圖 -->
+              <!-- 預覽模式：結構化列表 -->
               <div v-if="viewMode === 'preview'" class="preview-flowchart-container">
                 <div 
-                  v-for="(question, index) in questionList" 
-                  :key="question.id"
-                  class="preview-question-flow"
+                  v-for="node in structuredQuestionList" 
+                  :key="node.id"
+                  class="preview-structured-item"
+                  :class="{ 'active': selectedQuestionId === node.id }"
+                  :style="{ marginLeft: (node.level * 30) + 'px' }"
+                  @click="selectQuestion(node.id)"
                 >
-                  <div class="preview-question-title">
-                    <span class="q-number">{{ index + 1 }}</span>
-                    <span class="q-text">{{ question.title || '未命名題目' }}</span>
-                    <el-tag :type="getQuestionTypeTag(question.type)" size="small" class="q-type-tag">
-                      {{ getQuestionTypeName(question.type) }}
-                    </el-tag>
-                  </div>
-                  
-                  <!-- 有邏輯規則的題目才顯示流程 -->
-                  <div v-if="hasOptionType(question.type) && question.logicRuleList && question.logicRuleList.length > 0" class="preview-logic-flow">
-                    <div class="flow-simple-row">
-                      <div 
-                        v-for="(rule, ruleIndex) in question.logicRuleList" 
-                        :key="rule.id"
-                        class="simple-flow-item"
-                      >
-                        <span class="option-badge">{{ getOptionLabel(rule.optionIndex) }}</span>
-                        <span class="arrow-right">→</span>
-                        <span class="action-text">{{ getJumpTargetName(rule.jumpTarget) }}</span>
-                      </div>
+                  <div class="preview-question-title-wrapper">
+                    <!-- 顯示這題是從哪個選項跳過來的 -->
+                    <div class="q-source-badge" v-if="node.condition">
+                      <el-tag size="small" type="success" effect="dark" class="source-tag">
+                        從: {{ node.condition.optionLabel }}. {{ node.condition.optionName || '未命名選項' }}
+                      </el-tag>
+                      <span class="jump-arrow">→</span>
+                    </div>
+
+                    <div class="preview-question-title">
+                      <span class="q-number">{{ node.displayNum }}</span>
+                      <span class="q-text">{{ node.title || '未命名題目' }}</span>
+                      <el-tag :type="getQuestionTypeTag(node.type)" size="small" class="q-type-tag">
+                        {{ getQuestionTypeName(node.type) }}
+                      </el-tag>
                     </div>
                   </div>
                   
-                  <!-- 填空/文本題型的簡單提示 -->
-                  <div v-else-if="['3', '9', '10'].includes(question.type)" class="preview-simple-hint">
+                  <div v-if="['3', '9', '10'].includes(node.type)" class="preview-simple-hint">
                     <el-icon><Edit /></el-icon>
                     <span>填寫類題目</span>
                   </div>
+                </div>
+                
+                <div v-if="structuredQuestionList.length === 0" class="empty-state">
+                  <el-empty description="暫無題目" />
                 </div>
               </div>
               
@@ -531,123 +389,250 @@
         </div>
 
         <!-- 右側：屬性設置面板 -->
-        <div class="right-panel" :class="{ 'hidden': isLogicPanelExpanded || viewMode === 'preview' }">
-          <!-- 頂部標籤頁 -->
-          <div class="panel-tabs">
-            <el-tabs v-model="activeTab" type="border-card">
-              <el-tab-pane label="題目" name="question" />
-              <el-tab-pane label="選項" name="options" />
-            </el-tabs>
-          </div>
-          
-          <div class="panel-content">
-            <div v-if="selectedQuestion" class="settings-form">
-              <!-- 題目設置 -->
-              <div v-show="activeTab === 'question'">
-                <div class="settings-section">
-                  <div class="section-header">題目類型</div>
-                  <el-select
-                    v-model="selectedQuestion.type"
-                    placeholder="選擇題型"
-                    class="type-select"
-                    disabled
-                  >
-                    <el-option label="單選" value="1" />
-                    <el-option label="多選" value="2" />
-                    <el-option label="圖片單選" value="7" />
-                    <el-option label="圖片多選" value="8" />
-                    <el-option label="單行文本" value="9" />
-                    <el-option label="多行文本" value="3" />
-                    <el-option label="附件" value="4" />
-                    <el-option label="分支" value="5" />
-                    <el-option label="填空" value="10" />
-                  </el-select>
-                </div>
-
-                <div class="settings-section">
-                  <div class="section-header">基礎設置</div>
-                  <el-form label-position="top" size="default">
-                    <el-form-item label="題目標題">
-                      <el-input
-                        v-model="selectedQuestion.title"
-                        type="textarea"
-                        :rows="2"
-                        placeholder="請輸入題目內容"
-                      />
-                    </el-form-item>
-
-                    <el-form-item label="必答設置">
-                      <el-checkbox v-model="selectedQuestion.required">必答題</el-checkbox>
-                    </el-form-item>
-                  </el-form>
-                </div>
-
-
-
-
-              </div>
-
-              <!-- 選項設置 -->
-              <div v-show="activeTab === 'options'">
-                <div class="settings-section">
-                  <div class="section-header">選項設置</div>
-
-                  <div v-if="hasOptionType(selectedQuestion.type)" class="options-editor">
-                    <div 
-                      v-for="(option, index) in selectedQuestion.options" 
-                      :key="index"
-                      class="option-editor-item"
+        <div class="right-panel" :class="{ 'hidden': viewMode === 'preview' && !selectedQuestion }">
+          <!-- 編輯模式：屬性設置 -->
+          <template v-if="viewMode === 'edit'">
+            <div class="panel-tabs">
+              <el-tabs v-model="activeTab" type="border-card">
+                <el-tab-pane label="題目" name="question" />
+                <el-tab-pane label="選項" name="options" />
+              </el-tabs>
+            </div>
+            
+            <div class="panel-content">
+              <div v-if="selectedQuestion" class="settings-form">
+                <div v-show="activeTab === 'question'">
+                  <div class="settings-section">
+                    <div class="section-header">題目類型</div>
+                    <el-select
+                      v-model="selectedQuestion.type"
+                      placeholder="選擇題型"
+                      class="type-select"
+                      disabled
                     >
-                      <span class="option-label">{{ getOptionLabel(index) }}</span>
-                      <el-input
-                        v-model="selectedQuestion.options[index]"
-                        placeholder="選項內容"
-                        size="small"
-                      />
-                      <el-button
-                        size="small"
-                        type="danger"
-                        @click="removeOption(index)"
-                        :disabled="selectedQuestion.options.length <= 2"
-                        circle
-                      >
-                        <el-icon><Delete /></el-icon>
-                      </el-button>
-                    </div>
-                    <el-button 
-                      type="primary" 
-                      @click="addOption" 
-                      size="small" 
-                      plain
-                      class="add-option-btn"
-                    >
-                      <el-icon><Plus /></el-icon>
-                      新增選項
-                    </el-button>
+                      <el-option label="單選" value="1" />
+                      <el-option label="多選" value="2" />
+                      <el-option label="圖片單選" value="7" />
+                      <el-option label="圖片多選" value="8" />
+                      <el-option label="單行文本" value="9" />
+                      <el-option label="多行文本" value="3" />
+                      <el-option label="附件" value="4" />
+                      <el-option label="分支" value="5" />
+                      <el-option label="填空" value="10" />
+                    </el-select>
+                  </div>
+
+                  <div class="settings-section">
+                    <div class="section-header">基礎設置</div>
+                    <el-form label-position="top" size="default">
+                      <el-form-item label="題目標題">
+                        <el-input
+                          v-model="selectedQuestion.title"
+                          type="textarea"
+                          :rows="2"
+                          placeholder="請輸入題目內容"
+                        />
+                      </el-form-item>
+
+                      <el-form-item label="必答設置">
+                        <el-checkbox v-model="selectedQuestion.required">必答題</el-checkbox>
+                      </el-form-item>
+                    </el-form>
                   </div>
                 </div>
 
+                <div v-show="activeTab === 'options'">
+                  <div class="settings-section">
+                    <div class="section-header">選項設置</div>
+                    <div v-if="hasOptionType(selectedQuestion.type)" class="options-editor">
+                      <div 
+                        v-for="(option, index) in selectedQuestion.options" 
+                        :key="index"
+                        class="option-editor-item"
+                      >
+                        <span class="option-label">{{ getOptionLabel(index) }}</span>
+                        <el-input
+                          v-model="selectedQuestion.options[index]"
+                          placeholder="選項內容"
+                          size="small"
+                        />
+                        <el-button
+                          size="small"
+                          type="danger"
+                          @click="removeOption(index)"
+                          :disabled="selectedQuestion.options.length <= 2"
+                          circle
+                        >
+                          <el-icon><Delete /></el-icon>
+                        </el-button>
+                      </div>
+                      <el-button 
+                        type="primary" 
+                        @click="addOption" 
+                        size="small" 
+                        plain
+                        class="add-option-btn"
+                      >
+                        <el-icon><Plus /></el-icon>
+                        新增選項
+                      </el-button>
+                    </div>
+                  </div>
 
+                  <div v-if="['7', '8'].includes(selectedQuestion.type)" class="settings-section">
+                    <div class="section-header">圖片</div>
+                    <el-form label-position="top" size="default">
+                      <el-form-item label="默認圖片寬度">
+                        <el-input v-model="selectedQuestion.imageWidth" placeholder="請輸入">
+                          <template #append>像素</template>
+                        </el-input>
+                      </el-form-item>
+                      <el-button class="apply-image-btn" size="small">
+                        應用到本題所有圖片
+                      </el-button>
+                    </el-form>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="no-selection">
+                <el-empty description="請選擇題目進行設置" :image-size="80" />
+              </div>
+            </div>
+          </template>
 
-                <div v-if="['7', '8'].includes(selectedQuestion.type)" class="settings-section">
-                  <div class="section-header">圖片</div>
-                  <el-form label-position="top" size="default">
-                    <el-form-item label="默認圖片寬度">
-                      <el-input v-model="selectedQuestion.imageWidth" placeholder="請輸入">
-                        <template #append>像素</template>
-                      </el-input>
-                    </el-form-item>
-                    <el-button class="apply-image-btn" size="small">
-                      應用到本題所有圖片
-                    </el-button>
-                  </el-form>
+          <!-- 預覽模式下的邏輯設置 -->
+          <template v-else-if="viewMode === 'preview'">
+            <div class="panel-header">
+              <el-icon><Connection /></el-icon>
+              <span>邏輯編輯</span>
+            </div>
+            <div class="panel-content logic-edit-panel">
+              <div class="logic-edit-section">
+                <div v-if="selectedQuestion" class="logic-editor">
+                  <div class="question-type-hint">
+                    <el-tag :type="getLogicTypeTag(selectedQuestion.type)" size="small">
+                      {{ getQuestionTypeName(selectedQuestion.type) }}
+                    </el-tag>
+                    <span class="hint-text">此題型支援跳轉邏輯</span>
+                  </div>
+
+                  <div v-if="hasOptionType(selectedQuestion.type)" class="logic-rules-wrapper">
+                    <div class="logic-rules-header">
+                      <span class="rules-title">跳轉規則列表</span>
+                      <div class="header-buttons">
+                        <el-button 
+                          v-if="!selectedQuestion.logicRuleList || selectedQuestion.logicRuleList.length === 0"
+                          type="primary" 
+                          size="small"
+                          @click="addLogicRule"
+                          class="add-rule-btn"
+                        >
+                          <el-icon><Plus /></el-icon>
+                          新增規則
+                        </el-button>
+                        <el-button 
+                          v-else
+                          type="danger" 
+                          size="small"
+                          @click="removeAllLogicRules"
+                          class="remove-all-rules-btn"
+                        >
+                          <el-icon><Delete /></el-icon>
+                          刪除所有規則
+                        </el-button>
+                      </div>
+                    </div>
+
+                    <div class="rules-grid">
+                      <div 
+                        v-for="(rule, ruleIndex) in selectedQuestion.logicRuleList" 
+                        :key="rule.id"
+                        class="logic-rule-card"
+                      >
+                        <div class="rule-card-header">
+                          <div class="rule-index">
+                            <el-icon><Connection /></el-icon>
+                            <span>規則 {{ ruleIndex + 1 }}</span>
+                          </div>
+                        </div>
+
+                        <div class="rule-card-body">
+                          <div class="rule-row">
+                            <span class="rule-label">如果</span>
+                            <span class="rule-question-name">{{ selectedQuestion.title || '本題' }}</span>
+                          </div>
+
+                          <div class="rule-row">
+                            <span class="rule-label">選中</span>
+                            <el-tag :type="getOptionTagType(rule.optionIndex)" size="default" class="option-tag">
+                              {{ getOptionLabel(rule.optionIndex) }}. {{ selectedQuestion.options[rule.optionIndex] || '未命名' }}
+                            </el-tag>
+                          </div>
+
+                          <div class="rule-row">
+                            <span class="rule-label">則</span>
+                            <span class="rule-action-label">跳轉至</span>
+                            <el-select 
+                              v-model="rule.jumpTarget" 
+                              placeholder="選擇跳轉目標"
+                              size="default"
+                              class="jump-select"
+                              clearable
+                              filterable
+                            >
+                              <el-option-group label="常用選項">
+                                <el-option label="➡️ 下一題" value="next" />
+                                <el-option label="⏹️ 結束問卷" value="end" />
+                              </el-option-group>
+                              <el-option-group label="題目列表">
+                                <el-option 
+                                  v-for="(q, qIndex) in questionList" 
+                                  :key="q.id"
+                                  :label="`${qIndex + 1}. ${q.title || '未命名題目'}${q.id === selectedQuestion.id ? ' (當前題目)' : ''}`"
+                                  :value="q.id"
+                                  :disabled="q.id === selectedQuestion.id"
+                                />
+                              </el-option-group>
+                            </el-select>
+                          </div>
+
+                          <div class="rule-preview">
+                            <el-tag :type="getRulePreviewTag(rule.jumpTarget)" size="small">
+                              當選擇 {{ getOptionName(rule.optionIndex) }} 時 → {{ getJumpTargetName(rule.jumpTarget) }}
+                            </el-tag>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div v-if="!selectedQuestion.logicRuleList || selectedQuestion.logicRuleList.length === 0" class="empty-rules">
+                      <el-empty description="暫無跳轉規則" :image-size="60" />
+                      <el-tag type="info" size="small">💡 點擊上方「新增規則」按鈕開始設置</el-tag>
+                    </div>
+                  </div>
+
+                  <div v-else-if="['3', '9', '10'].includes(selectedQuestion.type)" class="no-logic-hint">
+                    <el-icon><InfoFilled /></el-icon>
+                    <div class="hint-content">
+                      <span class="hint-title">填空/文本類題型</span>
+                      <span class="hint-desc">此類題型通常不需要設置選項跳轉，可直接使用顯示邏輯</span>
+                    </div>
+                  </div>
+
+                  <div v-else class="no-logic-hint">
+                    <el-icon><CircleClose /></el-icon>
+                    <span>該題型不支援跳轉邏輯</span>
+                  </div>
+                </div>
+                <div v-else class="no-selection-logic">
+                  <el-empty description="請在中間區域選擇題目進行邏輯設置" :image-size="80" />
+                  <div class="empty-tips">
+                    <el-tag type="info" size="small">💡 點擊任意題目即可開始設置邏輯</el-tag>
+                  </div>
                 </div>
               </div>
             </div>
-            <div v-else class="no-selection">
-              <el-empty description="請選擇題目進行設置" :image-size="80" />
-            </div>
-          </div>
+          </template>
         </div>
       </div>
     </div>
@@ -698,6 +683,78 @@ export default {
   computed: {
     selectedQuestion() {
       return this.questionList.find(q => q.id === this.selectedQuestionId) || null
+    },
+    structuredQuestionList() {
+      const displayList = [];
+      const processedIds = new Set();
+      
+      const targetedMap = new Map();
+      this.questionList.forEach(q => {
+        if (q.logicRuleList) {
+          q.logicRuleList.forEach(rule => {
+            if (rule.jumpTarget && rule.jumpTarget !== 'next' && rule.jumpTarget !== 'end') {
+              let tId = rule.jumpTarget;
+              if (typeof tId === 'object') tId = tId.jumpTarget || tId.id;
+              
+              targetedMap.set(tId, {
+                sourceId: q.id,
+                optionIndex: rule.optionIndex,
+                optionLabel: this.getOptionLabel(rule.optionIndex),
+                optionName: q.options[rule.optionIndex]
+              });
+            }
+          });
+        }
+      });
+
+      let rootIndex = 1;
+      
+      const processNode = (nodeQ, parentNum, childIdx, condition) => {
+        const num = parentNum ? `${parentNum}.${childIdx}` : `${rootIndex++}`;
+        displayList.push({
+          ...nodeQ,
+          displayNum: num,
+          condition: condition,
+          isChild: !!parentNum,
+          level: parentNum ? parentNum.split('.').length : 0
+        });
+        
+        let localChildIdx = 1;
+        if (nodeQ.logicRuleList) {
+          nodeQ.logicRuleList.forEach(rule => {
+            if (rule.jumpTarget && rule.jumpTarget !== 'next' && rule.jumpTarget !== 'end') {
+              let tId = rule.jumpTarget;
+              if (typeof tId === 'object') tId = tId.jumpTarget || tId.id;
+              
+              const targetQ = this.questionList.find(t => t.id === tId);
+              if (targetQ && !processedIds.has(targetQ.id)) {
+                processedIds.add(targetQ.id);
+                processNode(targetQ, num, localChildIdx++, {
+                  optionIndex: rule.optionIndex,
+                  optionLabel: this.getOptionLabel(rule.optionIndex),
+                  optionName: nodeQ.options[rule.optionIndex]
+                });
+              }
+            }
+          });
+        }
+      };
+
+      this.questionList.forEach(q => {
+        if (!targetedMap.has(q.id) && !processedIds.has(q.id)) {
+          processedIds.add(q.id);
+          processNode(q, null, 0, null);
+        }
+      });
+      
+      this.questionList.forEach((q) => {
+        if (!processedIds.has(q.id)) {
+          processedIds.add(q.id);
+          processNode(q, null, 0, null);
+        }
+      });
+
+      return displayList;
     }
   },
   watch: {

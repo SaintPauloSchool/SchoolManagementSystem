@@ -176,6 +176,7 @@ import { Upload, Plus, Edit, Delete, ArrowRight } from '@element-plus/icons-vue'
 import AddQuestionWizard from './AddQuestionWizard.vue'
 import FormQuestionDialog from './FormQuestionDialog.vue'
 import { ElMessage } from 'element-plus'
+import request from '@/utils/request'
 
 export default {
   name: 'BasicInfoForm',
@@ -397,29 +398,53 @@ export default {
     },
     
     editFormQuestion(index) {
-      this.editingFormQuestion = { ...this.localFormData.questions[index] }
+      const questionData = this.localFormData.questions[index]
+      console.log('編輯表單問題 - 點擊編輯:', questionData)
+      console.log('編輯表單問題 - questionnaireData:', questionData.questionnaireData)
+      console.log('編輯表單問題 - questions:', questionData.questions)
+      this.editingFormQuestion = { ...questionData }
       this.showFormQuestionDialog = true
     },
     
-    saveFormQuestion(question) {
+    saveFormQuestion(saveData) {
+      // saveData 格式：{ questionnaire: {...}, questions: [...] }
+      console.log('保存表單問題數據:', saveData)
+      
       if (this.editingFormQuestion) {
+        // 編輯模式：更新現有問題
         const index = this.localFormData.questions.findIndex(q => q.id === this.editingFormQuestion.id)
         if (index > -1) {
-          question.questionType = 'form'
-          this.localFormData.questions[index] = question
+          // 將整個 questionnaire 和 questions 打包成一個問題對象
+          const formQuestion = {
+            id: this.editingFormQuestion.id,
+            questionType: 'form',
+            title: saveData.questionnaire?.title || '問卷調查',
+            description: saveData.questionnaire?.description || '',
+            questionnaireData: saveData.questionnaire, // 保存完整的問卷數據
+            questions: saveData.questions || [] // 保存所有子問題
+          }
+          this.localFormData.questions[index] = formQuestion
+          ElMessage.success('更新表單問題成功')
         }
       } else {
-        question.id = Date.now()
-        question.questionType = 'form'
-        this.localFormData.questions.push(question)
+        // 新增模式：創建新問題
+        const newQuestion = {
+          id: Date.now(),
+          questionType: 'form',
+          title: saveData.questionnaire?.title || '問卷調查',
+          description: saveData.questionnaire?.description || '',
+          questionnaireData: saveData.questionnaire, // 保存完整的問卷數據
+          questions: saveData.questions || [] // 保存所有子問題
+        }
+        this.localFormData.questions.push(newQuestion)
+        ElMessage.success('添加表單問題成功')
       }
       
+      // 同步到父組件的 formData
       Object.assign(this.formData, this.localFormData)
       
       this.editingFormQuestion = null
       this.showFormQuestionDialog = false
-      
-      ElMessage.success('保存成功')
     },
 
     removeQuestion(index) {

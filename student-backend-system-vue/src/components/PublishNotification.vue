@@ -45,6 +45,7 @@
 <script>
 import BasicInfoForm from './BasicInfoForm.vue'
 import SendSettingsForm from './SendSettingsForm.vue'
+import request from '@/utils/request'
 
 export default {
   name: 'PublishNotification',
@@ -88,13 +89,68 @@ export default {
         
         console.log('發布通知:', this.formData)
         
-        // 模擬提交
-        this.$message.success('通知發布成功')
-        this.$emit('publish-success')
-        this.resetForm()
+        // 準備提交數據
+        const submitData = {
+          // 通知基本信息
+          title: this.formData.title,
+          content: this.formData.content,
+          jumpUrl: this.formData.jumpUrl || null,
+          attachmentUrls: this.formData.attachmentUrls ? JSON.stringify(this.formData.attachmentUrls) : null,
+          status: this.formData.status,
+          replyDeadline: this.formData.replyDeadline ? new Date(this.formData.replyDeadline).toISOString() : null,
+          
+          // 接收對象
+          receivers: this.formData.receivers,
+          ccs: this.formData.ccs,
+          
+          // 問題列表 - 需要處理表單問題的嵌套結構
+          questions: (this.formData.questions || []).map(q => {
+            if (q.questionType === 'form' && q.questions) {
+              // 表單問題：需要將嵌套的問題列表展開
+              return {
+                questionTitle: q.title || '問卷調查',
+                questionType: 'form',
+                isRequired: '0',
+                content: JSON.stringify({
+                  questionnaire: q.questionnaireData,
+                  questions: q.questions
+                })
+              }
+            } else {
+              // 普通問題
+              return {
+                questionTitle: q.title,
+                questionType: q.type || q.questionType,
+                options: q.options ? JSON.stringify(q.options) : null,
+                isRequired: q.required ? '1' : '0',
+                content: q.content || null,
+                logicRules: q.logicRuleList ? JSON.stringify(q.logicRuleList) : null,
+                fillBlanks: q.fillBlanks ? JSON.stringify(q.fillBlanks) : null,
+                correctAnswers: q.correctAnswers ? JSON.stringify(q.correctAnswers) : null
+              }
+            }
+          })
+        }
+        
+        console.log('提交到後端的數據:', submitData)
+        
+        // 調用後端 API
+        const response = await request({
+          url: '/system/notification',
+          method: 'post',
+          data: submitData
+        })
+        
+        if (response.code === 200 || response.code === 0) {
+          this.$message.success('通知發布成功')
+          this.$emit('publish-success')
+          this.resetForm()
+        } else {
+          throw new Error(response.msg || '發布失敗')
+        }
       } catch (error) {
         console.error('發布失敗:', error)
-        this.$message.error('發布失敗，請稍後重試')
+        this.$message.error(error.message || '發布失敗，請稍後重試')
       }
     },
 
