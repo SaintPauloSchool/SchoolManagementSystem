@@ -3707,10 +3707,19 @@ export default {
   border-radius: 8px;
   border-top: 1px dashed #e4e7ed;
   margin-top: 4px;
+  width: 100%;
 }
 
 .rule-preview .el-tag {
   font-weight: 600;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.5;
+  padding: 6px 12px;
+  height: auto;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
 }
 
 /* 空規則狀態 */
