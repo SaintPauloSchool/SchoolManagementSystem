@@ -25,8 +25,8 @@
             class="view-mode-btn"
             size="default"
           >
-            <el-icon><View /></el-icon>
-            預覽
+            <el-icon><Connection /></el-icon>
+            邏輯編輯
           </el-button>
         </div>
         <div class="toolbar-right">
@@ -2062,12 +2062,57 @@ export default {
   background: white;
 }
 
-.preview-question-flow {
+.preview-question-flow,
+.preview-structured-item {
   background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
   border: 1px solid #e4e7ed;
   border-radius: 8px;
   padding: 16px 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.preview-structured-item:hover {
+  border-color: #b3d8ff;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.preview-structured-item.active {
+  border-color: #409EFF;
+  background: linear-gradient(135deg, #ecf5ff 0%, #f0f7ff 100%);
+  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.2);
+  border-left: 4px solid #409EFF;
+}
+
+.preview-structured-item.active .q-number {
+  background: linear-gradient(135deg, #409EFF 0%, #337ecc 100%);
+  box-shadow: 0 2px 6px rgba(64, 158, 255, 0.3);
+}
+
+.preview-structured-item.active .q-text {
+  color: #409EFF;
+  font-weight: 700;
+}
+
+.q-source-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.jump-arrow {
+  color: #67c23a;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.preview-question-title-wrapper {
+  display: flex;
+  flex-direction: column;
 }
 
 .preview-question-title {
