@@ -92,6 +92,142 @@
               </div>
             </el-collapse-item>
 
+            <!-- 邏輯編輯面板（只在預覽模式顯示） -->
+            <el-collapse-item name="logicEdit" v-if="viewMode === 'preview'">
+              <template #title>
+                <div class="panel-title-with-icon">
+                  <el-icon><Connection /></el-icon>
+                  <span>邏輯編輯</span>
+                </div>
+              </template>
+              <div class="panel-content logic-edit-panel-content">
+                <div class="logic-edit-section">
+                  <div v-if="selectedQuestion" class="logic-editor">
+                    <div class="question-type-hint">
+                      <el-tag :type="getLogicTypeTag(selectedQuestion.type)" size="small">
+                        {{ getQuestionTypeName(selectedQuestion.type) }}
+                      </el-tag>
+                      <span class="hint-text">此題型支援跳轉邏輯</span>
+                    </div>
+
+                    <div v-if="hasOptionType(selectedQuestion.type)" class="logic-rules-wrapper">
+                      <div class="logic-rules-header">
+                        <span class="rules-title">跳轉規則列表</span>
+                        <div class="header-buttons">
+                          <el-button 
+                            v-if="!selectedQuestion.logicRuleList || selectedQuestion.logicRuleList.length === 0"
+                            type="primary" 
+                            size="small"
+                            @click="addLogicRule"
+                            class="add-rule-btn"
+                          >
+                            <el-icon><Plus /></el-icon>
+                            新增規則
+                          </el-button>
+                          <el-button 
+                            v-else
+                            type="danger" 
+                            size="small"
+                            @click="removeAllLogicRules"
+                            class="remove-all-rules-btn"
+                          >
+                            <el-icon><Delete /></el-icon>
+                            刪除所有規則
+                          </el-button>
+                        </div>
+                      </div>
+
+                      <div class="rules-grid">
+                        <div 
+                          v-for="(rule, ruleIndex) in selectedQuestion.logicRuleList" 
+                          :key="rule.id"
+                          class="logic-rule-card"
+                        >
+                          <div class="rule-card-header">
+                            <div class="rule-index">
+                              <el-icon><Connection /></el-icon>
+                              <span>規則 {{ ruleIndex + 1 }}</span>
+                            </div>
+                          </div>
+
+                          <div class="rule-card-body">
+                            <div class="rule-row">
+                              <span class="rule-label">如果</span>
+                              <span class="rule-question-name">{{ selectedQuestion.title || '本題' }}</span>
+                            </div>
+
+                            <div class="rule-row">
+                              <span class="rule-label">選中</span>
+                              <el-tag :type="getOptionTagType(rule.optionIndex)" size="default" class="option-tag">
+                                {{ getOptionLabel(rule.optionIndex) }}. {{ selectedQuestion.options[rule.optionIndex] || '未命名' }}
+                              </el-tag>
+                            </div>
+
+                            <div class="rule-row">
+                              <span class="rule-label">則</span>
+                              <span class="rule-action-label">跳轉至</span>
+                              <el-select 
+                                v-model="rule.jumpTarget" 
+                                placeholder="選擇跳轉目標"
+                                size="default"
+                                class="jump-select"
+                                clearable
+                                filterable
+                              >
+                                <el-option-group label="常用選項">
+                                  <el-option label="➡️ 下一題" value="next" />
+                                  <el-option label="⏹️ 結束問卷" value="end" />
+                                </el-option-group>
+                                <el-option-group label="題目列表">
+                                  <el-option 
+                                    v-for="(q, qIndex) in questionList" 
+                                    :key="q.id"
+                                    :label="`${qIndex + 1}. ${q.title || '未命名題目'}${q.id === selectedQuestion.id ? ' (當前題目)' : ''}`"
+                                    :value="q.id"
+                                    :disabled="q.id === selectedQuestion.id"
+                                  />
+                                </el-option-group>
+                              </el-select>
+                            </div>
+
+                            <div class="rule-preview">
+                              <el-tag :type="getRulePreviewTag(rule.jumpTarget)" size="small">
+                                當選擇 {{ getOptionName(rule.optionIndex) }} 時 → {{ getJumpTargetName(rule.jumpTarget) }}
+                              </el-tag>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div v-if="!selectedQuestion.logicRuleList || selectedQuestion.logicRuleList.length === 0" class="empty-rules">
+                        <el-empty description="暫無跳轉規則" :image-size="60" />
+                        <el-tag type="info" size="small">💡 點擊上方「新增規則」按鈕開始設置</el-tag>
+                      </div>
+                    </div>
+
+                    <div v-else-if="['3', '9', '10'].includes(selectedQuestion.type)" class="no-logic-hint">
+                      <el-icon><InfoFilled /></el-icon>
+                      <div class="hint-content">
+                        <span class="hint-title">填空/文本類題型</span>
+                        <span class="hint-desc">此類題型通常不需要設置選項跳轉，可直接使用顯示邏輯</span>
+                      </div>
+                    </div>
+
+                    <div v-else class="no-logic-hint">
+                      <el-icon><CircleClose /></el-icon>
+                      <span>該題型不支援跳轉邏輯</span>
+                    </div>
+                  </div>
+                  <div v-else class="no-selection-logic">
+                    <el-empty description="請在中間區域選擇題目進行邏輯設置" :image-size="80" />
+                    <div class="empty-tips">
+                      <el-tag type="info" size="small">💡 點擊任意題目即可開始設置邏輯</el-tag>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </el-collapse-item>
+
           </el-collapse>
         </div>
 
@@ -124,23 +260,39 @@
             <div class="questionnaire-body">
               <!-- 預覽模式：結構化列表 -->
               <div v-if="viewMode === 'preview'" class="preview-flowchart-container">
+                <!-- SVG 流程線層 -->
+                <svg class="flow-connector-svg" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+                            refX="9" refY="3.5" orient="auto">
+                      <polygon points="0 0, 10 3.5, 0 7" fill="#67c23a" />
+                    </marker>
+                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" style="stop-color:#409EFF;stop-opacity:1" />
+                      <stop offset="100%" style="stop-color:#67c23a;stop-opacity:1" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                              
                 <div 
-                  v-for="node in structuredQuestionList" 
+                  v-for="(node, nodeIndex) in structuredQuestionList" 
                   :key="node.id"
                   class="preview-structured-item"
                   :class="{ 'active': selectedQuestionId === node.id }"
-                  :style="{ marginLeft: (node.level * 30) + 'px' }"
+                  :style="{ marginLeft: (node.level * 40) + 'px' }"
+                  :data-has-source="!!node.condition"
                   @click="selectQuestion(node.id)"
                 >
                   <div class="preview-question-title-wrapper">
                     <!-- 顯示這題是從哪個選項跳過來的 -->
                     <div class="q-source-badge" v-if="node.condition">
                       <el-tag size="small" type="success" effect="dark" class="source-tag">
-                        從: {{ node.condition.optionLabel }}. {{ node.condition.optionName || '未命名選項' }}
+                        <el-icon class="source-icon"><Connection /></el-icon>
+                        從：{{ node.condition.optionLabel }}. {{ node.condition.optionName || '未命名選項' }}
                       </el-tag>
-                      <span class="jump-arrow">→</span>
+                      <span class="jump-arrow">⬇</span>
                     </div>
-
+              
                     <div class="preview-question-title">
                       <span class="q-number">{{ node.displayNum }}</span>
                       <span class="q-text">{{ node.title || '未命名題目' }}</span>
@@ -149,13 +301,43 @@
                       </el-tag>
                     </div>
                   </div>
-                  
+                                
+                  <!-- 邏輯規則預覽（帶流程線） -->
+                  <div v-if="node.logicRuleList && node.logicRuleList.length > 0" class="preview-logic-flow-chart">
+                    <div class="logic-flow-title">
+                      <el-icon><Connection /></el-icon>
+                      <span>邏輯分支</span>
+                    </div>
+                    <div class="logic-flow-lines">
+                      <div 
+                        v-for="(rule, ruleIdx) in node.logicRuleList" 
+                        :key="rule.id"
+                        class="logic-flow-line"
+                      >
+                        <div class="flow-line-connector">
+                          <div class="option-node">
+                            <span class="option-letter">{{ getOptionLabel(rule.optionIndex) }}</span>
+                          </div>
+                          <div class="flow-line-path">
+                            <div class="flow-line"></div>
+                            <div class="flow-arrow">➜</div>
+                          </div>
+                          <div class="target-node">
+                            <el-tag :type="getRulePreviewTag(rule.jumpTarget)" size="small" effect="dark">
+                              {{ getJumpTargetName(rule.jumpTarget) }}
+                            </el-tag>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                                
                   <div v-if="['3', '9', '10'].includes(node.type)" class="preview-simple-hint">
                     <el-icon><Edit /></el-icon>
                     <span>填寫類題目</span>
                   </div>
                 </div>
-                
+                              
                 <div v-if="structuredQuestionList.length === 0" class="empty-state">
                   <el-empty description="暫無題目" />
                 </div>
@@ -1782,9 +1964,9 @@ export default {
 
 /* 左側面板 */
 .left-panel {
-  width: 320px;
+  width: 360px;
   flex-shrink: 0;
-  min-width: 300px; /* 設置最小寬度防止過度壓縮 */
+  min-width: 340px; /* 設置最小寬度防止過度壓縮 */
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -1797,8 +1979,8 @@ export default {
 
 /* 邏輯面板展開時的左側面板樣式 */
 .left-panel.logic-expanded {
-  width: 900px;
-  min-width: 850px;
+  width: 450px;
+  min-width: 420px;
 }
 
 .left-panel .panel-header {
@@ -1822,6 +2004,12 @@ export default {
   flex: 1;
   overflow-y: auto;
   padding: 16px 20px 20px 20px;
+}
+
+/* 邏輯編輯面板內容區域 */
+.left-panel .panel-content.logic-edit-panel-content {
+  padding: 12px 16px 16px 16px;
+  background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
 }
 
 .left-panel .panel-content::-webkit-scrollbar {
@@ -2060,6 +2248,18 @@ export default {
   gap: 16px;
   padding: 24px 32px;
   background: white;
+  position: relative;
+}
+
+/* SVG 流程線層 */
+.flow-connector-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .preview-question-flow,
@@ -2071,6 +2271,8 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   cursor: pointer;
   transition: all 0.25s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .preview-structured-item:hover {
@@ -2102,12 +2304,33 @@ export default {
   gap: 6px;
   margin-bottom: 8px;
   font-size: 12px;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, rgba(103, 194, 58, 0.1) 0%, rgba(64, 158, 255, 0.1) 100%);
+  border-radius: 6px;
+  border: 1px solid rgba(103, 194, 58, 0.3);
+}
+
+.source-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.source-icon {
+  font-size: 14px;
 }
 
 .jump-arrow {
   color: #67c23a;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 16px;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
 }
 
 .preview-question-title-wrapper {
@@ -2118,24 +2341,27 @@ export default {
 .preview-question-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 12px;
   padding-bottom: 10px;
   border-bottom: 1px dashed #ecf5ff;
+  flex-wrap: wrap;
 }
 
 .q-number {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
+  min-width: 24px;
   height: 24px;
-  border-radius: 50%;
+  border-radius: 12px;
   background: linear-gradient(135deg, #409EFF 0%, #67c23a 100%);
   color: white;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
+  padding: 0 6px;
+  line-height: 1;
 }
 
 .q-text {
@@ -2149,54 +2375,109 @@ export default {
   flex-shrink: 0;
 }
 
-.preview-logic-flow {
-  padding: 12px 16px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  margin-left: 34px;
+/* 邏輯規則預覽（帶流程線） */
+.preview-logic-flow-chart {
+  margin-top: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+  border-radius: 8px;
+  border: 2px solid #e4e7ed;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
-.flow-simple-row {
+.logic-flow-title {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #dcdfe6;
 }
 
-.simple-flow-item {
+.logic-flow-title .el-icon {
+  font-size: 14px;
+  color: #409EFF;
+}
+
+.logic-flow-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.logic-flow-line {
+  display: flex;
+  align-items: center;
+}
+
+.flow-line-connector {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
-  background: white;
-  border-radius: 6px;
-  border: 1px solid #f0f0f0;
-  font-size: 12px;
+  width: 100%;
 }
 
-.option-badge {
-  display: inline-flex;
+.option-node {
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg, #409EFF 0%, #67c23a 100%);
   color: white;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.arrow-right {
   font-size: 14px;
-  color: #409EFF;
   font-weight: 700;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+  flex-shrink: 0;
+  z-index: 3;
 }
 
-.action-text {
+.option-letter {
+  display: inline-block;
+}
+
+.flow-line-path {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.flow-line {
+  flex: 1;
+  height: 3px;
+  background: linear-gradient(90deg, #409EFF 0%, #67c23a 100%);
+  border-radius: 2px;
+  position: relative;
+}
+
+.flow-arrow {
+  font-size: 18px;
+  color: #67c23a;
+  font-weight: 700;
+  margin-left: -4px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.target-node {
+  flex-shrink: 0;
+  min-width: 100px;
+}
+
+.target-node .el-tag {
   font-size: 12px;
+  padding: 6px 12px;
   font-weight: 600;
-  color: #606266;
-  padding: 2px 6px;
+  border-radius: 6px;
 }
 
 .preview-simple-hint {
@@ -3333,7 +3614,7 @@ export default {
   margin-top: 8px;
 }
 
-/* 邏輯編輯面板樣式 */
+/* 邏輯編輯區域樣式 */
 .logic-edit-section {
   padding: 0;
 }
@@ -3341,7 +3622,290 @@ export default {
 .logic-editor {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+}
+
+.logic-rules-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rules-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.logic-rule-card {
+  background: #ffffff;
+  border-radius: 8px;
+  border: 2px solid #e4e7ed;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 8px;
+}
+
+.logic-rule-card:hover {
+  border-color: #409EFF;
+  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.rule-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.rule-index {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.rule-index .el-icon {
+  font-size: 14px;
+  color: #409EFF;
+}
+
+.rule-card-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rule-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.rule-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #606266;
+  min-width: 28px;
+  flex-shrink: 0;
+}
+
+.rule-question-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #303133;
+  padding: 3px 6px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 2px solid #409EFF;
+}
+
+.rule-action-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #606266;
+  min-width: 40px;
+  flex-shrink: 0;
+}
+
+.option-tag {
+  font-weight: 600;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.jump-select {
+  flex: 1;
+  min-width: 150px;
+}
+
+.jump-select :deep(.el-input__inner) {
+  font-size: 12px;
+  padding: 5px 8px;
+}
+
+.rule-preview {
+  margin-top: 3px;
+  padding: 6px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 4px;
+  border: 1px dashed #dcdfe6;
+}
+
+.rule-preview .el-tag {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.empty-rules {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px dashed #dcdfe6;
+}
+
+.no-selection-logic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
   gap: 16px;
+}
+
+.empty-tips {
+  display: flex;
+  justify-content: center;
+}
+
+.no-logic-hint {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
+  color: #606266;
+  font-size: 13px;
+}
+
+.no-logic-hint .el-icon {
+  font-size: 20px;
+  color: #909399;
+}
+
+.hint-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hint-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.hint-desc {
+  font-size: 12px;
+  color: #909399;
+}
+
+.question-type-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+}
+
+.hint-text {
+  font-size: 12px;
+  color: #606266;
+}
+
+.logic-rules-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 4px;
+}
+
+.rules-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  padding-left: 8px;
+  border-left: 3px solid #409EFF;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.add-rule-btn,
+.remove-all-rules-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+/* 預覽模式下的流程線樣式 */
+.preview-flowchart-container {
+  position: relative;
+}
+
+.preview-structured-item {
+  position: relative;
+  margin-left: 20px !important;
+}
+
+/* 流程連接線 - 使用 CSS 僞元素 */
+.preview-structured-item::before {
+  content: '↘';
+  position: absolute;
+  left: -18px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 14px;
+  color: #67c23a;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%) rotate(0deg);
+  background: transparent;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+/* 有來源的問題顯示更明顯的箭頭 */
+.preview-structured-item[data-has-source="true"]::before {
+  content: '⬇';
+  font-size: 16px;
+  color: #409EFF;
+  animation: arrowBounce 1.5s infinite;
+}
+
+@keyframes arrowBounce {
+  0%, 100% { transform: translateY(-50%) scale(1); opacity: 1; }
+  50% { transform: translateY(-45%) scale(1.2); opacity: 0.8; }
+}
+
+/* 第一層級的問題不顯示連接線 */
+.preview-structured-item[style*="margin-left: 0px"]::before,
+.preview-structured-item[style*="margin-left: 0px"]::after {
+  display: none;
+}
+
+/* 第二層級及以上顯示垂直連接線 */
+.preview-structured-item:not([style*="margin-left: 0px"])::after {
+  content: '';
+  position: absolute;
+  left: -18px;
+  top: -20px;
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(180deg, #409EFF 0%, #67c23a 100%);
+  border-radius: 2px;
+  z-index: 1;
 }
 
 /* 邏輯面板展開時的提示 */
