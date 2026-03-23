@@ -4155,10 +4155,15 @@ export default {
   min-height: 28px;
   padding: 4px 8px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   font-weight: 600;
   font-size: 12px;
   border-radius: 4px;
+  white-space: normal;
+  word-break: break-all;
+  word-wrap: break-word;
+  line-height: 1.5;
+  max-width: 100%;
 }
 
 .jump-select {
