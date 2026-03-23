@@ -317,6 +317,7 @@
                         <div class="flow-line-connector">
                           <div class="option-node">
                             <span class="option-letter">{{ getOptionLabel(rule.optionIndex) }}</span>
+                            <span class="option-text">{{ node.options[rule.optionIndex] || '未命名選項' }}</span>
                           </div>
                           <div class="flow-line-path">
                             <div class="flow-line"></div>
@@ -2425,21 +2426,38 @@ export default {
 .option-node {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 16px;
   background: linear-gradient(135deg, #409EFF 0%, #67c23a 100%);
   color: white;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
   flex-shrink: 0;
   z-index: 3;
 }
 
 .option-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.option-text {
   display: inline-block;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  opacity: 0.95;
 }
 
 .flow-line-path {
