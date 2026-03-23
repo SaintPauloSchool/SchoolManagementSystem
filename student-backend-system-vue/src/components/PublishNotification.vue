@@ -103,11 +103,11 @@ export default {
           
           // 問題列表 - 需要處理表單問題的嵌套結構
           questions: (this.formData.questions || []).map(q => {
-            if (q.questionType === 'form' && q.questions) {
+            if (q.questionType === '5' && q.questions) {
               // 表單問題：需要將嵌套的問題列表展開
               return {
                 questionTitle: q.title || '問卷調查',
-                questionType: 'form',
+                questionType: '5',
                 isRequired: '0',
                 content: JSON.stringify({
                   questionnaire: q.questionnaireData,

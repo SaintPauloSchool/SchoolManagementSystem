@@ -59,11 +59,10 @@ create table notification_question (
                                        notification_id       bigint(20)      not null                   comment '通知 ID',
                                        parent_question_id    bigint(20)      default null               comment '父问题 ID（用于分支问题，记录上一题的选项继续后指向此题）',
                                        question_title        varchar(500)    not null                   comment '问题标题',
-                                       question_type         char(1)         not null                   comment '问题类型（1 单选 2 多选 3 填空 4 附件上传 5 分支）',
+                                       question_type         char(1)         not null                   comment '问题类型（1 单选 2 多选 3 填空 4 附件上传 5 逻辑表单）',
                                        options               text            default null               comment '选项列表 (JSON 格式)
                                                                                 - 单选/多选：["选项 1","选项 2",...]
-                                                                                - 分支题型：[{"text":"选项文字","action":"continue/end","nextTitle":"下一题题目内容"},...]
-                                                                                注意：分支题型的 nextTitle 在保存时会被后端转换为实际的 nextQuestionId',
+                                                                                - 逻辑表单：存储在 content 字段中，包含完整的问卷结构和子问题列表',
                                        is_required           char(1)         default '0'                comment '是否必答（0 否 1 是）',
                                        sort_order            int(4)          default 0                  comment '排序',
                                        logic_rules           text            default null               comment '跳转逻辑规则 (JSON 格式)',

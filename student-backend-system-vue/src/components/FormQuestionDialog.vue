@@ -83,7 +83,7 @@
                       <el-icon><Checked /></el-icon>
                       <span>多選</span>
                     </div>
-                    <div class="type-btn" @click="addQuestion('10')">
+                    <div class="type-btn" @click="addQuestion('3')">
                       <el-icon><Edit /></el-icon>
                       <span>填空</span>
                     </div>
@@ -205,7 +205,7 @@
                       </div>
                     </div>
 
-                    <div v-else-if="['3', '9', '10'].includes(selectedQuestion.type)" class="no-logic-hint">
+                    <div v-else-if="['3'].includes(selectedQuestion.type)" class="no-logic-hint">
                       <el-icon><InfoFilled /></el-icon>
                       <div class="hint-content">
                         <span class="hint-title">填空/文本類題型</span>
@@ -333,7 +333,7 @@
                     </div>
                   </div>
                                 
-                  <div v-if="['3', '9', '10'].includes(node.type)" class="preview-simple-hint">
+                  <div v-if="['3'].includes(node.type)" class="preview-simple-hint">
                     <el-icon><Edit /></el-icon>
                     <span>填寫類題目</span>
                   </div>
@@ -483,7 +483,7 @@
                   </div>
 
                   <!-- 填空/文本 -->
-                  <div v-else-if="['3', '9'].includes(question.type)">
+                  <div v-else-if="['9'].includes(question.type)">
                     <el-input
                       v-model="question.placeholder"
                       placeholder="設置佔位文字"
@@ -494,7 +494,7 @@
                   </div>
 
                   <!-- 填空題目（拖拽權限控制） -->
-                  <div v-else-if="question.type === '10'">
+                  <div v-else-if="question.type === '3'">
                     <div class="fillblank-question-container">
                       <!-- 題目內容編輯框 -->
                       <div class="fillblank-editor" v-if="viewMode === 'edit'">
@@ -587,13 +587,7 @@
                     >
                       <el-option label="單選" value="1" />
                       <el-option label="多選" value="2" />
-                      <el-option label="圖片單選" value="7" />
-                      <el-option label="圖片多選" value="8" />
-                      <el-option label="單行文本" value="9" />
-                      <el-option label="多行文本" value="3" />
-                      <el-option label="附件" value="4" />
-                      <el-option label="分支" value="5" />
-                      <el-option label="填空" value="10" />
+                      <el-option label="填空" value="3" />
                     </el-select>
                   </div>
 
@@ -786,7 +780,7 @@
                     </div>
                   </div>
 
-                  <div v-else-if="['3', '9', '10'].includes(selectedQuestion.type)" class="no-logic-hint">
+                  <div v-else-if="['3'].includes(selectedQuestion.type)" class="no-logic-hint">
                     <el-icon><InfoFilled /></el-icon>
                     <div class="hint-content">
                       <span class="hint-title">填空/文本類題型</span>
@@ -1019,13 +1013,12 @@ export default {
       const typeMap = {
         '1': '單選題',
         '2': '多選題',
-        '3': '多行文本',
+        '3': '填空題',
         '4': '附件上傳',
-        '5': '分支題',
+        '5': '邏輯表單',
         '7': '圖片單選',
         '8': '圖片多選',
-        '9': '單行文本',
-        '10': '填空題'
+        '9': '單行文本'
       }
       return typeMap[type] || '未知題型'
     },
@@ -1035,13 +1028,12 @@ export default {
       const tagMap = {
         '1': 'success',
         '2': 'success',
-        '3': 'info',
+        '3': 'primary',
         '4': 'warning',
         '5': 'danger',
         '7': 'success',
         '8': 'success',
-        '9': 'info',
-        '10': 'primary'
+        '9': 'info'
       }
       return tagMap[type] || 'info'
     },
@@ -1051,13 +1043,12 @@ export default {
       const tagMap = {
         '1': 'success',
         '2': 'success',
-        '3': 'info',
+        '3': 'primary',
         '4': 'warning',
         '5': 'danger',
         '7': 'success',
         '8': 'success',
-        '9': 'info',
-        '10': 'primary'
+        '9': 'info'
       }
       return tagMap[type] || 'info'
     },
@@ -1278,7 +1269,7 @@ export default {
       }
       
       // 如果是填空題類型（新增的拖拽權限控制題目）
-      if (type === '10') {
+      if (type === '3') {
         question.fillBlanks = [] // 初始為空，由用戶動態新增
         question.correctAnswers = [] // 正確答案數組，與 fillBlanks 對應
       }
@@ -1298,7 +1289,7 @@ export default {
         return ['', '']
       }
       // 填空題類型返回空數組
-      if (type === '10') {
+      if (type === '3') {
         return null
       }
       return null
@@ -1695,7 +1686,7 @@ export default {
     
       // 同步填空題的 content 內容
       this.questionList.forEach(q => {
-        if (q.type === '10' && q.fillBlanks && q.fillBlanks.length > 0) {
+        if (q.type === '3' && q.fillBlanks && q.fillBlanks.length > 0) {
           // 重新同步 content 內容
           let editableDiv = this.$refs.contentEditableDiv
           if (Array.isArray(editableDiv) && editableDiv.length > 0) {
@@ -1743,7 +1734,7 @@ export default {
         }
             
         // 驗證填空題（只驗證內容是否為空）
-        if (q.type === '10') {
+        if (q.type === '3') {
           if (!q.content || !q.content.trim()) {
             ElMessage.warning({
               message: `第 ${i + 1} 題的題目內容不能為空`,

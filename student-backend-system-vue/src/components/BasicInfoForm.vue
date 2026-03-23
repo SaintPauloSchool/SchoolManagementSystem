@@ -113,7 +113,7 @@
                   </el-tag>
                   <div class="question-actions">
                     <el-button 
-                      v-if="question.questionType === 'form'" 
+                      v-if="question.questionType === '5'" 
                       size="small" 
                       @click="editFormQuestion(index)"
                     >
@@ -367,7 +367,8 @@ export default {
         '1': '單選',
         '2': '多選',
         '3': '填空',
-        '4': '附件'
+        '4': '附件',
+        '5': '邏輯表單'
       }
       return typeMap[type] || '未知'
     },
@@ -377,7 +378,8 @@ export default {
         '1': 'primary',
         '2': 'success',
         '3': 'warning',
-        '4': 'danger'
+        '4': 'danger',
+        '5': 'info'
       }
       return colorMap[type] || 'info'
     },
@@ -418,7 +420,8 @@ export default {
           // 將整個 questionnaire 和 questions 打包成一個問題對象
           const formQuestion = {
             id: this.editingFormQuestion.id,
-            questionType: 'form',
+            questionType: '5',
+            type: '5',
             title: saveData.questionnaire?.title || '問卷調查',
             description: saveData.questionnaire?.description || '',
             questionnaireData: saveData.questionnaire, // 保存完整的問卷數據
@@ -431,7 +434,8 @@ export default {
         // 新增模式：創建新問題
         const newQuestion = {
           id: Date.now(),
-          questionType: 'form',
+          questionType: '5',
+          type: '5',
           title: saveData.questionnaire?.title || '問卷調查',
           description: saveData.questionnaire?.description || '',
           questionnaireData: saveData.questionnaire, // 保存完整的問卷數據
