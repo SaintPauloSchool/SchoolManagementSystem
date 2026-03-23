@@ -123,9 +123,9 @@ insert into notification_cc values(1, 1, '1', '[201,202]', '["李主任","王副
 insert into notification_cc values(2, 1, '2', '[301]', '["校长办公室"]', NOW());
 
 -- 示例问题数据
--- 分支题型：第一个问题
-insert into notification_question values(1, 1, null, '您是否支持举办运动会？', '5', '[{"text":"支持，我会积极参加","action":"continue","nextTitle":"请选择您想参加的项目"},{"text":"不支持","action":"end"}]', '1', 1, NOW());
--- 如果选择支持，继续问第二个问题（由上一题的 nextTitle 生成）
-insert into notification_question values(2, 1, 1, '请选择您想参加的项目（可多选）', '2', '["跑步","跳远","投掷","其他"]', '0', 2, NOW());
+-- 单选题：第一个问题
+insert into notification_question values(1, 1, null, '您是否支持举办运动会？', '1', '["支持","不支持"]', '1', 1, null, null, null, null, NOW());
+-- 第二个问题：多选题
+insert into notification_question values(2, 1, null, '请选择您想参加的项目（可多选）', '2', '["跑步","跳远","投掷","其他"]', '0', 2, null, null, null, null, NOW());
 -- 第三个问题：填空题
-insert into notification_question values(3, 1, null, '请留下您的联系方式', '3', null, '1', 3, NOW());
+insert into notification_question values(3, 1, null, '请留下您的联系方式', '3', null, '1', 3, null, null, null, null, NOW());
