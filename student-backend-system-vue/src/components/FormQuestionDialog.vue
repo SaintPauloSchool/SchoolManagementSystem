@@ -559,14 +559,6 @@
               </div>
               </div>
             </div>
-
-            <!-- 底部新增按鈕 - 編輯模式 -->
-            <div class="questionnaire-footer" v-if="viewMode === 'edit'">
-              <el-button class="add-question-tips" size="large" @click="scrollToLeftPanel">
-                <el-icon><Plus /></el-icon>
-                從左側新增題目
-              </el-button>
-            </div>
           </div>
         </div>
 
@@ -1209,18 +1201,47 @@ export default {
     initForm() {
       if (this.question) {
         // 編輯模式：加載現有數據
-        this.questionnaireData = { title: '問卷調查', description: '' }
-        this.questionList = [{
-          ...this.question,
-          id: this.question.id || Date.now(),
-          description: this.question.description || '',
-          placeholder: this.question.placeholder || '',
-          defaultValue: this.question.defaultValue || '',
-          validation: this.question.validation || [],
-          randomOrder: this.question.randomOrder || false,
-          logicRuleList: this.question.logicRuleList || [] // 初始化邏輯規則列表
-        }]
-        this.selectedQuestionId = this.questionList[0].id
+        if (this.question.questionnaireData) {
+          // 如果有 questionnaireData，使用它
+          this.questionnaireData = {
+            title: this.question.questionnaireData.title || '問卷調查',
+            description: this.question.questionnaireData.description || ''
+          }
+        } else {
+          // 否則使用 title 和 description
+          this.questionnaireData = {
+            title: this.question.title || '問卷調查',
+            description: this.question.description || ''
+          }
+        }
+        
+        if (this.question.questions && this.question.questions.length > 0) {
+          // 如果有 questions 數組，使用它
+          this.questionList = this.question.questions.map((q, index) => ({
+            ...q,
+            id: q.id || Date.now() + index,
+            description: q.description || '',
+            placeholder: q.placeholder || '',
+            defaultValue: q.defaultValue || '',
+            validation: q.validation || [],
+            randomOrder: q.randomOrder || false,
+            logicRuleList: q.logicRuleList || []
+          }))
+        } else {
+          // 否則將 question 本身作為第一題
+          this.questionList = [{
+            ...this.question,
+            id: this.question.id || Date.now(),
+            description: this.question.description || '',
+            placeholder: this.question.placeholder || '',
+            defaultValue: this.question.defaultValue || '',
+            validation: this.question.validation || [],
+            randomOrder: this.question.randomOrder || false,
+            logicRuleList: this.question.logicRuleList || []
+          }]
+        }
+        
+        this.selectedQuestionId = this.questionList[0]?.id || null
       } else {
         this.resetForm()
       }
@@ -1661,13 +1682,6 @@ export default {
       return html
     },
 
-    scrollToLeftPanel() {
-      ElMessage.info({
-        message: '請從左側面板選擇題型新增題目',
-        offset: 100
-      })
-    },
-
     handleClose() {
       this.$emit('update:visible', false)
     },
@@ -1677,7 +1691,31 @@ export default {
         ElMessage.warning('請至少添加一道題目')
         return
       }
-
+    
+      // 同步填空題的 content 內容
+      this.questionList.forEach(q => {
+        if (q.type === '10' && q.fillBlanks && q.fillBlanks.length > 0) {
+          // 重新同步 content 內容
+          let editableDiv = this.$refs.contentEditableDiv
+          if (Array.isArray(editableDiv) && editableDiv.length > 0) {
+            editableDiv = editableDiv[0]
+          }
+              
+          if (editableDiv) {
+            let html = editableDiv.innerHTML
+            const tags = editableDiv.querySelectorAll('.editable-blank-tag')
+            tags.forEach((tag) => {
+              const index = parseInt(tag.dataset.index) + 1
+              const placeholder = `{{fillblank-${index}}}`
+              html = html.replace(tag.outerHTML, placeholder)
+            })
+            const tempDiv = document.createElement('div')
+            tempDiv.innerHTML = html
+            q.content = tempDiv.textContent || tempDiv.innerText || ''
+          }
+        }
+      })
+    
       // 驗證必填項
       for (let i = 0; i < this.questionList.length; i++) {
         const q = this.questionList[i]
@@ -1689,7 +1727,7 @@ export default {
           this.selectedQuestionId = q.id
           return
         }
-        
+            
         // 驗證選項
         if (this.hasOptionType(q.type)) {
           const validOptions = q.options.filter(opt => opt.trim())
@@ -1702,26 +1740,20 @@ export default {
             return
           }
         }
-        
-        // 驗證填空題
+            
+        // 驗證填空題（只驗證內容是否為空）
         if (q.type === '10') {
-          if (q.fillBlanks && q.fillBlanks.length > 0) {
-            for (let j = 0; j < q.fillBlanks.length; j++) {
-              const blank = q.fillBlanks[j]
-              const userAnswer = q.userAnswers ? q.userAnswers[j] : ''
-              if (blank.required && (!userAnswer || !userAnswer.trim())) {
-                ElMessage.warning({
-                  message: `第 ${i + 1} 題的第 ${j + 1} 個填空不能為空`,
-                  offset: 100
-                })
-                this.selectedQuestionId = q.id
-                return
-              }
-            }
+          if (!q.content || !q.content.trim()) {
+            ElMessage.warning({
+              message: `第 ${i + 1} 題的題目內容不能為空`,
+              offset: 100
+            })
+            this.selectedQuestionId = q.id
+            return
           }
         }
       }
-
+    
       this.$emit('save', {
         questionnaire: this.questionnaireData,
         questions: this.questionList
@@ -1731,7 +1763,7 @@ export default {
         message: '保存成功',
         offset: 100
       })
-    }
+    },
   }
 }
 </script>
@@ -2986,30 +3018,6 @@ export default {
   text-align: center;
   background: #f8f9fa;
   border-radius: 2px 2px 0 0;
-}
-
-.questionnaire-footer {
-  padding: 16px 24px;
-  border-top: 1px solid #e4e7ed;
-  background: #f0f2f5;
-  text-align: center;
-}
-
-.add-question-tips {
-  border: 2px dashed #409EFF;
-  background: #ecf5ff;
-  color: #409EFF;
-  border-radius: 6px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.add-question-tips:hover {
-  background: #d9ecff;
-  border-color: #67c23a;
-  color: #67c23a;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
 }
 
 /* 空狀態 */

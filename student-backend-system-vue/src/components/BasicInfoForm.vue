@@ -399,7 +399,12 @@ export default {
     
     editFormQuestion(index) {
       const questionData = this.localFormData.questions[index]
-      this.editingFormQuestion = { ...questionData }
+      // 传递完整的 questionnaireData 和 questions 数据
+      this.editingFormQuestion = {
+        ...questionData,
+        questionnaireData: questionData.questionnaireData || { title: questionData.title || '問卷調查', description: questionData.description || '' },
+        questions: questionData.questions || []
+      }
       this.showFormQuestionDialog = true
     },
     
