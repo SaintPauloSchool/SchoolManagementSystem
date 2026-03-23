@@ -7,15 +7,6 @@
           <img src="@/logo/sp.jpg" alt="School Logo" class="logo-icon" />
           <span class="logo-text" v-show="!isCollapsed">學生後台系統</span>
         </div>
-        <el-button 
-          v-if="!isMobile" 
-          link 
-          class="collapse-btn" 
-          @click="toggleCollapse"
-        >
-          <el-icon><Fold /></el-icon>
-          <span class="collapse-text" v-show="!isCollapsed">收起</span>
-        </el-button>
       </div>
 
       <nav class="sidebar-nav">
@@ -85,6 +76,19 @@
           </ul>
         </div>
       </nav>
+
+      <!-- 收起按鈕 - 放在底部 -->
+      <div class="sidebar-footer">
+        <el-button 
+          v-if="!isMobile" 
+          link 
+          class="collapse-btn" 
+          @click="toggleCollapse"
+        >
+          <el-icon><Fold /></el-icon>
+          <span class="collapse-text" v-show="!isCollapsed">收起</span>
+        </el-button>
+      </div>
     </aside>
 
     <!-- 主內容區 -->
@@ -295,6 +299,18 @@ export default {
   min-height: 80px;
 }
 
+/* 側邊欄底部 */
+.sidebar-footer {
+  padding: 20px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(30, 64, 175, 0.2);
+  backdrop-filter: blur(8px);
+  margin-top: auto;
+}
+
 .logo-wrapper {
   display: flex;
   align-items: center;
@@ -318,7 +334,6 @@ export default {
   gap: 8px;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   backdrop-filter: blur(8px);
-  align-self: center;
   opacity: 0.9;
 }
 
