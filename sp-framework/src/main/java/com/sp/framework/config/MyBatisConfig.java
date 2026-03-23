@@ -63,7 +63,7 @@ public class MyBatisConfig
                             }
                             catch (ClassNotFoundException e)
                             {
-                                e.printStackTrace();
+                                // 类未找到异常，不影响流程
                             }
                         }
                     }
@@ -85,7 +85,7 @@ public class MyBatisConfig
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            // IO 异常，记录日志但不影响流程
         }
         return typeAliasesPackage;
     }

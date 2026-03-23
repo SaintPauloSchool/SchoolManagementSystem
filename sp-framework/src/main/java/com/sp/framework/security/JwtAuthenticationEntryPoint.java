@@ -26,7 +26,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint, Se
             response.setCharacterEncoding("utf-8");
             response.getWriter().print(JSON.toJSONString(AjaxResult.error("认证失败，无法访问系统资源")));
         } catch (Exception ex) {
-            ex.printStackTrace();
+            // 认证失败处理异常，不影响流程
         }
     }
 }

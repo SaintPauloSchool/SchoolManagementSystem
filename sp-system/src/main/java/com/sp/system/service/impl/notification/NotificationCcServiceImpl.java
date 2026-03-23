@@ -16,9 +16,6 @@ import java.util.List;
 @Service
 public class NotificationCcServiceImpl extends ServiceImpl<NotificationCcMapper, NotificationCc> implements INotificationCcService {
 
-    @Autowired
-    private NotificationCcMapper notificationCcMapper;
-
     /**
      * 根据通知 ID 查询抄送对象列表
      *
@@ -27,8 +24,6 @@ public class NotificationCcServiceImpl extends ServiceImpl<NotificationCcMapper,
      */
     @Override
     public List<NotificationCc> selectByNotificationId(Long notificationId) {
-        return notificationCcMapper.selectByNotificationId(notificationId);
+        return baseMapper.selectByNotificationId(notificationId);
     }
-
-
 }

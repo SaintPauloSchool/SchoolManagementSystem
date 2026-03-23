@@ -16,9 +16,6 @@ import java.util.List;
 @Service
 public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Notification> implements INotificationService {
 
-    @Autowired
-    private NotificationMapper notificationMapper;
-
     /**
      * 查询通知列表
      *
@@ -27,7 +24,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public List<Notification> selectNotificationList(Notification notification) {
-        return notificationMapper.selectNotificationList(notification);
+        return baseMapper.selectNotificationList(notification);
     }
 
     /**
@@ -38,7 +35,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public Notification selectNotificationById(Long notificationId) {
-        return notificationMapper.selectById(notificationId);
+        return baseMapper.selectById(notificationId);
     }
 
     /**
@@ -49,7 +46,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public int insertNotification(Notification notification) {
-        return notificationMapper.insert(notification);
+        return baseMapper.insert(notification);
     }
 
     /**
@@ -60,7 +57,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public int updateNotification(Notification notification) {
-        return notificationMapper.updateById(notification);
+        return baseMapper.updateById(notification);
     }
 
     /**
@@ -71,7 +68,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public int deleteNotificationById(Long notificationId) {
-        return notificationMapper.deleteById(notificationId);
+        return baseMapper.deleteById(notificationId);
     }
 
     /**
@@ -82,7 +79,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public int deleteNotificationByIds(List<Long> notificationIds) {
-        return notificationMapper.deleteBatchIds(notificationIds);
+        return baseMapper.deleteBatchIds(notificationIds);
     }
 
     /**
@@ -94,7 +91,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public List<Notification> selectCcToMeList(Long userId, String userType) {
-        return notificationMapper.selectCcToMeList(userId, userType);
+        return baseMapper.selectCcToMeList(userId, userType);
     }
 
     /**
@@ -105,6 +102,6 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public List<Notification> selectMySendList(Long senderId) {
-        return notificationMapper.selectMySendList(senderId);
+        return baseMapper.selectMySendList(senderId);
     }
 }

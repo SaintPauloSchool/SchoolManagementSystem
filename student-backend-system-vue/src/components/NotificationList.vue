@@ -237,7 +237,8 @@ export default {
 
     async viewNotification(notification) {
       try {
-        console.log('查看通知详情:', notification.notificationId)
+        // 可以跳轉詳情頁或彈出詳情對話框
+        // this.$router.push(`/notification/detail/${id}`)
         this.selectedNotification = notification
         this.detailDialogVisible = true
       } catch (error) {

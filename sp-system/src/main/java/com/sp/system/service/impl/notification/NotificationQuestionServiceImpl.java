@@ -16,9 +16,6 @@ import java.util.List;
 @Service
 public class NotificationQuestionServiceImpl extends ServiceImpl<NotificationQuestionMapper, NotificationQuestion> implements INotificationQuestionService {
 
-    @Autowired
-    private NotificationQuestionMapper notificationQuestionMapper;
-
     /**
      * 根据通知 ID 查询问题列表
      *
@@ -27,6 +24,6 @@ public class NotificationQuestionServiceImpl extends ServiceImpl<NotificationQue
      */
     @Override
     public List<NotificationQuestion> selectByNotificationId(Long notificationId) {
-        return notificationQuestionMapper.selectByNotificationId(notificationId);
+        return baseMapper.selectByNotificationId(notificationId);
     }
 }

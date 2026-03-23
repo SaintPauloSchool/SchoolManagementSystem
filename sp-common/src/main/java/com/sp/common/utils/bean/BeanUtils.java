@@ -35,7 +35,7 @@ public class BeanUtils extends org.springframework.beans.BeanUtils
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            // Bean 属性复制异常，记录日志但不影响流程
         }
     }
 

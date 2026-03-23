@@ -123,7 +123,7 @@ public class ServletUtils
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            // IO 异常，记录日志但不影响流程
         }
         return null;
     }

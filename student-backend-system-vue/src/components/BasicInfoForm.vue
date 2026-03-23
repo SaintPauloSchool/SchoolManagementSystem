@@ -399,16 +399,12 @@ export default {
     
     editFormQuestion(index) {
       const questionData = this.localFormData.questions[index]
-      console.log('編輯表單問題 - 點擊編輯:', questionData)
-      console.log('編輯表單問題 - questionnaireData:', questionData.questionnaireData)
-      console.log('編輯表單問題 - questions:', questionData.questions)
       this.editingFormQuestion = { ...questionData }
       this.showFormQuestionDialog = true
     },
     
     saveFormQuestion(saveData) {
       // saveData 格式：{ questionnaire: {...}, questions: [...] }
-      console.log('保存表單問題數據:', saveData)
       
       if (this.editingFormQuestion) {
         // 編輯模式：更新現有問題

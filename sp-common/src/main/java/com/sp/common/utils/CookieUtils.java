@@ -65,7 +65,7 @@ public class CookieUtils
         }
         catch (UnsupportedEncodingException e)
         {
-            e.printStackTrace();
+            // UTF-8 编码异常，记录日志但不影响流程
         }
         response.addCookie(cookie);
     }
@@ -118,7 +118,7 @@ public class CookieUtils
                     }
                     catch (UnsupportedEncodingException e)
                     {
-                        e.printStackTrace();
+                        // UTF-8 编码异常，记录日志但不影响流程
                     }
                     if (isRemove)
                     {

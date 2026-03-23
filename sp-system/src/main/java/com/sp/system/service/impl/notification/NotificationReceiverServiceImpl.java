@@ -16,9 +16,6 @@ import java.util.List;
 @Service
 public class NotificationReceiverServiceImpl extends ServiceImpl<NotificationReceiverMapper, NotificationReceiver> implements INotificationReceiverService {
 
-    @Autowired
-    private NotificationReceiverMapper notificationReceiverMapper;
-
     /**
      * 根据通知 ID 查询接收对象列表
      *
@@ -27,6 +24,6 @@ public class NotificationReceiverServiceImpl extends ServiceImpl<NotificationRec
      */
     @Override
     public List<NotificationReceiver> selectByNotificationId(Long notificationId) {
-        return notificationReceiverMapper.selectByNotificationId(notificationId);
+        return baseMapper.selectByNotificationId(notificationId);
     }
 }

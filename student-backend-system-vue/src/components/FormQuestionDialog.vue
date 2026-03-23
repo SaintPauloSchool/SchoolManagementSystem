@@ -824,8 +824,8 @@
 <script>
 import { 
   Edit, Close, Check, Menu, CircleCheck, Checked, 
-  Delete, Plus, Upload, View, Download, Notebook, Grid, Connection,
-  ArrowUp, ArrowDown, InfoFilled, Warning, List, CircleClose, ArrowRight
+  Delete, Plus, Upload, Connection,
+  ArrowUp, ArrowDown, InfoFilled, CircleClose
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
@@ -833,8 +833,8 @@ export default {
   name: 'FormQuestionDialog',
   components: {
     Edit, Close, Check, Menu, CircleCheck, Checked, 
-    Delete, Plus, Upload, View, Download, Notebook, Grid, Connection,
-    ArrowUp, ArrowDown, InfoFilled, Warning, List, CircleClose, ArrowRight
+    Delete, Plus, Upload, Connection,
+    ArrowUp, ArrowDown, InfoFilled, CircleClose
   },
   props: {
     visible: {
@@ -858,8 +858,7 @@ export default {
         title: '',
         description: ''
       },
-      nextId: 1,
-      isLogicPanelExpanded: false // 邏輯面板是否展開
+      nextId: 1
     }
   },
   computed: {
@@ -1006,13 +1005,7 @@ export default {
     }
   },
   methods: {
-    // 處理面板展開/收起
-    handlePanelChange(activeNames) {
-      // 檢查邏輯編輯面板是否展開
-      this.isLogicPanelExpanded = Array.isArray(activeNames) 
-        ? activeNames.includes('logicEdit')
-        : activeNames === 'logicEdit'
-    },
+
 
     getOptionLabel(index) {
       return String.fromCharCode(65 + index)
@@ -1096,19 +1089,7 @@ export default {
       return '未知目標'
     },
 
-    // 獲取跳轉類型標籤顏色
-    getJumpTypeTag(target) {
-      if (!target) {
-        return 'info'
-      }
-      if (target === 'next') {
-        return 'success'
-      }
-      if (target === 'end') {
-        return 'danger'
-      }
-      return 'warning'
-    },
+
 
     // 獲取規則預覽標籤顏色
     getRulePreviewTag(target) {
@@ -1142,10 +1123,7 @@ export default {
       return types[optionIndex % types.length] || 'info'
     },
 
-    // 檢查規則是否有錯誤
-    hasRuleError(rule) {
-      return !rule.optionIndex || !rule.jumpTarget
-    },
+
 
     // 新增邏輯規則（一次性生成所有選項的規則）
     addLogicRule() {
@@ -1214,13 +1192,7 @@ export default {
       })
     },
 
-    // 新增規則條件（用於擴展多條件）
-    addRuleCondition(ruleIndex) {
-      ElMessage.info({
-        message: '多條件功能開發中...',
-        offset: 100
-      })
-    },
+
 
     // 切換視圖模式（編輯/預覽）
     switchViewMode(mode) {
@@ -1430,9 +1402,7 @@ export default {
       }
     },
 
-    startOptionSettings() {
-      // 已移除
-    },
+
 
     handleFillBlankAnswer(index, value, question) {
       if (!question.userAnswers) {
@@ -3632,9 +3602,9 @@ export default {
 }
 
 .rules-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
 }
 
 .logic-rule-card {
@@ -3908,10 +3878,6 @@ export default {
   z-index: 1;
 }
 
-/* 邏輯面板展開時的提示 */
-.logic-expanded-hint {
-  display: none;
-}
 
 /* 題型提示 */
 .question-type-hint {
@@ -3931,158 +3897,6 @@ export default {
   font-weight: 500;
 }
 
-/* 邏輯區塊 */
-.logic-block {
-  padding: 16px;
-  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
-  border-radius: 12px;
-  border: 1px solid #f0f0f0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.logic-block:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
-}
-
-.logic-block-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #ecf5ff;
-}
-
-.block-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #303133;
-}
-
-.block-title .el-icon {
-  font-size: 18px;
-  color: #409EFF;
-}
-
-.tooltip-icon {
-  cursor: help;
-  color: #909399;
-  font-size: 16px;
-  transition: color 0.2s ease;
-}
-
-.tooltip-icon:hover {
-  color: #409EFF;
-}
-
-/* 邏輯選項列表 */
-.logic-option-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* 邏輯選項卡片 */
-.logic-option-card {
-  background: #ffffff;
-  border-radius: 10px;
-  border: 2px solid #e4e7ed;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.logic-option-card:hover {
-  border-color: #409EFF;
-  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.12);
-  transform: translateY(-2px);
-}
-
-.option-card-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.option-index {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 28px;
-  height: 28px;
-  padding: 0 8px;
-  background: linear-gradient(135deg, #409EFF 0%, #67c23a 100%);
-  color: white;
-  font-size: 13px;
-  font-weight: 700;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
-}
-
-.option-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: #303133;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.option-card-body {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
-  background: #ffffff;
-}
-
-.jump-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #606266;
-  min-width: 70px;
-  flex-shrink: 0;
-}
-
-.jump-target-select {
-  flex: 1;
-}
-
-.jump-target-select :deep(.el-input__inner) {
-  font-size: 13px;
-  padding: 8px 12px;
-  border-color: #dcdfe6;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-}
-
-.jump-target-select :deep(.el-input__inner):hover {
-  border-color: #409EFF;
-  background: #ffffff;
-}
-
-.jump-target-select :deep(.el-input__inner):focus {
-  border-color: #409EFF;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-  background: #ffffff;
-}
-
-.option-card-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px 14px;
-  background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
-  border-top: 1px dashed #e4e7ed;
-}
 
 /* 無邏輯提示 */
 .no-logic-hint {
@@ -4307,26 +4121,6 @@ export default {
   flex-shrink: 0;
 }
 
-.option-select {
-  flex: 1;
-}
-
-.option-select :deep(.el-input__inner) {
-  font-size: 12px;
-  padding: 6px 8px;
-  border-color: #dcdfe6;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.option-select :deep(.el-input__inner):hover {
-  border-color: #409EFF;
-}
-
-.option-select :deep(.el-input__inner):focus {
-  border-color: #409EFF;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
-}
 
 /* 選項標籤樣式 */
 .option-tag {
@@ -4362,10 +4156,6 @@ export default {
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
 }
 
-.add-condition-btn {
-  padding: 6px 8px;
-  font-size: 12px;
-}
 
 .rule-preview {
   padding: 10px 12px;
@@ -4460,12 +4250,7 @@ export default {
     width: 280px;
     min-width: 260px;
   }
-  
-  .left-panel.logic-expanded {
-    width: 800px;
-    min-width: 750px;
-  }
-  
+
   .right-panel {
     width: 300px;
     min-width: 280px;
@@ -4484,12 +4269,7 @@ export default {
     max-height: 200px;
     flex-shrink: 1; /* 允許壓縮 */
   }
-  
-  .left-panel.logic-expanded {
-    width: 100%;
-    max-height: none;
-  }
-  
+
   .center-panel {
     min-height: 400px; /* 確保中間區域有足夠高度 */
   }
@@ -4499,7 +4279,7 @@ export default {
   }
   
   /* 小屏幕下規則卡片改為單列 */
-  .logic-rules-wrapper {
+  .rules-grid {
     grid-template-columns: 1fr;
   }
 }

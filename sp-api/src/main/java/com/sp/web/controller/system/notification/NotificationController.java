@@ -62,7 +62,7 @@ public class NotificationController extends BaseController {
     public TableDataInfo ccToMe() {
         // 獲取當前登錄用戶信息
         Long userId = getUserId();
-        String userType = getUserType(); // 需要在 BaseController 中實現
+        String userType = getUserType();
         
         startPage();
         List<Notification> list = notificationService.selectCcToMeList(userId, userType);
@@ -117,48 +117,47 @@ public class NotificationController extends BaseController {
     public AjaxResult add(@RequestBody Notification notification) {
         // 設置發送人信息
         notification.setSenderId(getUserId());
-        notification.setSenderName(getUsername()); // 需要在 BaseController 中實現
+        notification.setSenderName(getUsername());
         notification.setCreateTime(new Date());
         
         // 1. 保存通知基本信息
-        int result = notificationService.insertNotification(notification);
-        if (result <= 0) {
+        if (notificationService.save(notification)) {
+            // 獲取生成的通知 ID
+            Long notificationId = notification.getNotificationId();
+            
+            // 2. 保存接收對象
+            if (notification.getReceivers() != null && !notification.getReceivers().isEmpty()) {
+                for (NotificationReceiver receiver : notification.getReceivers()) {
+                    receiver.setNotificationId(notificationId);
+                    receiver.setCreateTime(new Date());
+                    notificationReceiverService.save(receiver);
+                }
+            }
+            
+            // 3. 保存抄送對象
+            if (notification.getCcs() != null && !notification.getCcs().isEmpty()) {
+                for (NotificationCc cc : notification.getCcs()) {
+                    cc.setNotificationId(notificationId);
+                    cc.setCreateTime(new Date());
+                    notificationCcService.save(cc);
+                }
+            }
+            
+            // 4. 保存問題列表
+            if (notification.getQuestions() != null && !notification.getQuestions().isEmpty()) {
+                int sortOrder = 1;
+                for (NotificationQuestion question : notification.getQuestions()) {
+                    question.setNotificationId(notificationId);
+                    question.setSortOrder(sortOrder++);
+                    question.setCreateTime(new Date());
+                    notificationQuestionService.save(question);
+                }
+            }
+            
+            return AjaxResult.success();
+        } else {
             return AjaxResult.error("發布失敗");
         }
-        
-        // 獲取生成的通知 ID
-        Long notificationId = notification.getNotificationId();
-        
-        // 2. 保存接收對象
-        if (notification.getReceivers() != null && !notification.getReceivers().isEmpty()) {
-            for (NotificationReceiver receiver : notification.getReceivers()) {
-                receiver.setNotificationId(notificationId);
-                receiver.setCreateTime(new Date());
-                notificationReceiverService.save(receiver);
-            }
-        }
-        
-        // 3. 保存抄送對象
-        if (notification.getCcs() != null && !notification.getCcs().isEmpty()) {
-            for (NotificationCc cc : notification.getCcs()) {
-                cc.setNotificationId(notificationId);
-                cc.setCreateTime(new Date());
-                notificationCcService.save(cc);
-            }
-        }
-        
-        // 4. 保存問題列表
-        if (notification.getQuestions() != null && !notification.getQuestions().isEmpty()) {
-            int sortOrder = 1;
-            for (NotificationQuestion question : notification.getQuestions()) {
-                question.setNotificationId(notificationId);
-                question.setSortOrder(sortOrder++);
-                question.setCreateTime(new Date());
-                notificationQuestionService.save(question);
-            }
-        }
-        
-        return AjaxResult.success();
     }
 
     /**

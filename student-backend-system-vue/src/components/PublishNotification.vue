@@ -87,8 +87,6 @@ export default {
         this.formData.senderName = this.$store?.state?.user?.username || '當前用戶'
         this.formData.status = '1'
         
-        console.log('發布通知:', this.formData)
-        
         // 準備提交數據
         const submitData = {
           // 通知基本信息
@@ -131,8 +129,6 @@ export default {
             }
           })
         }
-        
-        console.log('提交到後端的數據:', submitData)
         
         // 調用後端 API
         const response = await request({

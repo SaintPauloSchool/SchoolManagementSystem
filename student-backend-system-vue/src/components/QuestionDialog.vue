@@ -780,19 +780,15 @@ export default {
     },
     
     handleCreateNextFromChain(questionIndex, optionIndex) {
-      console.log('=== 从题目链点击继续编辑 ===')
-      console.log('题目索引:', questionIndex)
-      console.log('选项索引:', optionIndex)
-      
       const question = this.questionChain[questionIndex]
       const nextTitle = optionIndex === 1 ? question.nextTitle1 : question.nextTitle2
-      
+          
       if (!nextTitle?.trim()) {
-        this.$message.warning('请输入下一题的题目内容')
+        this.$message.warning('請輸入下一題的題目內容')
         return
       }
-      
-      // 添加到题目链的末尾
+          
+      // 添加到題目鏈的末尾
       this.questionChain.push({
         level: this.questionChain.length,
         title: nextTitle,
@@ -802,16 +798,12 @@ export default {
         nextTitle1: '',
         nextTitle2: ''
       })
-      
-      console.log('已添加到题目链，当前层级:', this.questionChain.length)
+          
       this.$message.success(`已展開第 ${this.questionChain.length + 1} 題的設置`)
     },
     
     handleCreateNext(optionIndex) {
-      console.log('=== 点击继续编辑此题 ===')
-      console.log('选项索引:', optionIndex)
-          
-      // 获取当前层级的题目数据
+      // 獲取當前層級的題目數據
       const currentLevel = this.questionChain.length
       const parentData = currentLevel === 0 ? this.branchForm : this.nextQuestionData[currentLevel]
       const nextTitle = optionIndex === 1 
@@ -819,17 +811,17 @@ export default {
         : (currentLevel === 0 ? this.branchForm.option2NextTitle : this.nextQuestionData[currentLevel].nextTitle2)
           
       if (!nextTitle?.trim()) {
-        this.$message.warning('请输入下一题的题目内容')
+        this.$message.warning('請輸入下一題的題目內容')
         return
       }
           
-      // 验证当前题目是否填写完整
+      // 驗證當前題目是否填寫完整
       if (currentLevel === 0 && !this.validateBranchOptions()) {
-        this.$message.warning('请先完善当前题目的选项设置')
+        this.$message.warning('請先完善當前題目的選項設置')
         return
       }
           
-      // 添加到题目链
+      // 添加到題目鏈
       this.questionChain.push({
         level: currentLevel + 1,
         title: nextTitle,
@@ -840,7 +832,6 @@ export default {
         nextTitle2: ''
       })
           
-      console.log('已添加到题目链，当前层级:', this.questionChain.length)
       this.$message.success(`已展開第 ${currentLevel + 2} 題的設置`)
     },
      
