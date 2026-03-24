@@ -1,8 +1,8 @@
-# 生產環境配置
+# 測試環境配置
 spring:
   config:
     activate:
-      on-profile: prod
+      on-profile: test
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driverClassName: com.mysql.cj.jdbc.Driver
@@ -36,7 +36,3 @@ spring:
       testWhileIdle: true
       testOnBorrow: false
       testOnReturn: false
-
-# 生產環境啟用 logback
-logging:
-  config: classpath:logback-prod.xml
