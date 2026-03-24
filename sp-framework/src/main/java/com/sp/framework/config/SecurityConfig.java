@@ -79,9 +79,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
             .antMatchers("/favicon.ico", "/sp.png").permitAll()
             .antMatchers("/html/**", "/css/**", "/docs/**", "/fonts/**", "/img/**", "/ajax/**", "/js/**", "/sp/**").permitAll()
             .antMatchers("/captcha/captchaImage**").permitAll()
-            .antMatchers("/login", "/register").permitAll()
+            .antMatchers("/login", "/register").permitAll();
             // 其他请求都需要认证
-            .anyRequest().authenticated();
+            //.anyRequest().authenticated();
 
         // 添加JWT过滤器
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

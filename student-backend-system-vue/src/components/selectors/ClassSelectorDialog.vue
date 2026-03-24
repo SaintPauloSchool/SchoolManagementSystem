@@ -1,81 +1,121 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="選擇班級"
-    width="600px"
+    title="选择班级"
+    width="750px"
     :before-close="handleClose"
+    class="class-selector-dialog"
   >
-    <div class="selector-dialog">
-      <!-- 搜索區域 -->
-      <div class="search-area">
+    <div class="selector-wrapper">
+      <!-- 左侧树形结构 -->
+      <div class="left-panel">
+        <div class="panel-title">
+          <el-icon><School /></el-icon>
+          <span>组织架构</span>
+        </div>
+        
         <el-input
           v-model="searchKeyword"
-          placeholder="搜索班級名稱"
+          placeholder="搜索班级..."
           clearable
-          style="width: 300px"
+          class="search-input"
         >
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
-      </div>
 
-      <!-- 班級列表 -->
-      <div class="class-list">
-        <el-checkbox-group v-model="selectedClassIds">
-          <el-checkbox
-            v-for="cls in filteredClasses"
-            :key="cls.id"
-            :label="cls.id"
-            class="class-checkbox"
+        <div class="tree-container">
+          <div v-if="loading" class="loading">
+            <el-icon class="is-loading"><Loading /></el-icon>
+            <span>加载中...</span>
+          </div>
+          <div v-else-if="departmentTree.length === 0" class="empty">
+            <el-icon><DocumentDelete /></el-icon>
+            <span>暂无数据</span>
+          </div>
+          <el-tree
+            v-else
+            ref="classTree"
+            :data="departmentTree"
+            :props="treeProps"
+            :expand-on-click-node="false"
+            :check-on-click-node="true"
+            node-key="id"
+            show-checkbox
           >
-            <div class="class-item">
-              <div class="class-name">{{ cls.name }}</div>
-              <div class="class-info">{{ cls.grade }} {{ cls.teacher }}</div>
-            </div>
-          </el-checkbox>
-        </el-checkbox-group>
-        
-        <div v-if="filteredClasses.length === 0" class="no-data">
-          暫無匹配的班級
+            <template #default="{ node, data }">
+              <span class="tree-node">
+                <el-icon v-if="data.type === 5" class="node-icon school-icon"><School /></el-icon>
+                <el-icon v-else-if="data.type === 4" class="node-icon campus-icon"><OfficeBuilding /></el-icon>
+                <el-icon v-else-if="data.type === 3" class="node-icon stage-icon"><Reading /></el-icon>
+                <el-icon v-else-if="data.type === 2" class="node-icon grade-icon"><Notebook /></el-icon>
+                <el-icon v-else-if="data.type === 1" class="node-icon class-icon"><User /></el-icon>
+                <span class="node-label">{{ node.label }}</span>
+                <el-tag v-if="data.type === 1 && data.standardGrade" size="small" class="grade-tag">
+                  {{ getGradeName(data.standardGrade) }}
+                </el-tag>
+              </span>
+            </template>
+          </el-tree>
         </div>
       </div>
 
-      <!-- 已選擇區域 -->
-      <div class="selected-area">
-        <div class="selected-header">
-          已選擇 ({{ selectedClasses.length }})
+      <!-- 右侧已选区域 -->
+      <div class="right-panel">
+        <div class="panel-title">
+          <el-icon><Checked /></el-icon>
+          <span>已选择 ({{ selectedClasses.length }})</span>
         </div>
-        <div class="selected-tags">
-          <el-tag
+
+        <div class="selected-container">
+          <div
             v-for="cls in selectedClasses"
             :key="cls.id"
-            closable
-            @close="removeSelectedClass(cls)"
-            class="selected-tag"
+            class="selected-item"
           >
-            {{ cls.name }}
-          </el-tag>
+            <div class="item-info">
+              <el-icon class="item-icon"><User /></el-icon>
+              <span>{{ cls.name }}</span>
+            </div>
+            <el-button link type="danger" size="small" @click="removeSelectedClass(cls)">
+              <el-icon><Close /></el-icon>
+            </el-button>
+          </div>
+          <div v-if="selectedClasses.length === 0" class="empty-selected">
+            <el-empty :image-size="80" description="请从左侧选择班级" />
+          </div>
         </div>
       </div>
     </div>
 
     <template #footer>
-      <span class="dialog-footer">
+      <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleConfirm">確定</el-button>
-      </span>
+        <el-button 
+          type="primary" 
+          @click="handleConfirm"
+          :disabled="selectedClasses.length === 0"
+        >
+          确定 ({{ selectedClasses.length }})
+        </el-button>
+      </div>
     </template>
   </el-dialog>
 </template>
 
 <script>
-import { Search } from '@element-plus/icons-vue'
+import { 
+  Search, Loading, DocumentDelete, School, OfficeBuilding, 
+  Reading, Notebook, User, Checked, Close 
+} from '@element-plus/icons-vue'
+import request from '@/utils/request'
 
 export default {
   name: 'ClassSelectorDialog',
   components: {
-    Search
+    Search, Loading, DocumentDelete, School, OfficeBuilding, 
+    Reading, Notebook, User, Checked, Close
   },
   props: {
     visible: {
@@ -91,8 +131,9 @@ export default {
   data() {
     return {
       searchKeyword: '',
-      allClasses: [],
-      selectedClassIds: []
+      departmentTree: [],
+      selectedClassIds: [],
+      loading: false
     }
   },
   computed: {
@@ -104,21 +145,17 @@ export default {
         this.$emit('update:visible', value)
       }
     },
-    filteredClasses() {
-      if (!this.searchKeyword) {
-        return this.allClasses
+    treeProps() {
+      return {
+        children: 'children',
+        label: 'name',
+        isLeaf: (data) => data.type === 1
       }
-      const keyword = this.searchKeyword.toLowerCase()
-      return this.allClasses.filter(cls => 
-        cls.name.toLowerCase().includes(keyword) ||
-        cls.grade.toLowerCase().includes(keyword) ||
-        cls.teacher.toLowerCase().includes(keyword)
-      )
     },
     selectedClassesWithDetails() {
       return this.selectedClassIds.map(id => {
-        const cls = this.allClasses.find(c => c.id === id)
-        return cls || { id, name: '未知班級' }
+        const cls = this.findClassInTree(id, this.departmentTree)
+        return cls || { id, name: '未知班级' }
       })
     }
   },
@@ -126,31 +163,79 @@ export default {
     visible(newVal) {
       if (newVal) {
         this.loadData()
-        this.initSelected()
+        this.$nextTick(() => {
+          this.initSelectedTree()
+        })
       }
     }
   },
   methods: {
     async loadData() {
+      this.loading = true
       try {
-        // 這裡應該調用實際的 API 獲取班級數據
-        // 暫時使用模擬數據
-        this.allClasses = [
-          { id: 1, name: '一年级1班', grade: '一年级', teacher: '张老师' },
-          { id: 2, name: '一年级2班', grade: '一年级', teacher: '李老师' },
-          { id: 3, name: '二年级1班', grade: '二年级', teacher: '王老师' },
-          { id: 4, name: '二年级2班', grade: '二年级', teacher: '赵老师' },
-          { id: 5, name: '三年级1班', grade: '三年级', teacher: '陈老师' },
-          { id: 6, name: '三年级2班', grade: '三年级', teacher: '刘老师' }
-        ]
+        const response = await request({
+          url: '/system/department/tree',
+          method: 'get'
+        })
+        if (response.code === 200 || response.code === 0) {
+          this.departmentTree = response.data || []
+          this.$nextTick(() => {
+            this.initSelectedTree()
+          })
+        } else {
+          this.$message.error('加载班级数据失败')
+        }
       } catch (error) {
-        console.error('加載班級數據失敗:', error)
-        this.$message.error('加載班級數據失敗')
+        console.error('加载班级数据失败:', error)
+        this.$message.error('加载班级数据失败')
+      } finally {
+        this.loading = false
       }
     },
 
-    initSelected() {
-      this.selectedClassIds = this.selectedClasses.map(cls => cls.id)
+    initSelectedTree() {
+      if (this.$refs.classTree && this.selectedClasses && this.selectedClasses.length > 0) {
+        const classIds = this.selectedClasses.map(cls => cls.id)
+        this.$refs.classTree.setCheckedKeys(classIds)
+      }
+    },
+
+    findClassInTree(id, tree) {
+      for (const node of tree) {
+        if (node.id === id) {
+          return node
+        }
+        if (node.children) {
+          const found = this.findClassInTree(id, node.children)
+          if (found) return found
+        }
+      }
+      return null
+    },
+
+    getGradeName(standardGrade) {
+      if (!standardGrade) return ''
+      const grades = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', 
+                      '七年级', '八年级', '九年级', '高一', '高二', '高三']
+      return grades[standardGrade - 1] || `${standardGrade}年级`
+    },
+
+    handleClose() {
+      this.searchKeyword = ''
+      if (this.$refs.classTree) {
+        this.$refs.classTree.setCheckedKeys([])
+      }
+      this.selectedClassIds = []
+      this.$emit('update:visible', false)
+    },
+
+    handleConfirm() {
+      if (this.$refs.classTree) {
+        const checkedKeys = this.$refs.classTree.getCheckedKeys()
+        this.selectedClassIds = Array.from(checkedKeys)
+      }
+      this.$emit('confirm', this.selectedClassesWithDetails)
+      this.handleClose()
     },
 
     removeSelectedClass(cls) {
@@ -158,180 +243,207 @@ export default {
       if (index > -1) {
         this.selectedClassIds.splice(index, 1)
       }
-    },
-
-    handleClose() {
-      this.searchKeyword = ''
-      this.selectedClassIds = []
-      this.$emit('update:visible', false)
-    },
-
-    handleConfirm() {
-      this.$emit('confirm', this.selectedClassesWithDetails)
-      this.handleClose()
     }
   }
 }
 </script>
 
 <style scoped>
-.selector-dialog {
-  height: 500px;
+.class-selector-dialog .el-dialog__body {
+  padding: 0;
+}
+
+.selector-wrapper {
+  display: flex;
+  height: 450px;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* 左侧面板 */
+.left-panel {
+  flex: 1.5;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  gap: 12px;
 }
 
-.search-area {
-  padding: 20px;
-  border-bottom: 2px solid #e5e7eb;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-}
-
-.class-list {
+/* 右侧面板 */
+.right-panel {
   flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-  background: #ffffff;
-}
-
-.class-checkbox {
-  display: block;
-  margin-bottom: 12px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid transparent;
-}
-
-.class-checkbox:hover {
-  background-color: #eff6ff;
-  border-color: #bfdbfe;
-  transform: translateX(4px);
-}
-
-.class-item {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
 }
 
-.class-name {
-  font-weight: 700;
-  color: #111827;
-  font-size: 15px;
-  letter-spacing: 0.3px;
-}
-
-.class-info {
-  font-size: 13px;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.no-data {
-  text-align: center;
-  color: #9ca3af;
-  padding: 60px 0;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.selected-area {
-  border-top: 2px solid #e5e7eb;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-  max-height: 180px;
-  overflow-y: auto;
-}
-
-.selected-header {
-  font-weight: 700;
-  color: #374151;
-  margin-bottom: 12px;
-  font-size: 14px;
-  letter-spacing: 0.3px;
+.panel-title {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.selected-header::before {
-  content: '';
-  width: 4px;
-  height: 16px;
-  background: linear-gradient(to bottom, #3b82f6, #2563eb);
-  border-radius: 2px;
-  display: inline-block;
-}
-
-.selected-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.selected-tag {
-  margin: 0;
-  border-radius: 8px;
   font-weight: 600;
-  transition: all 0.3s ease;
+  font-size: 15px;
+  color: #303133;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e4e7ed;
 }
 
-.selected-tag:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+.panel-title .el-icon {
+  font-size: 18px;
+  color: #409EFF;
+}
+
+.search-input {
+  width: 100%;
+}
+
+.tree-container {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  padding: 12px;
+  background: #f5f7fa;
+}
+
+.tree-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tree-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tree-container::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.loading, .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  gap: 12px;
+  color: #909399;
+}
+
+.loading .el-icon {
+  font-size: 32px;
+  color: #409EFF;
+}
+
+.empty .el-icon {
+  font-size: 48px;
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.node-icon {
+  font-size: 16px;
+}
+
+.school-icon { color: #E6A23C; }
+.campus-icon { color: #409EFF; }
+.stage-icon { color: #67C23A; }
+.grade-icon { color: #909399; }
+.class-icon { color: #F56C6C; }
+
+.node-label {
+  flex: 1;
+  font-size: 14px;
+}
+
+.grade-tag {
+  font-size: 11px;
+}
+
+.selected-container {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  padding: 12px;
+  background: #f5f7fa;
+}
+
+.selected-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.selected-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.selected-container::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.selected-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: #ffffff;
+  border-radius: 4px;
+  border: 1px solid #e4e7ed;
+}
+
+.item-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.item-icon {
+  color: #409EFF;
+  font-size: 16px;
+}
+
+.item-info span {
+  font-size: 14px;
+  color: #606266;
+}
+
+.empty-selected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 20px 24px;
-  background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
-  border-top: 2px solid #e5e7eb;
+  padding: 16px 24px;
+  border-top: 1px solid #e4e7ed;
 }
 
-.dialog-footer .el-button {
-  min-width: 100px;
-  height: 42px;
-  font-weight: 600;
-  font-size: 15px;
-  border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* 树节点样式优化 */
+:deep(.el-tree) {
+  background: transparent;
 }
 
-/* 美化滚动条 */
-.class-list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.class-list::-webkit-scrollbar-track {
-  background: #f1f5f9;
+:deep(.el-tree-node__content) {
+  height: auto;
+  padding: 6px 0;
   border-radius: 4px;
 }
 
-.class-list::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #93c5fd, #3b82f6);
-  border-radius: 4px;
-  transition: all 0.3s ease;
+:deep(.el-tree-node__content:hover) {
+  background-color: #ecf5ff;
 }
 
-.class-list::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #3b82f6, #2563eb);
-}
-
-.selected-area::-webkit-scrollbar {
-  width: 8px;
-}
-
-.selected-area::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-.selected-area::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #93c5fd, #3b82f6);
-  border-radius: 4px;
+:deep(.el-checkbox__inner) {
+  border-radius: 2px;
 }
 </style>

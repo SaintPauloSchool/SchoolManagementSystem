@@ -84,12 +84,12 @@
             <artifactId>snakeyaml</artifactId>
         </dependency>
 
-        <!-- servlet包 -->
+        <!-- servlet 包 -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
-
+    
     </dependencies>
 
 </project>

@@ -4,7 +4,22 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: {
+          // 将所有带有 @ 符号的标签视为自定义元素
+          isCustomElement: (tag) => tag.startsWith('@')
+        }
+      }
+    })
+  ],
+  define: {
+    // Vue 3 特性标志配置
+    __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
+    __VUE_OPTIONS_API__: true,
+    __VUE_PROD_DEVTOOLS__: false
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
