@@ -333,9 +333,9 @@
                     </div>
                   </div>
                                 
-                  <div v-if="['3'].includes(node.type)" class="preview-simple-hint">
+                  <div v-if="['3'].includes(node.type)" class="preview-question-content">
                     <el-icon><Edit /></el-icon>
-                    <span>填寫類題目</span>
+                    <span class="content-text" v-html="renderFillBlankText(node)"></span>
                   </div>
                 </div>
                               
@@ -504,7 +504,7 @@
                             contenteditable="true"
                             @input="onContentInput"
                             @keydown="onContentKeydown"
-                            ref="contentEditableDiv"
+                            :ref="`contentEditableDiv-${question.id}`"
                             placeholder="請輸入題目內容，然後點擊「新增填空」在需要填空的位置插入下劃線佔位符"
                           ></div>
                         </div>
@@ -1183,7 +1183,71 @@ export default {
       if (mode === this.viewMode) {
         return
       }
+      
+      // 切換前同步當前編輯的內容
+      if (this.selectedQuestion && this.selectedQuestion.type === '3' && this.selectedQuestion.fillBlanks && this.selectedQuestion.fillBlanks.length > 0) {
+        let editableDiv = this.$refs.contentEditableDiv
+        // 如果是数组，取第一个元素
+        if (Array.isArray(editableDiv) && editableDiv.length > 0) {
+          editableDiv = editableDiv[0]
+        }
+        
+        // 如果是 Vue 组件实例，获取其 $el 属性
+        if (editableDiv && editableDiv.$el) {
+          editableDiv = editableDiv.$el
+        }
+        
+        // 确保是原生 DOM 元素且有 querySelectorAll 方法
+        if (editableDiv && typeof editableDiv.querySelectorAll === 'function') {
+          let html = editableDiv.innerHTML
+          const tags = editableDiv.querySelectorAll('.editable-blank-tag')
+          tags.forEach((tag) => {
+            const index = parseInt(tag.dataset.index) + 1
+            const placeholder = `{{fillblank-${index}}}`
+            html = html.replace(tag.outerHTML, placeholder)
+          })
+          const tempDiv = document.createElement('div')
+          tempDiv.innerHTML = html
+          this.selectedQuestion.content = tempDiv.textContent || tempDiv.innerText || ''
+        }
+      }
+      
       this.viewMode = mode
+      
+      // 切換到編輯模式後，恢復填空題的內容
+      if (mode === 'edit' && this.selectedQuestion && this.selectedQuestion.type === '3' && this.selectedQuestion.fillBlanks && this.selectedQuestion.fillBlanks.length > 0) {
+        this.$nextTick(() => {
+          let editableDiv = this.$refs.contentEditableDiv
+          // 如果是数组，取第一个元素
+          if (Array.isArray(editableDiv) && editableDiv.length > 0) {
+            editableDiv = editableDiv[0]
+          }
+          
+          // 如果是 Vue 组件实例，获取其 $el 属性
+          if (editableDiv && editableDiv.$el) {
+            editableDiv = editableDiv.$el
+          }
+          
+          // 确保是原生 DOM 元素且有 querySelectorAll 方法
+          if (editableDiv && typeof editableDiv.querySelectorAll === 'function' && this.selectedQuestion.content) {
+            // 将 content 中的 {{fillblank-n}} 转换回 HTML 标签
+            let html = this.selectedQuestion.content
+            const fillBlankMatches = html.match(/\{\{fillblank-(\d+)\}\}/g)
+            if (fillBlankMatches) {
+              fillBlankMatches.forEach((placeholder) => {
+                const match = placeholder.match(/\{\{fillblank-(\d+)\}\}/)
+                if (match) {
+                  const index = parseInt(match[1])
+                  const blankTag = `<span class="editable-blank-tag" contenteditable="false" data-index="${index - 1}" style="display:inline-block;position:relative;text-align:center;padding:0 2px 14px 2px;margin:0 2px;vertical-align:baseline;white-space:nowrap;cursor:default;user-select:none;"><span style="display:inline-block;font-size:14px;color:transparent;border-bottom:1px solid #303133;min-width:80px;">____________</span><span style="position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:11px;color:#E6A23C;white-space:nowrap;line-height:1;"><span style="color:#F56C6C;">*</span> 填空${index}</span></span>`
+                  html = html.replace(placeholder, blankTag)
+                }
+              })
+            }
+            editableDiv.innerHTML = html
+          }
+        })
+      }
+      
       ElMessage.success({
         message: mode === 'edit' ? '已切換至編輯模式' : '已切換至預覽模式',
         offset: 100
@@ -1209,6 +1273,21 @@ export default {
         
         if (this.question.questions && this.question.questions.length > 0) {
           // 如果有 questions 數組，使用它
+          console.log('===== questions 数组详情 =====')
+          console.log('questions 数组长度:', this.question.questions.length)
+          this.question.questions.forEach((q, idx) => {
+            console.log(`题目${idx + 1}:`, {
+              id: q.id,
+              title: q.title,
+              type: q.type,
+              questionType: q.questionType,
+              content: q.content,
+              fillBlanks: q.fillBlanks,
+              options: q.options
+            })
+          })
+          console.log('===== questions 数组详情结束 =====')
+          
           this.questionList = this.question.questions.map((q, index) => ({
             ...q,
             id: q.id || Date.now() + index,
@@ -1219,8 +1298,14 @@ export default {
             randomOrder: q.randomOrder || false,
             logicRuleList: q.logicRuleList || []
           }))
+          console.log('映射后的 questionList:', this.questionList)
+                
+          // 优先选中填空题，如果没有填空题则选中第一题
+          const firstFillBlank = this.questionList.find(q => q.type === '3')
+          this.selectedQuestionId = firstFillBlank ? firstFillBlank.id : this.questionList[0]?.id
         } else {
           // 否則將 question 本身作為第一題
+          console.log('没有 questions 数组，将 question 本身作为第一题')
           this.questionList = [{
             ...this.question,
             id: this.question.id || Date.now(),
@@ -1231,9 +1316,20 @@ export default {
             randomOrder: this.question.randomOrder || false,
             logicRuleList: this.question.logicRuleList || []
           }]
+          this.selectedQuestionId = this.questionList[0]?.id
         }
         
-        this.selectedQuestionId = this.questionList[0]?.id || null
+        console.log('===== 数据加载完成 =====')
+        console.log('questionList:', this.questionList)
+        console.log('selectedQuestionId:', this.selectedQuestionId)
+        console.log('第一个题目 type:', this.questionList[0]?.type)
+        console.log('第一个题目 content:', this.questionList[0]?.content)
+        
+        // 加載完成後，恢復所有填空題的內容到編輯器
+        this.$nextTick(() => {
+          console.log('$nextTick 执行，调用 restoreAllFillBlankContents')
+          this.restoreAllFillBlankContents()
+        })
       } else {
         this.resetForm()
       }
@@ -1297,6 +1393,136 @@ export default {
 
     selectQuestion(id) {
       this.selectedQuestionId = id
+    },
+
+    handlePanelChange() {
+      // 面板折叠/展开时，同步填空题的 content 内容
+      this.$nextTick(() => {
+        // 同步内容到 question.content
+        if (this.selectedQuestion && this.selectedQuestion.type === '3' && this.selectedQuestion.fillBlanks && this.selectedQuestion.fillBlanks.length > 0) {
+          // 使用动态 ref 定位当前选中题目的编辑器
+          const editableDiv = this.$refs[`contentEditableDiv-${this.selectedQuestion.id}`]?.[0]
+          
+          if (editableDiv && typeof editableDiv.querySelectorAll === 'function') {
+            let html = editableDiv.innerHTML
+            const tags = editableDiv.querySelectorAll('.editable-blank-tag')
+            tags.forEach((tag) => {
+              const index = parseInt(tag.dataset.index) + 1
+              const placeholder = `{{fillblank-${index}}}`
+              html = html.replace(tag.outerHTML, placeholder)
+            })
+            const tempDiv = document.createElement('div')
+            tempDiv.innerHTML = html
+            this.selectedQuestion.content = tempDiv.textContent || tempDiv.innerText || ''
+          }
+        }
+        
+        // 如果是展开面板且内容为空，尝试恢复
+        if (this.activePanels.includes('questionSettings') && this.selectedQuestion && this.selectedQuestion.type === '3' && this.selectedQuestion.fillBlanks && this.selectedQuestion.fillBlanks.length > 0) {
+          const editableDiv = this.$refs[`contentEditableDiv-${this.selectedQuestion.id}`]?.[0]
+          if (!editableDiv && this.selectedQuestion.content) {
+            // 等待 DOM 渲染完成后恢复内容
+            this.$nextTick(() => {
+              const div = this.$refs[`contentEditableDiv-${this.selectedQuestion.id}`]?.[0]
+              if (div && typeof div.querySelectorAll === 'function') {
+                let html = this.selectedQuestion.content
+                const fillBlankMatches = html.match(/\{\{fillblank-(\d+)\}\}/g)
+                if (fillBlankMatches) {
+                  fillBlankMatches.forEach((placeholder) => {
+                    const match = placeholder.match(/\{\{fillblank-(\d+)\}\}/)
+                    if (match) {
+                      const index = parseInt(match[1])
+                      const blankTag = `<span class="editable-blank-tag" contenteditable="false" data-index="${index - 1}" style="display:inline-block;position:relative;text-align:center;padding:0 2px 14px 2px;margin:0 2px;vertical-align:baseline;white-space:nowrap;cursor:default;user-select:none;"><span style="display:inline-block;font-size:14px;color:transparent;border-bottom:1px solid #303133;min-width:80px;">____________</span><span style="position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:11px;color:#E6A23C;white-space:nowrap;line-height:1;"><span style="color:#F56C6C;">*</span> 填空${index}</span></span>`
+                      html = html.replace(placeholder, blankTag)
+                    }
+                  })
+                }
+                div.innerHTML = html
+              }
+            })
+          }
+        }
+      })
+    },
+
+    // 从 fillBlanks 数据生成 content（用于 DOM 不可用时）
+    generateContentFromFillBlanks(question) {
+      if (!question.fillBlanks || question.fillBlanks.length === 0) {
+        return question.title || ''
+      }
+      
+      // 生成带占位符的内容
+      let content = question.title || ''
+      question.fillBlanks.forEach((blank, index) => {
+        content += ` {{fillblank-${index + 1}}}`
+      })
+      return content
+    },
+
+    // 恢复所有填空题内容到编辑器（用于初始化时）
+    restoreAllFillBlankContents() {
+      console.log('>>> restoreAllFillBlankContents 被调用')
+      console.log('questionList 长度:', this.questionList.length)
+      
+      // 遍历所有填空题
+      this.questionList.forEach((question, index) => {
+        console.log(`处理第${index + 1}题:`, {
+          id: question.id,
+          type: question.type,
+          title: question.title,
+          content: question.content
+        })
+        
+        if (question.type !== '3') {
+          console.log(`第${index + 1}题不是填空题，跳过`)
+          return
+        }
+        
+        // 如果是填空题且有 content
+        if (question.content) {
+          // 等待两轮渲染，确保 v-if 条件渲染完成
+          this.$nextTick(() => {
+            this.$nextTick(() => {
+              // 使用动态 ref 定位当前题目的编辑器
+              const editableDiv = this.$refs[`contentEditableDiv-${question.id}`]?.[0]
+              
+              if (!editableDiv) {
+                console.warn(`填空题编辑器未渲染，question id:`, question.id)
+                return
+              }
+              
+              if (editableDiv && typeof editableDiv.querySelectorAll === 'function') {
+                // 将 content 中的 {{fillblank-n}} 转换回 HTML 标签
+                let html = question.content
+                const fillBlankMatches = html.match(/\{\{fillblank-(\d+)\}\}/g)
+                
+                console.log(`第${index + 1}题 fillBlankMatches:`, fillBlankMatches)
+                
+                if (fillBlankMatches) {
+                  fillBlankMatches.forEach((placeholder) => {
+                    const match = placeholder.match(/\{\{fillblank-(\d+)\}\}/)
+                    if (match) {
+                      const index = parseInt(match[1])
+                      const blankTag = `<span class="editable-blank-tag" contenteditable="false" data-index="${index - 1}" style="display:inline-block;position:relative;text-align:center;padding:0 2px 14px 2px;margin:0 2px;vertical-align:baseline;white-space:nowrap;cursor:default;user-select:none;"><span style="display:inline-block;font-size:14px;color:transparent;border-bottom:1px solid #303133;min-width:80px;">____________</span><span style="position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:11px;color:#E6A23C;white-space:nowrap;line-height:1;"><span style="color:#F56C6C;">*</span> 填空${index}</span></span>`
+                      html = html.replace(placeholder, blankTag)
+                    }
+                  })
+                } else {
+                  // 如果没有占位符，直接使用 content 或 title
+                  html = question.content || question.title || ''
+                }
+                
+                editableDiv.innerHTML = html
+                console.log(`第${index + 1}题填空题内容已恢复:`, html)
+              } else {
+                console.warn(`编辑器 DOM 不可用或没有 querySelectorAll 方法，question id:`, question.id)
+              }
+            })
+          })
+        } else {
+          console.log(`第${index + 1}题填空题没有 content，使用 title:`, question.title)
+        }
+      })
     },
 
     moveUp(index) {
@@ -1440,62 +1666,59 @@ export default {
       }
       question.correctAnswers.push('') // 新增空的答案佔位
       
-      // 在 contenteditable div 中插入佔位符標籤
-      let editableDiv = this.$refs.contentEditableDiv
-      // 如果是數組，取第一個元素
-      if (Array.isArray(editableDiv) && editableDiv.length > 0) {
-        editableDiv = editableDiv[0]
-      }
-      
-      if (editableDiv) {
-        const selection = window.getSelection()
-        let range;
+      // 使用动态 ref 定位当前选中题目的编辑器
+      this.$nextTick(() => {
+        const editableDiv = this.$refs[`contentEditableDiv-${question.id}`]?.[0]
         
-        if (selection && selection.rangeCount > 0) {
-          range = selection.getRangeAt(0)
-          // 確保光標在編輯區域內，否則默認添加到末尾
-          if (!editableDiv.contains(range.commonAncestorContainer) && editableDiv !== range.commonAncestorContainer) {
-            range = null
-          }
-        }
-        
-        if (!range) {
-          range = document.createRange()
-          range.selectNodeContents(editableDiv)
-          range.collapse(false) // 光標移到最後
-          if (selection) {
-            selection.removeAllRanges()
-            selection.addRange(range)
-          }
-        }
-        
-        // 創建佔位符標籤
-        const blankIndex = question.fillBlanks.length
-        const blankTag = document.createElement('span')
-        blankTag.className = 'editable-blank-tag'
-        blankTag.contentEditable = 'false'
-        blankTag.style.cssText = 'display:inline-block;position:relative;text-align:center;padding:0 2px 14px 2px;margin:0 2px;vertical-align:baseline;white-space:nowrap;cursor:default;user-select:none;'
-        blankTag.innerHTML = `<span style="display:inline-block;font-size:14px;color:transparent;border-bottom:1px solid #303133;min-width:80px;">____________</span><span style="position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:11px;color:#E6A23C;white-space:nowrap;line-height:1;"><span style="color:#F56C6C;">*</span> 填空${blankIndex}</span>`
-        blankTag.dataset.index = blankIndex - 1
-        
-        // 插入到光标位置（先收合選取範圍，避免刪除已選中的文字）
-        range.collapse(false)
-        
-        // 在佔位符前後插入零寬空格，防止瀏覽器在輸入文字時誤刪非可編輯元素
-        const zwsp = '\u200B'
-        const afterText = document.createTextNode(zwsp)
-        const beforeText = document.createTextNode(zwsp)
-        
-        range.insertNode(afterText)
-        range.insertNode(blankTag)
-        range.insertNode(beforeText)
-        
-        // 光标移到佔位符後面的零寬空格之後
-        range.setStartAfter(afterText)
-        range.setEndAfter(afterText)
-        selection.removeAllRanges()
-        selection.addRange(range)
+        if (editableDiv && typeof editableDiv.querySelectorAll === 'function') {
+          const selection = window.getSelection()
+          let range;
           
+          if (selection && selection.rangeCount > 0) {
+            range = selection.getRangeAt(0)
+            // 確保光標在編輯區域內，否則默認添加到末尾
+            if (!editableDiv.contains(range.commonAncestorContainer) && editableDiv !== range.commonAncestorContainer) {
+              range = null
+            }
+          }
+          
+          if (!range) {
+            range = document.createRange()
+            range.selectNodeContents(editableDiv)
+            range.collapse(false) // 光標移到最後
+            if (selection) {
+              selection.removeAllRanges()
+              selection.addRange(range)
+            }
+          }
+          
+          // 創建佔位符標籤
+          const blankIndex = question.fillBlanks.length
+          const blankTag = document.createElement('span')
+          blankTag.className = 'editable-blank-tag'
+          blankTag.contentEditable = 'false'
+          blankTag.style.cssText = 'display:inline-block;position:relative;text-align:center;padding:0 2px 14px 2px;margin:0 2px;vertical-align:baseline;white-space:nowrap;cursor:default;user-select:none;'
+          blankTag.innerHTML = `<span style="display:inline-block;font-size:14px;color:transparent;border-bottom:1px solid #303133;min-width:80px;">____________</span><span style="position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:11px;color:#E6A23C;white-space:nowrap;line-height:1;"><span style="color:#F56C6C;">*</span> 填空${blankIndex}</span>`
+          blankTag.dataset.index = blankIndex - 1
+          
+          // 插入到光标位置（先收合選取範圍，避免刪除已選中的文字）
+          range.collapse(false)
+          
+          // 在佔位符前後插入零寬空格，防止瀏覽器在輸入文字時誤刪非可編輯元素
+          const zwsp = '\u200B'
+          const afterText = document.createTextNode(zwsp)
+          const beforeText = document.createTextNode(zwsp)
+          
+          range.insertNode(afterText)
+          range.insertNode(blankTag)
+          range.insertNode(beforeText)
+          
+          // 光标移到佔位符後面的零寬空格之後
+          range.setStartAfter(afterText)
+          range.setEndAfter(afterText)
+          selection.removeAllRanges()
+          selection.addRange(range)
+            
           // 同步更新 content
           let html = editableDiv.innerHTML
           const tags = editableDiv.querySelectorAll('.editable-blank-tag')
@@ -1507,7 +1730,8 @@ export default {
           const tempDiv = document.createElement('div')
           tempDiv.innerHTML = html
           question.content = tempDiv.textContent || tempDiv.innerText || ''
-      }
+        }
+      })
       
       ElMessage.success({
         message: '已新增填空',
@@ -1516,8 +1740,24 @@ export default {
     },
 
     onContentInput() {
-      // 內容變化時不立即同步，避免光標跳動
-      // 只在保存時才同步
+      // 內容變化時立即同步到 question.content
+      if (this.selectedQuestion) {
+        // 使用动态 ref 定位当前选中题目的编辑器
+        const editableDiv = this.$refs[`contentEditableDiv-${this.selectedQuestion.id}`]?.[0]
+        
+        if (editableDiv && typeof editableDiv.querySelectorAll === 'function') {
+          let html = editableDiv.innerHTML
+          const tags = editableDiv.querySelectorAll('.editable-blank-tag')
+          tags.forEach((tag) => {
+            const index = parseInt(tag.dataset.index) + 1
+            const placeholder = `{{fillblank-${index}}}`
+            html = html.replace(tag.outerHTML, placeholder)
+          })
+          const tempDiv = document.createElement('div')
+          tempDiv.innerHTML = html
+          this.selectedQuestion.content = tempDiv.textContent || tempDiv.innerText || ''
+        }
+      }
     },
 
     onContentKeydown(e) {
@@ -1684,26 +1924,43 @@ export default {
         return
       }
     
-      // 同步填空題的 content 內容
+      // 同步所有填空題的 content 內容
       this.questionList.forEach(q => {
-        if (q.type === '3' && q.fillBlanks && q.fillBlanks.length > 0) {
-          // 重新同步 content 內容
-          let editableDiv = this.$refs.contentEditableDiv
-          if (Array.isArray(editableDiv) && editableDiv.length > 0) {
-            editableDiv = editableDiv[0]
-          }
-              
-          if (editableDiv) {
-            let html = editableDiv.innerHTML
-            const tags = editableDiv.querySelectorAll('.editable-blank-tag')
-            tags.forEach((tag) => {
-              const index = parseInt(tag.dataset.index) + 1
-              const placeholder = `{{fillblank-${index}}}`
-              html = html.replace(tag.outerHTML, placeholder)
-            })
-            const tempDiv = document.createElement('div')
-            tempDiv.innerHTML = html
-            q.content = tempDiv.textContent || tempDiv.innerText || ''
+        if (q.type === '3') {
+          // 如果有 fillBlanks，說明已經配置了填空
+          if (q.fillBlanks && q.fillBlanks.length > 0) {
+            // 嘗試從 DOM 同步
+            let editableDiv = this.$refs.contentEditableDiv
+            if (Array.isArray(editableDiv) && editableDiv.length > 0) {
+              editableDiv = editableDiv[0]
+            }
+            
+            // 如果是 Vue 组件实例，获取其 $el 属性
+            if (editableDiv && editableDiv.$el) {
+              editableDiv = editableDiv.$el
+            }
+            
+            if (editableDiv && typeof editableDiv.querySelectorAll === 'function') {
+              let html = editableDiv.innerHTML
+              const tags = editableDiv.querySelectorAll('.editable-blank-tag')
+              tags.forEach((tag) => {
+                const index = parseInt(tag.dataset.index) + 1
+                const placeholder = `{{fillblank-${index}}}`
+                html = html.replace(tag.outerHTML, placeholder)
+              })
+              const tempDiv = document.createElement('div')
+              tempDiv.innerHTML = html
+              q.content = tempDiv.textContent || tempDiv.innerText || ''
+            } else if (q.content) {
+              // 如果 DOM 不可用但已有 content，保持不变
+              // 这确保在切换视图模式后保存时内容不会丢失
+            } else {
+              // 如果 DOM 不可用且没有 content，尝试从 fillBlanks 生成
+              q.content = this.generateContentFromFillBlanks(q)
+            }
+          } else {
+            // 没有 fillBlanks，使用 title 作为 content
+            q.content = q.title || ''
           }
         }
       })
@@ -2491,7 +2748,7 @@ export default {
   border-radius: 6px;
 }
 
-.preview-simple-hint {
+.preview-question-content {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2499,12 +2756,38 @@ export default {
   background: #f8f9fa;
   border-radius: 6px;
   margin-left: 34px;
-  color: #909399;
-  font-size: 12px;
+  color: #606266;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
-.preview-simple-hint .el-icon {
+.preview-question-content .el-icon {
   font-size: 14px;
+  color: #909399;
+  flex-shrink: 0;
+}
+
+.preview-question-content .content-text {
+  flex: 1;
+  word-break: break-all;
+}
+
+.preview-question-content .underline-placeholder-preview {
+  display: inline-block;
+  margin: 0 2px;
+}
+
+.preview-question-content .underline-text-preview {
+  display: inline-block;
+  border-bottom: 2px solid #409EFF;
+  min-width: 60px;
+  color: transparent !important;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, transparent 60%, #409EFF 60%);
+  background-size: 100% 2px;
+  background-repeat: no-repeat;
+  background-position: bottom;
 }
 
 .questionnaire-body::-webkit-scrollbar {
