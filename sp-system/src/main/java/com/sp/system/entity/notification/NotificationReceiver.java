@@ -24,7 +24,7 @@ public class NotificationReceiver implements Serializable {
     @TableField("notification_id")
     private Long notificationId;
 
-    /** 接收类型（1班级 2学生/家长 3教职员工） */
+    /** 接收类型（1 班级 2 学生/家长） */
     @TableField("receive_type")
     private String receiveType;
 

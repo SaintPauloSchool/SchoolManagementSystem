@@ -869,18 +869,6 @@ body {
   border-color: #059669;
 }
 
-/* 教職員工選擇按鈕 */
-.send-settings-form .selection-item .el-button--warning {
-  background: #f59e0b;
-  border-color: #f59e0b;
-  color: #ffffff;
-}
-
-.send-settings-form .selection-item .el-button--warning:hover {
-  background: #d97706;
-  border-color: #d97706;
-}
-
 /* 抄送教職員工按鈕 */
 .send-settings-form .selection-item .el-button--info {
   background: #6b7280;
@@ -944,17 +932,6 @@ body {
 
 .send-settings-form .tag-item .el-tag--success:hover {
   background: #d1fae5;
-}
-
-/* 教職員工標籤 */
-.send-settings-form .tag-item .el-tag--warning {
-  background: #fffbeb;
-  color: #92400e;
-  border-color: #fcd34d;
-}
-
-.send-settings-form .tag-item .el-tag--warning:hover {
-  background: #fef3c7;
 }
 
 /* 抄送教職員工標籤 */

@@ -168,8 +168,7 @@ export default {
     getReceiveTypeText(type) {
       const typeMap = {
         '1': '班級',
-        '2': '學生/家長',
-        '3': '教职员工'
+        '2': '學生/家長'
       }
       return typeMap[type] || '未知'
     },

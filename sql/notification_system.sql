@@ -29,7 +29,7 @@ drop table if exists notification_receiver;
 create table notification_receiver (
                                        receiver_id           bigint(20)      not null auto_increment    comment '接收关系ID',
                                        notification_id       bigint(20)      not null                   comment '通知ID',
-                                       receive_type          char(1)         not null                   comment '接收类型（1班级 2学生/家长 3教职员工）',
+                                       receive_type          char(1)         not null                   comment '接收类型（1 班级 2 学生/家长）',
                                        receive_ids           text            not null                   comment '接收对象ID列表(JSON格式)',
                                        receive_names         text            not null                   comment '接收对象名称列表(JSON格式)',
                                        create_time           datetime                                   comment '创建时间',

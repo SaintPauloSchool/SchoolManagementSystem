@@ -66,30 +66,7 @@
             </div>
           </el-form-item>
       
-          <!-- 教職員工選擇 -->
-          <el-form-item label="選擇教職員工">
-            <div class="selection-item">
-              <el-button 
-                type="warning" 
-                @click="openStaffSelector"
-                plain
-              >
-                已選擇 {{ selectedStaff.length }} 位教職員工
-                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <div v-if="selectedStaff.length > 0" class="selected-tags">
-                <el-tag
-                  v-for="staff in selectedStaff"
-                  :key="staff.id"
-                  closable
-                  @close="removeStaff(staff)"
-                  class="tag-item"
-                >
-                  {{ staff.name }}
-                </el-tag>
-              </div>
-            </div>
-          </el-form-item>
+
         </div>
       </el-card>
 
@@ -213,11 +190,7 @@
       @confirm="handleStudentSelect"
     />
 
-    <StaffSelectorDialog
-      v-model:visible="staffSelectorVisible"
-      :selected-staff="selectedStaff"
-      @confirm="handleStaffSelect"
-    />
+
 
     <StaffSelectorDialog
       v-model:visible="ccStaffSelectorVisible"
@@ -264,13 +237,11 @@ export default {
       
       classSelectorVisible: false,
       studentSelectorVisible: false,
-      staffSelectorVisible: false,
       ccStaffSelectorVisible: false,
       directorySelectorVisible: false,
       
       selectedClasses: [],
       selectedStudents: [],
-      selectedStaff: [],
       selectedCcStaff: [],
       selectedCcDirectory: []
     }
@@ -306,11 +277,6 @@ export default {
                 case '2':
                   if (!this.selectedStudents.some(s => s.id === id)) {
                     this.selectedStudents.push(item)
-                  }
-                  break
-                case '3':
-                  if (!this.selectedStaff.some(s => s.id === id)) {
-                    this.selectedStaff.push(item)
                   }
                   break
               }
@@ -352,8 +318,7 @@ export default {
     validate() {
       return new Promise((resolve, reject) => {
         const hasReceivers = this.selectedClasses.length > 0 || 
-                           this.selectedStudents.length > 0 || 
-                           this.selectedStaff.length > 0
+                           this.selectedStudents.length > 0
         
         if (!hasReceivers) {
           this.$message.warning('請至少選擇一個接收對象')
@@ -378,7 +343,6 @@ export default {
     resetForm() {
       this.selectedClasses = []
       this.selectedStudents = []
-      this.selectedStaff = []
       this.selectedCcStaff = []
       this.selectedCcDirectory = []
       this.sendRemind = false
@@ -420,14 +384,6 @@ export default {
         })
       }
       
-      if (this.selectedStaff.length > 0) {
-        receivers.push({
-          receiveType: '3',
-          receiveIds: JSON.stringify(this.selectedStaff.map(s => s.id)),
-          receiveNames: JSON.stringify(this.selectedStaff.map(s => s.name))
-        })
-      }
-      
       const ccs = []
       
       if (this.selectedCcStaff.length > 0) {
@@ -460,9 +416,6 @@ export default {
       this.studentSelectorVisible = true
     },
 
-    openStaffSelector() {
-      this.staffSelectorVisible = true
-    },
 
     openCcStaffSelector() {
       this.ccStaffSelectorVisible = true
@@ -480,9 +433,6 @@ export default {
       this.selectedStudents = students
     },
 
-    handleStaffSelect(staff) {
-      this.selectedStaff = staff
-    },
 
     handleCcStaffSelect(staff) {
       this.selectedCcStaff = staff
@@ -506,12 +456,6 @@ export default {
       }
     },
 
-    removeStaff(staff) {
-      const index = this.selectedStaff.findIndex(s => s.id === staff.id)
-      if (index > -1) {
-        this.selectedStaff.splice(index, 1)
-      }
-    },
 
     removeCcStaff(staff) {
       const index = this.selectedCcStaff.findIndex(s => s.id === staff.id)
