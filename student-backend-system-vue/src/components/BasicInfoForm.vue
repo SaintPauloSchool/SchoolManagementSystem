@@ -196,9 +196,7 @@ export default {
       localFormData: { ...this.formData },
       fileList: [],
       uploadUrl: '/api/common/upload',
-      uploadHeaders: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      },
+      uploadHeaders: {},
       showQuestionDialog: false,
       showFormQuestionDialog: false,
       editingQuestion: null,
@@ -213,6 +211,12 @@ export default {
           { max: 2000, message: '正文長度不能超過 2000 個字符', trigger: 'blur' }
         ]
       }
+    }
+  },
+  created() {
+    // 初始化上传头
+    this.uploadHeaders = {
+      'Authorization': 'Bearer ' + localStorage.getItem('token')
     }
   },
   watch: {
@@ -385,7 +389,13 @@ export default {
     },
 
     editQuestion(index) {
-      this.editingQuestion = { ...this.localFormData.questions[index] }
+      const question = { ...this.localFormData.questions[index] }
+      // 确保问题有 id，如果没有则生成一个
+      if (!question.id) {
+        question.id = Date.now()
+        this.localFormData.questions[index].id = question.id
+      }
+      this.editingQuestion = question
       this.showQuestionDialog = true
     },
 

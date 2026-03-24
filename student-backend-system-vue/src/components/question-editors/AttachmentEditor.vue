@@ -113,17 +113,38 @@ export default {
         attachments: [],
         required: this.questionData.required || false
       },
-      fileList: this.questionData.attachments ? [...this.questionData.attachments] : [],
+      fileList: [],
      uploadUrl: '/api/common/upload',
-     uploadHeaders: {
-        'Authorization': 'Bearer' + localStorage.getItem('token')
-      },
+     uploadHeaders: {},
       rules: {
         title: [
           { required: true, message: '請輸入題目內容', trigger: 'blur' },
           { max: 200, message: '標題長度不能超過 200 個字符', trigger: 'blur' }
         ]
       }
+    }
+  },
+  created() {
+    // 初始化上传头
+    this.uploadHeaders = {
+      'Authorization': 'Bearer ' + localStorage.getItem('token')
+    }
+    
+    // 初始化 fileList，确保符合 Element Plus 上传组件的格式
+    if (this.questionData.attachments && this.questionData.attachments.length > 0) {
+      this.fileList = this.questionData.attachments.map((file, index) => ({
+        name: file.name || `文件${index + 1}`,
+        url: file.url,
+        status: 'success',
+        response: {
+          code: 200,
+          data: {
+            url: file.url
+          }
+        }
+      }))
+      // 同步到 localQuestionData
+      this.localQuestionData.attachments = [...this.fileList]
     }
   },
   methods: {

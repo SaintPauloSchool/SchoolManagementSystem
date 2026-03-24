@@ -70,7 +70,7 @@
             </div>
           </div>
 
-          <!-- 附加题 -->
+          <!-- 附件题 -->
           <div 
             class="type-card"
             :class="{ selected: selectedType === '4' }"
@@ -79,7 +79,7 @@
             <div class="card-icon attachment">
               <el-icon :size="36"><Paperclip /></el-icon>
             </div>
-            <h4 class="card-title">附加题</h4>
+            <h4 class="card-title">附件题</h4>
             <p class="card-desc">上传附件文件</p>
             <div class="selected-mark" v-if="selectedType === '4'">
               <el-icon :size="20"><Check /></el-icon>
@@ -116,7 +116,7 @@
           @save="handleSave"
         />
         
-        <!-- 附加题编辑器 -->
+        <!-- 附件题编辑器 -->
         <AttachmentEditor
           ref="editorComponent"
           v-else-if="selectedType === '4'"

@@ -1214,36 +1214,47 @@ export default {
       
       this.viewMode = mode
       
-      // 切換到編輯模式後，恢復填空題的內容
-      if (mode === 'edit' && this.selectedQuestion && this.selectedQuestion.type === '3' && this.selectedQuestion.fillBlanks && this.selectedQuestion.fillBlanks.length > 0) {
+      // 切換到編輯模式後，確保 activePanels 正確設置並恢復所有填空題的內容
+      if (mode === 'edit') {
+        // 確保展開題目設置面板
+        if (!this.activePanels.includes('questionSettings')) {
+          this.activePanels = ['questionType', 'questionSettings']
+        }
+        
         this.$nextTick(() => {
-          let editableDiv = this.$refs.contentEditableDiv
-          // 如果是数组，取第一个元素
-          if (Array.isArray(editableDiv) && editableDiv.length > 0) {
-            editableDiv = editableDiv[0]
-          }
+          // 恢復所有填空題的內容
+          this.restoreAllFillBlankContents()
           
-          // 如果是 Vue 组件实例，获取其 $el 属性
-          if (editableDiv && editableDiv.$el) {
-            editableDiv = editableDiv.$el
-          }
-          
-          // 确保是原生 DOM 元素且有 querySelectorAll 方法
-          if (editableDiv && typeof editableDiv.querySelectorAll === 'function' && this.selectedQuestion.content) {
-            // 将 content 中的 {{fillblank-n}} 转换回 HTML 标签
-            let html = this.selectedQuestion.content
-            const fillBlankMatches = html.match(/\{\{fillblank-(\d+)\}\}/g)
-            if (fillBlankMatches) {
-              fillBlankMatches.forEach((placeholder) => {
-                const match = placeholder.match(/\{\{fillblank-(\d+)\}\}/)
-                if (match) {
-                  const index = parseInt(match[1])
-                  const blankTag = `<span class="editable-blank-tag" contenteditable="false" data-index="${index - 1}" style="display:inline-block;position:relative;text-align:center;padding:0 2px 14px 2px;margin:0 2px;vertical-align:baseline;white-space:nowrap;cursor:default;user-select:none;"><span style="display:inline-block;font-size:14px;color:transparent;border-bottom:1px solid #303133;min-width:80px;">____________</span><span style="position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:11px;color:#E6A23C;white-space:nowrap;line-height:1;"><span style="color:#F56C6C;">*</span> 填空${index}</span></span>`
-                  html = html.replace(placeholder, blankTag)
-                }
-              })
+          // 如果有選中題目且是填空題，額外恢復該題目的內容
+          if (this.selectedQuestion && this.selectedQuestion.type === '3' && this.selectedQuestion.fillBlanks && this.selectedQuestion.fillBlanks.length > 0) {
+            let editableDiv = this.$refs.contentEditableDiv
+            // 如果是数组，取第一个元素
+            if (Array.isArray(editableDiv) && editableDiv.length > 0) {
+              editableDiv = editableDiv[0]
             }
-            editableDiv.innerHTML = html
+            
+            // 如果是 Vue 组件实例，获取其 $el 属性
+            if (editableDiv && editableDiv.$el) {
+              editableDiv = editableDiv.$el
+            }
+            
+            // 确保是原生 DOM 元素且有 querySelectorAll 方法
+            if (editableDiv && typeof editableDiv.querySelectorAll === 'function' && this.selectedQuestion.content) {
+              // 将 content 中的 {{fillblank-n}} 转换回 HTML 标签
+              let html = this.selectedQuestion.content
+              const fillBlankMatches = html.match(/\{\{fillblank-(\d+)\}\}/g)
+              if (fillBlankMatches) {
+                fillBlankMatches.forEach((placeholder) => {
+                  const match = placeholder.match(/\{\{fillblank-(\d+)\}\}/)
+                  if (match) {
+                    const index = parseInt(match[1])
+                    const blankTag = `<span class="editable-blank-tag" contenteditable="false" data-index="${index - 1}" style="display:inline-block;position:relative;text-align:center;padding:0 2px 14px 2px;margin:0 2px;vertical-align:baseline;white-space:nowrap;cursor:default;user-select:none;"><span style="display:inline-block;font-size:14px;color:transparent;border-bottom:1px solid #303133;min-width:80px;">____________</span><span style="position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:11px;color:#E6A23C;white-space:nowrap;line-height:1;"><span style="color:#F56C6C;">*</span> 填空${index}</span></span>`
+                    html = html.replace(placeholder, blankTag)
+                  }
+                })
+              }
+              editableDiv.innerHTML = html
+            }
           }
         })
       }
