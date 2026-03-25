@@ -188,9 +188,6 @@ export default {
         })
         if (response.code === 200 || response.code === 0) {
           this.departmentTree = response.data || []
-          this.$nextTick(() => {
-            this.initSelectedTree()
-          })
         } else {
           this.$message.error('加载班级数据失败')
         }
@@ -199,20 +196,27 @@ export default {
         this.$message.error('加载班级数据失败')
       } finally {
         this.loading = false
+        this.$nextTick(() => {
+          setTimeout(() => {
+            if (this.visible) {
+               this.initSelectedTree()
+            }
+          }, 100)
+        })
       }
     },
 
     initSelectedTree() {
-      if (this.$refs.classTree && this.selectedClasses && this.selectedClasses.length > 0) {
+      if (!this.$refs.classTree) return;
+
+      if (this.selectedClasses && this.selectedClasses.length > 0) {
         const classIds = this.selectedClasses.map(cls => cls.id)
         this.$refs.classTree.setCheckedKeys(classIds)
-        this.$nextTick(() => {
+        setTimeout(() => {
           this.updateSelectedClassIds()
-        })
+        }, 50)
       } else {
-        if (this.$refs.classTree) {
-          this.$refs.classTree.setCheckedKeys([])
-        }
+        this.$refs.classTree.setCheckedKeys([])
         this.selectedClassIds = []
       }
     },
