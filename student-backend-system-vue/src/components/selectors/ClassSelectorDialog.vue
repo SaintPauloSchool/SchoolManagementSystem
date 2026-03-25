@@ -160,12 +160,10 @@ export default {
       }
     },
     selectedClassesWithDetails() {
-      const result = this.selectedClassIds.map(id => {
+      return this.selectedClassIds.map(id => {
         const cls = this.findClassInTree(id, this.departmentTree)
         return cls || { id, name: '未知班级' }
       })
-      console.log('selectedClassesWithDetails 计算结果:', result)
-      return result
     }
   },
   watch: {
@@ -197,11 +195,9 @@ export default {
       } finally {
         this.loading = false
         this.$nextTick(() => {
-          setTimeout(() => {
-            if (this.visible) {
-               this.initSelectedTree()
-            }
-          }, 100)
+          if (this.visible) {
+            this.initSelectedTree()
+          }
         })
       }
     },
@@ -394,13 +390,13 @@ export default {
   content: none;
 }
 
+.search-input {
+  width: 100%;
+}
+
 .panel-title .el-icon {
   font-size: 16px;
   color: #409EFF;
-}
-
-.search-input {
-  width: 100%;
 }
 
 .search-input :deep(.el-input__wrapper) {
@@ -464,11 +460,6 @@ export default {
   color: #409EFF;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.1); }
-}
-
 .empty .el-icon {
   font-size: 48px;
   color: #c0c4cc;
@@ -490,12 +481,6 @@ export default {
 .stage-icon { color: #67C23A; }
 .grade-icon { color: #909399; }
 .class-icon { color: #F56C6C; }
-
-.node-label {
-  flex: 1;
-  font-size: 14px;
-  color: #606266;
-}
 
 .grade-tag {
   font-size: 11px;
