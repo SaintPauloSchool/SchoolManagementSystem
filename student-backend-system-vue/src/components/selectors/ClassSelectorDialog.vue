@@ -2,9 +2,10 @@
   <el-dialog
     v-model="dialogVisible"
     title="选择班级"
-    width="750px"
+    width="900px"
     :before-close="handleClose"
     class="class-selector-dialog"
+    top="10vh"
   >
     <div class="selector-wrapper">
       <!-- 左侧树形结构 -->
@@ -253,11 +254,42 @@ export default {
   padding: 0;
 }
 
+.class-selector-dialog .el-dialog__header {
+  padding: 16px 20px;
+  background: linear-gradient(90deg, #409EFF 0%, #66b1ff 100%);
+  border-radius: 0;
+  margin-right: 0;
+}
+
+.class-selector-dialog .el-dialog__title {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.class-selector-dialog .el-dialog__headerbtn .el-dialog__close {
+  color: #ffffff;
+  transition: all 0.3s;
+}
+
+.class-selector-dialog .el-dialog__headerbtn .el-dialog__close:hover {
+  transform: rotate(90deg);
+  color: #f0f0f0;
+}
+
+.class-selector-dialog .el-dialog__footer {
+  padding: 12px 20px;
+  border-top: 1px solid #e8ecf1;
+  background: #ffffff;
+  border-radius: 0;
+}
+
 .selector-wrapper {
   display: flex;
-  height: 450px;
-  gap: 16px;
-  padding: 16px;
+  height: 500px;
+  gap: 20px;
+  padding: 20px;
+  background: #ffffff;
 }
 
 /* 左侧面板 */
@@ -266,6 +298,10 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: #ffffff;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 /* 右侧面板 */
@@ -274,6 +310,10 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: #ffffff;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .panel-title {
@@ -281,14 +321,18 @@ export default {
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   color: #303133;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #e4e7ed;
 }
 
+.panel-title::after {
+  content: none;
+}
+
 .panel-title .el-icon {
-  font-size: 18px;
+  font-size: 16px;
   color: #409EFF;
 }
 
@@ -296,13 +340,32 @@ export default {
   width: 100%;
 }
 
+.search-input :deep(.el-input__wrapper) {
+  box-shadow: 0 0 0 1px #e4e7ed;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.search-input :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #c0c4cc;
+}
+
+.search-input :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #409EFF !important;
+}
+
 .tree-container {
   flex: 1;
   overflow-y: auto;
-  border: 1px solid #e4e7ed;
+  border: 1px solid #dcdfe6;
   border-radius: 4px;
   padding: 12px;
-  background: #f5f7fa;
+  background: #ffffff;
+}
+
+.tree-container:hover {
+  border-color: #409EFF;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
 }
 
 .tree-container::-webkit-scrollbar {
@@ -310,12 +373,17 @@ export default {
 }
 
 .tree-container::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f0f2f8;
+  border-radius: 3px;
 }
 
 .tree-container::-webkit-scrollbar-thumb {
   background: #dcdfe6;
   border-radius: 3px;
+}
+
+.tree-container::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
 }
 
 .loading, .empty {
@@ -333,8 +401,14 @@ export default {
   color: #409EFF;
 }
 
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
 .empty .el-icon {
   font-size: 48px;
+  color: #c0c4cc;
 }
 
 .tree-node {
@@ -357,19 +431,26 @@ export default {
 .node-label {
   flex: 1;
   font-size: 14px;
+  color: #606266;
 }
 
 .grade-tag {
   font-size: 11px;
+  border-radius: 3px;
 }
 
 .selected-container {
   flex: 1;
   overflow-y: auto;
-  border: 1px solid #e4e7ed;
+  border: 1px solid #dcdfe6;
   border-radius: 4px;
   padding: 12px;
-  background: #f5f7fa;
+  background: #ffffff;
+}
+
+.selected-container:hover {
+  border-color: #409EFF;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
 }
 
 .selected-container::-webkit-scrollbar {
@@ -377,7 +458,8 @@ export default {
 }
 
 .selected-container::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f0f2f8;
+  border-radius: 3px;
 }
 
 .selected-container::-webkit-scrollbar-thumb {
@@ -385,15 +467,39 @@ export default {
   border-radius: 3px;
 }
 
+.selected-container::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
+}
+
 .selected-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 10px 14px;
   margin-bottom: 8px;
   background: #ffffff;
   border-radius: 4px;
   border: 1px solid #e4e7ed;
+  transition: all 0.3s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.selected-item:hover {
+  background: #f5f7fa;
+  border-color: #409EFF;
+  transform: translateX(3px);
+  box-shadow: 0 2px 6px rgba(64, 158, 255, 0.15);
 }
 
 .item-info {
@@ -418,6 +524,7 @@ export default {
   align-items: center;
   justify-content: center;
   height: 100%;
+  color: #c0c4cc;
 }
 
 .dialog-footer {
@@ -425,7 +532,28 @@ export default {
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 24px;
-  border-top: 1px solid #e4e7ed;
+}
+
+.dialog-footer .el-button {
+  min-width: 80px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.dialog-footer .el-button--primary {
+  background: #409EFF;
+  border-color: #409EFF;
+}
+
+.dialog-footer .el-button--primary:hover:not(:disabled) {
+  background: #66b1ff;
+  border-color: #66b1ff;
+}
+
+.dialog-footer .el-button--primary:active:not(:disabled) {
+  background: #3a8ee6;
+  border-color: #3a8ee6;
 }
 
 /* 树节点样式优化 */
@@ -435,15 +563,48 @@ export default {
 
 :deep(.el-tree-node__content) {
   height: auto;
-  padding: 6px 0;
-  border-radius: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  transition: all 0.3s;
 }
 
 :deep(.el-tree-node__content:hover) {
   background-color: #ecf5ff;
 }
 
+:deep(.el-tree-node__content.is-current) {
+  background-color: #ecf5ff;
+  color: #409EFF;
+  font-weight: 600;
+}
+
 :deep(.el-checkbox__inner) {
   border-radius: 2px;
+  border: 2px solid #dcdfe6;
+  transition: all 0.3s;
+}
+
+:deep(.el-checkbox__inner:hover) {
+  border-color: #667eea;
+}
+
+:deep(.el-checkbox.is-checked .el-checkbox__inner) {
+  background: #409EFF;
+  border-color: #409EFF;
+}
+
+:deep(.el-checkbox__input.is-indeterminate .el-checkbox__inner::before) {
+  background: #409EFF;
+}
+
+/* 空状态优化 */
+:deep(.el-empty__description) {
+  color: #909399;
+  font-size: 14px;
+}
+
+:deep(.el-empty__image) {
+  opacity: 0.5;
 }
 </style>
