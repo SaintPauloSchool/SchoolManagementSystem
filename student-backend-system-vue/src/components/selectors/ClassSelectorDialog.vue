@@ -44,6 +44,7 @@
             :check-on-click-node="true"
             node-key="id"
             show-checkbox
+            @check="handleCheckChange"
           >
             <template #default="{ node, data }">
               <span class="tree-node">
@@ -66,24 +67,28 @@
       <div class="right-panel">
         <div class="panel-title">
           <el-icon><Checked /></el-icon>
-          <span>已选择 ({{ selectedClasses.length }})</span>
+          <span>已选择 ({{ selectedClassesWithDetails.length }})</span>
         </div>
 
         <div class="selected-container">
-          <div
-            v-for="cls in selectedClasses"
-            :key="cls.id"
-            class="selected-item"
-          >
-            <div class="item-info">
-              <el-icon class="item-icon"><User /></el-icon>
+          <div v-if="selectedClassesWithDetails.length > 0" class="selected-list">
+            <div
+              v-for="cls in selectedClassesWithDetails"
+              :key="cls.id"
+              class="selected-tag"
+            >
               <span>{{ cls.name }}</span>
+              <el-button 
+                link 
+                type="danger" 
+                size="small" 
+                @click="removeSelectedClass(cls)"
+              >
+                <el-icon><Close /></el-icon>
+              </el-button>
             </div>
-            <el-button link type="danger" size="small" @click="removeSelectedClass(cls)">
-              <el-icon><Close /></el-icon>
-            </el-button>
           </div>
-          <div v-if="selectedClasses.length === 0" class="empty-selected">
+          <div v-else class="empty-selected">
             <el-empty :image-size="80" description="请从左侧选择班级" />
           </div>
         </div>
@@ -96,9 +101,9 @@
         <el-button 
           type="primary" 
           @click="handleConfirm"
-          :disabled="selectedClasses.length === 0"
+          :disabled="selectedClassesWithDetails.length === 0"
         >
-          确定 ({{ selectedClasses.length }})
+          确定 ({{ selectedClassesWithDetails.length }})
         </el-button>
       </div>
     </template>
@@ -154,10 +159,12 @@ export default {
       }
     },
     selectedClassesWithDetails() {
-      return this.selectedClassIds.map(id => {
+      const result = this.selectedClassIds.map(id => {
         const cls = this.findClassInTree(id, this.departmentTree)
         return cls || { id, name: '未知班级' }
       })
+      console.log('selectedClassesWithDetails 计算结果:', result)
+      return result
     }
   },
   watch: {
@@ -198,7 +205,31 @@ export default {
       if (this.$refs.classTree && this.selectedClasses && this.selectedClasses.length > 0) {
         const classIds = this.selectedClasses.map(cls => cls.id)
         this.$refs.classTree.setCheckedKeys(classIds)
+        this.$nextTick(() => {
+          this.updateSelectedClassIds()
+        })
+      } else {
+        if (this.$refs.classTree) {
+          this.$refs.classTree.setCheckedKeys([])
+        }
+        this.selectedClassIds = []
       }
+    },
+
+    updateSelectedClassIds() {
+      if (!this.$refs.classTree) return;
+      const checkedNodes = this.$refs.classTree.getCheckedNodes(false, false);
+      const topLevelNodes = checkedNodes.filter(nodeData => {
+         let node = this.$refs.classTree.getNode(nodeData.id);
+         if (!node) return false;
+         let parent = node.parent;
+         while(parent && parent.level > 0) {
+            if (parent.checked) return false;
+            parent = parent.parent;
+         }
+         return true;
+      });
+      this.selectedClassIds = topLevelNodes.map(n => n.id);
     },
 
     findClassInTree(id, tree) {
@@ -231,10 +262,6 @@ export default {
     },
 
     handleConfirm() {
-      if (this.$refs.classTree) {
-        const checkedKeys = this.$refs.classTree.getCheckedKeys()
-        this.selectedClassIds = Array.from(checkedKeys)
-      }
       this.$emit('confirm', this.selectedClassesWithDetails)
       this.handleClose()
     },
@@ -243,7 +270,38 @@ export default {
       const index = this.selectedClassIds.indexOf(cls.id)
       if (index > -1) {
         this.selectedClassIds.splice(index, 1)
+        // 更新树的勾选状态
+        if (this.$refs.classTree) {
+          this.$refs.classTree.setCheckedKeys(this.selectedClassIds)
+        }
       }
+    },
+
+    handleCheckChange(data, checkInfo) {
+      if (!this.$refs.classTree) return;
+      
+      const isChecked = checkInfo.checkedKeys.includes(data.id);
+      
+      if (!isChecked) {
+        let node = this.$refs.classTree.getNode(data.id);
+        let parent = node ? node.parent : null;
+        let ancestorInSelected = false;
+        while(parent && parent.level > 0) {
+           if (this.selectedClassIds.includes(parent.data.id)) {
+               ancestorInSelected = true;
+               break;
+           }
+           parent = parent.parent;
+        }
+        
+        if (ancestorInSelected) {
+           this.$message.warning('已选中上级组织，无法单独取消子项');
+           this.$refs.classTree.setCheckedKeys(this.selectedClassIds);
+           return;
+        }
+      }
+      
+      this.updateSelectedClassIds();
     }
   }
 }
@@ -471,52 +529,29 @@ export default {
   background: #c0c4cc;
 }
 
-.selected-item {
+.selected-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selected-tag {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  margin-bottom: 8px;
-  background: #ffffff;
+  padding: 6px 12px;
+  background: #f5f7fa;
   border-radius: 4px;
   border: 1px solid #e4e7ed;
   transition: all 0.3s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.selected-item:hover {
-  background: #f5f7fa;
-  border-color: #409EFF;
-  transform: translateX(3px);
-  box-shadow: 0 2px 6px rgba(64, 158, 255, 0.15);
-}
-
-.item-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.item-icon {
-  color: #409EFF;
-  font-size: 16px;
-}
-
-.item-info span {
   font-size: 14px;
   color: #606266;
+}
+
+.selected-tag:hover {
+  background: #ecf5ff;
+  border-color: #409EFF;
+  box-shadow: 0 1px 4px rgba(64, 158, 255, 0.1);
 }
 
 .empty-selected {
