@@ -152,15 +152,6 @@
               :disabled-date="disabledDate"
             />
           </el-form-item>
-
-          <el-form-item label="發送提醒">
-            <el-switch
-              v-model="sendRemind"
-              active-text="開啟"
-              inactive-text="關閉"
-            />
-            <div class="form-tip">開啟後將在發送前發送提醒通知</div>
-          </el-form-item>
         </div>
       </el-card>
 
@@ -233,7 +224,6 @@ export default {
   data() {
     return {
       localFormData: { ...this.formData },
-      sendRemind: false,
       
       classSelectorVisible: false,
       studentSelectorVisible: false,
@@ -345,7 +335,6 @@ export default {
       this.selectedStudents = []
       this.selectedCcStaff = []
       this.selectedCcDirectory = []
-      this.sendRemind = false
       this.localFormData = {
         receivers: [],
         ccs: [],
@@ -505,10 +494,19 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: 8px;
 }
 
 .selected-tags {
   width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tag-item {
+  margin: 4px 0;
 }
 
 /* 發送選項佈局 */
@@ -529,14 +527,6 @@ export default {
 /* 日期選擇器 */
 .el-date-picker {
   width: 100%;
-}
-
-/* 開關組樣式優化 */
-.el-form-item[label="發送提醒"] {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
 }
 
 /* 操作按鈕區域 */

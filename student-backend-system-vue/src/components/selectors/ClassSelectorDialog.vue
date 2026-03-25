@@ -77,14 +77,15 @@
               :key="cls.id"
               class="selected-tag"
             >
-              <span>{{ cls.name }}</span>
+              <span class="selected-tag-name">{{ cls.name }}</span>
               <el-button 
                 link 
                 type="danger" 
                 size="small" 
                 @click="removeSelectedClass(cls)"
+                class="remove-btn"
               >
-                <el-icon><Close /></el-icon>
+                <el-icon><CloseBold /></el-icon>
               </el-button>
             </div>
           </div>
@@ -113,7 +114,7 @@
 <script>
 import { 
   Search, Loading, DocumentDelete, School, OfficeBuilding, 
-  Reading, Notebook, User, Checked, Close 
+  Reading, Notebook, User, Checked, CloseBold 
 } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
@@ -121,7 +122,7 @@ export default {
   name: 'ClassSelectorDialog',
   components: {
     Search, Loading, DocumentDelete, School, OfficeBuilding, 
-    Reading, Notebook, User, Checked, Close
+    Reading, Notebook, User, Checked, CloseBold
   },
   props: {
     visible: {
@@ -539,9 +540,9 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 12px;
+  padding: 10px 14px;
   background: #f5f7fa;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid #e4e7ed;
   transition: all 0.3s;
   font-size: 14px;
@@ -551,7 +552,44 @@ export default {
 .selected-tag:hover {
   background: #ecf5ff;
   border-color: #409EFF;
-  box-shadow: 0 1px 4px rgba(64, 158, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.selected-tag-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+
+.remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  opacity: 0.6;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.remove-btn:hover {
+  opacity: 1;
+  background: rgba(245, 108, 108, 0.1);
+  transform: scale(1.1);
+}
+
+.remove-btn:active {
+  transform: scale(0.95);
+}
+
+.remove-btn .el-icon {
+  font-size: 14px;
+  color: #F56C6C;
 }
 
 .empty-selected {
