@@ -108,6 +108,38 @@ create table notification_answer (
 ) engine=innodb auto_increment=1 comment = '通知回答表';
 
 -- ----------------------------
+-- 家长学生关系表
+-- ----------------------------
+drop table if exists sys_parent_student_relation;
+create table sys_parent_student_relation (
+  id                    bigint          not null auto_increment    comment '主键 ID',
+  parent_user_id        varchar(64)     not null                   comment '家长用户 ID',
+  student_user_id       varchar(64)     not null                   comment '学生用户 ID',
+  student_name          varchar(100)    default null               comment '学生姓名',
+  relation_desc         varchar(50)     default '家长'             comment '关系描述',
+  mobile                varchar(20)     default null               comment '家长手机号',
+  external_userid       varchar(64)     default null               comment '家长外部用户 ID',
+  create_time           datetime        default null               comment '创建时间',
+  update_time           datetime        default null               comment '更新时间',
+  primary key (id),
+  unique key uk_parent_student (parent_user_id, student_user_id)
+) engine=innodb auto_increment=1 comment='家长学生关系表';
+
+-- ----------------------------
+-- 部门家长绑定表
+-- ----------------------------
+drop table if exists sys_department_parent_binding;
+create table sys_department_parent_binding (
+  id                    bigint          not null auto_increment    comment '主键 ID',
+  department_id         bigint          not null                   comment '部门 ID',
+  parent_user_id        varchar(64)     not null                   comment '家长用户 ID',
+  student_user_id       varchar(64)     default null               comment '学生用户 ID',
+  create_time           datetime        default null               comment '创建时间',
+  update_time           datetime        default null               comment '更新时间',
+  primary key (id)
+) engine=innodb auto_increment=1 comment='部门家长绑定表';
+
+-- ----------------------------
 -- 初始化数据
 -- ----------------------------
 -- 示例通知数据
