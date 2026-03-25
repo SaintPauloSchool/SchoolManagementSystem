@@ -1,4 +1,4 @@
-<template>
+1<template>
   <div class="send-settings-form">
     <el-form
       ref="formRef"
@@ -45,7 +45,7 @@
           <el-form-item label="選擇學生/家長">
             <div class="selection-item">
               <el-button 
-                type="success" 
+                type="primary" 
                 @click="openStudentSelector"
                 plain
               >
@@ -69,8 +69,6 @@
 
         </div>
       </el-card>
-
-      <!-- 抄送設置 -->
       <el-card class="settings-card">
         <template #header>
           <div class="card-header">
@@ -84,7 +82,7 @@
           <el-form-item label="抄送教職員工">
             <div class="selection-item">
               <el-button 
-                type="info" 
+                type="primary" 
                 @click="openCcStaffSelector"
                 plain
               >
@@ -109,7 +107,7 @@
           <el-form-item label="抄送學校通訊錄">
             <div class="selection-item">
               <el-button 
-                type="danger" 
+                type="primary" 
                 @click="openCcDirectorySelector"
                 plain
               >
@@ -132,7 +130,7 @@
         </div>
       </el-card>
 
-      <!-- 發送設置 -->
+      <!-- 发送设置 -->
       <el-card class="settings-card">
         <template #header>
           <div class="card-header">
@@ -155,7 +153,7 @@
         </div>
       </el-card>
 
-      <!-- 操作按鈕 -->
+      <!-- 操作按钮 -->
       <el-form-item class="form-actions">
         <el-button @click="goToPrev">
           <el-icon><ArrowLeft /></el-icon>
@@ -168,7 +166,7 @@
       </el-form-item>
     </el-form>
 
-    <!-- 選擇器對話框 -->
+    <!-- 选择器对话框 -->
     <ClassSelectorDialog
       v-model:visible="classSelectorVisible"
       :selected-classes="selectedClasses"
@@ -405,7 +403,6 @@ export default {
       this.studentSelectorVisible = true
     },
 
-
     openCcStaffSelector() {
       this.ccStaffSelectorVisible = true
     },
@@ -421,7 +418,6 @@ export default {
     handleStudentSelect(students) {
       this.selectedStudents = students
     },
-
 
     handleCcStaffSelect(staff) {
       this.selectedCcStaff = staff
@@ -444,7 +440,6 @@ export default {
         this.selectedStudents.splice(index, 1)
       }
     },
-
 
     removeCcStaff(staff) {
       const index = this.selectedCcStaff.findIndex(s => s.id === staff.id)
@@ -475,13 +470,12 @@ export default {
 .form-container .el-form-item {
   margin-bottom: 24px;
 }
-
 /* 卡片容器 */
 .settings-card {
   margin-bottom: 20px;
 }
 
-/* 選擇區域佈局 */
+/* 选择区域布局 */
 .receivers-section,
 .cc-section {
   display: flex;
@@ -509,14 +503,14 @@ export default {
   margin: 4px 0;
 }
 
-/* 發送選項佈局 */
+/* 发送选项布局 */
 .send-options {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* 表單提示文字 */
+/* 表单提示文字 */
 .form-tip {
   font-size: 12px;
   color: #6b7280;
@@ -524,12 +518,12 @@ export default {
   line-height: 1.5;
 }
 
-/* 日期選擇器 */
+/* 日期选择器 */
 .el-date-picker {
   width: 100%;
 }
 
-/* 操作按鈕區域 */
+/* 操作按钮区域 */
 .form-actions {
   text-align: right;
   padding-top: 20px;
@@ -553,7 +547,7 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* 響應式設計 */
+/* 响应式设计 */
 @media (max-width: 768px) {
   .form-container {
     padding: 0;
@@ -585,4 +579,5 @@ export default {
     width: 100%;
   }
 }
+
 </style>
