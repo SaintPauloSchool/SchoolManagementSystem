@@ -43,9 +43,6 @@
                 <el-icon v-else-if="data.type === 2" class="node-icon grade-icon"><Notebook /></el-icon>
                 <el-icon v-else-if="data.type === 1" class="node-icon class-icon"><User /></el-icon>
                 <span class="node-label">{{ node.label }}</span>
-                <el-tag v-if="data.type === 1 && data.standardGrade" size="small" class="grade-tag">
-                  {{ getGradeName(data.standardGrade) }}
-                </el-tag>
               </span>
             </template>
           </el-tree>
@@ -232,13 +229,6 @@ export default {
         }
       }
       return null
-    },
-  
-    getGradeName(standardGrade) {
-      if (!standardGrade) return ''
-      const grades = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', 
-                      '七年级', '八年级', '九年级', '高一', '高二', '高三']
-      return grades[standardGrade - 1] || `${standardGrade}年级`
     },
 
     handleClose() {
