@@ -15,17 +15,6 @@
           <span>组织架构</span>
         </div>
         
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索班级..."
-          clearable
-          class="search-input"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-
         <div class="tree-container">
           <div v-if="loading" class="loading">
             <el-icon class="is-loading"><Loading /></el-icon>
@@ -113,7 +102,7 @@
 
 <script>
 import { 
-  Search, Loading, DocumentDelete, School, OfficeBuilding, 
+  Loading, DocumentDelete, School, OfficeBuilding, 
   Reading, Notebook, User, Checked, CloseBold 
 } from '@element-plus/icons-vue'
 import request from '@/utils/request'
@@ -121,7 +110,7 @@ import request from '@/utils/request'
 export default {
   name: 'ClassSelectorDialog',
   components: {
-    Search, Loading, DocumentDelete, School, OfficeBuilding, 
+    Loading, DocumentDelete, School, OfficeBuilding, 
     Reading, Notebook, User, Checked, CloseBold
   },
   props: {
@@ -137,7 +126,6 @@ export default {
   emits: ['update:visible', 'confirm'],
   data() {
     return {
-      searchKeyword: '',
       departmentTree: [],
       selectedClassIds: [],
       loading: false
@@ -254,7 +242,6 @@ export default {
     },
 
     handleClose() {
-      this.searchKeyword = ''
       if (this.$refs.classTree) {
         this.$refs.classTree.setCheckedKeys([])
       }
@@ -390,27 +377,9 @@ export default {
   content: none;
 }
 
-.search-input {
-  width: 100%;
-}
-
 .panel-title .el-icon {
   font-size: 16px;
   color: #409EFF;
-}
-
-.search-input :deep(.el-input__wrapper) {
-  box-shadow: 0 0 0 1px #e4e7ed;
-  border-radius: 4px;
-  transition: all 0.3s;
-}
-
-.search-input :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #c0c4cc;
-}
-
-.search-input :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px #409EFF !important;
 }
 
 .tree-container {
