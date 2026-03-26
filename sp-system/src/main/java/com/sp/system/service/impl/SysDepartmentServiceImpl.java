@@ -1,14 +1,16 @@
 package com.sp.system.service.impl;
 
-import com.sp.common.core.domain.entity.SysDepartment;
+import com.sp.system.entity.SysDepartment;
+import com.sp.system.entity.SysDepartmentParentBinding;
+import com.sp.system.entity.SysParentStudentRelation;
 import com.sp.system.mapper.SysDepartmentMapper;
+import com.sp.system.mapper.SysDepartmentParentBindingMapper;
+import com.sp.system.mapper.SysParentStudentRelationMapper;
 import com.sp.system.service.ISysDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -20,6 +22,12 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
 
     @Autowired
     private SysDepartmentMapper departmentMapper;
+
+    @Autowired
+    private SysDepartmentParentBindingMapper parentBindingMapper;
+
+    @Autowired
+    private SysParentStudentRelationMapper parentStudentRelationMapper;
 
     /**
      * 根据类型查询部门列表
@@ -81,6 +89,25 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
         sortTreeRecursive(schools);
 
         return schools;
+    }
+
+    /**
+     * 获取班级树形结构（带家长学生关系，用于学生/家长选择器）
+     * 在 getClassTree 的基础上为 type=1 的班级加载家长学生关系数据
+     *
+     * @return 带家长学生关系的树形结构
+     */
+    @Override
+    public List<SysDepartment> getClassTreeWithParents() {
+        // 1. 获取基础树形结构
+        List<SysDepartment> tree = getClassTree();
+        
+        // 2. 为 type=1 的班级添加家长学生关系数据
+        if (!tree.isEmpty()) {
+            loadParentStudentRelations(tree);
+        }
+        
+        return tree;
     }
 
     /**
@@ -150,6 +177,70 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
                 }
             }
         }
+    }
+
+    /**
+     * 为家长节点加载学生关系数据
+     *
+     * @param nodes 部门节点列表
+     */
+    private void loadParentStudentRelations(List<SysDepartment> nodes) {
+        // 遍历部门节点
+        for (SysDepartment dept : nodes) {
+            // 如果是家长节点（type=1），加载家长学生关系
+            if (dept.getType() != null && dept.getType() == 1) {
+                // 通过部门 ID 查询家长绑定关系
+                List<SysDepartmentParentBinding> bindings = parentBindingMapper.selectByDepartmentId(dept.getId());
+                
+                if (bindings != null && !bindings.isEmpty()) {
+                    // 获取所有家长用户 ID
+                    List<String> parentUserIds = bindings.stream()
+                            .map(SysDepartmentParentBinding::getParentUserId)
+                            .distinct()
+                            .collect(Collectors.toList());
+                    
+                    if (!parentUserIds.isEmpty()) {
+                        // 查询家长学生关系
+                        List<SysParentStudentRelation> relations = parentStudentRelationMapper.selectByParentUserIds(parentUserIds);
+                        
+                        if (relations != null && !relations.isEmpty()) {
+                            // 为每个关系创建子节点
+                            if (dept.getChildren() == null) {
+                                dept.setChildren(new ArrayList<>());
+                            }
+                            
+                            for (SysParentStudentRelation relation : relations) {
+                                SysDepartment node = convertToDepartmentNode(relation);
+                                dept.getChildren().add(node);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 递归处理子节点
+            if (dept.getChildren() != null && !dept.getChildren().isEmpty()) {
+                loadParentStudentRelations(dept.getChildren());
+            }
+        }
+    }
+
+    /**
+     * 将家长学生关系转换为部门节点
+     *
+     * @param relation 家长学生关系
+     * @return 部门节点
+     */
+    private SysDepartment convertToDepartmentNode(SysParentStudentRelation relation) {
+        SysDepartment node = new SysDepartment();
+        node.setId(relation.getId());
+        node.setStudentUserId(relation.getStudentUserId());
+        node.setParentUserId(relation.getParentUserId());
+        node.setName(relation.getStudentName() + "-" + relation.getRelationDesc());
+        node.setRelationDesc(relation.getRelationDesc());
+        node.setMobile(relation.getMobile());
+        node.setIsLeaf(true);
+        return node;
     }
 
     /**

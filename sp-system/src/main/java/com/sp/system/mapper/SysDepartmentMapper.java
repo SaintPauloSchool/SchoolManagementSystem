@@ -1,6 +1,6 @@
 package com.sp.system.mapper;
 
-import com.sp.common.core.domain.entity.SysDepartment;
+import com.sp.system.entity.SysDepartment;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;

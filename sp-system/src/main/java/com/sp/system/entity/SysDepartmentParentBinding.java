@@ -1,6 +1,5 @@
-package com.sp.common.core.domain.entity;
+package com.sp.system.entity;
 
-import java.util.Date;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.sp.common.core.domain.BaseEntity;

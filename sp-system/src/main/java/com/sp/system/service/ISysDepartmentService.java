@@ -1,6 +1,6 @@
 package com.sp.system.service;
 
-import com.sp.common.core.domain.entity.SysDepartment;
+import com.sp.system.entity.SysDepartment;
 
 import java.util.List;
 
@@ -33,6 +33,14 @@ public interface ISysDepartmentService {
      * @return 学校层级的树形结构
      */
     List<SysDepartment> getClassTree();
+
+    /**
+     * 获取班级树形结构（带家长学生关系，用于学生/家长选择器）
+     * 在 getClassTree 的基础上为 type=1 的班级加载家长学生关系数据
+     *
+     * @return 带家长学生关系的树形结构
+     */
+    List<SysDepartment> getClassTreeWithParents();
 
     /**
      * 查询所有班级（type=1）

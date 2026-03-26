@@ -30,18 +30,25 @@
             :data="departmentTree"
             :props="treeProps"
             :expand-on-click-node="false"
-            :check-on-click-node="true"
+            :check-on-click-node="false"
             node-key="id"
-            show-checkbox
-            @check="handleCheckChange"
           >
             <template #default="{ node, data }">
               <span class="tree-node">
+                <!-- 只在叶子节点显示选中状态 -->
+                <el-checkbox
+                  v-if="data.isLeaf"
+                  :checked="selectedStudentIds.includes(data.id)"
+                  @click.stop="() => handleLeafNodeClick(data)"
+                  class="node-checkbox"
+                />
                 <el-icon v-if="data.type === 5" class="node-icon school-icon"><School /></el-icon>
                 <el-icon v-else-if="data.type === 4" class="node-icon campus-icon"><OfficeBuilding /></el-icon>
                 <el-icon v-else-if="data.type === 3" class="node-icon stage-icon"><Reading /></el-icon>
                 <el-icon v-else-if="data.type === 2" class="node-icon grade-icon"><Notebook /></el-icon>
                 <el-icon v-else-if="data.type === 1" class="node-icon class-icon"><User /></el-icon>
+                <el-icon v-else-if="data.type === 10" class="node-icon parent-icon"><UserFilled /></el-icon>
+                <el-icon v-else-if="data.isLeaf" class="node-icon relation-icon"><User /></el-icon>
                 <span class="node-label">{{ node.label }}</span>
               </span>
             </template>
@@ -63,7 +70,7 @@
               :key="student.id"
               class="selected-tag"
             >
-              <span class="selected-tag-name">{{ student.name }}({{ student.parentName }})</span>
+              <span class="selected-tag-name">{{ student.name }}</span>
               <el-button 
                 link 
                 type="danger" 
@@ -100,7 +107,7 @@
 <script>
 import { 
   Loading, DocumentDelete, School, OfficeBuilding, 
-  Reading, Notebook, User, Checked, CloseBold 
+  Reading, Notebook, User, UserFilled, Checked, CloseBold 
 } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
@@ -108,7 +115,7 @@ export default {
   name: 'StudentSelectorDialog',
   components: {
     Loading, DocumentDelete, School, OfficeBuilding, 
-    Reading, Notebook, User, Checked, CloseBold
+    Reading, Notebook, User, UserFilled, Checked, CloseBold
   },
   props: {
     visible: {
@@ -141,15 +148,31 @@ export default {
       return {
         children: 'children',
         label: 'name',
-        isLeaf: (data) => data.type === 1
+        isLeaf: (data) => {
+          // 使用 isLeaf 字段判断是否为叶子节点
+          return data.isLeaf === true;
+        }
       }
     },
     selectedStudentsWithDetails() {
-      return this.selectedStudentIds.map(id => {
-        const student = this.findStudentInTree(id, this.departmentTree)
-        return student || { id, name: '未知学生', parentName: '' }
+      const result = this.selectedStudentIds.map(id => {
+        const relation = this.findRelationInTree(id, this.departmentTree)
+        if (relation) {
+          return {
+            id: relation.id, // sys_parent_student_relation 的 ID
+            studentUserId: relation.studentUserId,
+            parentUserId: relation.parentUserId,
+            name: relation.name, // 学生姓名 - 关系
+            studentName: relation.name.split('-')[0],
+            parentName: relation.name.split('-')[1],
+            relationDesc: relation.relationDesc,
+            mobile: relation.mobile
+          }
+        }
+        return { id, name: '未知学生' }
       })
-    }
+      return result
+    },
   },
   watch: {
     visible(newVal) {
@@ -166,16 +189,16 @@ export default {
       this.loading = true
       try {
         const response = await request({
-          url: '/system/department/tree',
+          url: '/system/department/treeWithParents',
           method: 'get'
         })
         if (response.code === 200 || response.code === 0) {
           this.departmentTree = response.data || []
+
         } else {
           this.$message.error('加载学生数据失败')
         }
       } catch (error) {
-        console.error('加载学生数据失败:', error)
         this.$message.error('加载学生数据失败')
       } finally {
         this.loading = false
@@ -218,13 +241,14 @@ export default {
       this.selectedStudentIds = topLevelNodes.map(n => n.id);
     },
   
-    findStudentInTree(id, tree) {
+    findRelationInTree(id, tree) {
       for (const node of tree) {
-        if (node.id === id) {
+        // isLeaf=true 的节点是家长学生关系节点
+        if (node.isLeaf && node.id === id) {
           return node
         }
         if (node.children) {
-          const found = this.findStudentInTree(id, node.children)
+          const found = this.findRelationInTree(id, node.children)
           if (found) return found
         }
       }
@@ -244,6 +268,19 @@ export default {
       this.handleClose()
     },
 
+    handleLeafNodeClick(data) {
+      if (!data || !data.id) return;
+      // 切换选中状态
+      const index = this.selectedStudentIds.indexOf(data.id);
+      if (index > -1) {
+        // 取消选中
+        this.selectedStudentIds.splice(index, 1);
+      } else {
+        // 选中
+        this.selectedStudentIds.push(data.id);
+      }
+    },
+
     removeSelectedStudent(student) {
       const index = this.selectedStudentIds.indexOf(student.id)
       if (index > -1) {
@@ -255,32 +292,6 @@ export default {
       }
     },
 
-    handleCheckChange(data, checkInfo) {
-      if (!this.$refs.classTree) return;
-      
-      const isChecked = checkInfo.checkedKeys.includes(data.id);
-      
-      if (!isChecked) {
-        let node = this.$refs.classTree.getNode(data.id);
-        let parent = node ? node.parent : null;
-        let ancestorInSelected = false;
-        while(parent && parent.level > 0) {
-           if (this.selectedStudentIds.includes(parent.data.id)) {
-               ancestorInSelected = true;
-               break;
-           }
-           parent = parent.parent;
-        }
-        
-        if (ancestorInSelected) {
-           this.$message.warning('已选中上级组织，无法单独取消子项');
-           this.$refs.classTree.setCheckedKeys(this.selectedStudentIds);
-           return;
-        }
-      }
-      
-      this.updateSelectedStudentIds();
-    }
   }
 }
 </script>
@@ -431,6 +442,19 @@ export default {
   flex: 1;
 }
 
+.node-checkbox {
+  margin-right: 4px;
+}
+
+.parent-select-wrapper {
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.parent-select-wrapper .el-select {
+  width: 120px;
+}
+
 .node-icon {
   font-size: 16px;
 }
@@ -440,6 +464,8 @@ export default {
 .stage-icon { color: #67C23A; }
 .grade-icon { color: #909399; }
 .class-icon { color: #F56C6C; }
+.parent-icon { color: #67C23A; }
+.relation-icon { color: #E6A23C; }
 
 .grade-tag {
   font-size: 11px;

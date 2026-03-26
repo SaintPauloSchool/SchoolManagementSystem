@@ -1,4 +1,4 @@
-package com.sp.common.core.domain.entity;
+package com.sp.system.entity;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -43,8 +43,26 @@ public class SysDepartment implements Serializable {
     /** 班级群 id */
     private String groupChatId;
 
+    /** 家长用户 ID（type=10 时使用） */
+    private String parentUserId;
+
+    /** 学生用户 ID（type=11 时使用） */
+    private String studentUserId;
+
+    /** 关系描述（type=11 时使用） */
+    private String relationDesc;
+
+    /** 手机号（type=11 时使用） */
+    private String mobile;
+
+    /** 是否叶子节点 */
+    private Boolean isLeaf;
+
     /** 子部门（非数据库字段） */
     private List<SysDepartment> children;
+
+    /** 家长学生关系列表（仅 type=1 时使用，非数据库字段） */
+    private List<SysParentStudentRelation> parentRelations;
 
     public Long getId() {
         return id;
@@ -126,12 +144,60 @@ public class SysDepartment implements Serializable {
         this.groupChatId = groupChatId;
     }
 
+    public String getParentUserId() {
+        return parentUserId;
+    }
+
+    public void setParentUserId(String parentUserId) {
+        this.parentUserId = parentUserId;
+    }
+
+    public String getStudentUserId() {
+        return studentUserId;
+    }
+
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
+    }
+
+    public String getRelationDesc() {
+        return relationDesc;
+    }
+
+    public void setRelationDesc(String relationDesc) {
+        this.relationDesc = relationDesc;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    public Boolean getIsLeaf() {
+        return isLeaf;
+    }
+
+    public void setIsLeaf(Boolean isLeaf) {
+        this.isLeaf = isLeaf;
+    }
+
     public List<SysDepartment> getChildren() {
         return children;
     }
 
     public void setChildren(List<SysDepartment> children) {
         this.children = children;
+    }
+
+    public List<SysParentStudentRelation> getParentRelations() {
+        return parentRelations;
+    }
+
+    public void setParentRelations(List<SysParentStudentRelation> parentRelations) {
+        this.parentRelations = parentRelations;
     }
 
     @Override
