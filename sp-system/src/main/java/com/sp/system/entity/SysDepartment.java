@@ -61,9 +61,6 @@ public class SysDepartment implements Serializable {
     /** 子部门（非数据库字段） */
     private List<SysDepartment> children;
 
-    /** 家长学生关系列表（仅 type=1 时使用，非数据库字段） */
-    private List<SysParentStudentRelation> parentRelations;
-
     public Long getId() {
         return id;
     }
@@ -190,14 +187,6 @@ public class SysDepartment implements Serializable {
 
     public void setChildren(List<SysDepartment> children) {
         this.children = children;
-    }
-
-    public List<SysParentStudentRelation> getParentRelations() {
-        return parentRelations;
-    }
-
-    public void setParentRelations(List<SysParentStudentRelation> parentRelations) {
-        this.parentRelations = parentRelations;
     }
 
     @Override

@@ -19,11 +19,4 @@ public interface SysDepartmentParentBindingMapper {
      */
     List<SysDepartmentParentBinding> selectByDepartmentId(@Param("departmentId") Long departmentId);
 
-    /**
-     * 批量查询部门家长绑定
-     *
-     * @param departmentIds 部门 ID 列表
-     * @return 家长绑定集合
-     */
-    List<SysDepartmentParentBinding> selectByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
 }

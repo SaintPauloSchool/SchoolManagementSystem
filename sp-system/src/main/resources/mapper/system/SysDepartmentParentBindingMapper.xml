@@ -20,14 +20,4 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         WHERE department_id = #{departmentId}
     </select>
 
-    <!-- 批量查询部门家长绑定 -->
-    <select id="selectByDepartmentIds" resultMap="SysDepartmentParentBindingResult">
-        SELECT id, department_id, parent_user_id, student_user_id, create_time, update_time
-        FROM sys_department_parent_binding
-        WHERE department_id IN
-        <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
-            #{departmentId}
-        </foreach>
-    </select>
-
 </mapper>

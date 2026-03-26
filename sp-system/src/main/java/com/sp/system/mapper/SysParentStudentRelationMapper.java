@@ -12,14 +12,6 @@ import java.util.List;
 public interface SysParentStudentRelationMapper {
 
     /**
-     * 根据家长用户 ID 查询关系列表
-     *
-     * @param parentUserId 家长用户 ID
-     * @return 家长学生关系集合
-     */
-    List<SysParentStudentRelation> selectByParentUserId(@Param("parentUserId") String parentUserId);
-
-    /**
      * 批量查询家长学生关系
      *
      * @param parentUserIds 家长用户 ID 列表

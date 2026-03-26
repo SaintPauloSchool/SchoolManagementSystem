@@ -40,32 +40,4 @@ public class DepartmentController extends BaseController {
         List<SysDepartment> tree = departmentService.getClassTreeWithParents();
         return AjaxResult.success(tree);
     }
-
-    /**
-     * 查询所有班级列表（type=1）
-     */
-    @Anonymous
-    @GetMapping("/classes")
-    public AjaxResult classes() {
-        List<SysDepartment> classes = departmentService.selectAllClasses();
-        return AjaxResult.success(classes);
-    }
-
-    /**
-     * 根据类型查询部门列表
-     */
-    @GetMapping("/list")
-    public AjaxResult list(@RequestParam Integer type) {
-        List<SysDepartment> list = departmentService.selectByType(type);
-        return AjaxResult.success(list);
-    }
-
-    /**
-     * 根据父级 ID 查询子部门
-     */
-    @GetMapping("/children")
-    public AjaxResult children(@RequestParam Integer parentId) {
-        List<SysDepartment> list = departmentService.selectByParentId(parentId);
-        return AjaxResult.success(list);
-    }
 }

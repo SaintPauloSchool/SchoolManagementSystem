@@ -17,24 +17,6 @@
         <result property="groupChatId" column="group_chat_id"/>
     </resultMap>
 
-    <!-- 根据类型查询部门列表 -->
-    <select id="selectByType" resultMap="SysDepartmentResult">
-        SELECT id, parent_id, name, type, register_year, standard_grade, order_num, 
-               is_graduated, open_group_chat, group_chat_id
-        FROM sys_department
-        WHERE type = #{type}
-        ORDER BY order_num ASC
-    </select>
-
-    <!-- 根据父级 ID 查询子部门 -->
-    <select id="selectByParentId" resultMap="SysDepartmentResult">
-        SELECT id, parent_id, name, type, register_year, standard_grade, order_num, 
-               is_graduated, open_group_chat, group_chat_id
-        FROM sys_department
-        WHERE parent_id = #{parentId}
-        ORDER BY order_num ASC
-    </select>
-
     <!-- 查询所有部门 -->
     <select id="selectAll" resultMap="SysDepartmentResult">
         SELECT id, parent_id, name, type, register_year, standard_grade, order_num, 
