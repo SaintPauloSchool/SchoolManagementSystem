@@ -19,11 +19,4 @@ public interface SysSchoolDepartmentMapper {
      */
     List<SysSchoolDepartment> selectAll();
 
-    /**
-     * 查询学校部门成员
-     *
-     * @param departmentId 部门 ID
-     * @return 成员集合
-     */
-    List<SysSchoolDepartmentMember> selectMembersByDepartmentId(@Param("departmentId") Long departmentId);
 }

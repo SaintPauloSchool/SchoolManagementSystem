@@ -3,16 +3,12 @@ package com.sp.system.service.impl;
 import com.sp.system.entity.SysSchoolDepartment;
 import com.sp.system.entity.SysSchoolDepartmentMember;
 import com.sp.system.mapper.SysSchoolDepartmentMapper;
+import com.sp.system.mapper.SysSchoolDepartmentMemberMapper;
 import com.sp.system.service.ISysSchoolDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -24,6 +20,9 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
 
     @Autowired
     private SysSchoolDepartmentMapper schoolDepartmentMapper;
+
+    @Autowired
+    private SysSchoolDepartmentMemberMapper schoolDepartmentMemberMapper;
 
     /**
      * 获取学校部门树形结构（带成员）
@@ -59,7 +58,7 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
         return allDepartments.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(
-                        dept -> dept.getParentId() != null ? dept.getParentId().longValue() : 0L
+                        dept -> Optional.ofNullable(dept.getParentId()).orElse((Integer) 0).longValue()
                 ));
     }
 
@@ -68,8 +67,7 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
      */
     private List<SysSchoolDepartment> getRootNodes(List<SysSchoolDepartment> allDepartments) {
         return allDepartments.stream()
-                .filter(dept -> dept.getParentId() == null || dept.getParentId() == 0)
-                .sorted(Comparator.comparingInt((SysSchoolDepartment dept) -> dept.getOrderNum() != null ? dept.getOrderNum() : 0).reversed())
+                .filter(dept -> Optional.ofNullable(dept.getParentId()).orElse((Integer) 0) == 0)
                 .collect(Collectors.toList());
     }
 
@@ -77,23 +75,16 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
      * 递归构建树形结构
      */
     private void buildTree(List<SysSchoolDepartment> nodes, Map<Long, List<SysSchoolDepartment>> childrenMap) {
-        if (nodes == null || nodes.isEmpty()) {
-            return;
-        }
-
-        for (SysSchoolDepartment node : nodes) {
-            if (node == null || node.getId() == null) {
-                continue;
-            }
-
-            // 按 orderNum 倒序排序子节点
-            List<SysSchoolDepartment> children = childrenMap.getOrDefault(node.getId(), Collections.emptyList());
-            if (!children.isEmpty()) {
-                children.sort(Comparator.comparingInt((SysSchoolDepartment dept) -> dept.getOrderNum() != null ? dept.getOrderNum() : 0).reversed());
-                node.setChildren(children);
-                buildTree(children, childrenMap);
-            }
-        }
+        nodes.stream()
+                .filter(Objects::nonNull)
+                .filter(node -> node.getId() != null)
+                .forEach(node -> {
+                    List<SysSchoolDepartment> children = childrenMap.get(node.getId());
+                    if (children != null && !children.isEmpty()) {
+                        node.setChildren(children);
+                        buildTree(children, childrenMap);
+                    }
+                });
     }
 
     /**
@@ -104,38 +95,84 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
             return;
         }
 
-        for (SysSchoolDepartment dept : nodes) {
-            if (dept == null || dept.getId() == null || Boolean.TRUE.equals(dept.getIsLeaf())) {
-                continue;
-            }
+        // 收集所有需要查询成员的部门 ID
+        List<Long> departmentIds = nodes.stream()
+                .filter(this::isValidNonLeafDepartment)
+                .map(SysSchoolDepartment::getId)
+                .distinct()
+                .collect(Collectors.toList());
 
-            // 查询部门成员
-            List<SysSchoolDepartmentMember> members = schoolDepartmentMapper.selectMembersByDepartmentId(dept.getId());
-            if (members == null || members.isEmpty()) {
-                continue;
-            }
+        if (departmentIds.isEmpty()) {
+            return;
+        }
 
-            // 初始化 children 列表
+        // 批量查询所有部门的成员并按部门 ID 分组
+        Map<Long, List<SysSchoolDepartmentMember>> membersMap = queryMembersByDepartmentIds(departmentIds);
+
+        // 为每个部门分配成员数据并递归处理子部门
+        nodes.stream()
+                .filter(Objects::nonNull)
+                .filter(dept -> dept.getId() != null)
+                .filter(dept -> !Boolean.TRUE.equals(dept.getIsLeaf()))
+                .forEach(dept -> processDepartmentMembers(dept, membersMap));
+    }
+
+    /**
+     * 处理部门成员数据
+     */
+    private void processDepartmentMembers(SysSchoolDepartment dept, Map<Long, List<SysSchoolDepartmentMember>> membersMap) {
+        // 获取部门成员
+        List<SysSchoolDepartmentMember> members = membersMap.get(dept.getId());
+
+        if (members == null || members.isEmpty()) {
+            return;
+        }
+
+        // 转换成员为节点并添加到 children
+        List<SysSchoolDepartment> memberNodes = members.stream()
+                .filter(Objects::nonNull)
+                .map(member -> convertToMemberNode(member, dept.getId()))
+                .collect(Collectors.toList());
+
+        if (!memberNodes.isEmpty()) {
             if (dept.getChildren() == null) {
-                dept.setChildren(new ArrayList<>());
+                dept.setChildren(new ArrayList<>(memberNodes));
+            } else {
+                dept.getChildren().addAll(memberNodes);
             }
+        }
 
-            // 为每个成员创建叶子节点
-            for (SysSchoolDepartmentMember member : members) {
-                if (member != null) {
-                    dept.getChildren().add(convertToMemberNode(member, dept.getId()));
-                }
-            }
-
-            // 递归处理子部门节点（只处理非叶子节点）
+        // 递归处理子部门
+        if (dept.getChildren() != null) {
             List<SysSchoolDepartment> childDepartments = dept.getChildren().stream()
                     .filter(child -> !Boolean.TRUE.equals(child.getIsLeaf()))
                     .collect(Collectors.toList());
-            
+
             if (!childDepartments.isEmpty()) {
                 loadMembersForDepartments(childDepartments);
             }
         }
+    }
+
+    /**
+     * 判断是否为有效的非叶子部门节点
+     */
+    private boolean isValidNonLeafDepartment(SysSchoolDepartment dept) {
+        return dept != null
+                && dept.getId() != null
+                && !Boolean.TRUE.equals(dept.getIsLeaf());
+    }
+
+    /**
+     * 批量查询部门成员
+     */
+    private Map<Long, List<SysSchoolDepartmentMember>> queryMembersByDepartmentIds(List<Long> departmentIds) {
+        // 查询所有部门成员
+        List<SysSchoolDepartmentMember> allMembers = schoolDepartmentMemberMapper.selectMembersByDepartmentIds(departmentIds);
+        // 按部门 ID 分组
+        return allMembers.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(SysSchoolDepartmentMember::getDepartmentId));
     }
 
     /**
