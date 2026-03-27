@@ -142,7 +142,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
                     .filter(dept -> dept.getParentId().longValue() == currentId)
                     .collect(Collectors.toList());
 
-            if (children != null && !children.isEmpty()) {
+            if (!children.isEmpty()) {
                 currentDept.setChildren(children);
                 
                 // 递归处理下一层级
@@ -155,78 +155,134 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
 
     /**
      * 为班级节点加载家长学生关系数据
-     * 为每个家长创建独立的节点
+     * 批量查询所有班级的家长数据，避免 N+1 问题
      *
      * @param nodes 部门节点列表
      */
     private void loadParentStudentRelations(List<SysDepartment> nodes) {
-        // 遍历部门节点
-        for (SysDepartment dept : nodes) {
-            if (dept == null) {
-                continue;
-            }
-            
-            // 如果是班级节点（type=1），加载家长学生关系
-            if (dept.getType() != null && dept.getType() == TYPE_CLASS) {
-                loadParentsForClass(dept);
-            }
-            
-            // 递归处理子节点
-            if (dept.getChildren() != null && !dept.getChildren().isEmpty()) {
-                loadParentStudentRelations(dept.getChildren());
-            }
-        }
-    }
-
-    /**
-     * 为单个班级加载家长节点
-     *
-     * @param classDept 班级部门
-     */
-    private void loadParentsForClass(SysDepartment classDept) {
-        if (classDept.getId() == null) {
+        if (nodes == null || nodes.isEmpty()) {
             return;
         }
         
-        // 通过部门 ID 查询家长绑定关系
-        List<SysDepartmentParentBinding> bindings = parentBindingMapper.selectByDepartmentId(classDept.getId());
+        // 1. 收集所有班级节点
+        List<SysDepartment> classNodes = new ArrayList<>();
+        collectClassNodes(nodes, classNodes);
         
-        if (bindings == null || bindings.isEmpty()) {
+        if (classNodes.isEmpty()) {
             return;
         }
         
-        // 获取所有不重复的家长用户 ID
-        List<String> parentUserIds = bindings.stream()
+        // 2. 收集所有班级 ID
+        List<Long> classIds = classNodes.stream()
+                .map(SysDepartment::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        if (classIds.isEmpty()) {
+            return;
+        }
+        
+        // 3. 批量查询所有班级的家长绑定关系
+        List<SysDepartmentParentBinding> allBindings = parentBindingMapper.selectByDepartmentIds(classIds);
+        
+        if (allBindings == null || allBindings.isEmpty()) {
+            return;
+        }
+        
+        // 4. 按班级 ID 分组
+        Map<Long, List<SysDepartmentParentBinding>> bindingsByClassId = allBindings.stream()
+                .filter(Objects::nonNull)
+                .filter(binding -> binding.getDepartmentId() != null)
+                .collect(Collectors.groupingBy(SysDepartmentParentBinding::getDepartmentId));
+        
+        // 5. 获取所有不重复的家长用户 ID
+        List<String> allParentUserIds = allBindings.stream()
                 .filter(Objects::nonNull)
                 .map(SysDepartmentParentBinding::getParentUserId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
         
-        if (parentUserIds.isEmpty()) {
+        if (allParentUserIds.isEmpty()) {
             return;
         }
         
-        // 批量查询家长学生关系
-        List<SysParentStudentRelation> relations = parentStudentRelationMapper.selectByParentUserIds(parentUserIds);
+        // 6. 批量查询所有家长学生关系
+        List<SysParentStudentRelation> allRelations = parentStudentRelationMapper.selectByParentUserIds(allParentUserIds);
         
-        if (relations == null || relations.isEmpty()) {
+        if (allRelations == null || allRelations.isEmpty()) {
             return;
         }
         
-        // 初始化 children 列表
-        if (classDept.getChildren() == null) {
-            classDept.setChildren(new ArrayList<>());
-        }
+        // 7. 按家长用户 ID 分组，便于快速查找
+        Map<String, List<SysParentStudentRelation>> relationsByParentId = allRelations.stream()
+                .filter(Objects::nonNull)
+                .filter(relation -> relation.getParentUserId() != null)
+                .collect(Collectors.groupingBy(SysParentStudentRelation::getParentUserId));
         
-        // 为每个家长关系创建独立节点
-        for (SysParentStudentRelation relation : relations) {
-            if (relation != null) {
-                SysDepartment node = convertToDepartmentNode(relation);
-                classDept.getChildren().add(node);
+        // 8. 为每个班级节点设置家长数据
+        for (SysDepartment classNode : classNodes) {
+            List<SysDepartmentParentBinding> bindings = bindingsByClassId.get(classNode.getId());
+            if (bindings == null || bindings.isEmpty()) {
+                continue;
+            }
+            
+            // 初始化 children 列表
+            if (classNode.getChildren() == null) {
+                classNode.setChildren(new ArrayList<>());
+            }
+            
+            // 为该班级的每个家长添加节点
+            for (SysDepartmentParentBinding binding : bindings) {
+                String parentUserId = binding.getParentUserId();
+                if (parentUserId == null) {
+                    continue;
+                }
+                
+                List<SysParentStudentRelation> relations = relationsByParentId.get(parentUserId);
+                if (relations == null || relations.isEmpty()) {
+                    continue;
+                }
+                
+                // 为每个家长关系创建独立节点
+                for (SysParentStudentRelation relation : relations) {
+                    SysDepartment node = convertToDepartmentNode(relation);
+                    classNode.getChildren().add(node);
+                }
             }
         }
     }
+    
+    /**
+     * 递归收集所有班级节点（type=1）
+     *
+     * @param nodes 部门节点列表
+     * @param classNodes 用于存储收集到的班级节点
+     */
+    private void collectClassNodes(List<SysDepartment> nodes, List<SysDepartment> classNodes) {
+        if (nodes == null || nodes.isEmpty()) {
+            return;
+        }
+        
+        for (SysDepartment dept : nodes) {
+            if (dept == null) {
+                continue;
+            }
+            
+            // 如果是班级节点（type=1），添加到集合中
+            if (dept.getType() != null && dept.getType() == TYPE_CLASS) {
+                classNodes.add(dept);
+            }
+            
+            // 递归处理子节点
+            if (dept.getChildren() != null && !dept.getChildren().isEmpty()) {
+                collectClassNodes(dept.getChildren(), classNodes);
+            }
+        }
+    }
+
+
 
     /**
      * 将家长学生关系转换为部门节点

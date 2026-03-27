@@ -12,11 +12,11 @@ import java.util.List;
 public interface SysDepartmentParentBindingMapper {
 
     /**
-     * 根据部门 ID 查询家长绑定列表
+     * 根据部门 ID 列表批量查询家长绑定列表
      *
-     * @param departmentId 部门 ID
+     * @param departmentIds 部门 ID 列表
      * @return 家长绑定集合
      */
-    List<SysDepartmentParentBinding> selectByDepartmentId(@Param("departmentId") Long departmentId);
+    List<SysDepartmentParentBinding> selectByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
 
 }
