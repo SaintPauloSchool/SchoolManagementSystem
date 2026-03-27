@@ -4,9 +4,7 @@ import com.sp.common.annotation.Anonymous;
 import com.sp.common.core.controller.BaseController;
 import com.sp.common.core.domain.AjaxResult;
 import com.sp.system.entity.SysDepartment;
-import com.sp.system.entity.SysSchoolDepartment;
 import com.sp.system.service.ISysDepartmentService;
-import com.sp.system.service.ISysSchoolDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,9 +20,6 @@ public class DepartmentController extends BaseController {
 
     @Autowired
     private ISysDepartmentService departmentService;
-
-    @Autowired
-    private ISysSchoolDepartmentService schoolDepartmentService;
 
     /**
      * 获取班级树形结构
@@ -43,16 +38,6 @@ public class DepartmentController extends BaseController {
     @GetMapping("/treeWithParents")
     public AjaxResult treeWithParents() {
         List<SysDepartment> tree = departmentService.getClassTreeWithParents();
-        return AjaxResult.success(tree);
-    }
-
-    /**
-     * 获取学校部门树形结构（带成员，用于教职员工选择器）
-     */
-    @Anonymous
-    @GetMapping("/treeWithMembers")
-    public AjaxResult treeWithMembers() {
-        List<SysSchoolDepartment> tree = schoolDepartmentService.getSchoolDepartmentTreeWithMembers();
         return AjaxResult.success(tree);
     }
 }
