@@ -31,6 +31,7 @@
             :props="treeProps"
             :expand-on-click-node="false"
             :check-on-click-node="false"
+            :check-strictly="true"
             node-key="id"
           >
             <template #default="{ node, data }">
@@ -38,7 +39,7 @@
                 <!-- 只在叶子节点显示选中状态 -->
                 <el-checkbox
                   v-if="data.isLeaf"
-                  :checked="selectedStudentIds.includes(data.id)"
+                  :model-value="selectedStudentIds.includes(data.id)"
                   @click.stop="() => handleLeafNodeClick(data)"
                   class="node-checkbox"
                 />
@@ -274,12 +275,22 @@ export default {
       const index = this.selectedStudentIds.indexOf(data.id);
       if (index > -1) {
         // 取消选中
-        this.selectedStudentIds.splice(index, 1);
+        this.selectedStudentIds = this.selectedStudentIds.filter(id => id !== data.id);
+        // 取消树的选中状态
+        this.$nextTick(() => {
+          if (this.$refs.classTree) {
+            this.$refs.classTree.setChecked(data, false);
+          }
+        });
       } else {
         // 选中
         this.selectedStudentIds.push(data.id);
-        // 自动滚动到底部
+        // 设置树的选中状态
         this.$nextTick(() => {
+          if (this.$refs.classTree) {
+            this.$refs.classTree.setChecked(data, true);
+          }
+          // 自动滚动到底部
           if (this.$refs.selectedContainer) {
             this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
           }
@@ -290,11 +301,17 @@ export default {
     removeSelectedStudent(student) {
       const index = this.selectedStudentIds.indexOf(student.id)
       if (index > -1) {
-        this.selectedStudentIds.splice(index, 1)
-        // 更新树的勾选状态
-        if (this.$refs.classTree) {
-          this.$refs.classTree.setCheckedKeys(this.selectedStudentIds)
-        }
+        // 使用新数组赋值以确保 Vue 响应式更新
+        this.selectedStudentIds = this.selectedStudentIds.filter(id => id !== student.id)
+        // 取消树的选中状态 - 从树中找到对应的节点
+        this.$nextTick(() => {
+          if (this.$refs.classTree) {
+            const node = this.$refs.classTree.getNode(student.id)
+            if (node) {
+              this.$refs.classTree.setChecked(node, false)
+            }
+          }
+        })
       }
     },
 
