@@ -38,7 +38,7 @@
                 <!-- 只在叶子节点显示选中状态 -->
                 <el-checkbox
                   v-if="data.isLeaf"
-                  :checked="selectedStaffIds.includes(data.id)"
+                  :model-value="selectedStaffIds.includes(data.id)"
                   @click.stop="() => handleLeafNodeClick(data)"
                   class="node-checkbox"
                 />
@@ -306,7 +306,7 @@ export default {
       const index = this.selectedStaffIds.indexOf(data.id);
       if (index > -1) {
         // 取消选中
-        this.selectedStaffIds.splice(index, 1);
+        this.selectedStaffIds = this.selectedStaffIds.filter(id => id !== data.id);
       } else {
         // 选中
         this.selectedStaffIds.push(data.id);
@@ -322,7 +322,7 @@ export default {
     removeSelectedStaff(staff) {
       const index = this.selectedStaffIds.indexOf(staff.id)
       if (index > -1) {
-        this.selectedStaffIds.splice(index, 1)
+        this.selectedStaffIds = this.selectedStaffIds.filter(id => id !== staff.id)
         // 更新树的勾选状态
         if (this.$refs.staffTree) {
           this.$refs.staffTree.setCheckedKeys(this.selectedStaffIds)
