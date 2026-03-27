@@ -63,7 +63,7 @@
           <span>已选择 ({{ selectedStudentsWithDetails.length }})</span>
         </div>
 
-        <div class="selected-container">
+        <div class="selected-container" ref="selectedContainer">
           <div v-if="selectedStudentsWithDetails.length > 0" class="selected-list">
             <div
               v-for="student in selectedStudentsWithDetails"
@@ -278,6 +278,12 @@ export default {
       } else {
         // 选中
         this.selectedStudentIds.push(data.id);
+        // 自动滚动到底部
+        this.$nextTick(() => {
+          if (this.$refs.selectedContainer) {
+            this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
+          }
+        });
       }
     },
 

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.system.mapper.SysSchoolDepartmentMapper">
+
+    <resultMap type="com.sp.system.entity.SysSchoolDepartment" id="SysSchoolDepartmentResult">
+        <result property="id" column="id"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="name" column="name"/>
+        <result property="nameEn" column="name_en"/>
+        <result property="orderNum" column="order_num"/>
+        <result property="departmentLeader" column="department_leader"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <resultMap type="com.sp.system.entity.SysSchoolDepartmentMember" id="SysSchoolDepartmentMemberResult">
+        <result property="id" column="id"/>
+        <result property="userid" column="userid"/>
+        <result property="name" column="name"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="openUserid" column="open_userid"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- 查询所有学校部门 -->
+    <select id="selectAll" resultMap="SysSchoolDepartmentResult">
+        SELECT id, parent_id, name, name_en, order_num, department_leader, create_time, update_time
+        FROM sys_school_department
+        ORDER BY order_num ASC
+    </select>
+
+    <!-- 查询部门成员 -->
+    <select id="selectMembersByDepartmentId" resultMap="SysSchoolDepartmentMemberResult">
+        SELECT id, userid, name, department_id, open_userid, create_time, update_time
+        FROM sys_school_department_member
+        WHERE department_id = #{departmentId}
+        ORDER BY name ASC
+    </select>
+
+</mapper>

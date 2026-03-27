@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 学校部门对象 sys_school_department
@@ -36,6 +37,15 @@ public class SysSchoolDepartment implements Serializable {
 
     /** 更新时间 */
     private Date updateTime;
+
+    /** 子部门/成员列表（树形结构用） */
+    private List<SysSchoolDepartment> children;
+
+    /** 是否为叶子节点（用于树形选择器） */
+    private Boolean isLeaf;
+
+    /** 教职员工 UserID（用于前端识别） */
+    private String staffUserId;
 
     public Long getId() {
         return id;
@@ -101,6 +111,30 @@ public class SysSchoolDepartment implements Serializable {
         this.updateTime = updateTime;
     }
 
+    public java.util.List<SysSchoolDepartment> getChildren() {
+        return children;
+    }
+
+    public void setChildren(java.util.List<SysSchoolDepartment> children) {
+        this.children = children;
+    }
+
+    public Boolean getIsLeaf() {
+        return isLeaf;
+    }
+
+    public void setIsLeaf(Boolean isLeaf) {
+        this.isLeaf = isLeaf;
+    }
+
+    public String getStaffUserId() {
+        return staffUserId;
+    }
+
+    public void setStaffUserId(String staffUserId) {
+        this.staffUserId = staffUserId;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
@@ -112,6 +146,9 @@ public class SysSchoolDepartment implements Serializable {
             .append("departmentLeader", getDepartmentLeader())
             .append("createTime", getCreateTime())
             .append("updateTime", getUpdateTime())
+            .append("children", getChildren())
+            .append("isLeaf", getIsLeaf())
+            .append("staffUserId", getStaffUserId())
             .toString();
     }
 }

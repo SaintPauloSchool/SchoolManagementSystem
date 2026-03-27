@@ -56,7 +56,7 @@
           <span>已选择 ({{ selectedClassesWithDetails.length }})</span>
         </div>
 
-        <div class="selected-container">
+        <div class="selected-container" ref="selectedContainer">
           <div v-if="selectedClassesWithDetails.length > 0" class="selected-list">
             <div
               v-for="cls in selectedClassesWithDetails"
@@ -280,6 +280,15 @@ export default {
       }
       
       this.updateSelectedClassIds();
+      
+      // 如果是选中操作，自动滚动到底部
+      if (isChecked) {
+        this.$nextTick(() => {
+          if (this.$refs.selectedContainer) {
+            this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
+          }
+        });
+      }
     }
   }
 }
