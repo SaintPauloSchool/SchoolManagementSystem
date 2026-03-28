@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.system.mapper.notification.NotificationQuestionMapper">
+    
+    <resultMap type="NotificationQuestion" id="NotificationQuestionResult">
+        <result property="questionId"    column="question_id"    />
+        <result property="notificationId"    column="notification_id"    />
+        <result property="questionTitle"    column="question_title"    />
+        <result property="questionType"    column="question_type"    />
+        <result property="options"    column="options"    />
+        <result property="isRequired"    column="is_required"    />
+        <result property="content"    column="content"    />
+        <result property="sortOrder"    column="sort_order"    />
+        <result property="logicRules"    column="logic_rules"    />
+        <result property="fillBlanks"    column="fill_blanks"    />
+        <result property="correctAnswers"    column="correct_answers"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+    
+    <!-- 根据通知 ID 查询问题列表 -->
+    <select id="selectByNotificationId" parameterType="Long" resultMap="NotificationQuestionResult">
+        select question_id, notification_id, question_title, question_type, options, is_required, 
+               content, sort_order, logic_rules, fill_blanks, correct_answers, create_time 
+        from notification_question 
+        where notification_id = #{notificationId}
+        order by sort_order asc
+    </select>
+    
+    <!-- 新增问题 -->
+    <insert id="insert" parameterType="NotificationQuestion" useGeneratedKeys="true" keyProperty="questionId">
+        insert into notification_question
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="notificationId != null">notification_id,</if>
+            <if test="questionTitle != null">question_title,</if>
+            <if test="questionType != null">question_type,</if>
+            <if test="options != null">options,</if>
+            <if test="isRequired != null">is_required,</if>
+            <if test="content != null">content,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="logicRules != null">logic_rules,</if>
+            <if test="fillBlanks != null">fill_blanks,</if>
+            <if test="correctAnswers != null">correct_answers,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="notificationId != null">#{notificationId},</if>
+            <if test="questionTitle != null">#{questionTitle},</if>
+            <if test="questionType != null">#{questionType},</if>
+            <if test="options != null">#{options},</if>
+            <if test="isRequired != null">#{isRequired},</if>
+            <if test="content != null">#{content},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="logicRules != null">#{logicRules},</if>
+            <if test="fillBlanks != null">#{fillBlanks},</if>
+            <if test="correctAnswers != null">#{correctAnswers},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+    
+</mapper>

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sp.common.core.domain.BaseEntity;
 
 import java.util.Date;
@@ -50,6 +51,7 @@ public class Notification extends BaseEntity {
     private String status;
 
     /** 回复截止时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField("reply_deadline")
     private Date replyDeadline;
     

@@ -1,6 +1,5 @@
 package com.sp.system.service.impl.notification;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sp.system.mapper.notification.NotificationCcMapper;
 import com.sp.system.entity.notification.NotificationCc;
 import com.sp.system.service.notification.INotificationCcService;
@@ -10,11 +9,14 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 通知抄送对象Service业务层处理
+ * 通知抄送对象 Service 业务层处理
  *
  */
 @Service
-public class NotificationCcServiceImpl extends ServiceImpl<NotificationCcMapper, NotificationCc> implements INotificationCcService {
+public class NotificationCcServiceImpl implements INotificationCcService {
+
+    @Autowired
+    private NotificationCcMapper notificationCcMapper;
 
     /**
      * 根据通知 ID 查询抄送对象列表
@@ -24,6 +26,17 @@ public class NotificationCcServiceImpl extends ServiceImpl<NotificationCcMapper,
      */
     @Override
     public List<NotificationCc> selectByNotificationId(Long notificationId) {
-        return baseMapper.selectByNotificationId(notificationId);
+        return notificationCcMapper.selectByNotificationId(notificationId);
+    }
+    
+    /**
+     * 新增抄送对象
+     *
+     * @param cc 抄送对象
+     * @return 结果
+     */
+    @Override
+    public int save(NotificationCc cc) {
+        return notificationCcMapper.insert(cc);
     }
 }

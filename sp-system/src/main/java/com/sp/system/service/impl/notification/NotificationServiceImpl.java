@@ -1,6 +1,5 @@
 package com.sp.system.service.impl.notification;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sp.system.mapper.notification.NotificationMapper;
 import com.sp.system.entity.notification.Notification;
 import com.sp.system.service.notification.INotificationService;
@@ -10,11 +9,14 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 通知Service业务层处理
+ * 通知 Service 业务层处理
  *
  */
 @Service
-public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Notification> implements INotificationService {
+public class NotificationServiceImpl implements INotificationService {
+
+    @Autowired
+    private NotificationMapper notificationMapper;
 
     /**
      * 查询通知列表
@@ -24,7 +26,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public List<Notification> selectNotificationList(Notification notification) {
-        return baseMapper.selectNotificationList(notification);
+        return notificationMapper.selectNotificationList(notification);
     }
 
     /**
@@ -35,7 +37,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public Notification selectNotificationById(Long notificationId) {
-        return baseMapper.selectById(notificationId);
+        return notificationMapper.selectById(notificationId);
     }
 
     /**
@@ -46,7 +48,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public int insertNotification(Notification notification) {
-        return baseMapper.insert(notification);
+        return notificationMapper.insert(notification);
     }
 
     /**
@@ -57,7 +59,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public int updateNotification(Notification notification) {
-        return baseMapper.updateById(notification);
+        return notificationMapper.updateById(notification);
     }
 
     /**
@@ -68,7 +70,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public int deleteNotificationById(Long notificationId) {
-        return baseMapper.deleteById(notificationId);
+        return notificationMapper.deleteById(notificationId);
     }
 
     /**
@@ -79,29 +81,40 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      */
     @Override
     public int deleteNotificationByIds(List<Long> notificationIds) {
-        return baseMapper.deleteBatchIds(notificationIds);
+        return notificationMapper.deleteBatchIds(notificationIds);
     }
 
     /**
-     * 根据用户ID查询抄送给我的通知列表
+     * 根据用户 ID 查询抄送给我的通知列表
      *
-     * @param userId 用户ID
+     * @param userId 用户 ID
      * @param userType 用户类型
      * @return 通知集合
      */
     @Override
     public List<Notification> selectCcToMeList(Long userId, String userType) {
-        return baseMapper.selectCcToMeList(userId, userType);
+        return notificationMapper.selectCcToMeList(userId, userType);
     }
 
     /**
-     * 根据用户ID查询我发送的通知列表
+     * 根据用户 ID 查询我发送的通知列表
      *
-     * @param senderId 发送人ID
+     * @param senderId 发送人 ID
      * @return 通知集合
      */
     @Override
     public List<Notification> selectMySendList(Long senderId) {
-        return baseMapper.selectMySendList(senderId);
+        return notificationMapper.selectMySendList(senderId);
+    }
+    
+    /**
+     * 保存通知
+     *
+     * @param notification 通知
+     * @return 结果
+     */
+    @Override
+    public boolean save(Notification notification) {
+        return insertNotification(notification) > 0;
     }
 }

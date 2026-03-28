@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.system.mapper.notification.NotificationCcMapper">
+    
+    <resultMap type="NotificationCc" id="NotificationCcResult">
+        <result property="ccId"    column="cc_id"    />
+        <result property="notificationId"    column="notification_id"    />
+        <result property="ccType"    column="cc_type"    />
+        <result property="ccIds"    column="cc_ids"    />
+        <result property="ccNames"    column="cc_names"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+    
+    <!-- 根据通知 ID 查询抄送对象列表 -->
+    <select id="selectByNotificationId" parameterType="Long" resultMap="NotificationCcResult">
+        select cc_id, notification_id, cc_type, cc_ids, cc_names, create_time 
+        from notification_cc 
+        where notification_id = #{notificationId}
+    </select>
+    
+    <!-- 新增抄送对象 -->
+    <insert id="insert" parameterType="NotificationCc" useGeneratedKeys="true" keyProperty="ccId">
+        insert into notification_cc
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="notificationId != null">notification_id,</if>
+            <if test="ccType != null">cc_type,</if>
+            <if test="ccIds != null">cc_ids,</if>
+            <if test="ccNames != null">cc_names,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="notificationId != null">#{notificationId},</if>
+            <if test="ccType != null">#{ccType},</if>
+            <if test="ccIds != null">#{ccIds},</if>
+            <if test="ccNames != null">#{ccNames},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+    
+</mapper>

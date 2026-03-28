@@ -73,7 +73,7 @@ spring:
 # MyBatis
 mybatis:
   # 搜索指定包別名
-  typeAliasesPackage: com.sp.**.domain
+  typeAliasesPackage: com.sp.**.entity,com.sp.**.domain
   # 配置 mapper 的掃描，找到所有的 mapper.xml 映射文件
   mapperLocations: classpath*:mapper/**/*Mapper.xml
   # 加載全局的配置文件

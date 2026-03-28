@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.system.mapper.notification.NotificationReceiverMapper">
+    
+    <resultMap type="NotificationReceiver" id="NotificationReceiverResult">
+        <result property="receiverId"    column="receiver_id"    />
+        <result property="notificationId"    column="notification_id"    />
+        <result property="receiveType"    column="receive_type"    />
+        <result property="receiveIds"    column="receive_ids"    />
+        <result property="receiveNames"    column="receive_names"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+    
+    <!-- 根据通知 ID 查询接收对象列表 -->
+    <select id="selectByNotificationId" parameterType="Long" resultMap="NotificationReceiverResult">
+        select receiver_id, notification_id, receive_type, receive_ids, receive_names, create_time 
+        from notification_receiver 
+        where notification_id = #{notificationId}
+    </select>
+    
+    <!-- 新增接收对象 -->
+    <insert id="insert" parameterType="NotificationReceiver" useGeneratedKeys="true" keyProperty="receiverId">
+        insert into notification_receiver
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="notificationId != null">notification_id,</if>
+            <if test="receiveType != null">receive_type,</if>
+            <if test="receiveIds != null">receive_ids,</if>
+            <if test="receiveNames != null">receive_names,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="notificationId != null">#{notificationId},</if>
+            <if test="receiveType != null">#{receiveType},</if>
+            <if test="receiveIds != null">#{receiveIds},</if>
+            <if test="receiveNames != null">#{receiveNames},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+    
+</mapper>

@@ -33,6 +33,7 @@
             v-else
             ref="sendFormRef"
             :form-data="formData"
+            :submitting="submitting"
             @prev="handlePrev"
             @submit="handleSubmit"
           />
@@ -57,6 +58,7 @@ export default {
   data() {
     return {
       currentStep: 0,
+      submitting: false,
       formData: {
         title: '',
         content: '',
@@ -82,7 +84,10 @@ export default {
     },
 
     async handleSubmit() {
+      if (this.submitting) return
+      
       try {
+        this.submitting = true
         this.formData.senderId = this.$store?.state?.user?.userId || null
         this.formData.senderName = this.$store?.state?.user?.username || '當前用戶'
         this.formData.status = '1'
@@ -95,7 +100,7 @@ export default {
           jumpUrl: this.formData.jumpUrl || null,
           attachmentUrls: this.formData.attachmentUrls ? JSON.stringify(this.formData.attachmentUrls) : null,
           status: this.formData.status,
-          replyDeadline: this.formData.replyDeadline ? new Date(this.formData.replyDeadline).toISOString() : null,
+          replyDeadline: this.formData.replyDeadline ? this.formatDate(this.formData.replyDeadline) : null,
           
           // 接收對象
           receivers: this.formData.receivers,
@@ -147,6 +152,8 @@ export default {
       } catch (error) {
         console.error('發布失敗:', error)
         this.$message.error(error.message || '發布失敗，請稍後重試')
+      } finally {
+        this.submitting = false
       }
     },
 
@@ -165,6 +172,18 @@ export default {
         questions: []
       }
       this.currentStep = 0
+    },
+    
+    formatDate(date) {
+      if (!date) return null
+      const d = new Date(date)
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      const hours = String(d.getHours()).padStart(2, '0')
+      const minutes = String(d.getMinutes()).padStart(2, '0')
+      const seconds = String(d.getSeconds()).padStart(2, '0')
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
     }
   }
 }

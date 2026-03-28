@@ -130,6 +130,7 @@
 import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
+import request from '@/utils/request'
 
 export default {
   name: 'SchoolNotificationSystem',
@@ -231,15 +232,14 @@ export default {
 
     async loadMySendNotifications() {
       try {
-        this.mySendNotifications = [
-          {
-            notificationId: 3,
-            title: '班級活動通知',
-            senderName: '王老師',
-            status: '1',
-            createTime: '2024-01-16 10:00:00'
-          }
-        ]
+        const response = await request({
+          url: '/system/notification/mySend',
+          method: 'get'
+        })
+        
+        if (response.code === 200 || response.code === 0) {
+          this.mySendNotifications = response.rows || []
+        }
       } catch (error) {
         console.error('加載失敗:', error)
         this.$message.error('數據加載失敗')
@@ -248,7 +248,7 @@ export default {
 
     handlePublishSuccess() {
       this.$message.success('通知發布成功')
-      this.activeMenu = '1-2'
+      this.activeMenu = '1-3'
       this.loadMySendNotifications()
     }
   }

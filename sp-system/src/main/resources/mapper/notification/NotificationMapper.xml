@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.system.mapper.notification.NotificationMapper">
+    
+    <resultMap type="Notification" id="NotificationResult">
+        <result property="notificationId"    column="notification_id"    />
+        <result property="title"    column="title"    />
+        <result property="content"    column="content"    />
+        <result property="senderId"    column="sender_id"    />
+        <result property="senderName"    column="sender_name"    />
+        <result property="jumpUrl"    column="jump_url"    />
+        <result property="attachmentUrls"    column="attachment_urls"    />
+        <result property="status"    column="status"    />
+        <result property="replyDeadline"    column="reply_deadline"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <collection property="receivers" ofType="NotificationReceiver" select="com.sp.system.mapper.notification.NotificationReceiverMapper.selectByNotificationId" column="notification_id"/>
+        <collection property="ccs" ofType="NotificationCc" select="com.sp.system.mapper.notification.NotificationCcMapper.selectByNotificationId" column="notification_id"/>
+        <collection property="questions" ofType="NotificationQuestion" select="com.sp.system.mapper.notification.NotificationQuestionMapper.selectByNotificationId" column="notification_id"/>
+    </resultMap>
+    
+    <!-- 查询通知列表 -->
+    <select id="selectNotificationList" parameterType="Notification" resultMap="NotificationResult">
+        select notification_id, title, content, sender_id, sender_name, jump_url, 
+               attachment_urls, status, reply_deadline, create_time, update_time 
+        from notification
+        <where>  
+            <if test="title != null and title != ''">
+                AND title like concat('%', #{title}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+            <if test="senderId != null">
+                AND sender_id = #{senderId}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+    
+    <!-- 根据用户 ID 查询抄送给我的通知列表 -->
+    <select id="selectCcToMeList" resultMap="NotificationResult">
+        select n.notification_id, n.title, n.content, n.sender_id, n.sender_name, n.jump_url, 
+               n.attachment_urls, n.status, n.reply_deadline, n.create_time, n.update_time 
+        from notification n
+        inner join notification_cc nc on n.notification_id = nc.notification_id
+        where nc.cc_type = #{userType} 
+          and nc.cc_ids like concat('%', #{userId}, '%')
+        order by n.create_time desc
+    </select>
+    
+    <!-- 根据用户 ID 查询我发送的通知列表 -->
+    <select id="selectMySendList" parameterType="Long" resultMap="NotificationResult">
+        select notification_id, title, content, sender_id, sender_name, jump_url, 
+               attachment_urls, status, reply_deadline, create_time, update_time 
+        from notification 
+        where sender_id = #{senderId}
+        order by create_time desc
+    </select>
+    
+    <!-- 新增通知 -->
+    <insert id="insert" parameterType="Notification" useGeneratedKeys="true" keyProperty="notificationId">
+        insert into notification
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null">title,</if>
+            <if test="content != null">content,</if>
+            <if test="senderId != null">sender_id,</if>
+            <if test="senderName != null">sender_name,</if>
+            <if test="jumpUrl != null">jump_url,</if>
+            <if test="attachmentUrls != null">attachment_urls,</if>
+            <if test="status != null">status,</if>
+            <if test="replyDeadline != null">reply_deadline,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="title != null">#{title},</if>
+            <if test="content != null">#{content},</if>
+            <if test="senderId != null">#{senderId},</if>
+            <if test="senderName != null">#{senderName},</if>
+            <if test="jumpUrl != null">#{jumpUrl},</if>
+            <if test="attachmentUrls != null">#{attachmentUrls},</if>
+            <if test="status != null">#{status},</if>
+            <if test="replyDeadline != null">#{replyDeadline},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+    
+    <!-- 根据 ID 查询通知 -->
+    <select id="selectById" parameterType="Long" resultMap="NotificationResult">
+        select notification_id, title, content, sender_id, sender_name, jump_url, 
+               attachment_urls, status, reply_deadline, create_time, update_time 
+        from notification 
+        where notification_id = #{notificationId}
+    </select>
+    
+    <!-- 修改通知 -->
+    <update id="updateById" parameterType="Notification">
+        update notification
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="senderId != null">sender_id = #{senderId},</if>
+            <if test="senderName != null">sender_name = #{senderName},</if>
+            <if test="jumpUrl != null">jump_url = #{jumpUrl},</if>
+            <if test="attachmentUrls != null">attachment_urls = #{attachmentUrls},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="replyDeadline != null">reply_deadline = #{replyDeadline},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where notification_id = #{notificationId}
+    </update>
+    
+    <!-- 根据 ID 删除通知 -->
+    <delete id="deleteById" parameterType="Long">
+        delete from notification where notification_id = #{notificationId}
+    </delete>
+    
+    <!-- 批量删除通知 -->
+    <delete id="deleteBatchIds" parameterType="java.util.List">
+        delete from notification where notification_id in
+        <foreach item="notificationId" collection="list" open="(" separator="," close=")">
+            #{notificationId}
+        </foreach>
+    </delete>
+    
+</mapper>

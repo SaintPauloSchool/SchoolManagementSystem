@@ -1,15 +1,14 @@
 package com.sp.system.service.notification;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.sp.system.entity.notification.NotificationReceiver;
 
 import java.util.List;
 
 /**
- * 通知接收对象Service接口
+ * 通知接收对象 Service 接口
  *
  */
-public interface INotificationReceiverService extends IService<NotificationReceiver> {
+public interface INotificationReceiverService {
     /**
      * 根据通知 ID 查询接收对象列表
      *
@@ -17,4 +16,12 @@ public interface INotificationReceiverService extends IService<NotificationRecei
      * @return 接收对象集合
      */
     List<NotificationReceiver> selectByNotificationId(Long notificationId);
+    
+    /**
+     * 新增接收对象
+     *
+     * @param receiver 接收对象
+     * @return 结果
+     */
+    int save(NotificationReceiver receiver);
 }

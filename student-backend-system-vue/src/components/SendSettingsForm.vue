@@ -159,7 +159,7 @@
           <el-icon><ArrowLeft /></el-icon>
           上一步：內容編輯
         </el-button>
-        <el-button type="primary" @click="handleSubmit">
+        <el-button type="primary" @click="handleSubmit" :loading="submitting">
           <el-icon><Promotion /></el-icon>
           提交發布
         </el-button>
@@ -216,6 +216,10 @@ export default {
     formData: {
       type: Object,
       required: true
+    },
+    submitting: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['prev', 'submit'],

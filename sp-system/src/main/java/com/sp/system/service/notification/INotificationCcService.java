@@ -1,15 +1,14 @@
 package com.sp.system.service.notification;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.sp.system.entity.notification.NotificationCc;
 
 import java.util.List;
 
 /**
- * 通知抄送对象Service接口
+ * 通知抄送对象 Service 接口
  *
  */
-public interface INotificationCcService extends IService<NotificationCc> {
+public interface INotificationCcService {
     /**
      * 根据通知 ID 查询抄送对象列表
      *
@@ -17,4 +16,12 @@ public interface INotificationCcService extends IService<NotificationCc> {
      * @return 抄送对象集合
      */
     List<NotificationCc> selectByNotificationId(Long notificationId);
+    
+    /**
+     * 新增抄送对象
+     *
+     * @param cc 抄送对象
+     * @return 结果
+     */
+    int save(NotificationCc cc);
 }
