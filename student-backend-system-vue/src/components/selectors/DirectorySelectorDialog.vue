@@ -2,84 +2,114 @@
   <el-dialog
     v-model="dialogVisible"
     title="選擇學校通訊錄"
-    width="600px"
+    width="900px"
     :before-close="handleClose"
+    class="class-selector-dialog"
+    top="10vh"
   >
-    <div class="selector-dialog">
-      <!-- 搜索區域 -->
-      <div class="search-area">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索通訊錄名稱"
-          clearable
-          style="width: 300px"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-      </div>
-
-      <!-- 通訊錄列表 -->
-      <div class="directory-list">
-        <el-tree
-          ref="treeRef"
-          :data="directoryTree"
-          :props="treeProps"
-          show-checkbox
-          node-key="id"
-          :default-checked-keys="selectedDirectoryIds"
-          :filter-node-method="filterNode"
-          @check="handleCheck"
-        >
-          <template #default="{ node, data }">
-            <div class="tree-node">
-              <span>{{ data.name }}</span>
-              <span v-if="data.count" class="count-tag">({{ data.count }})</span>
-            </div>
-          </template>
-        </el-tree>
+    <div class="selector-wrapper">
+      <!-- 左侧树形结构 -->
+      <div class="left-panel">
+        <div class="panel-title">
+          <el-icon><School /></el-icon>
+          <span>組織架構</span>
+        </div>
         
-        <div v-if="directoryTree.length === 0" class="no-data">
-          暫無通訊錄數據
+        <div class="tree-container">
+          <div v-if="loading" class="loading">
+            <el-icon class="is-loading"><Loading /></el-icon>
+            <span>加載中...</span>
+          </div>
+          <div v-else-if="directoryTree.length === 0" class="empty">
+            <el-icon><DocumentDelete /></el-icon>
+            <span>暫無數據</span>
+          </div>
+          <el-tree
+            v-else
+            ref="treeRef"
+            :data="directoryTree"
+            :props="treeProps"
+            :expand-on-click-node="false"
+            :check-on-click-node="true"
+            node-key="id"
+            show-checkbox
+            @check="handleCheckChange"
+          >
+            <template #default="{ node, data }">
+              <span class="tree-node">
+                <el-icon v-if="data.type === 5" class="node-icon school-icon"><School /></el-icon>
+                <el-icon v-else-if="data.type === 4" class="node-icon campus-icon"><OfficeBuilding /></el-icon>
+                <el-icon v-else-if="data.type === 3" class="node-icon stage-icon"><Reading /></el-icon>
+                <el-icon v-else-if="data.type === 2" class="node-icon grade-icon"><Notebook /></el-icon>
+                <el-icon v-else class="node-icon department-icon"><User /></el-icon>
+                <span class="node-label">{{ node.label }}</span>
+                <span v-if="data.count" class="count-tag">({{ data.count }})</span>
+              </span>
+            </template>
+          </el-tree>
         </div>
       </div>
 
-      <!-- 已選擇區域 -->
-      <div class="selected-area">
-        <div class="selected-header">
-          已選擇 ({{ selectedDirectories.length }})
+      <!-- 右侧已选区域 -->
+      <div class="right-panel">
+        <div class="panel-title">
+          <el-icon><Checked /></el-icon>
+          <span>已選擇 ({{ selectedDirectoriesWithDetails.length }})</span>
         </div>
-        <div class="selected-tags">
-          <el-tag
-            v-for="dir in selectedDirectories"
-            :key="dir.id"
-            closable
-            @close="removeSelectedDirectory(dir)"
-            class="selected-tag"
-          >
-            {{ dir.name }}
-          </el-tag>
+
+        <div class="selected-container" ref="selectedContainer">
+          <div v-if="selectedDirectoriesWithDetails.length > 0" class="selected-list">
+            <div
+              v-for="dir in selectedDirectoriesWithDetails"
+              :key="dir.id"
+              class="selected-tag"
+            >
+              <span class="selected-tag-name">{{ dir.name }}</span>
+              <el-button 
+                link 
+                type="danger" 
+                size="small" 
+                @click="removeSelectedDirectory(dir)"
+                class="remove-btn"
+              >
+                <el-icon><CloseBold /></el-icon>
+              </el-button>
+            </div>
+          </div>
+          <div v-else class="empty-selected">
+            <el-empty :image-size="80" description="請從左側選擇通訊錄" />
+          </div>
         </div>
       </div>
     </div>
 
     <template #footer>
-      <span class="dialog-footer">
+      <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleConfirm">確定</el-button>
-      </span>
+        <el-button 
+          type="primary" 
+          @click="handleConfirm"
+          :disabled="selectedDirectoriesWithDetails.length === 0"
+        >
+          確定 ({{ selectedDirectoriesWithDetails.length }})
+        </el-button>
+      </div>
     </template>
   </el-dialog>
 </template>
 
 <script>
-import { Search } from '@element-plus/icons-vue'
+import { 
+  Loading, DocumentDelete, School, OfficeBuilding, 
+  Reading, Notebook, User, Checked, CloseBold 
+} from '@element-plus/icons-vue'
+import request from '@/utils/request'
 
 export default {
   name: 'DirectorySelectorDialog',
   components: {
-    Search
+    Loading, DocumentDelete, School, OfficeBuilding, 
+    Reading, Notebook, User, Checked, CloseBold
   },
   props: {
     visible: {
@@ -94,9 +124,9 @@ export default {
   emits: ['update:visible', 'confirm'],
   data() {
     return {
-      searchKeyword: '',
       directoryTree: [],
       selectedDirectoryIds: [],
+      loading: false,
       treeProps: {
         children: 'children',
         label: 'name'
@@ -111,120 +141,182 @@ export default {
       set(value) {
         this.$emit('update:visible', value)
       }
+    },
+    selectedDirectoriesWithDetails() {
+      // 过滤掉子节点，只保留父节点
+      const parentIds = this.filterParentNodes(this.selectedDirectoryIds, this.directoryTree)
+      return parentIds.map(id => {
+        const dir = this.findDirectoryInTree(id, this.directoryTree)
+        return dir || { id, name: '未知通訊錄' }
+      })
     }
   },
   watch: {
     visible(newVal) {
       if (newVal) {
         this.loadData()
-        this.initSelected()
+        this.$nextTick(() => {
+          this.initSelectedTree()
+        })
       }
-    },
-    searchKeyword(val) {
-      this.$refs.treeRef.filter(val)
     }
   },
   methods: {
     async loadData() {
+      this.loading = true
       try {
-        // 這裡應該調用實際的 API 獲取通訊錄數據
-        // 暫時使用模擬數據
-        this.directoryTree = [
-          {
-            id: 301,
-            name: '校领导',
-            count: 5,
-            children: [
-              { id: 3011, name: '校长办公室', count: 1 },
-              { id: 3012, name: '副校长办公室', count: 2 }
-            ]
-          },
-          {
-            id: 302,
-            name: '行政部门',
-            count: 12,
-            children: [
-              { id: 3021, name: '教务处', count: 3 },
-              { id: 3022, name: '德育处', count: 2 },
-              { id: 3023, name: '总务处', count: 4 }
-            ]
-          },
-          {
-            id: 303,
-            name: '教学部门',
-            count: 25,
-            children: [
-              { id: 3031, name: '语文教研组', count: 6 },
-              { id: 3032, name: '数学教研组', count: 5 },
-              { id: 3033, name: '英语教研组', count: 4 }
-            ]
-          },
-          {
-            id: 304,
-            name: '其他部门',
-            count: 8,
-            children: [
-              { id: 3041, name: '图书馆', count: 2 },
-              { id: 3042, name: '医务室', count: 1 }
-            ]
-          }
-        ]
+        // 调用学校部门信息管理接口获取数据（仅部门，不含人员）
+        const response = await request({
+          url: '/system/schoolDepartment/tree',
+          method: 'get'
+        })
+        if (response.code === 200 || response.code === 0) {
+          this.directoryTree = response.data || []
+        } else {
+          this.$message.error('加載通訊錄數據失敗')
+        }
       } catch (error) {
         console.error('加載通訊錄數據失敗:', error)
         this.$message.error('加載通訊錄數據失敗')
+      } finally {
+        this.loading = false
+        this.$nextTick(() => {
+          if (this.visible) {
+            this.initSelectedTree()
+          }
+        })
       }
     },
 
-    initSelected() {
-      this.selectedDirectoryIds = this.selectedDirectories.map(dir => dir.id)
+    initSelectedTree() {
+      if (!this.$refs.treeRef) return;
+
+      if (this.selectedDirectories && this.selectedDirectories.length > 0) {
+        const directoryIds = this.selectedDirectories.map(dir => dir.id)
+        // 过滤掉子节点，只保留父节点（如果父节点也在选中列表中）
+        const filteredIds = this.filterParentNodes(directoryIds, this.directoryTree)
+        this.$refs.treeRef.setCheckedKeys(filteredIds)
+        this.selectedDirectoryIds = [...filteredIds]
+      } else {
+        this.$refs.treeRef.setCheckedKeys([])
+        this.selectedDirectoryIds = []
+      }
     },
 
-    filterNode(value, data) {
-      if (!value) return true
-      return data.name.toLowerCase().includes(value.toLowerCase())
+    // 过滤出父节点（如果节点和它的父节点都在列表中，只保留父节点）
+    filterParentNodes(ids, tree) {
+      const idSet = new Set(ids)
+      const resultIds = []
+      
+      const checkNode = (node) => {
+        if (idSet.has(node.id)) {
+          // 如果这个节点在选中列表中，添加它，但不检查它的子节点
+          resultIds.push(node.id)
+          return
+        }
+        // 如果有子节点，递归检查
+        if (node.children && node.children.length > 0) {
+          node.children.forEach(child => checkNode(child))
+        }
+      }
+      
+      tree.forEach(rootNode => checkNode(rootNode))
+      return resultIds
     },
 
-    handleCheck(data, checkedInfo) {
-      this.selectedDirectoryIds = checkedInfo.checkedKeys
+    findDirectoryInTree(id, tree) {
+      for (const node of tree) {
+        if (node.id === id) {
+          return node
+        }
+        if (node.children) {
+          const found = this.findDirectoryInTree(id, node.children)
+          if (found) return found
+        }
+      }
+      return null
+    },
+
+    handleCheckChange(data, checkInfo) {
+      const checkedKeys = [...checkInfo.checkedKeys]
+      const halfCheckedKeys = checkInfo.halfCheckedKeys || []
+      
+      // 如果是选中操作且是父节点（有半选状态）
+      if (checkInfo.checkedKeys.includes(data.id) && halfCheckedKeys.includes(data.id)) {
+        // 获取所有子节点 ID
+        const childrenIds = this.getAllChildrenIds(data, this.directoryTree)
+        // 过滤掉子节点，只保留父节点
+        const otherCheckedKeys = checkedKeys.filter(id => id !== data.id && !childrenIds.includes(id))
+        this.selectedDirectoryIds = [...otherCheckedKeys, data.id]
+      } else if (checkInfo.checkedKeys.includes(data.id)) {
+        // 选中叶子节点
+        this.selectedDirectoryIds = [...checkedKeys]
+      } else {
+        // 取消选中
+        this.selectedDirectoryIds = checkedKeys
+        
+        // 如果是取消父节点，也要取消所有子节点
+        if (halfCheckedKeys.includes(data.id)) {
+          const childrenIds = this.getAllChildrenIds(data, this.directoryTree)
+          this.selectedDirectoryIds = checkedKeys.filter(id => !childrenIds.includes(id))
+        }
+      }
+      
+      // 自動滾動到底部
+      this.$nextTick(() => {
+        if (this.$refs.selectedContainer) {
+          this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
+        }
+      });
+    },
+
+    getAllChildrenIds(node, tree) {
+      const childrenIds = []
+      
+      const findNodeAndCollectChildren = (currentNode) => {
+        if (currentNode.children && currentNode.children.length > 0) {
+          currentNode.children.forEach(child => {
+            childrenIds.push(child.id)
+            findNodeAndCollectChildren(child)
+          })
+        }
+      }
+      
+      // 在树中找到这个节点并获取所有子节点
+      const searchInTree = (treeData) => {
+        for (const item of treeData) {
+          if (item.id === node.id) {
+            findNodeAndCollectChildren(item)
+            return
+          }
+          if (item.children && item.children.length > 0) {
+            searchInTree(item.children)
+          }
+        }
+      }
+      
+      searchInTree(tree)
+      return childrenIds
     },
 
     removeSelectedDirectory(dir) {
-      const index = this.selectedDirectoryIds.indexOf(dir.id)
-      if (index > -1) {
-        this.selectedDirectoryIds.splice(index, 1)
-        // 同步更新树的选中状态
+      this.selectedDirectoryIds = this.selectedDirectoryIds.filter(id => id !== dir.id)
+      // 更新樹的勾選狀態
+      if (this.$refs.treeRef) {
         this.$refs.treeRef.setCheckedKeys(this.selectedDirectoryIds)
       }
     },
 
-    getSelectedNodes() {
-      const getAllNodes = (nodes) => {
-        let result = []
-        nodes.forEach(node => {
-          if (this.selectedDirectoryIds.includes(node.id)) {
-            result.push({
-              id: node.id,
-              name: node.name
-            })
-          }
-          if (node.children && node.children.length > 0) {
-            result = result.concat(getAllNodes(node.children))
-          }
-        })
-        return result
-      }
-      return getAllNodes(this.directoryTree)
-    },
-
     handleClose() {
-      this.searchKeyword = ''
+      if (this.$refs.treeRef) {
+        this.$refs.treeRef.setCheckedKeys([])
+      }
       this.selectedDirectoryIds = []
       this.$emit('update:visible', false)
     },
-
+    
     handleConfirm() {
-      const selectedDirs = this.getSelectedNodes()
-      this.$emit('confirm', selectedDirs)
+      this.$emit('confirm', this.selectedDirectoriesWithDetails)
       this.handleClose()
     }
   }
@@ -232,31 +324,160 @@ export default {
 </script>
 
 <style scoped>
-.selector-dialog {
-  height: 550px;
+.class-selector-dialog .el-dialog__body {
+  padding: 0;
+}
+
+.class-selector-dialog .el-dialog__header {
+  padding: 16px 20px;
+  background: linear-gradient(90deg, #409EFF 0%, #66b1ff 100%);
+  border-radius: 0;
+  margin-right: 0;
+}
+
+.class-selector-dialog .el-dialog__title {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.class-selector-dialog .el-dialog__headerbtn .el-dialog__close {
+  color: #ffffff;
+  transition: all 0.3s;
+}
+
+.class-selector-dialog .el-dialog__headerbtn .el-dialog__close:hover {
+  transform: rotate(90deg);
+  color: #f0f0f0;
+}
+
+.class-selector-dialog .el-dialog__footer {
+  padding: 12px 20px;
+  border-top: 1px solid #e8ecf1;
+  background: #ffffff;
+  border-radius: 0;
+}
+
+.selector-wrapper {
+  display: flex;
+  height: 500px;
+  gap: 20px;
+  padding: 20px;
+  background: #ffffff;
+}
+
+/* 左侧面板 */
+.left-panel {
+  flex: 1.5;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
-}
-
-.search-area {
-  padding: 20px;
-  border-bottom: 2px solid #e5e7eb;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-}
-
-.directory-list {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
+  gap: 12px;
   background: #ffffff;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* 右侧面板 */
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #ffffff;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #303133;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.panel-title::after {
+  content: none;
+}
+
+.panel-title .el-icon {
+  font-size: 16px;
+  color: #409EFF;
+}
+
+.tree-container {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.tree-container:hover {
+  border-color: #409EFF;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
+}
+
+.tree-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tree-container::-webkit-scrollbar-track {
+  background: #f0f2f8;
+  border-radius: 3px;
+}
+
+.tree-container::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.tree-container::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
+}
+
+.loading, .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  gap: 12px;
+  color: #909399;
+}
+
+.loading .el-icon {
+  font-size: 32px;
+  color: #409EFF;
+}
+
+.empty .el-icon {
+  font-size: 48px;
+  color: #c0c4cc;
 }
 
 .tree-node {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
 }
+
+.node-icon {
+  font-size: 16px;
+}
+
+.school-icon { color: #E6A23C; }
+.campus-icon { color: #409EFF; }
+.stage-icon { color: #67C23A; }
+.grade-icon { color: #909399; }
+.department-icon { color: #F56C6C; }
 
 .count-tag {
   margin-left: 8px;
@@ -269,141 +490,186 @@ export default {
   border-radius: 6px;
 }
 
-.no-data {
-  text-align: center;
-  color: #9ca3af;
-  padding: 60px 0;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.selected-area {
-  border-top: 2px solid #e5e7eb;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-  max-height: 180px;
+.selected-container {
+  flex: 1;
   overflow-y: auto;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  padding: 12px;
+  background: #ffffff;
 }
 
-.selected-header {
-  font-weight: 700;
-  color: #374151;
-  margin-bottom: 12px;
-  font-size: 14px;
-  letter-spacing: 0.3px;
+.selected-container:hover {
+  border-color: #409EFF;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
+}
+
+.selected-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.selected-container::-webkit-scrollbar-track {
+  background: #f0f2f8;
+  border-radius: 3px;
+}
+
+.selected-container::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.selected-container::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
+}
+
+.selected-list {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
 }
 
-.selected-header::before {
-  content: '';
-  width: 4px;
-  height: 16px;
-  background: linear-gradient(to bottom, #3b82f6, #2563eb);
-  border-radius: 2px;
-  display: inline-block;
-}
-
-.selected-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
 .selected-tag {
-  margin: 0;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f5f7fa;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  transition: all 0.3s;
+  font-size: 14px;
+  color: #606266;
 }
 
 .selected-tag:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  background: #ecf5ff;
+  border-color: #409EFF;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.selected-tag-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+
+.remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  opacity: 0.6;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.remove-btn:hover {
+  opacity: 1;
+  background: rgba(245, 108, 108, 0.1);
+  transform: scale(1.1);
+}
+
+.remove-btn:active {
+  transform: scale(0.95);
+}
+
+.remove-btn .el-icon {
+  font-size: 14px;
+  color: #F56C6C;
+}
+
+.empty-selected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #c0c4cc;
 }
 
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 20px 24px;
-  background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
-  border-top: 2px solid #e5e7eb;
+  padding: 16px 24px;
 }
 
 .dialog-footer .el-button {
-  min-width: 100px;
-  height: 42px;
-  font-weight: 600;
-  font-size: 15px;
-  border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 80px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s;
 }
 
-/* 美化树组件 */
+.dialog-footer .el-button--primary {
+  background: #409EFF;
+  border-color: #409EFF;
+}
+
+.dialog-footer .el-button--primary:hover:not(:disabled) {
+  background: #66b1ff;
+  border-color: #66b1ff;
+}
+
+.dialog-footer .el-button--primary:active:not(:disabled) {
+  background: #3a8ee6;
+  border-color: #3a8ee6;
+}
+
+/* 树节点样式优化 */
 :deep(.el-tree) {
   background: transparent;
-  border: none;
 }
 
 :deep(.el-tree-node__content) {
-  padding: 8px 0;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  height: auto;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  transition: all 0.3s;
 }
 
 :deep(.el-tree-node__content:hover) {
-  background-color: #eff6ff;
-  transform: translateX(4px);
+  background-color: #ecf5ff;
 }
 
-:deep(.el-checkbox__inner) {
-  border-radius: 6px;
-  border: 2px solid #d1d5db;
-}
-
-:deep(.el-checkbox__input.is-checked + .el-checkbox__label) {
-  color: #3b82f6;
+:deep(.el-tree-node__content.is-current) {
+  background-color: #ecf5ff;
+  color: #409EFF;
   font-weight: 600;
 }
 
-:deep(.el-checkbox__inner.is-checked) {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  border-color: #3b82f6;
+:deep(.el-checkbox__inner) {
+  border-radius: 2px;
+  border: 2px solid #dcdfe6;
+  transition: all 0.3s;
 }
 
-/* 美化滚动条 */
-.directory-list::-webkit-scrollbar {
-  width: 8px;
+:deep(.el-checkbox__inner:hover) {
+  border-color: #667eea;
 }
 
-.directory-list::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
+:deep(.el-checkbox.is-checked .el-checkbox__inner) {
+  background: #409EFF;
+  border-color: #409EFF;
 }
 
-.directory-list::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #93c5fd, #3b82f6);
-  border-radius: 4px;
-  transition: all 0.3s ease;
+:deep(.el-checkbox__input.is-indeterminate .el-checkbox__inner::before) {
+  background: #409EFF;
 }
 
-.directory-list::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #3b82f6, #2563eb);
+/* 空状态优化 */
+:deep(.el-empty__description) {
+  color: #909399;
+  font-size: 14px;
 }
 
-.selected-area::-webkit-scrollbar {
-  width: 8px;
-}
-
-.selected-area::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-.selected-area::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #93c5fd, #3b82f6);
-  border-radius: 4px;
+:deep(.el-empty__image) {
+  opacity: 0.5;
 }
 </style>

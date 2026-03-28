@@ -17,4 +17,12 @@ public interface ISysSchoolDepartmentService {
      * @return 带成员的部门树形结构
      */
     List<SysSchoolDepartment> getSchoolDepartmentTreeWithMembers();
+
+    /**
+     * 获取学校部门树形结构（仅部门，不含人员）
+     * 只返回部门层级结构，不包含人员数据
+     *
+     * @return 仅部门的树形结构
+     */
+    List<SysSchoolDepartment> getSchoolDepartmentTree();
 }

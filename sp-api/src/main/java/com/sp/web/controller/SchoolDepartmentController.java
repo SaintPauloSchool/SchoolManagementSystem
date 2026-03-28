@@ -32,4 +32,14 @@ public class SchoolDepartmentController extends BaseController {
         List<SysSchoolDepartment> tree = schoolDepartmentService.getSchoolDepartmentTreeWithMembers();
         return AjaxResult.success(tree);
     }
+
+    /**
+     * 获取学校部门树形结构（仅部门，不含人员）
+     */
+    @Anonymous
+    @GetMapping("/tree")
+    public AjaxResult tree() {
+        List<SysSchoolDepartment> tree = schoolDepartmentService.getSchoolDepartmentTree();
+        return AjaxResult.success(tree);
+    }
 }

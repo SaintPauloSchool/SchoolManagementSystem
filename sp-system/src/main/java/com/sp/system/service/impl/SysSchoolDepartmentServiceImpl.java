@@ -29,6 +29,23 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
      */
     @Override
     public List<SysSchoolDepartment> getSchoolDepartmentTreeWithMembers() {
+        List<SysSchoolDepartment> rootNodes = buildDepartmentTree();
+        loadMembersForDepartments(rootNodes);
+        return rootNodes;
+    }
+
+    /**
+     * 获取学校部门树形结构（仅部门，不含人员）
+     */
+    @Override
+    public List<SysSchoolDepartment> getSchoolDepartmentTree() {
+        return buildDepartmentTree();
+    }
+
+    /**
+     * 构建部门树形结构
+     */
+    private List<SysSchoolDepartment> buildDepartmentTree() {
         // 1. 查询所有部门数据
         List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll();
 
@@ -44,9 +61,6 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
 
         // 4. 递归构建树形结构
         buildTree(rootNodes, childrenMap);
-
-        // 5. 为每个部门加载成员数据
-        loadMembersForDepartments(rootNodes);
 
         return rootNodes;
     }
