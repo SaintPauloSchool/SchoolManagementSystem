@@ -12,17 +12,17 @@
       <div class="left-panel">
         <div class="panel-title">
           <el-icon><School /></el-icon>
-          <span>组织架构</span>
+          <span>組織架構</span>
         </div>
         
         <div class="tree-container">
           <div v-if="loading" class="loading">
             <el-icon class="is-loading"><Loading /></el-icon>
-            <span>加载中...</span>
+            <span>加載中...</span>
           </div>
           <div v-else-if="departmentTree.length === 0" class="empty">
             <el-icon><DocumentDelete /></el-icon>
-            <span>暂无数据</span>
+            <span>暫無數據</span>
           </div>
           <el-tree
             v-else
@@ -35,7 +35,7 @@
           >
             <template #default="{ node, data }">
               <span class="tree-node">
-                <!-- 只在叶子节点显示选中状态 -->
+                <!-- 只在葉子節點顯示選中狀態 -->
                 <el-checkbox
                   v-if="data.isLeaf"
                   :model-value="selectedStaffIds.includes(data.id)"
@@ -56,7 +56,7 @@
       <div class="right-panel">
         <div class="panel-title">
           <el-icon><Checked /></el-icon>
-          <span>已选择 ({{ selectedStaffWithDetails.length }})</span>
+          <span>已選擇 ({{ selectedStaffWithDetails.length }})</span>
         </div>
 
         <div class="selected-container" ref="selectedContainer">
@@ -79,7 +79,7 @@
             </div>
           </div>
           <div v-else class="empty-selected">
-            <el-empty :image-size="80" description="请从左侧选择教职员工" />
+            <el-empty :image-size="80" description="請從左側選擇教職員工" />
           </div>
         </div>
       </div>
@@ -93,7 +93,7 @@
           @click="handleConfirm"
           :disabled="selectedStaffWithDetails.length === 0"
         >
-          确定 ({{ selectedStaffWithDetails.length }})
+          確定 ({{ selectedStaffWithDetails.length }})
         </el-button>
       </div>
     </template>
@@ -163,7 +163,7 @@ export default {
             department: department ? department.name : '未知部门'
           }
         }
-        return { id, name: '未知教职工', position: '', department: '' }
+        return { id, name: '未知教職員工', position: '', department: '' }
       })
       return result
     },
@@ -189,10 +189,10 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.departmentTree = response.data || []
         } else {
-          this.$message.error('加载教职员工数据失败')
+          this.$message.error('加載教職員工數據失敗')
         }
       } catch (error) {
-        console.error('加载教职员工数据失败:', error)
+        console.error('加載教職員工數據失敗:', error)
         this.$message.error('加载教职员工数据失败')
       } finally {
         this.loading = false

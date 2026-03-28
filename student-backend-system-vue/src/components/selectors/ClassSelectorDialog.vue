@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="选择班级"
+    title="選擇班級"
     width="900px"
     :before-close="handleClose"
     class="class-selector-dialog"
@@ -12,17 +12,17 @@
       <div class="left-panel">
         <div class="panel-title">
           <el-icon><School /></el-icon>
-          <span>组织架构</span>
+          <span>組織架構</span>
         </div>
         
         <div class="tree-container">
           <div v-if="loading" class="loading">
             <el-icon class="is-loading"><Loading /></el-icon>
-            <span>加载中...</span>
+            <span>加載中...</span>
           </div>
           <div v-else-if="departmentTree.length === 0" class="empty">
             <el-icon><DocumentDelete /></el-icon>
-            <span>暂无数据</span>
+            <span>暫無數據</span>
           </div>
           <el-tree
             v-else
@@ -53,7 +53,7 @@
       <div class="right-panel">
         <div class="panel-title">
           <el-icon><Checked /></el-icon>
-          <span>已选择 ({{ selectedClassesWithDetails.length }})</span>
+          <span>已選擇 ({{ selectedClassesWithDetails.length }})</span>
         </div>
 
         <div class="selected-container" ref="selectedContainer">
@@ -76,7 +76,7 @@
             </div>
           </div>
           <div v-else class="empty-selected">
-            <el-empty :image-size="80" description="请从左侧选择班级" />
+            <el-empty :image-size="80" description="請從左側選擇班級" />
           </div>
         </div>
       </div>
@@ -90,7 +90,7 @@
           @click="handleConfirm"
           :disabled="selectedClassesWithDetails.length === 0"
         >
-          确定 ({{ selectedClassesWithDetails.length }})
+          確定 ({{ selectedClassesWithDetails.length }})
         </el-button>
       </div>
     </template>
@@ -147,7 +147,7 @@ export default {
     selectedClassesWithDetails() {
       return this.selectedClassIds.map(id => {
         const cls = this.findClassInTree(id, this.departmentTree)
-        return cls || { id, name: '未知班级' }
+        return cls || { id, name: '未知班級' }
       })
     }
   },
@@ -172,10 +172,10 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.departmentTree = response.data || []
         } else {
-          this.$message.error('加载班级数据失败')
+          this.$message.error('加載班級數據失敗')
         }
       } catch (error) {
-        console.error('加载班级数据失败:', error)
+        console.error('加載班級數據失敗:', error)
         this.$message.error('加载班级数据失败')
       } finally {
         this.loading = false

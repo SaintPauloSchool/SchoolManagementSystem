@@ -12,17 +12,17 @@
       <div class="left-panel">
         <div class="panel-title">
           <el-icon><School /></el-icon>
-          <span>组织架构</span>
+          <span>組織架構</span>
         </div>
         
         <div class="tree-container">
           <div v-if="loading" class="loading">
             <el-icon class="is-loading"><Loading /></el-icon>
-            <span>加载中...</span>
+            <span>加載中...</span>
           </div>
           <div v-else-if="departmentTree.length === 0" class="empty">
             <el-icon><DocumentDelete /></el-icon>
-            <span>暂无数据</span>
+            <span>暫無數據</span>
           </div>
           <el-tree
             v-else
@@ -36,7 +36,7 @@
           >
             <template #default="{ node, data }">
               <span class="tree-node">
-                <!-- 只在叶子节点显示选中状态 -->
+                <!-- 只在葉子節點顯示選中狀態 -->
                 <el-checkbox
                   v-if="data.isLeaf"
                   :model-value="selectedStudentIds.includes(data.id)"
@@ -61,7 +61,7 @@
       <div class="right-panel">
         <div class="panel-title">
           <el-icon><Checked /></el-icon>
-          <span>已选择 ({{ selectedStudentsWithDetails.length }})</span>
+          <span>已選擇 ({{ selectedStudentsWithDetails.length }})</span>
         </div>
 
         <div class="selected-container" ref="selectedContainer">
@@ -84,7 +84,7 @@
             </div>
           </div>
           <div v-else class="empty-selected">
-            <el-empty :image-size="80" description="请从左侧选择学生" />
+            <el-empty :image-size="80" description="請從左側選擇學生" />
           </div>
         </div>
       </div>
@@ -98,7 +98,7 @@
           @click="handleConfirm"
           :disabled="selectedStudentsWithDetails.length === 0"
         >
-          确定 ({{ selectedStudentsWithDetails.length }})
+          確定 ({{ selectedStudentsWithDetails.length }})
         </el-button>
       </div>
     </template>
@@ -170,7 +170,7 @@ export default {
             mobile: relation.mobile
           }
         }
-        return { id, name: '未知学生' }
+        return { id, name: '未知學生' }
       })
       return result
     },
@@ -197,7 +197,7 @@ export default {
           this.departmentTree = response.data || []
 
         } else {
-          this.$message.error('加载学生数据失败')
+          this.$message.error('加載學生數據失敗')
         }
       } catch (error) {
         this.$message.error('加载学生数据失败')
