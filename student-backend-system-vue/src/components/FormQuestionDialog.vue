@@ -3,12 +3,7 @@
     <div class="form-question-dialog">
       <!-- 頂部工具欄 -->
       <div class="dialog-toolbar" v-if="viewMode === 'edit'">
-        <div class="toolbar-left">
-          <h2 class="toolbar-title">
-            <el-icon class="title-icon"><Edit /></el-icon>
-            編輯問題
-          </h2>
-        </div>
+        <div class="toolbar-left"></div>
         <div class="toolbar-center">
           <el-button 
             :type="viewMode === 'edit' ? 'primary' : 'info'" 
@@ -26,7 +21,7 @@
             size="default"
           >
             <el-icon><Connection /></el-icon>
-            邏輯編輯
+            編輯邏輯
           </el-button>
         </div>
         <div class="toolbar-right">
@@ -931,22 +926,19 @@ export default {
         this.initForm()
       }
     },
-    // 監聽所選題目的選項變化（只同步選項索引，不自動生成規則）
+    // 監聽所選題目的選項變化
     selectedQuestion: {
       handler(newVal) {
         if (newVal && this.hasOptionType(newVal.type)) {
-          // 只同步現有規則的 optionIndex，不會自動新增規則
           if (newVal.logicRuleList && newVal.logicRuleList.length > 0) {
             const optionsCount = newVal.options.length
             const currentRulesCount = newVal.logicRuleList.length
             
-            // 如果規則數量大於選項數量，則刪除多餘的規則
             if (currentRulesCount > optionsCount) {
               for (let i = currentRulesCount - 1; i >= optionsCount; i--) {
                 newVal.logicRuleList.splice(i, 1)
               }
             }
-            // 重新綁定每個規則的 optionIndex
             newVal.logicRuleList.forEach((rule, index) => {
               rule.optionIndex = index
             })
@@ -1267,15 +1259,12 @@ export default {
 
     initForm() {
       if (this.question) {
-        // 編輯模式：加載現有數據
         if (this.question.questionnaireData) {
-          // 如果有 questionnaireData，使用它
           this.questionnaireData = {
             title: this.question.questionnaireData.title || '問卷調查',
             description: this.question.questionnaireData.description || ''
           }
         } else {
-          // 否則使用 title 和 description
           this.questionnaireData = {
             title: this.question.title || '問卷調查',
             description: this.question.description || ''
@@ -1283,22 +1272,6 @@ export default {
         }
         
         if (this.question.questions && this.question.questions.length > 0) {
-          // 如果有 questions 數組，使用它
-          console.log('===== questions 数组详情 =====')
-          console.log('questions 数组长度:', this.question.questions.length)
-          this.question.questions.forEach((q, idx) => {
-            console.log(`题目${idx + 1}:`, {
-              id: q.id,
-              title: q.title,
-              type: q.type,
-              questionType: q.questionType,
-              content: q.content,
-              fillBlanks: q.fillBlanks,
-              options: q.options
-            })
-          })
-          console.log('===== questions 数组详情结束 =====')
-          
           this.questionList = this.question.questions.map((q, index) => ({
             ...q,
             id: q.id || Date.now() + index,
@@ -1309,14 +1282,10 @@ export default {
             randomOrder: q.randomOrder || false,
             logicRuleList: q.logicRuleList || []
           }))
-          console.log('映射后的 questionList:', this.questionList)
-                
-          // 优先选中填空题，如果没有填空题则选中第一题
+          
           const firstFillBlank = this.questionList.find(q => q.type === '3')
           this.selectedQuestionId = firstFillBlank ? firstFillBlank.id : this.questionList[0]?.id
         } else {
-          // 否則將 question 本身作為第一題
-          console.log('没有 questions 数组，将 question 本身作为第一题')
           this.questionList = [{
             ...this.question,
             id: this.question.id || Date.now(),
@@ -1330,15 +1299,7 @@ export default {
           this.selectedQuestionId = this.questionList[0]?.id
         }
         
-        console.log('===== 数据加载完成 =====')
-        console.log('questionList:', this.questionList)
-        console.log('selectedQuestionId:', this.selectedQuestionId)
-        console.log('第一个题目 type:', this.questionList[0]?.type)
-        console.log('第一个题目 content:', this.questionList[0]?.content)
-        
-        // 加載完成後，恢復所有填空題的內容到編輯器
         this.$nextTick(() => {
-          console.log('$nextTick 执行，调用 restoreAllFillBlankContents')
           this.restoreAllFillBlankContents()
         })
       } else {
@@ -1470,69 +1431,38 @@ export default {
       return content
     },
 
-    // 恢复所有填空题内容到编辑器（用于初始化时）
+    // 恢复所有填空题内容到编辑器
     restoreAllFillBlankContents() {
-      console.log('>>> restoreAllFillBlankContents 被调用')
-      console.log('questionList 长度:', this.questionList.length)
-      
-      // 遍历所有填空题
-      this.questionList.forEach((question, index) => {
-        console.log(`处理第${index + 1}题:`, {
-          id: question.id,
-          type: question.type,
-          title: question.title,
-          content: question.content
-        })
-        
-        if (question.type !== '3') {
-          console.log(`第${index + 1}题不是填空题，跳过`)
+      this.questionList.forEach((question) => {
+        if (question.type !== '3' || !question.content) {
           return
         }
         
-        // 如果是填空题且有 content
-        if (question.content) {
-          // 等待两轮渲染，确保 v-if 条件渲染完成
+        this.$nextTick(() => {
           this.$nextTick(() => {
-            this.$nextTick(() => {
-              // 使用动态 ref 定位当前题目的编辑器
-              const editableDiv = this.$refs[`contentEditableDiv-${question.id}`]?.[0]
-              
-              if (!editableDiv) {
-                console.warn(`填空题编辑器未渲染，question id:`, question.id)
-                return
-              }
-              
-              if (editableDiv && typeof editableDiv.querySelectorAll === 'function') {
-                // 将 content 中的 {{fillblank-n}} 转换回 HTML 标签
-                let html = question.content
-                const fillBlankMatches = html.match(/\{\{fillblank-(\d+)\}\}/g)
-                
-                console.log(`第${index + 1}题 fillBlankMatches:`, fillBlankMatches)
-                
-                if (fillBlankMatches) {
-                  fillBlankMatches.forEach((placeholder) => {
-                    const match = placeholder.match(/\{\{fillblank-(\d+)\}\}/)
-                    if (match) {
-                      const index = parseInt(match[1])
-                      const blankTag = `<span class="editable-blank-tag" contenteditable="false" data-index="${index - 1}" style="display:inline-block;position:relative;text-align:center;padding:0 2px 14px 2px;margin:0 2px;vertical-align:baseline;white-space:nowrap;cursor:default;user-select:none;"><span style="display:inline-block;font-size:14px;color:transparent;border-bottom:1px solid #303133;min-width:80px;">____________</span><span style="position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:11px;color:#E6A23C;white-space:nowrap;line-height:1;"><span style="color:#F56C6C;">*</span> 填空${index}</span></span>`
-                      html = html.replace(placeholder, blankTag)
-                    }
-                  })
-                } else {
-                  // 如果没有占位符，直接使用 content 或 title
-                  html = question.content || question.title || ''
+            const editableDiv = this.$refs[`contentEditableDiv-${question.id}`]?.[0]
+            
+            if (!editableDiv || typeof editableDiv.querySelectorAll !== 'function') {
+              return
+            }
+            
+            let html = question.content
+            const fillBlankMatches = html.match(/\{\{fillblank-(\d+)\}\}/g)
+            
+            if (fillBlankMatches) {
+              fillBlankMatches.forEach((placeholder) => {
+                const match = placeholder.match(/\{\{fillblank-(\d+)\}\}/)
+                if (match) {
+                  const index = parseInt(match[1])
+                  const blankTag = `<span class="editable-blank-tag" contenteditable="false" data-index="${index - 1}" style="display:inline-block;position:relative;text-align:center;padding:0 2px 14px 2px;margin:0 2px;vertical-align:baseline;white-space:nowrap;cursor:default;user-select:none;"><span style="display:inline-block;font-size:14px;color:transparent;border-bottom:1px solid #303133;min-width:80px;">____________</span><span style="position:absolute;left:50%;transform:translateX(-50%);bottom:0;font-size:11px;color:#E6A23C;white-space:nowrap;line-height:1;"><span style="color:#F56C6C;">*</span> 填空${index}</span></span>`
+                  html = html.replace(placeholder, blankTag)
                 }
-                
-                editableDiv.innerHTML = html
-                console.log(`第${index + 1}题填空题内容已恢复:`, html)
-              } else {
-                console.warn(`编辑器 DOM 不可用或没有 querySelectorAll 方法，question id:`, question.id)
-              }
-            })
+              })
+            }
+            
+            editableDiv.innerHTML = html
           })
-        } else {
-          console.log(`第${index + 1}题填空题没有 content，使用 title:`, question.title)
-        }
+        })
       })
     },
 
