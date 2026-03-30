@@ -6,7 +6,7 @@
         <div class="toolbar-left">
           <h2 class="toolbar-title">
             <el-icon class="title-icon"><Edit /></el-icon>
-            編輯表單問題
+            編輯問題
           </h2>
         </div>
         <div class="toolbar-center">

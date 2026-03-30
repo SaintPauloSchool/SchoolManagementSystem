@@ -81,13 +81,9 @@
               <span class="section-title">已添加的問題 ({{ localFormData.questions.length }})</span>
             </div>
             <div class="buttons-wrapper">
-              <el-button class="add-question-btn" size="large" @click="addQuestion">
-                <el-icon class="btn-icon"><Plus /></el-icon>
-                <span class="btn-text">添加問題</span>
-              </el-button>
               <el-button class="add-form-question-btn" size="large" @click="addFormQuestion">
                 <el-icon class="btn-icon"><Edit /></el-icon>
-                <span class="btn-text">添加表單問題</span>
+                <span class="btn-text">添加問題</span>
               </el-button>
             </div>
           </div>
@@ -95,7 +91,7 @@
           <div v-if="localFormData.questions.length > 0" class="questions-list">
             <div 
               v-for="(question, index) in localFormData.questions" 
-              :key="question.id"
+              :key="question.id || index"
               class="question-item"
             >
               <div class="question-info">
@@ -104,27 +100,8 @@
                   <span class="question-title" style="margin-right: 16px;">{{ question.title }}</span>
                 </div>
                 <div class="question-right">
-                  <el-tag 
-                    size="small" 
-                    :type="getQuestionTypeColor(question.type)"
-                    class="question-type-tag"
-                  >
-                    {{ getQuestionTypeText(question.type) }}
-                  </el-tag>
                   <div class="question-actions">
-                    <el-button 
-                      v-if="question.questionType === '5'" 
-                      size="small" 
-                      @click="editFormQuestion(index)"
-                    >
-                      <el-icon><Edit /></el-icon>
-                      表單編輯
-                    </el-button>
-                    <el-button 
-                      v-else 
-                      size="small" 
-                      @click="editQuestion(index)"
-                    >
+                    <el-button size="small" @click="editFormQuestion(index)">
                       <el-icon><Edit /></el-icon>
                       編輯
                     </el-button>
@@ -155,13 +132,6 @@
       </el-form-item>
     </el-form>
 
-    <!-- 添加/編輯問題對話框 -->
-    <AddQuestionWizard
-      v-model:visible="showQuestionDialog"
-      :question="editingQuestion"
-      @save="saveQuestion"
-    />
-    
     <!-- 表單問題編輯對話框 -->
     <FormQuestionDialog
       v-model:visible="showFormQuestionDialog"
@@ -172,8 +142,7 @@
 </template>
 
 <script>
-import { Upload, Plus, Edit, Delete, ArrowRight } from '@element-plus/icons-vue'
-import AddQuestionWizard from './AddQuestionWizard.vue'
+import { Upload, Edit, Delete, ArrowRight } from '@element-plus/icons-vue'
 import FormQuestionDialog from './FormQuestionDialog.vue'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
@@ -181,7 +150,6 @@ import request from '@/utils/request'
 export default {
   name: 'BasicInfoForm',
   components: {
-    AddQuestionWizard,
     FormQuestionDialog
   },
   props: {
@@ -197,9 +165,7 @@ export default {
       fileList: [],
       uploadUrl: '/api/common/upload',
       uploadHeaders: {},
-      showQuestionDialog: false,
       showFormQuestionDialog: false,
-      editingQuestion: null,
       editingFormQuestion: null,
       rules: {
         title: [
@@ -366,43 +332,9 @@ export default {
       }
     },
 
-    getQuestionTypeText(type) {
-      const typeMap = {
-        '1': '單選',
-        '2': '多選',
-        '3': '填空',
-        '4': '附件',
-        '5': '邏輯表單'
-      }
-      return typeMap[type] || '未知'
-    },
 
-    getQuestionTypeColor(type) {
-      const colorMap = {
-        '1': 'primary',
-        '2': 'success',
-        '3': 'warning',
-        '4': 'danger',
-        '5': 'info'
-      }
-      return colorMap[type] || 'info'
-    },
 
-    editQuestion(index) {
-      const question = { ...this.localFormData.questions[index] }
-      // 确保问题有 id，如果没有则生成一个
-      if (!question.id) {
-        question.id = Date.now()
-        this.localFormData.questions[index].id = question.id
-      }
-      this.editingQuestion = question
-      this.showQuestionDialog = true
-    },
 
-    addQuestion() {
-      this.editingQuestion = null
-      this.showQuestionDialog = true
-    },
     
     addFormQuestion() {
       this.editingFormQuestion = null
@@ -473,28 +405,7 @@ export default {
       }).catch(() => {})
     },
 
-    saveQuestion(question) {
-      if (this.editingQuestion) {
-        const index = this.localFormData.questions.findIndex(q => q.id === this.editingQuestion.id)
-        if (index > -1) {
-          if (!question.questionType) {
-            question.questionType = 'normal'
-          }
-          this.localFormData.questions[index] = question
-        }
-      } else {
-        question.id = Date.now()
-        question.questionType = 'normal'
-        this.localFormData.questions.push(question)
-      }
-      
-      Object.assign(this.formData, this.localFormData)
-      
-      this.editingQuestion = null
-      this.showQuestionDialog = false
-      
-      ElMessage.success('保存成功')
-    }
+
   }
 }
 </script>
@@ -626,6 +537,12 @@ export default {
 
 .question-actions .el-button {
   margin: 0 !important;
+  font-weight: 600;
+  padding: 8px 12px !important;
+}
+
+.question-actions .el-button .el-icon {
+  margin-right: 4px;
 }
 
 .question-type-tag.el-tag:hover {
@@ -709,8 +626,6 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
 }
 
-/* 添加問題按鈕 - 與問題設置頭部完全一致 */
-.add-question-btn.el-button,
 .add-form-question-btn.el-button {
   height: 40px;
   padding: 0 18px;
@@ -730,34 +645,24 @@ export default {
 }
 
 .add-form-question-btn.el-button {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.25);
 }
 
-.add-question-btn.el-button:hover {
+.add-form-question-btn.el-button:hover {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
   transform: translateY(-2px);
 }
 
-.add-form-question-btn.el-button:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
-  transform: translateY(-2px);
-}
 
-.add-question-btn.el-button:active,
-.add-form-question-btn.el-button:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
-}
 
 .btn-icon {
   font-size: 17px;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.custom-upload-btn.el-button:hover .btn-icon,
-.add-question-btn.el-button:hover .btn-icon {
+.custom-upload-btn.el-button:hover .btn-icon {
   transform: scale(1.08) rotate(3deg);
 }
 
