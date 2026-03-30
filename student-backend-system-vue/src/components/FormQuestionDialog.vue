@@ -520,14 +520,6 @@
                     </div>
                   </div>
 
-                  <!-- 附件 -->
-                  <div v-else-if="question.type === '4'">
-                    <div class="attachment-placeholder">
-                      <el-icon><Upload /></el-icon>
-                      <span>點擊上傳附件 (最多 5 個)</span>
-                    </div>
-                  </div>
-
                   <!-- 分支 -->
                   <div v-else-if="question.type === '5'">
                     <div class="branch-preview">
@@ -632,20 +624,6 @@
                         新增選項
                       </el-button>
                     </div>
-                  </div>
-
-                  <div v-if="['7', '8'].includes(selectedQuestion.type)" class="settings-section">
-                    <div class="section-header">圖片</div>
-                    <el-form label-position="top" size="default">
-                      <el-form-item label="默認圖片寬度">
-                        <el-input v-model="selectedQuestion.imageWidth" placeholder="請輸入">
-                          <template #append>像素</template>
-                        </el-input>
-                      </el-form-item>
-                      <el-button class="apply-image-btn" size="small">
-                        應用到本題所有圖片
-                      </el-button>
-                    </el-form>
                   </div>
                 </div>
               </div>
@@ -982,13 +960,13 @@ export default {
     },
   
     isSingleChoice(type) {
-      // 單選類：1=單選，7=圖片單選
-      return ['1', '7'].includes(type)
+      // 單選類：1=單選
+      return ['1'].includes(type)
     },
   
     hasOptionType(type) {
-      // 需要選項的題型：1=單選，2=多選，7=圖片單選，8=圖片多選
-      return ['1', '2', '7', '8'].includes(type)
+      // 需要選項的題型：1=單選，2=多選
+      return ['1', '2'].includes(type)
     },
 
     // 獲取題型名稱
@@ -997,11 +975,7 @@ export default {
         '1': '單選題',
         '2': '多選題',
         '3': '填空題',
-        '4': '附件上傳',
-        '5': '邏輯表單',
-        '7': '圖片單選',
-        '8': '圖片多選',
-        '9': '單行文本'
+        '5': '邏輯表單'
       }
       return typeMap[type] || '未知題型'
     },
@@ -1012,11 +986,7 @@ export default {
         '1': 'success',
         '2': 'success',
         '3': 'primary',
-        '4': 'warning',
-        '5': 'danger',
-        '7': 'success',
-        '8': 'success',
-        '9': 'info'
+        '5': 'danger'
       }
       return tagMap[type] || 'info'
     },
@@ -1027,11 +997,7 @@ export default {
         '1': 'success',
         '2': 'success',
         '3': 'primary',
-        '4': 'warning',
-        '5': 'danger',
-        '7': 'success',
-        '8': 'success',
-        '9': 'info'
+        '5': 'danger'
       }
       return tagMap[type] || 'info'
     },
