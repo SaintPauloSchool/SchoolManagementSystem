@@ -604,6 +604,57 @@
                       <el-form-item label="必答設置">
                         <el-checkbox v-model="selectedQuestion.required">必答題</el-checkbox>
                       </el-form-item>
+
+                      <!-- 選項數量限制設置（只對多選題顯示） -->
+                      <el-form-item 
+                        v-if="hasOptionType(selectedQuestion.type) && selectedQuestion.type === '2'" 
+                        label="選項數量限制"
+                        :rules="[{ required: true, message: '請選擇最大選項數', trigger: 'change' }]"
+                      >
+                        <div class="options-limit-row">
+                          <div class="limit-item">
+                            <span class="limit-label">最少可選：</span>
+                            <el-select 
+                              v-model.number="selectedQuestion.minOptions" 
+                              @change="handleMinOptionsChange"
+                              placeholder="選擇最小值"
+                              size="default"
+                              class="limit-select"
+                            >
+                              <el-option 
+                                v-for="num in getOptionRange()" 
+                                :key="num" 
+                                :label="`${num} 項`" 
+                                :value="num" 
+                              />
+                            </el-select>
+                          </div>
+                          <div class="limit-separator">至</div>
+                          <div class="limit-item">
+                            <span class="limit-label">最多可選：</span>
+                            <el-select 
+                              v-model.number="selectedQuestion.maxOptions" 
+                              @change="handleMaxOptionsChange"
+                              placeholder="選擇最大值"
+                              size="default"
+                              class="limit-select"
+                              :class="{ 'is-error': !selectedQuestion.maxOptions }"
+                            >
+                              <el-option 
+                                v-for="num in getOptionRange()" 
+                                :key="num" 
+                                :label="`${num} 項`" 
+                                :value="num" 
+                              />
+                            </el-select>
+                          </div>
+                        </div>
+                        <div class="limit-tip">
+                          <el-tag type="info" size="small">
+                            💡 提示：最小值與最大值可以相等，用於限制必須選擇的選項數量
+                          </el-tag>
+                        </div>
+                      </el-form-item>
                     </el-form>
                   </div>
                 </div>
@@ -1239,7 +1290,9 @@ export default {
             defaultValue: q.defaultValue || '',
             validation: q.validation || [],
             randomOrder: q.randomOrder || false,
-            logicRuleList: q.logicRuleList || []
+            logicRuleList: q.logicRuleList || [],
+            minOptions: q.minOptions || 1,
+            maxOptions: q.maxOptions || null
           }))
           
           const firstFillBlank = this.questionList.find(q => q.type === '3')
@@ -1253,7 +1306,9 @@ export default {
             defaultValue: this.question.defaultValue || '',
             validation: this.question.validation || [],
             randomOrder: this.question.randomOrder || false,
-            logicRuleList: this.question.logicRuleList || []
+            logicRuleList: this.question.logicRuleList || [],
+            minOptions: this.question.minOptions || 1,
+            maxOptions: this.question.maxOptions || null
           }]
           this.selectedQuestionId = this.questionList[0]?.id
         }
@@ -1289,6 +1344,8 @@ export default {
         maxLength: 200,
         randomOrder: false,
         logicRuleList: [], // 邏輯規則列表（支援多條規則）
+        minOptions: 1, // 最少可選選項數
+        maxOptions: null, // 最多可選選項數（null 表示不限制）
         branchOptions: type === '5' ? [
           { text: '', action: 'continue', nextTitle: '' },
           { text: '', action: 'end', nextTitle: '' }
@@ -1325,6 +1382,69 @@ export default {
         return null
       }
       return null
+    },
+
+    // 獲取選項數量範圍（用於下拉框）
+    getOptionRange() {
+      if (!this.selectedQuestion || !this.selectedQuestion.options) {
+        return []
+      }
+      const count = this.selectedQuestion.options.length
+      const range = []
+      for (let i = 1; i <= count; i++) {
+        range.push(i)
+      }
+      return range
+    },
+
+    // 處理最小選項數變化
+    handleMinOptionsChange(value) {
+      if (!this.selectedQuestion) return
+      
+      // 確保值是數字
+      const numValue = typeof value === 'string' ? parseInt(value) : value
+      if (isNaN(numValue)) return
+      
+      const maxOptions = this.selectedQuestion.maxOptions || this.selectedQuestion.options.length
+      
+      // 確保最小值不大於最大值
+      if (numValue > maxOptions) {
+        this.selectedQuestion.minOptions = maxOptions
+        ElMessage.warning({
+          message: '最小選項數不能大於最大選項數，已自動調整為最大值',
+          offset: 100
+        })
+      } else {
+        this.selectedQuestion.minOptions = numValue
+      }
+    },
+
+    // 處理最大選項數變化
+    handleMaxOptionsChange(value) {
+      if (!this.selectedQuestion) return
+      
+      // 如果選擇了"不限制"（null 值）
+      if (value === null || value === undefined || value === '') {
+        this.selectedQuestion.maxOptions = null
+        return
+      }
+      
+      // 確保值是數字
+      const numValue = typeof value === 'string' ? parseInt(value) : value
+      if (isNaN(numValue)) return
+      
+      const minOptions = this.selectedQuestion.minOptions || 1
+      
+      // 確保最大值不小於最小值
+      if (numValue < minOptions) {
+        this.selectedQuestion.maxOptions = minOptions
+        ElMessage.warning({
+          message: '最大選項數不能小於最小選項數，已自動調整為最小值',
+          offset: 100
+        })
+      } else {
+        this.selectedQuestion.maxOptions = numValue
+      }
     },
 
     selectQuestion(id) {
@@ -1813,6 +1933,36 @@ export default {
             })
             this.selectedQuestionId = q.id
             return
+          }
+          
+          // 驗證多選題的選項數量限制
+          if (q.type === '2') {
+            if (!q.minOptions || q.minOptions < 1) {
+              ElMessage.warning({
+                message: `第 ${i + 1} 題的最小選項數必須大於 0`,
+                offset: 100
+              })
+              this.selectedQuestionId = q.id
+              return
+            }
+            
+            if (!q.maxOptions) {
+              ElMessage.warning({
+                message: `第 ${i + 1} 題請選擇最大選項數`,
+                offset: 100
+              })
+              this.selectedQuestionId = q.id
+              return
+            }
+            
+            if (q.minOptions > q.maxOptions) {
+              ElMessage.warning({
+                message: `第 ${i + 1} 題的最小選項數不能大於最大選項數`,
+                offset: 100
+              })
+              this.selectedQuestionId = q.id
+              return
+            }
           }
         }
             
@@ -3298,7 +3448,76 @@ export default {
   width: 100%;
 }
 
+/* 選項數量限制設置樣式 */
+.options-limit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  flex-wrap: wrap; /* 允許換行 */
+}
 
+.limit-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 140px; /* 增加最小寬度 */
+}
+
+.limit-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #606266;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.limit-select {
+  flex: 1;
+  min-width: 120px;
+}
+
+.limit-select :deep(.el-input) {
+  width: 100%;
+}
+
+.limit-select :deep(.el-input__inner) {
+  font-size: 13px;
+  padding: 6px 10px;
+  width: 100%;
+}
+
+/* 錯誤狀態樣式 */
+.limit-select.is-error :deep(.el-input__inner) {
+  border-color: #F56C6C !important;
+}
+
+.limit-separator {
+  font-size: 14px;
+  font-weight: 600;
+  color: #909399;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.limit-tip {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: transparent;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.limit-tip .el-tag {
+  font-size: 12px;
+  padding: 4px 8px;
+  height: auto;
+  line-height: 1.6;
+  white-space: normal;
+  word-break: break-all;
+  display: inline-block;
+}
 
 .options-editor {
   display: flex;
