@@ -145,7 +145,6 @@
 import { Upload, Edit, Delete, ArrowRight } from '@element-plus/icons-vue'
 import FormQuestionDialog from './FormQuestionDialog.vue'
 import { ElMessage } from 'element-plus'
-import request from '@/utils/request'
 
 export default {
   name: 'BasicInfoForm',
@@ -332,10 +331,6 @@ export default {
       }
     },
 
-
-
-
-    
     addFormQuestion() {
       this.editingFormQuestion = null
       this.showFormQuestionDialog = true
@@ -404,7 +399,6 @@ export default {
         ElMessage.success('刪除成功')
       }).catch(() => {})
     },
-
 
   }
 }
@@ -654,8 +648,6 @@ export default {
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
   transform: translateY(-2px);
 }
-
-
 
 .btn-icon {
   font-size: 17px;

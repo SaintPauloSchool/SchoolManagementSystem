@@ -73,6 +73,10 @@
                       <el-icon><Edit /></el-icon>
                       <span>填空</span>
                     </div>
+                    <div class="type-btn" @click="addQuestion('4')">
+                      <el-icon><Upload /></el-icon>
+                      <span>文件上傳</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -191,10 +195,10 @@
                       </div>
                     </div>
 
-                    <div v-else-if="['3'].includes(selectedQuestion.type)" class="no-logic-hint">
+                    <div v-else-if="['3', '4'].includes(selectedQuestion.type)" class="no-logic-hint">
                       <el-icon><InfoFilled /></el-icon>
                       <div class="hint-content">
-                        <span class="hint-title">填空/文本類題型</span>
+                        <span class="hint-title">填空/文本/文件上傳類題型</span>
                         <span class="hint-desc">此類題型通常不需要設置選項跳轉，可直接使用顯示邏輯</span>
                       </div>
                     </div>
@@ -322,6 +326,12 @@
                   <div v-if="['3'].includes(node.type)" class="preview-question-content">
                     <el-icon><Edit /></el-icon>
                     <span class="content-text" v-html="renderFillBlankText(node)"></span>
+                  </div>
+                  
+                  <!-- 文件上傳題目預覽 -->
+                  <div v-else-if="node.type === '4'" class="preview-question-content">
+                    <el-icon><Upload /></el-icon>
+                    <span class="content-text">{{ node.uploadNote || '暫無上傳說明' }}</span>
                   </div>
                 </div>
                               
@@ -517,6 +527,16 @@
                           點擊按鈕將在光標位置插入下劃線佔位符
                         </el-tag>
                     </div>
+                    </div>
+                  </div>
+
+                  <!-- 文件上傳題目 -->
+                  <div v-else-if="question.type === '4'">
+                    <div class="file-upload-question-container">
+                      <div class="upload-disabled-notice">
+                        <el-icon><Upload /></el-icon>
+                        <span>此處由用戶端上傳</span>
+                      </div>
                     </div>
                   </div>
 
@@ -744,10 +764,10 @@
                     </div>
                   </div>
 
-                  <div v-else-if="['3'].includes(selectedQuestion.type)" class="no-logic-hint">
+                  <div v-else-if="['3', '4'].includes(selectedQuestion.type)" class="no-logic-hint">
                     <el-icon><InfoFilled /></el-icon>
                     <div class="hint-content">
-                      <span class="hint-title">填空/文本類題型</span>
+                      <span class="hint-title">填空/文本/文件上傳類題型</span>
                       <span class="hint-desc">此類題型通常不需要設置選項跳轉，可直接使用顯示邏輯</span>
                     </div>
                   </div>
@@ -975,6 +995,7 @@ export default {
         '1': '單選題',
         '2': '多選題',
         '3': '填空題',
+        '4': '文件上傳',
         '5': '邏輯表單'
       }
       return typeMap[type] || '未知題型'
@@ -986,6 +1007,7 @@ export default {
         '1': 'success',
         '2': 'success',
         '3': 'primary',
+        '4': 'warning',
         '5': 'danger'
       }
       return tagMap[type] || 'info'
@@ -997,6 +1019,7 @@ export default {
         '1': 'success',
         '2': 'success',
         '3': 'primary',
+        '4': 'warning',
         '5': 'danger'
       }
       return tagMap[type] || 'info'
@@ -1276,6 +1299,11 @@ export default {
       if (type === '3') {
         question.fillBlanks = [] // 初始為空，由用戶動態新增
         question.correctAnswers = [] // 正確答案數組，與 fillBlanks 對應
+      }
+      
+      // 如果是文件上傳題類型
+      if (type === '4') {
+        question.uploadNote = '此處由用戶端上傳...' // 上傳說明文字
       }
       
       this.questionList.push(question)
@@ -3433,6 +3461,69 @@ export default {
 .add-fillblank-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
+}
+
+/* 文件上傳題目樣式 */
+.file-upload-question-container {
+  padding: 20px;
+  background: linear-gradient(135deg, #fdf6ec 0%, #ffffff 100%);
+  border-radius: 12px;
+  border: 2px solid #e4e7ed;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.upload-note-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.upload-note-input {
+  width: 100%;
+}
+
+.upload-note-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #e4e7ed;
+}
+
+.upload-note-preview .el-icon {
+  font-size: 24px;
+  color: #e6a23c;
+}
+
+.preview-note-text {
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.upload-disabled-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+  border-radius: 8px;
+  border: 2px dashed #dcdfe6;
+}
+
+.upload-disabled-notice .el-icon {
+  font-size: 28px;
+  color: #909399;
+}
+
+.upload-disabled-notice span {
+  font-size: 14px;
+  color: #606266;
+  font-weight: 500;
 }
 
 
