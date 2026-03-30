@@ -6,16 +6,7 @@
         <div class="toolbar-left"></div>
         <div class="toolbar-center">
           <el-button 
-            :type="viewMode === 'edit' ? 'primary' : 'info'" 
-            @click="switchViewMode('edit')"
-            class="view-mode-btn"
-            size="default"
-          >
-            <el-icon><Edit /></el-icon>
-            編輯
-          </el-button>
-          <el-button 
-            :type="viewMode === 'preview' ? 'success' : 'info'" 
+            type="primary"
             @click="switchViewMode('preview')"
             class="view-mode-btn"
             size="default"
@@ -36,7 +27,7 @@
         </div>
       </div>
 
-      <!-- 預覽模式工具欄 -->
+      <!-- 邏輯模式工具欄 -->
       <div class="dialog-toolbar preview-toolbar" v-else>
         <div class="toolbar-center">
           <el-button 
@@ -87,12 +78,12 @@
               </div>
             </el-collapse-item>
 
-            <!-- 邏輯編輯面板（只在預覽模式顯示） -->
+            <!-- 邏輯編輯面板（只在邏輯模式顯示） -->
             <el-collapse-item name="logicEdit" v-if="viewMode === 'preview'">
               <template #title>
                 <div class="panel-title-with-icon">
                   <el-icon><Connection /></el-icon>
-                  <span>邏輯編輯</span>
+                  <span>編輯邏輯</span>
                 </div>
               </template>
               <div class="panel-content logic-edit-panel-content">
@@ -226,10 +217,10 @@
           </el-collapse>
         </div>
 
-        <!-- 中間：問卷預覽/編輯區 -->
+        <!-- 中間：問題預覽/編輯區 -->
         <div class="center-panel">
           <div class="questionnaire-preview">
-            <!-- 問卷頭部 - 只在編輯模式顯示 -->
+            <!-- 問題頭部 - 只在編輯模式顯示 -->
             <div class="questionnaire-header" v-if="viewMode === 'edit'">
               <div class="header-row">
                 <span class="header-label">標題:</span>
@@ -253,7 +244,7 @@
 
             <!-- 題目列表 -->
             <div class="questionnaire-body">
-              <!-- 預覽模式：結構化列表 -->
+              <!-- 邏輯模式：結構化列表 -->
               <div v-if="viewMode === 'preview'" class="preview-flowchart-container">
                 <!-- SVG 流程線層 -->
                 <svg class="flow-connector-svg" xmlns="http://www.w3.org/2000/svg">
@@ -440,7 +431,7 @@
                       </div>
                     </div>
                     
-                    <!-- 預覽模式下顯示邏輯規則流程圖 -->
+                    <!-- 邏輯模式下顯示邏輯規則流程圖 -->
                     <div v-if="viewMode === 'preview' && question.logicRuleList && question.logicRuleList.length > 0" class="logic-flowchart">
                       <div class="flowchart-title">
                         <el-icon><Connection /></el-icon>
@@ -505,7 +496,7 @@
                         </div>
                       </div>
                       
-                      <!-- 預覽模式下的題目顯示 -->
+                      <!-- 邏輯模式下的題目顯示 -->
                       <div v-else-if="viewMode === 'preview'" class="fillblank-preview-display">
                         <div class="preview-text" v-html="renderFillBlankText(question)"></div>
                       </div>
@@ -664,7 +655,7 @@
             </div>
           </template>
 
-          <!-- 預覽模式下的邏輯設置 -->
+          <!-- 邏輯模式下的邏輯設置 -->
           <template v-else-if="viewMode === 'preview'">
             <div class="panel-header">
               <el-icon><Connection /></el-icon>
@@ -1064,9 +1055,6 @@ export default {
       }
       return '未知目標'
     },
-
-
-
     // 獲取規則預覽標籤顏色
     getRulePreviewTag(target) {
       if (!target) {
@@ -1168,9 +1156,7 @@ export default {
       })
     },
 
-
-
-    // 切換視圖模式（編輯/預覽）
+    // 切換視圖模式（編輯/邏輯）
     switchViewMode(mode) {
       if (mode === this.viewMode) {
         return
@@ -1252,7 +1238,7 @@ export default {
       }
       
       ElMessage.success({
-        message: mode === 'edit' ? '已切換至編輯模式' : '已切換至預覽模式',
+        message: mode === 'edit' ? '已切換至編輯模式' : '已切換至邏輯模式',
         offset: 100
       })
     },
@@ -1582,8 +1568,6 @@ export default {
       }
     },
 
-
-
     handleFillBlankAnswer(index, value, question) {
       if (!question.userAnswers) {
         question.userAnswers = []
@@ -1809,7 +1793,7 @@ export default {
       return html
     },
 
-    // 預覽模式下渲染填空題目（不含刪除按鈕）
+    // 邏輯模式下渲染填空題目（不含刪除按鈕）
     renderFillBlankText(question) {
       if (!question.content) return ''
       
@@ -1844,7 +1828,7 @@ export default {
           new RegExp(`\\{fillblank-${index + 1}\\}`, 'g')
         ]
         
-        // 預覽模式下不顯示刪除按鈕
+        // 邏輯模式下不顯示刪除按鈕
         const underlineBlank = `<span class="underline-placeholder-preview"><span class="underline-text-preview">__________</span></span>`
         
         patterns.forEach(pattern => {
@@ -2033,7 +2017,7 @@ export default {
   transform: translateX(-50%);
 }
 
-/* 預覽模式工具欄 */
+/* 邏輯模式工具欄 */
 .preview-toolbar {
   justify-content: center !important;
   border-bottom: none !important;
@@ -2048,6 +2032,40 @@ export default {
   border-radius: 6px;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 強制覆蓋 Element UI 默認樣式 */
+.view-mode-btn.el-button--primary {
+  background-color: #409EFF !important;
+  color: #fff !important;
+  border-color: #409EFF !important;
+}
+
+.view-mode-btn.el-button--primary:hover {
+  background-color: #66b1ff !important;
+  border-color: #66b1ff !important;
+}
+
+.view-mode-btn.el-button--success {
+  background-color: #67c23a !important;
+  color: #fff !important;
+  border-color: #67c23a !important;
+}
+
+.view-mode-btn.el-button--success:hover {
+  background-color: #85ce61 !important;
+  border-color: #85ce61 !important;
+}
+
+.view-mode-btn.el-button--info {
+  background-color: #909399 !important;
+  color: #fff !important;
+  border-color: #909399 !important;
+}
+
+.view-mode-btn.el-button--info:hover {
+  background-color: #a6a9ad !important;
+  border-color: #a6a9ad !important;
 }
 
 .view-mode-btn .el-icon {
@@ -2127,7 +2145,7 @@ export default {
   min-height: 0; /* 防止 flex 子項溢出 */
 }
 
-/* 預覽模式下的佈局 */
+/* 邏輯模式下的佈局 */
 .dialog-main.preview-mode {
   padding: 0;
   background: white;
@@ -2433,7 +2451,7 @@ export default {
   min-height: 0; /* 允許滾動區域正常滾動 */
 }
 
-/* 預覽模式簡化流程圖容器 */
+/* 邏輯模式簡化流程圖容器 */
 .preview-flowchart-container {
   display: flex;
   flex-direction: column;
@@ -3020,7 +3038,7 @@ export default {
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
 }
 
-/* 預覽模式下的邏輯規則流程圖 */
+/* 邏輯模式下的邏輯規則流程圖 */
 .logic-flowchart {
   margin-top: 20px;
   padding: 16px;
@@ -3164,7 +3182,7 @@ export default {
   color: #f56c6c;
 }
 
-/* 填空題目預覽模式樣式 */
+/* 填空題目邏輯模式樣式 */
 .logic-preview-section {
   margin-top: 16px;
   padding: 14px;
@@ -3218,7 +3236,7 @@ export default {
   font-weight: 700;
 }
 
-/* 填空題目預覽模式樣式 */
+/* 填空題目邏輯模式樣式 */
 .fillblank-preview-display {
   padding: 16px;
   background: #ffffff;
@@ -4057,7 +4075,7 @@ export default {
   border-radius: 4px;
 }
 
-/* 預覽模式下的流程線樣式 */
+/* 邏輯模式下的流程線樣式 */
 .preview-flowchart-container {
   position: relative;
 }
