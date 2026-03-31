@@ -1,190 +1,272 @@
 -- ----------------------------
 -- 家校通知系统数据库表结构
 -- ----------------------------
+-- 创建 class_log 表
+-- ----------------------------
+DROP TABLE IF EXISTS class_log;
+CREATE TABLE `class_log` (
+    `id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+    `student_class` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `teacher` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `course` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `course_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+    `start_date` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `end_date` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `update_date` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ----------------------------
 -- 通知主表
 -- ----------------------------
-drop table if exists notification;
-create table notification (
-                              notification_id       bigint(20)      not null auto_increment    comment '通知ID',
-                              title                 varchar(255)    not null                   comment '通知标题',
-                              content               text            default null               comment '通知正文',
-                              sender_id             bigint(20)      not null                   comment '发送人ID',
-                              sender_name           varchar(100)    not null                   comment '发送人姓名',
-                              jump_url              varchar(500)    default null               comment '跳转链接',
-                              attachment_urls       text            default null               comment '附件/图片URL列表(JSON格式)',
-                              status                char(1)         default '0'                comment '状态（0草稿 1已发布 2已撤回）',
-                              reply_deadline        datetime        default null               comment '回复截止时间',
-                              create_by             varchar(64)     default ''                 comment '创建者',
-                              create_time           datetime                                   comment '创建时间',
-                              update_by             varchar(64)     default ''                 comment '更新者',
-                              update_time           datetime                                   comment '更新时间',
-                              remark                varchar(500)    default null               comment '备注',
-                              primary key (notification_id)
-) engine=innodb auto_increment=1 comment = '通知主表';
+DROP TABLE IF EXISTS notification;
+CREATE TABLE notification (
+    notification_id     BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '通知 ID',
+    title               VARCHAR(255)    NOT NULL                   COMMENT '通知标题',
+    content             TEXT            DEFAULT NULL               COMMENT '通知正文',
+    sender_id           BIGINT(20)      NOT NULL                   COMMENT '发送人 ID',
+    sender_name         VARCHAR(100)    NOT NULL                   COMMENT '发送人姓名',
+    jump_url            VARCHAR(500)    DEFAULT NULL               COMMENT '跳转链接',
+    attachment_urls     TEXT            DEFAULT NULL               COMMENT '附件/图片 URL 列表 (JSON 格式)',
+    status              CHAR(1)         DEFAULT '0'                COMMENT '状态（0 草稿 1 已发布 2 已撤回）',
+    reply_deadline      DATETIME        DEFAULT NULL               COMMENT '回复截止时间',
+    create_by           VARCHAR(64)     DEFAULT ''                 COMMENT '创建者',
+    create_time         DATETIME                                   COMMENT '创建时间',
+    update_by           VARCHAR(64)     DEFAULT ''                 COMMENT '更新者',
+    update_time         DATETIME                                   COMMENT '更新时间',
+    remark              VARCHAR(500)    DEFAULT NULL               COMMENT '备注',
+    PRIMARY KEY (notification_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知主表';
 
 -- ----------------------------
 -- 通知接收对象表
 -- ----------------------------
-drop table if exists notification_receiver;
-create table notification_receiver (
-                                       receiver_id           bigint(20)      not null auto_increment    comment '接收关系ID',
-                                       notification_id       bigint(20)      not null                   comment '通知ID',
-                                       receive_type          char(1)         not null                   comment '接收类型（1 班级 2 学生/家长）',
-                                       receive_ids           text            not null                   comment '接收对象ID列表(JSON格式)',
-                                       receive_names         text            not null                   comment '接收对象名称列表(JSON格式)',
-                                       create_time           datetime                                   comment '创建时间',
-                                       primary key (receiver_id)
-) engine=innodb auto_increment=1 comment = '通知接收对象表';
+DROP TABLE IF EXISTS notification_receiver;
+CREATE TABLE notification_receiver (
+    receiver_id         BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '接收关系 ID',
+    notification_id     BIGINT(20)      NOT NULL                   COMMENT '通知 ID',
+    receive_type        CHAR(1)         NOT NULL                   COMMENT '接收类型（1 班级 2 学生/家长）',
+    receive_ids         TEXT            NOT NULL                   COMMENT '接收对象 ID 列表 (JSON 格式)',
+    receive_names       TEXT            NOT NULL                   COMMENT '接收对象名称列表 (JSON 格式)',
+    create_time         DATETIME                                   COMMENT '创建时间',
+    PRIMARY KEY (receiver_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知接收对象表';
 
 -- ----------------------------
 -- 通知抄送对象表
 -- ----------------------------
-drop table if exists notification_cc;
-create table notification_cc (
-                                 cc_id                 bigint(20)      not null auto_increment    comment '抄送关系ID',
-                                 notification_id       bigint(20)      not null                   comment '通知ID',
-                                 cc_type               char(1)         not null                   comment '抄送类型（1教职员工 2学校通讯录）',
-                                 cc_ids                text            not null                   comment '抄送对象ID列表(JSON格式)',
-                                 cc_names              text            not null                   comment '抄送对象名称列表(JSON格式)',
-                                 create_time           datetime                                   comment '创建时间',
-                                 primary key (cc_id)
-) engine=innodb auto_increment=1 comment = '通知抄送对象表';
+DROP TABLE IF EXISTS notification_cc;
+CREATE TABLE notification_cc (
+    cc_id               BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '抄送关系 ID',
+    notification_id     BIGINT(20)      NOT NULL                   COMMENT '通知 ID',
+    cc_type             CHAR(1)         NOT NULL                   COMMENT '抄送类型（1 教职员工 2 学校通讯录）',
+    cc_ids              TEXT            NOT NULL                   COMMENT '抄送对象 ID 列表 (JSON 格式)',
+    cc_names            TEXT            NOT NULL                   COMMENT '抄送对象名称列表 (JSON 格式)',
+    create_time         DATETIME                                   COMMENT '创建时间',
+    PRIMARY KEY (cc_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知抄送对象表';
 
 -- ----------------------------
 -- 问题表
 -- ----------------------------
-drop table if exists notification_question;
-create table notification_question (
-                                       question_id           bigint(20)      not null auto_increment    comment '问题 ID',
-                                       notification_id       bigint(20)      not null                   comment '通知 ID',
-                                       parent_question_id    bigint(20)      default null               comment '父问题 ID（用于分支问题，记录上一题的选项继续后指向此题）',
-                                       question_title        varchar(500)    not null                   comment '问题标题',
-                                       question_type         char(1)         not null                   comment '问题类型（1 单选 2 多选 3 填空 4 附件上传 5 逻辑表单）',
-                                       options               text            default null               comment '选项列表 (JSON 格式)
+DROP TABLE IF EXISTS notification_question;
+CREATE TABLE notification_question (
+    question_id         BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '问题 ID',
+    notification_id     BIGINT(20)      NOT NULL                   COMMENT '通知 ID',
+    parent_question_id  BIGINT(20)      DEFAULT NULL               COMMENT '父问题 ID（用于分支问题，记录上一题的选项继续后指向此题）',
+    question_title      VARCHAR(500)    NOT NULL                   COMMENT '问题标题',
+    question_type       CHAR(1)         NOT NULL                   COMMENT '问题类型（1 单选 2 多选 3 填空 4 附件上传 5 逻辑表单）',
+    options             TEXT            DEFAULT NULL               COMMENT '选项列表 (JSON 格式)
                                                                                 - 单选/多选：["选项 1","选项 2",...]
                                                                                 - 逻辑表单：存储在 content 字段中，包含完整的问卷结构和子问题列表',
-                                       is_required           char(1)         default '0'                comment '是否必答（0 否 1 是）',
-                                       sort_order            int(4)          default 0                  comment '排序',
-                                       logic_rules           text            default null               comment '跳转逻辑规则 (JSON 格式)',
-                                       fill_blanks           text            default null               comment '填空题的填空列表 (JSON 格式)',
-                                       correct_answers       text            default null               comment '填空题的正确答案 (JSON 格式)',
-                                       content               text            default null               comment '题目内容（富文本/HTML）',
-                                       create_time           datetime                                   comment '创建时间',
-                                       primary key (question_id)
-) engine=innodb auto_increment=1 comment = '通知问题表';
+    is_required         CHAR(1)         DEFAULT '0'                COMMENT '是否必答（0 否 1 是）',
+    sort_order          INT(4)          DEFAULT 0                  COMMENT '排序',
+    logic_rules         TEXT            DEFAULT NULL               COMMENT '跳转逻辑规则 (JSON 格式)',
+    fill_blanks         TEXT            DEFAULT NULL               COMMENT '填空题的填空列表 (JSON 格式)',
+    correct_answers     TEXT            DEFAULT NULL               COMMENT '填空题的正确答案 (JSON 格式)',
+    content             TEXT            DEFAULT NULL               COMMENT '题目内容（富文本/HTML）',
+    create_time         DATETIME                                   COMMENT '创建时间',
+    PRIMARY KEY (question_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知问题表';
 
 -- ----------------------------
 -- 用户通知阅读状态表
 -- ----------------------------
-drop table if exists user_notification_read;
-create table user_notification_read (
-                                        read_id               bigint(20)      not null auto_increment    comment '阅读记录ID',
-                                        notification_id       bigint(20)      not null                   comment '通知ID',
-                                        user_id               bigint(20)      not null                   comment '用户ID',
-                                        user_type             char(1)         not null                   comment '用户类型（1学生 2家长 3教师）',
-                                        is_read               char(1)         default '0'                comment '是否已读（0未读 1已读）',
-                                        read_time             datetime        default null               comment '阅读时间',
-                                        reply_status          char(1)         default '0'                comment '回复状态（0未回复 1已回复）',
-                                        reply_time            datetime        default null               comment '回复时间',
-                                        create_time           datetime                                   comment '创建时间',
-                                        primary key (read_id),
-                                        unique key uk_notification_user (notification_id, user_id)
-) engine=innodb auto_increment=1 comment = '用户通知阅读状态表';
+DROP TABLE IF EXISTS user_notification_read;
+CREATE TABLE user_notification_read (
+    read_id             BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '阅读记录 ID',
+    notification_id     BIGINT(20)      NOT NULL                   COMMENT '通知 ID',
+    user_id             BIGINT(20)      NOT NULL                   COMMENT '用户 ID',
+    user_type           CHAR(1)         NOT NULL                   COMMENT '用户类型（1 学生 2 家长 3 教师）',
+    is_read             CHAR(1)         DEFAULT '0'                COMMENT '是否已读（0 未读 1 已读）',
+    read_time           DATETIME        DEFAULT NULL               COMMENT '阅读时间',
+    reply_status        CHAR(1)         DEFAULT '0'                COMMENT '回复状态（0 未回复 1 已回复）',
+    reply_time          DATETIME        DEFAULT NULL               COMMENT '回复时间',
+    create_time         DATETIME                                   COMMENT '创建时间',
+    PRIMARY KEY (read_id),
+    UNIQUE KEY uk_notification_user (notification_id, user_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '用户通知阅读状态表';
 
 -- ----------------------------
 -- 回复答案表
 -- ----------------------------
-drop table if exists notification_answer;
-create table notification_answer (
-                                     answer_id             bigint(20)      not null auto_increment    comment '答案ID',
-                                     notification_id       bigint(20)      not null                   comment '通知ID',
-                                     question_id           bigint(20)      not null                   comment '问题ID',
-                                     user_id               bigint(20)      not null                   comment '用户ID',
-                                     user_type             char(1)         not null                   comment '用户类型（1学生 2家长 3教师）',
-                                     answer_content        text            default null               comment '答案内容',
-                                     attachment_urls       text            default null               comment '附件URL列表(JSON格式)',
-                                     create_time           datetime                                   comment '创建时间',
-                                     primary key (answer_id)
-) engine=innodb auto_increment=1 comment = '通知回答表';
-
--- ----------------------------
--- 家长学生关系表
--- ----------------------------
-drop table if exists sys_parent_student_relation;
-create table sys_parent_student_relation (
-  id                    bigint          not null auto_increment    comment '主键 ID',
-  parent_user_id        varchar(64)     not null                   comment '家长用户 ID',
-  student_user_id       varchar(64)     not null                   comment '学生用户 ID',
-  student_name          varchar(100)    default null               comment '学生姓名',
-  relation_desc         varchar(50)     default '家长'             comment '关系描述',
-  mobile                varchar(20)     default null               comment '家长手机号',
-  external_userid       varchar(64)     default null               comment '家长外部用户 ID',
-  create_time           datetime        default null               comment '创建时间',
-  update_time           datetime        default null               comment '更新时间',
-  primary key (id),
-  unique key uk_parent_student (parent_user_id, student_user_id)
-) engine=innodb auto_increment=1 comment='家长学生关系表';
-
--- ----------------------------
--- 部门家长绑定表
--- ----------------------------
-drop table if exists sys_department_parent_binding;
-create table sys_department_parent_binding (
-  id                    bigint          not null auto_increment    comment '主键 ID',
-  department_id         bigint          not null                   comment '部门 ID',
-  parent_user_id        varchar(64)     not null                   comment '家长用户 ID',
-  student_user_id       varchar(64)     default null               comment '学生用户 ID',
-  create_time           datetime        default null               comment '创建时间',
-  update_time           datetime        default null               comment '更新时间',
-  primary key (id)
-) engine=innodb auto_increment=1 comment='部门家长绑定表';
+DROP TABLE IF EXISTS notification_answer;
+CREATE TABLE notification_answer (
+    answer_id           BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '答案 ID',
+    notification_id     BIGINT(20)      NOT NULL                   COMMENT '通知 ID',
+    question_id         BIGINT(20)      NOT NULL                   COMMENT '问题 ID',
+    user_id             BIGINT(20)      NOT NULL                   COMMENT '用户 ID',
+    user_type           CHAR(1)         NOT NULL                   COMMENT '用户类型（1 学生 2 家长 3 教师）',
+    answer_content      TEXT            DEFAULT NULL               COMMENT '答案内容',
+    attachment_urls     TEXT            DEFAULT NULL               COMMENT '附件 URL 列表 (JSON 格式)',
+    create_time         DATETIME                                   COMMENT '创建时间',
+    PRIMARY KEY (answer_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知回答表';
 
 -- ----------------------------
 -- 初始化数据
 -- ----------------------------
 -- 示例通知数据
-insert into notification values(1, '关于春季运动会的通知', '各位家长同学，我校将于下周五举办春季运动会，请大家准时参加。', 1, '张老师', null, null, '1', '2026-03-15 23:59:59', 'admin', NOW(), '', null, '重要通知');
+INSERT INTO notification VALUES(
+    1, 
+    '关于春季运动会的通知', 
+    '各位家长同学，我校将于下周五举办春季运动会，请大家准时参加。', 
+    1, 
+    '张老师', 
+    NULL, 
+    NULL, 
+    '1', 
+    '2026-03-15 23:59:59', 
+    'admin', 
+    NOW(), 
+    '', 
+    NULL, 
+    '重要通知'
+);
 
 -- 示例接收对象数据
-insert into notification_receiver values(1, 1, '1', '[1,2,3]', '["一年级1班","一年级2班","二年级1班"]', NOW());
-insert into notification_receiver values(2, 1, '2', '[101,102,103]', '["张小明家长","李小红家长","王小华家长"]', NOW());
+INSERT INTO notification_receiver VALUES(1, 1, '1', '[1,2,3]', '["一年级 1 班","一年级 2 班","二年级 1 班"]', NOW());
+INSERT INTO notification_receiver VALUES(2, 1, '2', '[101,102,103]', '["张小明家长","李小红家长","王小华家长"]', NOW());
 
 -- 示例抄送对象数据
-insert into notification_cc values(1, 1, '1', '[201,202]', '["李主任","王副校长"]', NOW());
-insert into notification_cc values(2, 1, '2', '[301]', '["校长办公室"]', NOW());
+INSERT INTO notification_cc VALUES(1, 1, '1', '[201,202]', '["李主任","王副校长"]', NOW());
+INSERT INTO notification_cc VALUES(2, 1, '2', '[301]', '["校长办公室"]', NOW());
 
 -- 示例问题数据
 -- 单选题：第一个问题
-insert into notification_question values(1, 1, null, '您是否支持举办运动会？', '1', '["支持","不支持"]', '1', 1, null, null, null, null, NOW());
+INSERT INTO notification_question VALUES(1, 1, NULL, '您是否支持举办运动会？', '1', '["支持","不支持"]', '1', 1, NULL, NULL, NULL, NULL, NOW());
+
 -- 第二个问题：多选题
-insert into notification_question values(2, 1, null, '请选择您想参加的项目（可多选）', '2', '["跑步","跳远","投掷","其他"]', '0', 2, null, null, null, null, NOW());
+INSERT INTO notification_question VALUES(2, 1, NULL, '请选择您想参加的项目（可多选）', '2', '["跑步","跳远","投掷","其他"]', '0', 2, NULL, NULL, NULL, NULL, NOW());
+
 -- 第三个问题：填空题
-insert into notification_question values(3, 1, null, '请留下您的联系方式', '3', null, '1', 3, null, null, null, null, NOW());
+INSERT INTO notification_question VALUES(3, 1, NULL, '请留下您的联系方式', '3', NULL, '1', 3, NULL, NULL, NULL, NULL, NOW());
+
 -- ----------------------------
--- 学校部门表
-DROP TABLE IF EXISTS `wecom_school_department`;
-CREATE TABLE IF NOT EXISTS `wecom_school_department` (
-                                                       `id` bigint(20) NOT NULL COMMENT '部门 id',
-    `parent_id` int(11) DEFAULT NULL COMMENT '父部门 id',
-    `name` varchar(255) DEFAULT NULL COMMENT '部门名称',
-    `name_en` varchar(255) DEFAULT NULL COMMENT '部门英文名称',
-    `order_num` int(11) DEFAULT NULL COMMENT '在父部门中的次序值',
-    `department_leader` text DEFAULT NULL COMMENT '部门负责人的 UserID（JSON 数组字符串）',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+-- 部门表
+-- ----------------------------
+DROP TABLE IF EXISTS sys_department;
+CREATE TABLE sys_department (
+    id                  BIGINT          NOT NULL                        COMMENT '部门 id',
+    parent_id           INT             DEFAULT '0'                     COMMENT '父亲部门 id',
+    name                VARCHAR(255)    COLLATE utf8mb4_unicode_ci      NOT NULL COMMENT '部门名称',
+    type                INT             DEFAULT '0'                     COMMENT '部门类型：1-班级，2-年级，3-学段，4-校区，5-学校',
+    register_year       INT             DEFAULT NULL                    COMMENT '入学年份',
+    standard_grade      INT             DEFAULT NULL                    COMMENT '标准年级',
+    order_num           INT             DEFAULT '0'                     COMMENT '排序值',
+    is_graduated        TINYINT(1)      DEFAULT '0'                     COMMENT '是否毕业：1-是，0-否',
+    open_group_chat     TINYINT(1)      DEFAULT '0'                     COMMENT '是否开启班级群：1-是，0-否',
+    group_chat_id       VARCHAR(255)    COLLATE utf8mb4_unicode_ci      DEFAULT NULL COMMENT '班级群 id',
     PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='企業微信学校部门表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='部门表';
+
 -- ----------------------------
--- 学校部门成员表
-DROP TABLE IF EXISTS `wecom_school_department_member`;
-CREATE TABLE IF NOT EXISTS `wecom_school_department_member` (
-                                                              `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
-    `userid` varchar(100) NOT NULL COMMENT '成员 UserID',
-    `name` varchar(255) DEFAULT NULL COMMENT '成员名称',
-    `department_id` bigint(20) NOT NULL COMMENT '部门 ID',
-    `open_userid` varchar(100) DEFAULT NULL COMMENT '全局唯一 UserID',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='企業微信学校部门成员表';
+-- 家长学生关系表
 -- ----------------------------
+DROP TABLE IF EXISTS sys_parent_student_relation;
+CREATE TABLE sys_parent_student_relation (
+    id                  BIGINT          NOT NULL AUTO_INCREMENT    COMMENT '主键 ID',
+    parent_user_id      VARCHAR(64)     NOT NULL                   COMMENT '家长用户 ID',
+    student_user_id     VARCHAR(64)     NOT NULL                   COMMENT '学生用户 ID',
+    student_name        VARCHAR(100)    DEFAULT NULL               COMMENT '学生姓名',
+    relation_desc       VARCHAR(50)     DEFAULT '家长'             COMMENT '关系描述',
+    mobile              VARCHAR(20)     DEFAULT NULL               COMMENT '家长手机号',
+    external_userid     VARCHAR(64)     DEFAULT NULL               COMMENT '家长外部用户 ID',
+    create_time         DATETIME        DEFAULT NULL               COMMENT '创建时间',
+    update_time         DATETIME        DEFAULT NULL               COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_parent_student (parent_user_id, student_user_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='家长学生关系表';
+
+-- ----------------------------
+-- 部门家长绑定表
+-- ----------------------------
+DROP TABLE IF EXISTS sys_department_parent_binding;
+CREATE TABLE sys_department_parent_binding (
+    id                  BIGINT          NOT NULL AUTO_INCREMENT    COMMENT '主键 ID',
+    department_id       BIGINT          NOT NULL                   COMMENT '部门 ID',
+    parent_user_id      VARCHAR(64)     NOT NULL                   COMMENT '家长用户 ID',
+    student_user_id     VARCHAR(64)     DEFAULT NULL               COMMENT '学生用户 ID',
+    create_time         DATETIME        DEFAULT NULL               COMMENT '创建时间',
+    update_time         DATETIME        DEFAULT NULL               COMMENT '更新时间',
+    PRIMARY KEY (id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='部门家长绑定表';
+
+-- ----------------------------
+-- 課程班級表
+-- ----------------------------
+DROP TABLE IF EXISTS class_section;
+CREATE TABLE class_section (
+    id                  BIGINT          NOT NULL AUTO_INCREMENT,
+    class_section_dsedj VARCHAR(8)      NOT NULL,
+    class_section_sp    VARCHAR(8)      NOT NULL,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='課程班級';
+
+INSERT INTO class_section VALUES
+(1,'I 1_A_家長','K1A'),(2,'I 1_B_家長','K1B'),(3,'I 1_C_家長','K1C'),(4,'I 1_D_家長','K1D'),(5,'I 1_E_家長','K1E'),(6,'I 1_F_家長','K1F'),
+(7,'I 2_A_家長','K2A'),(8,'I 2_B_家長','K2B'),(9,'I 2_C_家長','K2C'),(10,'I 2_D_家長','K2D'),(11,'I 2_E_家長','K2E'),(12,'I 2_F_家長','K2F'),
+(13,'I 3_A_家長','K3A'),(14,'I 3_B_家長','K3B'),(15,'I 3_C_家長','K3C'),(16,'I 3_D_家長','K3D'),(17,'I 3_E_家長','K3E'),(18,'I 3_F_家長','K3F'),
+(19,'P1_A_家長','P1A'),(20,'P1_B_家長','P1B'),(21,'P1_C_家長','P1C'),(22,'P1_D_家長','P1D'),(23,'P1_E_家長','P1E'),(24,'P1_F_家長','P1F'),
+(25,'P2_A_家長','P2A'),(26,'P2_B_家長','P2B'),(27,'P2_C_家長','P2C'),(28,'P2_D_家長','P2D'),(29,'P2_E_家長','P2E'),(30,'P2_F_家長','P2F'),
+(31,'P3_A_家長','P3A'),(32,'P3_B_家長','P3B'),(33,'P3_C_家長','P3C'),(34,'P3_D_家長','P3D'),(35,'P3_E_家長','P3E'),(36,'P3_F_家長','P3F'),
+(37,'P4_A_家長','P4A'),(38,'P4_B_家長','P4B'),(39,'P4_C_家長','P4C'),(40,'P4_D_家長','P4D'),(41,'P4_E_家長','P4E'),(42,'P4_F_家長','P4F'),
+(43,'P5_A_家長','P5A'),(44,'P5_B_家長','P5B'),(45,'P5_C_家長','P5C'),(46,'P5_D_家長','P5D'),(47,'P5_E_家長','P5E'),(48,'P5_F_家長','P5F'),
+(49,'P6_A_家長','P6A'),(50,'P6_B_家長','P6B'),(51,'P6_C_家長','P6C'),(52,'P6_D_家長','P6D'),(53,'P6_E_家長','P6E'),(54,'P6_F_家長','P6F'),
+(55,'SG1_A_家長','F1A'),(56,'SG1_B_家長','F1B'),(57,'SG1_C_家長','F1C'),(58,'SG1_D_家長','F1D'),(59,'SG1_E_家長','F1E'),(60,'SG1_F_家長','F1F'),
+(61,'SG2_A_家長','F2A'),(62,'SG2_B_家長','F2B'),(63,'SG2_C_家長','F2C'),(64,'SG2_D_家長','F2D'),(65,'SG2_E_家長','F2E'),(66,'SG2_F_家長','F2F'),
+(67,'SG3_A_家長','F3A'),(68,'SG3_B_家長','F3B'),(69,'SG3_C_家長','F3C'),(70,'SG3_D_家長','F3D'),(71,'SG3_E_家長','F3E'),(72,'SG3_F_家長','F3F'),
+(73,'SC1_A_家長','F4A'),(74,'SC1_B_家長','F4B'),(75,'SC1_C_家長','F4C'),(76,'SC1_D_家長','F4D'),(77,'SC1_E_家長','F4E'),(78,'SC1_F_家長','F4F'),
+(79,'SC2_A_家長','F5A'),(80,'SC2_B_家長','F5B'),(81,'SC2_C_家長','F5C'),(82,'SC2_D_家長','F5D'),(83,'SC2_E_家長','F5E'),(84,'SC2_F_家長','F5F'),
+(85,'SC3_A_家長','F6A'),(86,'SC3_B_家長','F6B'),(87,'SC3_C_家長','F6C'),(88,'SC3_D_家長','F6D'),(89,'SC3_E_家長','F6E'),(90,'SC3_F_家長','F6F');
+
+-- ----------------------------
+-- 微信学校部门表
+-- ----------------------------
+DROP TABLE IF EXISTS wecom_school_department;
+CREATE TABLE wecom_school_department (
+    id                  BIGINT(20)      NOT NULL                        COMMENT '部门 id',
+    parent_id           INT(11)         DEFAULT NULL                    COMMENT '父部门 id',
+    name                VARCHAR(255)    DEFAULT NULL                    COMMENT '部门名称',
+    name_en             VARCHAR(255)    DEFAULT NULL                    COMMENT '部门英文名称',
+    order_num           INT(11)         DEFAULT NULL                    COMMENT '在父部门中的次序值',
+    department_leader   TEXT            DEFAULT NULL                    COMMENT '部门负责人的 UserID（JSON 数组字符串）',
+    create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP       COMMENT '创建时间',
+    update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='企業微信学校部门表';
+
+-- ----------------------------
+-- 微信学校部门成员表
+-- ----------------------------
+DROP TABLE IF EXISTS wecom_school_department_member;
+CREATE TABLE wecom_school_department_member (
+    id                  BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '主键 ID',
+    userid              VARCHAR(100)    NOT NULL                   COMMENT '成员 UserID',
+    name                VARCHAR(255)    DEFAULT NULL               COMMENT '成员名称',
+    department_id       BIGINT(20)      NOT NULL                   COMMENT '部门 ID',
+    open_userid         VARCHAR(100)    DEFAULT NULL               COMMENT '全局唯一 UserID',
+    create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP  COMMENT '创建时间',
+    update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='企業微信学校部门成员表';

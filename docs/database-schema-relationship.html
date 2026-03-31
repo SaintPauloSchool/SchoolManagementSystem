@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家校通知系统 - 数据库表结构关系图</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .mermaid {
+            background: #fff;
+            padding: 20px;
+            overflow-x: auto;
+        }
+        .info {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e3f2fd;
+            border-radius: 5px;
+        }
+        .info h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .info ul {
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 家校通知系统 - 数据库表结构关系图</h1>
+        <p class="subtitle">Database Schema Relationship Diagram</p>
+        
+        <div class="mermaid">
+erDiagram
+    notification ||--o{ notification_receiver : "发布通知给"
+    notification ||--o{ notification_cc : "抄送给"
+    notification ||--o{ notification_question : "包含问题"
+    notification ||--o{ user_notification_read : "用户查看"
+    notification ||--o{ notification_answer : "收集答案"
+    
+    notification_question ||--o{ notification_answer : "回答问题"
+    notification_question ||--o| notification_question : "父子问题关联"
+    
+    sys_department ||--o{ sys_department_parent_binding : "绑定家长"
+    sys_department_parent_binding }|--|| sys_parent_student_relation : "通过学生 ID 关联"
+    sys_parent_student_relation }|--|| sys_department_parent_binding : "通过家长 ID 关联"
+    
+    wecom_school_department ||--o{ wecom_school_department_member : "包含成员"
+
+    notification {
+        bigint notification_id PK "通知 ID"
+        varchar title "通知标题"
+        text content "通知正文"
+        bigint sender_id "发送人 ID"
+        varchar sender_name "发送人姓名"
+        varchar jump_url "跳转链接"
+        text attachment_urls "附件 URLs"
+        char status "状态 0 草稿 1 发布 2 撤回"
+        datetime reply_deadline "回复截止时间"
+        datetime create_time "创建时间"
+    }
+    
+    notification_receiver {
+        bigint receiver_id PK "接收关系 ID"
+        bigint notification_id FK "通知 ID"
+        char receive_type "接收类型 1 班级 2 学生/家长"
+        text receive_ids "接收对象 ID 列表"
+        text receive_names "接收对象名称列表"
+        datetime create_time "创建时间"
+    }
+    
+    notification_cc {
+        bigint cc_id PK "抄送关系 ID"
+        bigint notification_id FK "通知 ID"
+        char cc_type "抄送类型 1 教职工 2 通讯录"
+        text cc_ids "抄送对象 ID 列表"
+        text cc_names "抄送对象名称列表"
+        datetime create_time "创建时间"
+    }
+    
+    notification_question {
+        bigint question_id PK "问题 ID"
+        bigint notification_id FK "通知 ID"
+        bigint parent_question_id FK "父问题 ID"
+        varchar question_title "问题标题"
+        char question_type "问题类型 1 单选 2 多选 3 填空 4 附件 5 逻辑表单"
+        text options "选项列表 JSON"
+        char is_required "是否必答 0 否 1 是"
+        int sort_order "排序"
+        text logic_rules "跳转逻辑"
+        datetime create_time "创建时间"
+    }
+    
+    user_notification_read {
+        bigint read_id PK "阅读记录 ID"
+        bigint notification_id FK "通知 ID"
+        bigint user_id "用户 ID"
+        char user_type "用户类型 1 学生 2 家长 3 教师"
+        char is_read "是否已读 0 未读 1 已读"
+        datetime read_time "阅读时间"
+        char reply_status "回复状态 0 未回复 1 已回复"
+        datetime reply_time "回复时间"
+    }
+    
+    notification_answer {
+        bigint answer_id PK "答案 ID"
+        bigint notification_id FK "通知 ID"
+        bigint question_id FK "问题 ID"
+        bigint user_id "用户 ID"
+        char user_type "用户类型 1 学生 2 家长 3 教师"
+        text answer_content "答案内容"
+        text attachment_urls "附件 URLs"
+        datetime create_time "创建时间"
+    }
+    
+    sys_parent_student_relation {
+        bigint id PK "主键 ID"
+        varchar parent_user_id "家长用户 ID"
+        varchar student_user_id "学生用户 ID"
+        varchar student_name "学生姓名"
+        varchar relation_desc "关系描述"
+        varchar mobile "家长手机号"
+        datetime create_time "创建时间"
+    }
+    
+    sys_department {
+        bigint id PK "部门 ID"
+        int parent_id "父部门 ID"
+        varchar name "部门名称"
+        int type "部门类型 1 班级 2 年级 3 学段 4 校区 5 学校"
+        int register_year "入学年份"
+        int standard_grade "标准年级"
+        int order_num "排序值"
+        tinyint is_graduated "是否毕业 1 是 0 否"
+        tinyint open_group_chat "是否开启班级群 1 是 0 否"
+        varchar group_chat_id "班级群 ID"
+    }
+    
+    sys_department_parent_binding {
+        bigint id PK "主键 ID"
+        bigint department_id FK "部门 ID"
+        varchar parent_user_id "家长用户 ID"
+        varchar student_user_id "学生用户 ID"
+        datetime create_time "创建时间"
+        datetime update_time "更新时间"
+    }
+    
+    wecom_school_department {
+        bigint id PK "部门 ID"
+        int parent_id "父部门 ID"
+        varchar name "部门名称"
+        varchar name_en "部门英文名称"
+        int order_num "次序值"
+        text department_leader "部门负责人"
+        datetime create_time "创建时间"
+    }
+    
+    wecom_school_department_member {
+        bigint id PK "主键 ID"
+        varchar userid "成员 UserID"
+        varchar name "成员名称"
+        bigint department_id FK "部门 ID"
+        varchar open_userid "全局唯一 UserID"
+        datetime create_time "创建时间"
+    }
+    
+    class_log {
+        varchar id PK "主键 ID"
+        varchar student_class "班级"
+        varchar teacher "教师"
+        varchar course "课程"
+        varchar course_type "课程类型"
+        text content "内容"
+        varchar start_date "开始日期"
+        varchar end_date "结束日期"
+        datetime update_date "更新日期"
+    }
+    
+    class_section {
+        bigint id PK "主键 ID"
+        varchar class_section_dsedj "班级 section dsedj"
+        varchar class_section_sp "班级 section sp"
+    }
+        </div>
+        
+        <div class="info">
+            <h3>📋 图例说明</h3>
+            <ul>
+                <li><strong>PK</strong>: 主键 (Primary Key)</li>
+                <li><strong>FK</strong>: 外键 (Foreign Key)</li>
+                <li><strong>||--o{</strong>: 一对多关系</li>
+                <li><strong>||--o|</strong>: 一对一或零关系</li>
+                <li><strong>}|--||</strong>: 多对一关系</li>
+            </ul>
+        </div>
+        
+        <div class="info" style="background: #e8f5e9; margin-top: 20px;">
+            <h3 style="color: #388e3c;">💡 核心业务流程</h3>
+            <ol>
+                <li><strong>通知发布</strong>: 创建通知 → 设置接收人 → 添加问题 → 发布</li>
+                <li><strong>通知接收</strong>: 用户收到 → 记录阅读状态 → 查看问题 → 提交答案</li>
+                <li><strong>关系链</strong>: 企业微信部门 → 家长学生关系 → 通知接收对象</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            er: {
+                useMaxWidth: false
+            }
+        });
+    </script>
+</body>
+</html>
