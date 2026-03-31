@@ -167,7 +167,7 @@ export default {
       try {
         // 调用学校部门信息管理接口获取数据（仅部门，不含人员）
         const response = await request({
-          url: '/system/schoolDepartment/tree',
+          url: '/wecomSchoolDepartment/tree',
           method: 'get'
         })
         if (response.code === 200 || response.code === 0) {

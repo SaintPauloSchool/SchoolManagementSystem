@@ -1,14 +1,14 @@
 package com.sp.system.service;
 
-import com.sp.system.entity.SysSchoolDepartment;
+import com.sp.system.entity.WecomSchoolDepartment;
 
 import java.util.List;
 
 /**
- * 学校部门 Service 接口
+ * wecom学校部门 Service 接口
  *
  */
-public interface ISysSchoolDepartmentService {
+public interface IWecomSchoolDepartmentService {
 
     /**
      * 获取学校部门树形结构（带成员，用于教职员工选择器）
@@ -16,7 +16,7 @@ public interface ISysSchoolDepartmentService {
      *
      * @return 带成员的部门树形结构
      */
-    List<SysSchoolDepartment> getSchoolDepartmentTreeWithMembers();
+    List<WecomSchoolDepartment> getWecomSchoolDepartmentTreeWithMembers();
 
     /**
      * 获取学校部门树形结构（仅部门，不含人员）
@@ -24,5 +24,5 @@ public interface ISysSchoolDepartmentService {
      *
      * @return 仅部门的树形结构
      */
-    List<SysSchoolDepartment> getSchoolDepartmentTree();
+    List<WecomSchoolDepartment> getWecomSchoolDepartmentTree();
 }

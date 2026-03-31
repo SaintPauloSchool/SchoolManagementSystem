@@ -3,8 +3,8 @@ package com.sp.web.controller;
 import com.sp.common.annotation.Anonymous;
 import com.sp.common.core.controller.BaseController;
 import com.sp.common.core.domain.AjaxResult;
-import com.sp.system.entity.SysSchoolDepartment;
-import com.sp.system.service.ISysSchoolDepartmentService;
+import com.sp.system.entity.WecomSchoolDepartment;
+import com.sp.system.service.IWecomSchoolDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,15 +13,15 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * 学校部门信息管理
+ * WeCom学校部门信息管理
  *
  */
 @RestController
-@RequestMapping("/system/schoolDepartment")
-public class SchoolDepartmentController extends BaseController {
+@RequestMapping("/wecomSchoolDepartment")
+public class WecomSchoolDepartmentController extends BaseController {
 
     @Autowired
-    private ISysSchoolDepartmentService schoolDepartmentService;
+    private IWecomSchoolDepartmentService wecomSchoolDepartmentService;
 
     /**
      * 获取学校部门树形结构（带成员，用于教职员工选择器）
@@ -29,7 +29,7 @@ public class SchoolDepartmentController extends BaseController {
     @Anonymous
     @GetMapping("/treeWithMembers")
     public AjaxResult treeWithMembers() {
-        List<SysSchoolDepartment> tree = schoolDepartmentService.getSchoolDepartmentTreeWithMembers();
+        List<WecomSchoolDepartment> tree = wecomSchoolDepartmentService.getWecomSchoolDepartmentTreeWithMembers();
         return AjaxResult.success(tree);
     }
 
@@ -39,7 +39,7 @@ public class SchoolDepartmentController extends BaseController {
     @Anonymous
     @GetMapping("/tree")
     public AjaxResult tree() {
-        List<SysSchoolDepartment> tree = schoolDepartmentService.getSchoolDepartmentTree();
+        List<WecomSchoolDepartment> tree = wecomSchoolDepartmentService.getWecomSchoolDepartmentTree();
         return AjaxResult.success(tree);
     }
 }

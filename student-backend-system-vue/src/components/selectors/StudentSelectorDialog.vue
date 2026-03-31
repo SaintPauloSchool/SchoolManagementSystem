@@ -12,7 +12,7 @@
       <div class="left-panel">
         <div class="panel-title">
           <el-icon><School /></el-icon>
-          <span>組織架構</span>
+          <span>WeCom家校通訊錄</span>
         </div>
         
         <div class="tree-container">

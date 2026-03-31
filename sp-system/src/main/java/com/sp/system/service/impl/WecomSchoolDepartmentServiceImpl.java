@@ -1,10 +1,10 @@
 package com.sp.system.service.impl;
 
-import com.sp.system.entity.SysSchoolDepartment;
-import com.sp.system.entity.SysSchoolDepartmentMember;
-import com.sp.system.mapper.SysSchoolDepartmentMapper;
-import com.sp.system.mapper.SysSchoolDepartmentMemberMapper;
-import com.sp.system.service.ISysSchoolDepartmentService;
+import com.sp.system.entity.WecomSchoolDepartment;
+import com.sp.system.entity.WecomSchoolDepartmentMember;
+import com.sp.system.mapper.WecomSchoolDepartmentMapper;
+import com.sp.system.mapper.WecomSchoolDepartmentMemberMapper;
+import com.sp.system.service.IWecomSchoolDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,24 +12,24 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 学校部门 Service 实现类
+ * wecom学校部门 Service 实现类
  *
  */
 @Service
-public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentService {
+public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentService {
 
     @Autowired
-    private SysSchoolDepartmentMapper schoolDepartmentMapper;
+    private WecomSchoolDepartmentMapper schoolDepartmentMapper;
 
     @Autowired
-    private SysSchoolDepartmentMemberMapper schoolDepartmentMemberMapper;
+    private WecomSchoolDepartmentMemberMapper schoolDepartmentMemberMapper;
 
     /**
      * 获取学校部门树形结构（带成员）
      */
     @Override
-    public List<SysSchoolDepartment> getSchoolDepartmentTreeWithMembers() {
-        List<SysSchoolDepartment> rootNodes = buildDepartmentTree();
+    public List<WecomSchoolDepartment> getWecomSchoolDepartmentTreeWithMembers() {
+        List<WecomSchoolDepartment> rootNodes = buildDepartmentTree();
         loadMembersForDepartments(rootNodes);
         return rootNodes;
     }
@@ -38,26 +38,26 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
      * 获取学校部门树形结构（仅部门，不含人员）
      */
     @Override
-    public List<SysSchoolDepartment> getSchoolDepartmentTree() {
+    public List<WecomSchoolDepartment> getWecomSchoolDepartmentTree() {
         return buildDepartmentTree();
     }
 
     /**
      * 构建部门树形结构
      */
-    private List<SysSchoolDepartment> buildDepartmentTree() {
+    private List<WecomSchoolDepartment> buildDepartmentTree() {
         // 1. 查询所有部门数据
-        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll();
+        List<WecomSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll();
 
         if (allDepartments == null || allDepartments.isEmpty()) {
             return Collections.emptyList();
         }
 
         // 2. 构建父子关系映射
-        Map<Long, List<SysSchoolDepartment>> childrenMap = buildChildrenMap(allDepartments);
+        Map<Long, List<WecomSchoolDepartment>> childrenMap = buildChildrenMap(allDepartments);
 
         // 3. 找到根节点（parentId 为 null 或 0）
-        List<SysSchoolDepartment> rootNodes = getRootNodes(allDepartments);
+        List<WecomSchoolDepartment> rootNodes = getRootNodes(allDepartments);
 
         // 4. 递归构建树形结构
         buildTree(rootNodes, childrenMap);
@@ -68,7 +68,7 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
     /**
      * 构建父子关系映射
      */
-    private Map<Long, List<SysSchoolDepartment>> buildChildrenMap(List<SysSchoolDepartment> allDepartments) {
+    private Map<Long, List<WecomSchoolDepartment>> buildChildrenMap(List<WecomSchoolDepartment> allDepartments) {
         return allDepartments.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(
@@ -79,7 +79,7 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
     /**
      * 获取根节点列表
      */
-    private List<SysSchoolDepartment> getRootNodes(List<SysSchoolDepartment> allDepartments) {
+    private List<WecomSchoolDepartment> getRootNodes(List<WecomSchoolDepartment> allDepartments) {
         return allDepartments.stream()
                 .filter(dept -> Optional.ofNullable(dept.getParentId()).orElse((Integer) 0) == 0)
                 .collect(Collectors.toList());
@@ -88,12 +88,12 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
     /**
      * 递归构建树形结构
      */
-    private void buildTree(List<SysSchoolDepartment> nodes, Map<Long, List<SysSchoolDepartment>> childrenMap) {
+    private void buildTree(List<WecomSchoolDepartment> nodes, Map<Long, List<WecomSchoolDepartment>> childrenMap) {
         nodes.stream()
                 .filter(Objects::nonNull)
                 .filter(node -> node.getId() != null)
                 .forEach(node -> {
-                    List<SysSchoolDepartment> children = childrenMap.get(node.getId());
+                    List<WecomSchoolDepartment> children = childrenMap.get(node.getId());
                     if (children != null && !children.isEmpty()) {
                         node.setChildren(children);
                         buildTree(children, childrenMap);
@@ -104,7 +104,7 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
     /**
      * 为部门加载成员数据
      */
-    private void loadMembersForDepartments(List<SysSchoolDepartment> nodes) {
+    private void loadMembersForDepartments(List<WecomSchoolDepartment> nodes) {
         if (nodes == null || nodes.isEmpty()) {
             return;
         }
@@ -112,7 +112,7 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
         // 收集所有需要查询成员的部门 ID
         List<Long> departmentIds = nodes.stream()
                 .filter(this::isValidNonLeafDepartment)
-                .map(SysSchoolDepartment::getId)
+                .map(WecomSchoolDepartment::getId)
                 .distinct()
                 .collect(Collectors.toList());
 
@@ -121,7 +121,7 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
         }
 
         // 批量查询所有部门的成员并按部门 ID 分组
-        Map<Long, List<SysSchoolDepartmentMember>> membersMap = queryMembersByDepartmentIds(departmentIds);
+        Map<Long, List<WecomSchoolDepartmentMember>> membersMap = queryMembersByDepartmentIds(departmentIds);
 
         // 为每个部门分配成员数据并递归处理子部门
         nodes.stream()
@@ -134,16 +134,16 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
     /**
      * 处理部门成员数据
      */
-    private void processDepartmentMembers(SysSchoolDepartment dept, Map<Long, List<SysSchoolDepartmentMember>> membersMap) {
+    private void processDepartmentMembers(WecomSchoolDepartment dept, Map<Long, List<WecomSchoolDepartmentMember>> membersMap) {
         // 获取部门成员
-        List<SysSchoolDepartmentMember> members = membersMap.get(dept.getId());
+        List<WecomSchoolDepartmentMember> members = membersMap.get(dept.getId());
 
         if (members == null || members.isEmpty()) {
             return;
         }
 
         // 转换成员为节点并添加到 children
-        List<SysSchoolDepartment> memberNodes = members.stream()
+        List<WecomSchoolDepartment> memberNodes = members.stream()
                 .filter(Objects::nonNull)
                 .map(member -> convertToMemberNode(member, dept.getId()))
                 .collect(Collectors.toList());
@@ -158,7 +158,7 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
 
         // 递归处理子部门
         if (dept.getChildren() != null) {
-            List<SysSchoolDepartment> childDepartments = dept.getChildren().stream()
+            List<WecomSchoolDepartment> childDepartments = dept.getChildren().stream()
                     .filter(child -> !Boolean.TRUE.equals(child.getIsLeaf()))
                     .collect(Collectors.toList());
 
@@ -171,7 +171,7 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
     /**
      * 判断是否为有效的非叶子部门节点
      */
-    private boolean isValidNonLeafDepartment(SysSchoolDepartment dept) {
+    private boolean isValidNonLeafDepartment(WecomSchoolDepartment dept) {
         return dept != null
                 && dept.getId() != null
                 && !Boolean.TRUE.equals(dept.getIsLeaf());
@@ -180,20 +180,20 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
     /**
      * 批量查询部门成员
      */
-    private Map<Long, List<SysSchoolDepartmentMember>> queryMembersByDepartmentIds(List<Long> departmentIds) {
+    private Map<Long, List<WecomSchoolDepartmentMember>> queryMembersByDepartmentIds(List<Long> departmentIds) {
         // 查询所有部门成员
-        List<SysSchoolDepartmentMember> allMembers = schoolDepartmentMemberMapper.selectMembersByDepartmentIds(departmentIds);
+        List<WecomSchoolDepartmentMember> allMembers = schoolDepartmentMemberMapper.selectMembersByDepartmentIds(departmentIds);
         // 按部门 ID 分组
         return allMembers.stream()
                 .filter(Objects::nonNull)
-                .collect(Collectors.groupingBy(SysSchoolDepartmentMember::getDepartmentId));
+                .collect(Collectors.groupingBy(WecomSchoolDepartmentMember::getDepartmentId));
     }
 
     /**
      * 将成员转换为部门节点（用于树形展示）
      */
-    private SysSchoolDepartment convertToMemberNode(SysSchoolDepartmentMember member, Long currentDepartmentId) {
-        SysSchoolDepartment node = new SysSchoolDepartment();
+    private WecomSchoolDepartment convertToMemberNode(WecomSchoolDepartmentMember member, Long currentDepartmentId) {
+        WecomSchoolDepartment node = new WecomSchoolDepartment();
         node.setId(member.getId());
         node.setName(member.getName());
         node.setParentId(currentDepartmentId.intValue());

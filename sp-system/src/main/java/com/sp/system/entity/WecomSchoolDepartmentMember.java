@@ -7,10 +7,10 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 学校部门成员对象 sys_school_department_member
+ * wecom学校部门成员对象 wecom_school_department_member
  *
  */
-public class SysSchoolDepartmentMember implements Serializable {
+public class WecomSchoolDepartmentMember implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /** 主键 ID */

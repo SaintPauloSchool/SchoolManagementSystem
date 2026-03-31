@@ -8,10 +8,10 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 学校部门对象 sys_school_department
+ * wecom学校部门对象 wecom_school_department
  *
  */
-public class SysSchoolDepartment implements Serializable {
+public class WecomSchoolDepartment implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /** 部门 id */
@@ -39,7 +39,7 @@ public class SysSchoolDepartment implements Serializable {
     private Date updateTime;
 
     /** 子部门/成员列表（树形结构用） */
-    private List<SysSchoolDepartment> children;
+    private List<WecomSchoolDepartment> children;
 
     /** 是否为叶子节点（用于树形选择器） */
     private Boolean isLeaf;
@@ -111,11 +111,11 @@ public class SysSchoolDepartment implements Serializable {
         this.updateTime = updateTime;
     }
 
-    public java.util.List<SysSchoolDepartment> getChildren() {
+    public java.util.List<WecomSchoolDepartment> getChildren() {
         return children;
     }
 
-    public void setChildren(java.util.List<SysSchoolDepartment> children) {
+    public void setChildren(java.util.List<WecomSchoolDepartment> children) {
         this.children = children;
     }
 

@@ -183,7 +183,7 @@ export default {
       this.loading = true
       try {
         const response = await request({
-          url: '/system/schoolDepartment/treeWithMembers',
+          url: '/wecomSchoolDepartment/treeWithMembers',
           method: 'get'
         })
         if (response.code === 200 || response.code === 0) {
