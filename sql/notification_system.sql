@@ -270,3 +270,51 @@ CREATE TABLE wecom_school_department_member (
     update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='企業微信学校部门成员表';
+-- ----------------------------
+-- token表
+-- ----------------------------
+CREATE TABLE `sys_token` (
+     `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+     `user_id` bigint NOT NULL COMMENT '用户ID',
+     `parent_user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+     `token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Token值',
+     `expire_time` datetime NOT NULL COMMENT '过期时间',
+     `create_time` datetime NOT NULL COMMENT '创建时间',
+     `update_time` datetime NOT NULL COMMENT '更新时间',
+     PRIMARY KEY (`id`),
+     UNIQUE KEY `token_value` (`token`),
+     KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=934 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Token表'
+-- ----------------------------
+-- 系統学校部门表
+-- ----------------------------
+DROP TABLE IF EXISTS sys_school_department;
+CREATE TABLE sys_school_department (
+   id                  BIGINT(20)      NOT NULL                        COMMENT '部门 id',
+   parent_id           INT(11)         DEFAULT NULL                    COMMENT '父部门 id',
+   name                VARCHAR(255)    DEFAULT NULL                    COMMENT '部门名称',
+   name_en             VARCHAR(255)    DEFAULT NULL                    COMMENT '部门英文名称',
+   order_num           INT(11)         DEFAULT NULL                    COMMENT '在父部门中的次序值',
+   department_leader   TEXT            DEFAULT NULL                    COMMENT '部门负责人的 UserID（JSON 数组字符串）',
+   type                TINYINT(1)      DEFAULT 1                       COMMENT '类型：1-学校部门通讯录，2-家校通讯录',
+   create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP       COMMENT '创建时间',
+   update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+   PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系統学校部门表';
+
+-- ----------------------------
+-- 系統学校部门成员表
+-- ----------------------------
+
+DROP TABLE IF EXISTS sys_school_department_member;
+CREATE TABLE sys_school_department_member (
+  id                  BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '主键 ID',
+  userid              VARCHAR(100)    NOT NULL                   COMMENT '成员 UserID',
+  name                VARCHAR(255)    DEFAULT NULL               COMMENT '成员名称',
+  department_id       BIGINT(20)      NOT NULL                   COMMENT '部门 ID',
+  open_userid         VARCHAR(100)    DEFAULT NULL               COMMENT '全局唯一 UserID',
+  type                TINYINT(1)      DEFAULT 1                  COMMENT '类型：1-学校部门通讯录，2-家校通讯录',
+  create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP  COMMENT '创建时间',
+  update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系統学校部门成员表';

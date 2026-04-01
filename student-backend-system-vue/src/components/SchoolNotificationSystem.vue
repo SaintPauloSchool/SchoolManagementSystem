@@ -40,6 +40,29 @@
           </ul>
         </div>
         
+        <!-- 通訊錄管理 -->
+        <div class="nav-section">
+          <div class="nav-section-title" @click="toggleSection('contact')">
+            <el-icon><User /></el-icon>
+            <span v-show="!isCollapsed">通訊錄管理</span>
+            <el-icon v-show="!isCollapsed" class="expand-icon">
+              <ArrowRight v-if="!expandedSections.contact" />
+              <ArrowDown v-else />
+            </el-icon>
+          </div>
+          
+          <ul v-show="!isCollapsed && expandedSections.contact" class="nav-list nav-sublist">
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '2-1' }"
+              @click="handleMenuSelect('2-1')"
+            >
+              <el-icon class="nav-icon"><OfficeBuilding /></el-icon>
+              <span class="nav-text">學校部門通訊錄</span>
+            </li>
+          </ul>
+        </div>
+        
         <!-- 占位大类 1 -->
         <div class="nav-section">
           <div class="nav-section-title" @click="toggleSection('system')">
@@ -117,6 +140,11 @@
             @refresh="loadMySendNotifications"
             type="mySend"
           />
+          
+          <!-- 學校部門通訊錄 -->
+          <SchoolDepartment
+            v-else-if="activeMenu === '2-1'"
+          />
         </transition>
       </div>
     </main>
@@ -127,16 +155,18 @@
 </template>
 
 <script>
-import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown } from '@element-plus/icons-vue'
+import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
+import SchoolDepartment from './SchoolDepartment.vue'
 import request from '@/utils/request'
 
 export default {
   name: 'SchoolNotificationSystem',
   components: {
     NotificationList,
-    PublishNotification
+    PublishNotification,
+    SchoolDepartment
   },
   data() {
     return {
@@ -147,7 +177,10 @@ export default {
       isMobileMenuOpen: false,
       isMobile: false,
       expandedSections: {
-        homeSchool: true
+        homeSchool: true,
+        contact: false,
+        system: false,
+        report: false
       },
       menuItems: [
         { index: '1-1', title: '發布通知', icon: 'Edit' },
@@ -202,6 +235,8 @@ export default {
         this.loadCcToMeNotifications()
       } else if (index === '1-3') {
         this.loadMySendNotifications()
+      } else if (index === '2-1') {
+        // 學校部門通訊錄，无需加载数据
       }
     },
 

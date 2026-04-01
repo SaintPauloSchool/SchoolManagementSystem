@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.system.mapper.SysSchoolDepartmentMapper">
+
+    <resultMap type="com.sp.system.entity.SysSchoolDepartment" id="SysSchoolDepartmentResult">
+        <result property="id" column="id"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="name" column="name"/>
+        <result property="nameEn" column="name_en"/>
+        <result property="orderNum" column="order_num"/>
+        <result property="departmentLeader" column="department_leader"/>
+        <result property="type" column="type"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <resultMap type="com.sp.system.entity.SysSchoolDepartmentMember" id="SysSchoolDepartmentMemberResult">
+        <result property="id" column="id"/>
+        <result property="userid" column="userid"/>
+        <result property="name" column="name"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="openUserid" column="open_userid"/>
+        <result property="type" column="type"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- 查询所有部门 -->
+    <select id="selectAll" resultMap="SysSchoolDepartmentResult">
+        SELECT id, parent_id, name, name_en, order_num, 
+               department_leader, type, create_time, update_time
+        FROM sys_school_department
+        WHERE type = 1
+        ORDER BY order_num ASC
+    </select>
+
+    <!-- 根据 ID 查询部门详情 -->
+    <select id="selectById" parameterType="Long" resultMap="SysSchoolDepartmentResult">
+        SELECT id, parent_id, name, name_en, order_num, 
+               department_leader, type, create_time, update_time
+        FROM sys_school_department
+        WHERE id = #{id}
+    </select>
+
+    <!-- 插入部门信息 -->
+    <insert id="insert" parameterType="com.sp.system.entity.SysSchoolDepartment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_school_department (
+            parent_id,
+            name,
+            name_en,
+            order_num,
+            department_leader,
+            type,
+            create_time,
+            update_time
+        ) VALUES (
+            #{parentId},
+            #{name},
+            #{nameEn},
+            #{orderNum},
+            #{departmentLeader},
+            #{type},
+            SYSDATE(),
+            SYSDATE()
+        )
+    </insert>
+
+    <!-- 更新部门信息 -->
+    <update id="update" parameterType="com.sp.system.entity.SysSchoolDepartment">
+        UPDATE sys_school_department
+        <set>
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="nameEn != null and nameEn != ''">name_en = #{nameEn},</if>
+            <if test="orderNum != null">order_num = #{orderNum},</if>
+            <if test="departmentLeader != null">department_leader = #{departmentLeader},</if>
+            <if test="type != null">type = #{type},</if>
+            update_time = SYSDATE()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除部门信息 -->
+    <delete id="deleteById" parameterType="Long">
+        DELETE FROM sys_school_department WHERE id = #{id}
+    </delete>
+
+    <!-- 批量查询多个部门的成员 -->
+    <select id="selectMembersByDepartmentIds" resultMap="SysSchoolDepartmentMemberResult">
+        SELECT id, userid, name, department_id, open_userid, type, create_time, update_time
+        FROM sys_school_department_member
+        WHERE department_id IN
+        <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
+            #{departmentId}
+        </foreach>
+        ORDER BY department_id ASC, name ASC
+    </select>
+
+    <!-- 插入部门成员信息 -->
+    <insert id="insertMember" parameterType="com.sp.system.entity.SysSchoolDepartmentMember" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_school_department_member (
+            userid,
+            name,
+            department_id,
+            open_userid,
+            type,
+            create_time,
+            update_time
+        ) VALUES (
+            #{userid},
+            #{name},
+            #{departmentId},
+            #{openUserid},
+            #{type},
+            SYSDATE(),
+            SYSDATE()
+        )
+    </insert>
+
+    <!-- 更新部门成员信息 -->
+    <update id="updateMember" parameterType="com.sp.system.entity.SysSchoolDepartmentMember">
+        UPDATE sys_school_department_member
+        <set>
+            <if test="userid != null and userid != ''">userid = #{userid},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="departmentId != null">department_id = #{departmentId},</if>
+            <if test="openUserid != null and openUserid != ''">open_userid = #{openUserid},</if>
+            <if test="type != null">type = #{type},</if>
+            update_time = SYSDATE()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除部门成员信息 -->
+    <delete id="deleteMemberById" parameterType="Long">
+        DELETE FROM sys_school_department_member WHERE id = #{id}
+    </delete>
+
+    <!-- 根据部门 ID 删除所有成员 -->
+    <delete id="deleteMembersByDepartmentId" parameterType="Long">
+        DELETE FROM sys_school_department_member WHERE department_id = #{departmentId}
+    </delete>
+
+</mapper>
