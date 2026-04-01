@@ -73,4 +73,54 @@ public class SysSchoolDepartmentController extends BaseController {
             return AjaxResult.error("刪除失敗，部門不存在或已被刪除");
         }
     }
+
+    /**
+     * 批量添加部门成员
+     */
+    @Anonymous
+    @PostMapping("/members/batch")
+    public AjaxResult batchAddMembers(@RequestBody List<SysSchoolDepartmentMember> members) {
+        if (members == null || members.isEmpty()) {
+            return AjaxResult.error("成員列表不能為空");
+        }
+        
+        int result = sysSchoolDepartmentMemberService.batchAddMembers(members);
+        if (result > 0) {
+            return AjaxResult.success("添加 " + result + " 名成員成功");
+        } else {
+            return AjaxResult.error("添加成員失敗");
+        }
+    }
+
+    /**
+     * 新增部门
+     */
+    @Anonymous
+    @PostMapping
+    public AjaxResult addDepartment(@RequestBody SysSchoolDepartment department) {
+        // 设置默认 type 为 1
+        if (department.getType() == null) {
+            department.setType(1);
+        }
+        int result = sysSchoolDepartmentService.insertSysSchoolDepartment(department);
+        if (result > 0) {
+            return AjaxResult.success("新增成功");
+        } else {
+            return AjaxResult.error("新增失敗");
+        }
+    }
+
+    /**
+     * 修改部门
+     */
+    @Anonymous
+    @PutMapping
+    public AjaxResult editDepartment(@RequestBody SysSchoolDepartment department) {
+        int result = sysSchoolDepartmentService.updateSysSchoolDepartment(department);
+        if (result > 0) {
+            return AjaxResult.success("修改成功");
+        } else {
+            return AjaxResult.error("修改失敗");
+        }
+    }
 }

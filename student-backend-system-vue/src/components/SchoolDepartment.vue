@@ -41,6 +41,10 @@
                 <el-icon class="more-icon"><More /></el-icon>
                 <template #dropdown>
                   <el-dropdown-menu>
+                    <el-dropdown-item command="addMember" :data="data">
+                      <el-icon class="dropdown-icon"><User /></el-icon>
+                      <span>添加人員</span>
+                    </el-dropdown-item>
                     <el-dropdown-item command="delete" :data="data">
                       <el-icon class="dropdown-icon"><Delete /></el-icon>
                       <span>刪除部門</span>
@@ -53,7 +57,7 @@
         </el-tree>
       </div>
 
-      <!-- 右侧成员列表 -->
+      <!-- 右侧成员列表 --> 
       <div class="main-content">
         <div class="content-header">
           <div class="header-info">
@@ -88,7 +92,7 @@
     <!-- 新增/编辑部门对话框 -->
     <el-dialog
       :title="dialogTitle"
-      :visible.sync="departmentDialogVisible"
+      v-model="departmentDialogVisible"
       width="500px"
       @close="resetDepartmentForm"
     >
@@ -129,12 +133,94 @@
       </div>
     </el-dialog>
 
+    <!-- 选择成员对话框 -->
+    <el-dialog
+      :title="'選擇成員 - ' + (currentDepartment?.name || '')"
+      v-model="memberSelectorDialogVisible"
+      width="900px"
+      top="10vh"
+      @close="handleMemberSelectorClose"
+    >
+      <div class="selector-wrapper">
+        <div class="left-panel">
+          <div class="panel-title">
+            <el-icon><School /></el-icon>
+            <span>WeCom 家校通訊錄</span>
+          </div>
+          
+          <div class="tree-container">
+            <div v-if="loading" class="loading">
+              <el-icon class="is-loading"><Loading /></el-icon>
+              <span>加載中...</span>
+            </div>
+            <div v-else-if="wecomDepartmentTree.length === 0" class="empty">
+              <el-icon><DocumentDelete /></el-icon>
+              <span>暫無數據</span>
+            </div>
+            <el-tree
+              v-else
+              ref="wecomTree"
+              :data="wecomDepartmentTree"
+              :props="wecomTreeProps"
+              :expand-on-click-node="false"
+              :check-on-click-node="false"
+              node-key="id"
+              show-checkbox
+              @check="handleWecomCheckChange"
+            >
+              <template #default="{ node, data }">
+                <span class="tree-node">
+                  <el-icon v-if="data.type === 5" class="node-icon school-icon"><School /></el-icon>
+                  <el-icon v-else-if="data.isLeaf" class="node-icon user-icon"><User /></el-icon>
+                  <el-icon v-else class="node-icon dept-icon"><OfficeBuilding /></el-icon>
+                  <span>{{ data.name }}</span>
+                </span>
+              </template>
+            </el-tree>
+          </div>
+        </div>
+        
+        <div class="right-panel">
+          <div class="panel-title">
+            <el-icon><Check /></el-icon>
+            <span>已選成員（{{ selectedWecomMembers.length }}）</span>
+          </div>
+          
+          <div class="selected-list">
+            <div v-if="selectedWecomMembers.length === 0" class="empty-tip">
+              <el-icon><InfoFilled /></el-icon>
+              <span>請從左側選擇成員</span>
+            </div>
+            <div v-else class="member-tags">
+              <el-tag
+                v-for="(member, index) in selectedWecomMembers"
+                :key="member.id"
+                closable
+                :disable-transitions="true"
+                @close="removeWecomMember(index)"
+                class="member-tag"
+              >
+                {{ member.name }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="memberSelectorDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmAddMembers" :disabled="selectedWecomMembers.length === 0">
+          確 定
+        </el-button>
+      </div>
+    </el-dialog>
+
 
   </div>
 </template>
 
 <script>
-import { OfficeBuilding, Delete, More } from '@element-plus/icons-vue'
+import { OfficeBuilding, Delete, More, School, User, Check, InfoFilled, Loading, DocumentDelete } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
 export default {
@@ -142,7 +228,13 @@ export default {
   components: {
     OfficeBuilding,
     Delete,
-    More
+    More,
+    School,
+    User,
+    Check,
+    InfoFilled,
+    Loading,
+    DocumentDelete
   },
   data() {
     return {
@@ -170,7 +262,18 @@ export default {
         orderNum: 0,
         departmentLeader: ''
       },
-      treeSelectData: []
+      treeSelectData: [],
+      // 成员选择器相关
+      memberSelectorDialogVisible: false,
+      wecomDepartmentTree: [],
+      loading: false,
+      wecomTreeProps: {
+        children: 'children',
+        label: 'name',
+        isLeaf: 'isLeaf'
+      },
+      selectedWecomMembers: [],
+      selectedWecomMemberIds: []
     }
   },
   mounted() {
@@ -223,6 +326,22 @@ export default {
         }
       })
       return result
+    },
+
+    // 递归查找部门
+    findDepartmentByName(tree, name) {
+      for (const node of tree) {
+        if (node.name === name) {
+          return node
+        }
+        if (node.children && node.children.length > 0) {
+          const found = this.findDepartmentByName(node.children, name)
+          if (found) {
+            return found
+          }
+        }
+      }
+      return null
     },
 
     handleNodeClick(data) {
@@ -335,6 +454,7 @@ export default {
           try {
             const url = '/system/schoolDepartment'
             const method = this.departmentForm.id ? 'put' : 'post'
+            const departmentName = this.departmentForm.name  // 保存部门名称
             
             const response = await request({
               url: url,
@@ -345,7 +465,43 @@ export default {
             if (response.code === 200 || response.code === 0) {
               this.$message.success(this.departmentForm.id ? '更新成功' : '新增成功')
               this.departmentDialogVisible = false
-              this.loadDepartmentTree()
+              await this.loadDepartmentTree()
+              
+              // 如果是新增部门，需要更新 currentDepartment 为新创建的部门
+              if (!this.departmentForm.id) {
+                console.log('新增部门成功，部门名称:', departmentName)
+                console.log('当前部门树:', this.departmentTree)
+                
+                // 从树中找到新创建的部门（通过名称匹配）
+                const newDept = this.findDepartmentByName(this.departmentTree, departmentName)
+                console.log('查找到的新部门:', newDept)
+                
+                if (newDept) {
+                  this.currentDepartment = newDept
+                  // 设置树组件的选中状态
+                  this.$nextTick(() => {
+                    if (this.$refs.departmentTree) {
+                      this.$refs.departmentTree.setCurrentKey(newDept.id)
+                    }
+                  })
+                  
+                  // 询问是否添加成员
+                  this.$confirm('是否要為該部門添加成員？', '提示', {
+                    confirmButtonText: '確定',
+                    cancelButtonText: '取消',
+                    type: 'question'
+                  }).then(() => {
+                    // 使用新部门的 id 打开成员选择器
+                    console.log('用户确认添加成员，部门 ID:', newDept.id)
+                    this.openMemberSelector(newDept)
+                  }).catch(() => {
+                    // 用户取消
+                    console.log('用户取消添加成员')
+                  })
+                } else {
+                  console.error('未找到新创建的部门:', departmentName)
+                }
+              }
             }
           } catch (error) {
             this.$message.error('提交失敗')
@@ -371,6 +527,124 @@ export default {
     handleTreeCommand(command, nodeData) {
       if (command === 'delete') {
         this.handleDeleteDepartment(nodeData)
+      } else if (command === 'addMember') {
+        this.handleAddMember(nodeData)
+      }
+    },
+    
+    // 添加成员
+    handleAddMember(data) {
+      // 设置当前部门
+      this.currentDepartment = data
+      // 打开成员选择器
+      this.openMemberSelector(data)
+    },
+    
+    // 打开成员选择器
+    async openMemberSelector(department = null) {
+      // 如果没有传入部门，使用当前选中的部门
+      const targetDepartment = department || this.currentDepartment
+      
+      if (!targetDepartment) {
+        this.$message.warning('請先選擇部門')
+        return
+      }
+      
+      this.memberSelectorDialogVisible = true
+      this.loading = true
+      this.selectedWecomMembers = []
+      this.selectedWecomMemberIds = []
+      
+      try {
+        const response = await request({
+          url: '/wecomSchoolDepartment/treeWithMembers',
+          method: 'get'
+        })
+        
+        if (response.code === 200 || response.code === 0) {
+          this.wecomDepartmentTree = response.data || []
+        } else {
+          this.$message.error('加載成員數據失敗')
+        }
+      } catch (error) {
+        console.error('加载成员数据失败:', error)
+        this.$message.error('加载成员数据失败')
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    // WeCom 树复选框变化
+    handleWecomCheckChange(data, checked) {
+      // 获取所有选中的节点
+      const checkedNodes = this.$refs.wecomTree.getCheckedNodes()
+      // 过滤出叶子节点（成员）
+      const members = checkedNodes.filter(node => node.isLeaf === true)
+      this.selectedWecomMembers = members
+      this.selectedWecomMemberIds = members.map(m => m.id)
+    },
+    
+    // 移除选中的成员
+    removeWecomMember(index) {
+      this.selectedWecomMembers.splice(index, 1)
+      this.selectedWecomMemberIds.splice(index, 1)
+      
+      // 同步更新树的选中状态
+      if (this.$refs.wecomTree) {
+        this.$refs.wecomTree.setCheckedKeys(this.selectedWecomMemberIds)
+      }
+    },
+    
+    // 关闭成员选择器
+    handleMemberSelectorClose() {
+      this.memberSelectorDialogVisible = false
+      this.selectedWecomMembers = []
+      this.selectedWecomMemberIds = []
+      if (this.$refs.wecomTree) {
+        this.$refs.wecomTree.setCheckedKeys([])
+      }
+    },
+    
+    // 确认添加成员
+    async confirmAddMembers() {
+      if (this.selectedWecomMembers.length === 0) {
+        this.$message.warning('請選擇至少一個成員')
+        return
+      }
+      
+      if (!this.currentDepartment || !this.currentDepartment.id) {
+        this.$message.error('部門信息異常，請重新選擇')
+        return
+      }
+      
+      try {
+        // 批量添加成员
+        const membersToAdd = this.selectedWecomMembers.map(member => ({
+          userid: member.staffUserId || member.userid,
+          name: member.name,
+          departmentId: this.currentDepartment.id,
+          openUserid: member.openUserid || ''
+        }))
+        
+        const response = await request({
+          url: '/system/schoolDepartment/members/batch',
+          method: 'post',
+          data: membersToAdd
+        })
+        
+        if (response.code === 200 || response.code === 0) {
+          this.$message.success('添加成員成功')
+          this.memberSelectorDialogVisible = false
+          // 重新加载当前部门成员列表
+          this.loadMemberList(this.currentDepartment)
+        } else {
+          this.$message.error('添加成員失敗：' + (response.msg || '未知錯誤'))
+        }
+      } catch (error) {
+        console.error('添加成员失败:', error)
+        this.$message.error('添加成員失敗：' + (error.message || '網絡錯誤'))
+      } finally {
+        this.handleMemberSelectorClose()
       }
     },
     
@@ -761,5 +1035,109 @@ export default {
   width: 18px;
   height: 18px;
   font-size: 18px;
+}
+
+/* 成员选择器样式 */
+.selector-wrapper {
+  display: flex;
+  gap: 16px;
+  height: 500px;
+}
+
+.left-panel,
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #e8e8e8;
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+}
+
+.panel-title .el-icon {
+  font-size: 16px;
+  color: #1890ff;
+}
+
+.tree-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #595959;
+}
+
+.node-icon {
+  font-size: 16px;
+}
+
+.school-icon {
+  color: #722ed1;
+}
+
+.dept-icon {
+  color: #1890ff;
+}
+
+.user-icon {
+  color: #52c41a;
+}
+
+.loading,
+.empty,
+.empty-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.loading .el-icon,
+.empty .el-icon,
+.empty-tip .el-icon {
+  font-size: 32px;
+}
+
+.selected-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.member-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.member-tag {
+  margin: 0;
+}
+
+:deep(.el-dialog__footer) {
+  padding: 12px 24px;
+  border-top: 1px solid #e8e8e8;
 }
 </style>

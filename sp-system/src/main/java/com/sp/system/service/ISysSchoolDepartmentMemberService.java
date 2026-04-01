@@ -26,4 +26,12 @@ public interface ISysSchoolDepartmentMemberService {
      */
     int deleteMemberById(Long id);
 
+    /**
+     * 批量添加部门成员
+     *
+     * @param members 成员列表
+     * @return 影响行数
+     */
+    int batchAddMembers(List<SysSchoolDepartmentMember> members);
+
 }

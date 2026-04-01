@@ -42,4 +42,15 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
         return memberMapper.deleteMemberById(id);
     }
 
+    /**
+     * 批量添加部门成员
+     */
+    @Override
+    public int batchAddMembers(List<SysSchoolDepartmentMember> members) {
+        if (members == null || members.isEmpty()) {
+            return 0;
+        }
+        return memberMapper.batchInsertMembers(members);
+    }
+
 }

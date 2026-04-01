@@ -40,4 +40,50 @@
         </foreach>
     </delete>
 
+    <!-- 插入部门信息 -->
+    <insert id="insertDepartment" parameterType="com.sp.system.entity.SysSchoolDepartment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_school_department (
+            <if test="parentId != null">parent_id,</if>
+            <if test="name != null and name != ''">name,</if>
+            <if test="nameEn != null and nameEn != ''">name_en,</if>
+            <if test="orderNum != null">order_num,</if>
+            <if test="departmentLeader != null and departmentLeader != ''">department_leader,</if>
+            <if test="type != null">type,</if>
+            create_time,
+            update_time
+        ) VALUES (
+            <if test="parentId != null">#{parentId},</if>
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="nameEn != null and nameEn != ''">#{nameEn},</if>
+            <if test="orderNum != null">#{orderNum},</if>
+            <if test="departmentLeader != null and departmentLeader != ''">#{departmentLeader},</if>
+            <if test="type != null">#{type},</if>
+            now(),
+            now()
+        )
+    </insert>
+
+    <!-- 修改部门信息 -->
+    <update id="updateDepartment" parameterType="com.sp.system.entity.SysSchoolDepartment">
+        UPDATE sys_school_department
+        <set>
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="nameEn != null and nameEn != ''">name_en = #{nameEn},</if>
+            <if test="orderNum != null">order_num = #{orderNum},</if>
+            <if test="departmentLeader != null and departmentLeader != ''">department_leader = #{departmentLeader},</if>
+            <if test="type != null">type = #{type},</if>
+            update_time = now(),
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据 ID 查询部门 -->
+    <select id="selectById" parameterType="Long" resultMap="SysSchoolDepartmentResult">
+        SELECT id, parent_id, name, name_en, order_num, 
+               department_leader, type, create_time, update_time
+        FROM sys_school_department
+        WHERE id = #{id}
+    </select>
+
 </mapper>

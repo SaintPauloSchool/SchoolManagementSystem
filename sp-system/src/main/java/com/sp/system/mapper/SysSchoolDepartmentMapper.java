@@ -34,4 +34,28 @@ public interface SysSchoolDepartmentMapper {
      */
     int deleteByIds(@Param("ids") Long[] ids);
 
+    /**
+     * 插入部门信息
+     *
+     * @param department 部门信息
+     * @return 结果
+     */
+    int insertDepartment(SysSchoolDepartment department);
+
+    /**
+     * 修改部门信息
+     *
+     * @param department 部门信息
+     * @return 结果
+     */
+    int updateDepartment(SysSchoolDepartment department);
+
+    /**
+     * 根据 ID 查询部门
+     *
+     * @param id 部门 ID
+     * @return 部门信息
+     */
+    SysSchoolDepartment selectById(Long id);
+
 }

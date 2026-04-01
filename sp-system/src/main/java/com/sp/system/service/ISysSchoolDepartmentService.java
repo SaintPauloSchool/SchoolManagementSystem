@@ -26,4 +26,28 @@ public interface ISysSchoolDepartmentService {
      */
     int deleteSysSchoolDepartmentById(Long id);
 
+    /**
+     * 新增部门
+     *
+     * @param department 部门信息
+     * @return 结果
+     */
+    int insertSysSchoolDepartment(SysSchoolDepartment department);
+
+    /**
+     * 修改部门
+     *
+     * @param department 部门信息
+     * @return 结果
+     */
+    int updateSysSchoolDepartment(SysSchoolDepartment department);
+
+    /**
+     * 根据 ID 查询部门
+     *
+     * @param id 部门 ID
+     * @return 部门信息
+     */
+    SysSchoolDepartment selectSysSchoolDepartmentById(Long id);
+
 }

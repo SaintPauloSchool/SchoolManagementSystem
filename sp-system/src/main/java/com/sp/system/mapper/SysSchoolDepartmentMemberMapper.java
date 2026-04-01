@@ -35,4 +35,12 @@ public interface SysSchoolDepartmentMemberMapper {
      */
     int deleteByDepartmentId(@Param("departmentId") Long departmentId);
 
+    /**
+     * 批量插入部门成员
+     *
+     * @param members 成员列表
+     * @return 影响行数
+     */
+    int batchInsertMembers(@Param("members") List<SysSchoolDepartmentMember> members);
+
 }

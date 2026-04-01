@@ -122,9 +122,33 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
     }
 
     /**
+     * 新增部门
+     */
+    @Override
+    public int insertSysSchoolDepartment(SysSchoolDepartment department) {
+        return schoolDepartmentMapper.insertDepartment(department);
+    }
+
+    /**
+     * 修改部门
+     */
+    @Override
+    public int updateSysSchoolDepartment(SysSchoolDepartment department) {
+        return schoolDepartmentMapper.updateDepartment(department);
+    }
+
+    /**
+     * 根据 ID 查询部门
+     */
+    @Override
+    public SysSchoolDepartment selectSysSchoolDepartmentById(Long id) {
+        return schoolDepartmentMapper.selectById(id);
+    }
+
+    /**
      * 递归收集需要删除的部门 ID
      */
-    private void collectDepartmentIdsToDelete(Long parentId, List<SysSchoolDepartment> allDepartments, 
+    private  void collectDepartmentIdsToDelete(Long parentId, List<SysSchoolDepartment> allDepartments,
                                                List<Long> idsToCollect) {
         idsToCollect.add(parentId);
         
