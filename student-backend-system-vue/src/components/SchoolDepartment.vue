@@ -23,6 +23,7 @@
         </div>
         
         <el-tree
+          ref="departmentTree"
           :data="departmentTree"
           :props="defaultProps"
           node-key="id"
@@ -51,7 +52,7 @@
 
         <!-- 成员表格 -->
         <div class="table-wrapper">
-          <el-table :data="currentMemberList" style="width: 100%" height="250">
+          <el-table :data="currentMemberList" style="width: 100%" :max-height="'calc(100vh - 200px)'">
             <el-table-column type="selection" width="55" />
             <el-table-column prop="name" label="姓名" width="150" />
             <el-table-column prop="departmentName" label="所屬部門" width="180" />
@@ -217,6 +218,13 @@ export default {
             this.currentDepartment = this.departmentTree[0]
             console.log('选中部门:', this.currentDepartment)
             this.loadMemberList(this.departmentTree[0])
+            
+            // 设置树组件的选中状态
+            this.$nextTick(() => {
+              if (this.$refs.departmentTree) {
+                this.$refs.departmentTree.setCurrentKey(this.departmentTree[0].id)
+              }
+            })
           } else {
             this.$message.info('暫無部門數據，請新增部門')
           }
@@ -246,22 +254,66 @@ export default {
     handleNodeClick(data) {
       this.currentDepartment = data
       this.loadMemberList(data)
-    },
-
-    loadMemberList(department) {
-      const members = []
-      if (department.children) {
-        department.children.forEach(child => {
-          if (child.isLeaf) {
-            members.push({
-              ...child,
-              departmentName: department.name
-            })
+      
+      // 如果有子节点，自动展开
+      if (data.children && data.children.length > 0) {
+        this.$nextTick(() => {
+          const node = this.$refs.departmentTree.getNode(data.id)
+          if (node && !node.expanded) {
+            node.expand()
           }
         })
       }
-      this.currentMemberList = members
-      this.memberCount = members.length
+    },
+
+    loadMemberList(department) {
+      // 如果没有选中部门，清空列表
+      if (!department || !department.id) {
+        this.currentMemberList = []
+        this.memberCount = 0
+        return
+      }
+      
+      // 收集当前部门及所有子部门的 ID
+      const departmentIds = this.collectDepartmentIds(department)
+      
+      // 调用后端接口批量查询成员数据
+      request({
+        url: '/system/schoolDepartment/members',
+        method: 'post',
+        data: departmentIds
+      }).then(response => {
+        if (response.code === 200 || response.code === 0) {
+          const members = response.data || []
+          this.currentMemberList = members.map(member => ({
+            ...member,
+            departmentName: department.name
+          }))
+          this.memberCount = members.length
+        } else {
+          this.$message.error('加载成员失败')
+          this.currentMemberList = []
+          this.memberCount = 0
+        }
+      }).catch(error => {
+        console.error('加载成员失败:', error)
+        this.$message.error('加载失败')
+        this.currentMemberList = []
+        this.memberCount = 0
+      })
+    },
+
+    // 递归收集所有子部门 ID
+    collectDepartmentIds(department) {
+      const ids = [department.id]
+      if (department.children && department.children.length > 0) {
+        department.children.forEach(child => {
+          if (!child.isLeaf) {
+            ids.push(...this.collectDepartmentIds(child))
+          }
+        })
+      }
+      return ids
     },
 
     handleAddDepartment() {
@@ -375,9 +427,8 @@ export default {
 /* 主体布局 */
 .layout-content {
   display: flex;
-  flex: 1;
+  height: 100%;
   gap: 16px;
-  padding: 16px;
   overflow: hidden;
 }
 
@@ -390,12 +441,14 @@ export default {
   flex-direction: column;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+  height: 100%;
 }
 
 .sidebar-header {
   padding: 16px;
   background: #fff;
   border-bottom: 1px solid #e8e8e8;
+  flex-shrink: 0;
 }
 
 .search-box {
@@ -469,6 +522,23 @@ export default {
   border-radius: 3px;
 }
 
+/* 树节点内容样式 */
+:deep(.el-tree-node__content) {
+  height: 40px;
+  border-radius: 6px;
+  margin: 4px 0;
+  transition: all 0.3s;
+}
+
+:deep(.el-tree-node__content:hover) {
+  background-color: #f5f5f5;
+}
+
+/* 选中节点样式 */
+:deep(.el-tree-node.is-current > .el-tree-node__content) {
+  background-color: #e6f7ff;
+}
+
 .custom-tree-node {
   flex: 1;
   display: flex;
@@ -476,22 +546,7 @@ export default {
   padding: 8px 12px;
   font-size: 14px;
   color: #595959;
-  border-radius: 4px;
-  transition: all 0.2s;
-  margin: 4px 8px;
-}
-
-.custom-tree-node:hover {
-  background: transparent;
-}
-
-.custom-tree-node.is-current {
-  background: #1890ff;
-  color: #fff;
-}
-
-.custom-tree-node.is-current:hover {
-  background: #1890ff;
+  cursor: pointer;
 }
 
 .custom-tree-node .tree-icon {
@@ -500,8 +555,37 @@ export default {
   color: #1890ff;
 }
 
-.custom-tree-node.is-current .tree-icon {
-  color: #fff;
+/* 选中节点的文字和图标颜色 */
+:deep(.el-tree-node.is-current > .el-tree-node__content) .custom-tree-node {
+  color: #1890ff;
+}
+
+:deep(.el-tree-node.is-current > .el-tree-node__content) .custom-tree-node .tree-icon {
+  color: #1890ff;
+}
+
+/* 树节点展开箭头样式 */
+:deep(.el-tree-node__expand-icon) {
+  font-size: 14px;
+  color: #8c8c8c;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-tree-node__expand-icon.is-leaf) {
+  color: transparent;
+}
+
+:deep(.el-tree-node__expand-icon:hover) {
+  color: #1890ff;
+}
+
+:deep(.el-tree-node--expanded > .el-tree-node__content .el-tree-node__expand-icon) {
+  transform: rotate(90deg);
+}
+
+/* 选中节点的展开箭头 */
+:deep(.el-tree-node.is-current > .el-tree-node__content .el-tree-node__expand-icon) {
+  color: #1890ff;
 }
 
 /* 主内容区 */
@@ -513,12 +597,14 @@ export default {
   flex-direction: column;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+  height: 100%;
 }
 
 .content-header {
   padding: 20px 24px;
   background: #fafafa;
   border-bottom: 1px solid #e8e8e8;
+  flex-shrink: 0;
 }
 
 .header-info {
@@ -553,6 +639,8 @@ export default {
   flex: 1;
   overflow: hidden;
   padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 :deep(.el-table) {

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.system.mapper.SysSchoolDepartmentMemberMapper">
+
+    <resultMap type="com.sp.system.entity.SysSchoolDepartmentMember" id="SysSchoolDepartmentMemberResult">
+        <result property="id" column="id"/>
+        <result property="userid" column="userid"/>
+        <result property="name" column="name"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="openUserid" column="open_userid"/>
+        <result property="type" column="type"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- 批量查询多个部门的成员 -->
+    <select id="selectMembersByDepartmentIds" resultMap="SysSchoolDepartmentMemberResult">
+        SELECT id, userid, name, department_id, open_userid, type, create_time, update_time
+        FROM sys_school_department_member
+        WHERE department_id IN
+        <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
+            #{departmentId}
+        </foreach>
+        ORDER BY department_id ASC, name ASC
+    </select>
+
+</mapper>
