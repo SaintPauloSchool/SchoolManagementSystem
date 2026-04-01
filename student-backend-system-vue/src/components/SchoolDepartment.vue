@@ -23,7 +23,10 @@
           node-key="id"
           :expand-on-click-node="false"
           highlight-current
+          :default-expanded-keys="expandedKeys"
           @node-click="handleNodeClick"
+          @node-expand="handleNodeExpand"
+          @node-collapse="handleNodeCollapse"
           class="department-tree"
         >
           <template #default="{ node, data }">
@@ -191,7 +194,7 @@
         
         <div class="right-panel">
           <div class="panel-title">
-            <el-icon><Check /></el-icon>
+            <el-icon><User /></el-icon>
             <span>已選成員（{{ selectedWecomMembers.length }}）</span>
           </div>
           
@@ -231,7 +234,7 @@
 </template>
 
 <script>
-import { OfficeBuilding, Delete, More, School, User, Check, InfoFilled, Loading, DocumentDelete } from '@element-plus/icons-vue'
+import { OfficeBuilding, Delete, More, School, User, InfoFilled, Loading, DocumentDelete } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
 export default {
@@ -242,7 +245,6 @@ export default {
     More,
     School,
     User,
-    Check,
     InfoFilled,
     Loading,
     DocumentDelete
@@ -282,7 +284,8 @@ export default {
         isLeaf: 'isLeaf'
       },
       selectedWecomMembers: [],
-      selectedWecomMemberIds: []
+      expandedKeys: [],
+      isReloadingTree: false
     }
   },
   mounted() {
@@ -297,18 +300,45 @@ export default {
         })
         
         if (response.code === 200 || response.code === 0) {
+          this.isReloadingTree = true
           this.departmentTree = response.data || []
           this.treeSelectData = this.buildTreeSelectData(this.departmentTree)
           
+          this.$nextTick(() => {
+            this.isReloadingTree = false
+            if (this.$refs.departmentTree) {
+              this.expandedKeys.forEach(key => {
+                let node = this.$refs.departmentTree.getNode(key)
+                if (!node && !isNaN(key)) {
+                  node = this.$refs.departmentTree.getNode(Number(key))
+                }
+                if (node && !node.expanded) {
+                  node.expand()
+                }
+              })
+            }
+          })
+          
           if (!selectNewDepartment && this.departmentTree.length > 0) {
-            this.currentDepartment = this.departmentTree[0]
-            this.loadMemberList(this.departmentTree[0])
-            
-            this.$nextTick(() => {
-              if (this.$refs.departmentTree) {
-                this.$refs.departmentTree.setCurrentKey(this.departmentTree[0].id)
-              }
-            })
+            const preservedDept = this.currentDepartment ? this.findDepartment(this.departmentTree, this.currentDepartment.id) : null;
+            if (preservedDept) {
+              this.currentDepartment = preservedDept
+              this.loadMemberList(preservedDept)
+              this.$nextTick(() => {
+                if (this.$refs.departmentTree) {
+                  this.$refs.departmentTree.setCurrentKey(preservedDept.id)
+                }
+              })
+            } else {
+              this.currentDepartment = this.departmentTree[0]
+              this.loadMemberList(this.departmentTree[0])
+              
+              this.$nextTick(() => {
+                if (this.$refs.departmentTree) {
+                  this.$refs.departmentTree.setCurrentKey(this.departmentTree[0].id)
+                }
+              })
+            }
           }
         } else {
           this.$message.error('加載失敗：' + (response.msg || '未知錯誤'))
@@ -333,7 +363,23 @@ export default {
       return result
     },
 
-    // 递归查找部门
+    // 递归查找部门 (通过 id)
+    findDepartment(tree, id) {
+      for (const node of tree) {
+        if (String(node.id) === String(id)) {
+          return node
+        }
+        if (node.children && node.children.length > 0) {
+          const found = this.findDepartment(node.children, id)
+          if (found) {
+            return found
+          }
+        }
+      }
+      return null
+    },
+
+    // 递归查找部门 (通过 name)
     findDepartmentByName(tree, name) {
       for (const node of tree) {
         if (node.name === name) {
@@ -359,8 +405,29 @@ export default {
           const node = this.$refs.departmentTree.getNode(data.id)
           if (node && !node.expanded) {
             node.expand()
+            const idStr = String(data.id)
+            if (!this.expandedKeys.includes(idStr)) {
+              this.expandedKeys.push(idStr)
+            }
           }
         })
+      }
+    },
+
+    handleNodeExpand(data) {
+      if (this.isReloadingTree) return
+      const idStr = String(data.id)
+      if (!this.expandedKeys.includes(idStr)) {
+        this.expandedKeys.push(idStr)
+      }
+    },
+
+    handleNodeCollapse(data) {
+      if (this.isReloadingTree) return
+      const idStr = String(data.id)
+      const index = this.expandedKeys.indexOf(idStr)
+      if (index > -1) {
+        this.expandedKeys.splice(index, 1)
       }
     },
 
@@ -545,7 +612,6 @@ export default {
       this.memberSelectorDialogVisible = true
       this.loading = true
       this.selectedWecomMembers = []
-      this.selectedWecomMemberIds = []
       
       try {
         const response = await request({
@@ -568,24 +634,20 @@ export default {
     
     handleWecomCheckChange(data, checked) {
       const checkedNodes = this.$refs.wecomTree.getCheckedNodes()
-      const members = checkedNodes.filter(node => node.isLeaf === true)
-      this.selectedWecomMembers = members
-      this.selectedWecomMemberIds = members.map(m => m.id)
+      this.selectedWecomMembers = checkedNodes.filter(node => node.isLeaf === true)
     },
     
     removeWecomMember(index) {
       this.selectedWecomMembers.splice(index, 1)
-      this.selectedWecomMemberIds.splice(index, 1)
       
       if (this.$refs.wecomTree) {
-        this.$refs.wecomTree.setCheckedKeys(this.selectedWecomMemberIds)
+        this.$refs.wecomTree.setCheckedKeys(this.selectedWecomMembers.map(m => m.id))
       }
     },
     
     handleMemberSelectorClose() {
       this.memberSelectorDialogVisible = false
       this.selectedWecomMembers = []
-      this.selectedWecomMemberIds = []
       if (this.$refs.wecomTree) {
         this.$refs.wecomTree.setCheckedKeys([])
       }
@@ -646,6 +708,11 @@ export default {
               
           if (response.code === 200 || response.code === 0) {
             this.$message.success('刪除成功')
+            const idStr = String(data.id)
+            const index = this.expandedKeys.indexOf(idStr)
+            if (index > -1) {
+              this.expandedKeys.splice(index, 1)
+            }
             // 重新加载部门树
             this.loadDepartmentTree()
           } else {
@@ -686,7 +753,6 @@ export default {
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   height: 100%;
 }
@@ -862,7 +928,6 @@ export default {
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   height: 100%;
 }
@@ -929,7 +994,6 @@ export default {
 .department-dialog :deep(.el-dialog) {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .department-dialog :deep(.el-dialog__header) {
@@ -1152,7 +1216,6 @@ export default {
 .member-selector-dialog :deep(.el-dialog) {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .member-selector-dialog :deep(.el-dialog__header) {
