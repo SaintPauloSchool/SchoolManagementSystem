@@ -31,4 +31,15 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
         return members != null ? members : Collections.emptyList();
     }
 
+    /**
+     * 根据 ID 删除部门成员
+     */
+    @Override
+    public int deleteMemberById(Long id) {
+        if (id == null) {
+            return 0;
+        }
+        return memberMapper.deleteMemberById(id);
+    }
+
 }

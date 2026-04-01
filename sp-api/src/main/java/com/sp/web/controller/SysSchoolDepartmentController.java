@@ -45,4 +45,18 @@ public class SysSchoolDepartmentController extends BaseController {
         List<SysSchoolDepartmentMember> members = sysSchoolDepartmentMemberService.getMembersByDepartmentIds(departmentIds);
         return AjaxResult.success(members);
     }
+
+    /**
+     * 根据 ID 删除部门成员
+     */
+    @Anonymous
+    @DeleteMapping("/member/{id}")
+    public AjaxResult deleteMember(@PathVariable Long id) {
+        int result = sysSchoolDepartmentMemberService.deleteMemberById(id);
+        if (result > 0) {
+            return AjaxResult.success("刪除成功");
+        } else {
+            return AjaxResult.error("刪除失敗，成員不存在或已被刪除");
+        }
+    }
 }

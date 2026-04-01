@@ -18,4 +18,12 @@ public interface ISysSchoolDepartmentMemberService {
      */
     List<SysSchoolDepartmentMember> getMembersByDepartmentIds(List<Long> departmentIds);
 
+    /**
+     * 根据 ID 删除部门成员
+     *
+     * @param id 成员 ID
+     * @return 影响行数
+     */
+    int deleteMemberById(Long id);
+
 }

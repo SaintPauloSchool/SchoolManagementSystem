@@ -26,4 +26,10 @@
         ORDER BY department_id ASC, name ASC
     </select>
 
+    <!-- 根据 ID 删除部门成员 -->
+    <delete id="deleteMemberById" parameterType="Long">
+        DELETE FROM sys_school_department_member
+        WHERE id = #{id}
+    </delete>
+
 </mapper>

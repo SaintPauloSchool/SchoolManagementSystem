@@ -4,20 +4,14 @@
       <!-- 左侧部门树 -->
       <div class="left-sidebar">
         <div class="sidebar-header">
-          <div class="search-box">
-            <el-input
-              v-model="searchText"
-              placeholder="搜索成員、部門"
-              prefix-icon="Search"
-              clearable
-            />
+          <div class="sidebar-actions">
             <el-button
-              type="text"
+              type="primary"
               @click="handleAddDepartment"
-              class="add-btn-icon"
-              title="新增部門"
+              class="add-department-btn"
+              icon="Plus"
             >
-              <el-icon><Plus /></el-icon>
+              新增部門
             </el-button>
           </div>
         </div>
@@ -55,10 +49,16 @@
           <el-table :data="currentMemberList" style="width: 100%" :max-height="'calc(100vh - 200px)'">
             <el-table-column prop="name" label="姓名" width="150" />
             <el-table-column prop="departmentName" label="所屬部門" width="180" />
-            <el-table-column label="操作" width="100" fixed="right">
+            <el-table-column label="操作" width="100" fixed="right" align="center">
               <template #default="scope">
-                <el-button type="primary" size="small" plain @click="handleInvite(scope.row)">
-                  邀請
+                <el-button 
+                  type="danger" 
+                  circle 
+                  size="default"
+                  @click="handleDelete(scope.row)"
+                  class="delete-circle-btn"
+                >
+                  <el-icon><Delete /></el-icon>
                 </el-button>
               </template>
             </el-table-column>
@@ -116,13 +116,14 @@
 </template>
 
 <script>
-import { OfficeBuilding } from '@element-plus/icons-vue'
+import { OfficeBuilding, Delete } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
 export default {
   name: 'SchoolDepartment',
   components: {
-    OfficeBuilding
+    OfficeBuilding,
+    Delete
   },
   data() {
     return {
@@ -274,8 +275,35 @@ export default {
       this.departmentDialogVisible = true
     },
 
-    handleInvite(member) {
-      this.$message.success('已發送邀請給 ' + member.name)
+    handleDelete(member) {
+      this.$confirm(`確定要刪除成員 "${member.name}" 嗎？`, '提示', {
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        try {
+          const response = await request({
+            url: `/system/schoolDepartment/member/${member.id}`,
+            method: 'delete'
+          })
+          
+          if (response.code === 200 || response.code === 0) {
+            this.$message.success('刪除成功')
+            // 重新加载当前部门成员列表
+            if (this.currentDepartment) {
+              this.loadMemberList(this.currentDepartment)
+            }
+          } else {
+            this.$message.error('刪除失敗：' + (response.msg || '未知錯誤'))
+          }
+        } catch (error) {
+          if (error !== 'cancel') {
+            this.$message.error('刪除失敗：' + (error.message || '網絡錯誤'))
+          }
+        }
+      }).catch(() => {
+        // 用户取消删除
+      })
     },
 
     submitDepartmentForm() {
@@ -351,67 +379,26 @@ export default {
   height: 100%;
 }
 
-.sidebar-header {
+:deep(.sidebar-actions) {
   padding: 16px;
   background: #fff;
   border-bottom: 1px solid #e8e8e8;
   flex-shrink: 0;
 }
 
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.search-box .el-input {
-  flex: 1;
-}
-
-:deep(.search-box .el-input__wrapper) {
-  background: #fff;
-  border: 1px solid #d9d9d9;
-  border-radius: 6px;
+.add-department-btn {
+  width: 100%;
   height: 36px;
-  box-shadow: none;
-}
-
-:deep(.search-box .el-input__wrapper:hover) {
-  background: #fff;
-  border-color: #d9d9d9;
-}
-
-:deep(.search-box .el-input__wrapper.is-focus) {
-  background: #fff;
-  border-color: #40a9ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-}
-
-:deep(.search-box .el-input__inner) {
-  font-size: 13px;
-  color: #262626;
-}
-
-.add-btn-icon {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  background: #fff;
-  border: 1px solid #d9d9d9;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  border: none;
   border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
   transition: all 0.3s;
-  flex-shrink: 0;
-  color: #595959;
 }
 
-.add-btn-icon:hover {
-  background: #fff !important;
-  border-color: #d9d9d9 !important;
-  color: #595959 !important;
+.add-department-btn:hover {
+  opacity: 0.9;
 }
 
 .department-tree {
@@ -608,5 +595,55 @@ export default {
 
 :deep(.el-button--primary:hover) {
   opacity: 0.9;
+}
+
+/* 删除按钮 - 红色实心圆形 */
+.delete-circle-btn {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #ff7875 0%, #ff4d4f 100%) !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  overflow: hidden !important;
+  vertical-align: middle;
+}
+
+/* 覆盖全局样式的伪元素 */
+.delete-circle-btn::before {
+  display: none !important;
+}
+
+.delete-circle-btn:hover {
+  background: linear-gradient(135deg, #ff9c99 0%, #ff7875 100%) !important;
+  transform: translateY(-1px) !important;
+}
+
+.delete-circle-btn:active {
+  transform: translateY(0) !important;
+}
+
+/* 删除图标容器 */
+.delete-circle-btn .el-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* 删除图标 */
+.delete-circle-btn .el-icon svg {
+  color: #fff !important;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
 }
 </style>
