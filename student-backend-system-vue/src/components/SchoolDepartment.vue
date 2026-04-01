@@ -53,7 +53,6 @@
         <!-- 成员表格 -->
         <div class="table-wrapper">
           <el-table :data="currentMemberList" style="width: 100%" :max-height="'calc(100vh - 200px)'">
-            <el-table-column type="selection" width="55" />
             <el-table-column prop="name" label="姓名" width="150" />
             <el-table-column prop="departmentName" label="所屬部門" width="180" />
             <el-table-column label="操作" width="100" fixed="right">
@@ -112,29 +111,7 @@
       </div>
     </el-dialog>
 
-    <!-- 新增/编辑成员对话框 -->
-    <el-dialog
-      :title="memberDialogTitle"
-      :visible.sync="memberDialogVisible"
-      width="500px"
-      @close="resetMemberForm"
-    >
-      <el-form ref="memberForm" :model="memberForm" label-width="100px" :rules="memberRules">
-        <el-form-item label="成員名稱" prop="name">
-          <el-input v-model="memberForm.name" placeholder="請輸入成員名稱" />
-        </el-form-item>
-        <el-form-item label="UserID" prop="userid">
-          <el-input v-model="memberForm.userid" placeholder="請輸入 UserID" />
-        </el-form-item>
-        <el-form-item label="全局 UserID" prop="openUserid">
-          <el-input v-model="memberForm.openUserid" placeholder="請輸入全局唯一 UserID" />
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="memberDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="submitMemberForm">確 定</el-button>
-      </div>
-    </el-dialog>
+
   </div>
 </template>
 
@@ -149,7 +126,6 @@ export default {
   },
   data() {
     return {
-      searchText: '',
       departmentTree: [],
       currentDepartment: null,
       currentMemberList: [],
@@ -164,18 +140,8 @@ export default {
           { required: true, message: '請輸入部門名稱', trigger: 'blur' }
         ]
       },
-      memberRules: {
-        name: [
-          { required: true, message: '請輸入成員名稱', trigger: 'blur' }
-        ],
-        userid: [
-          { required: true, message: '請輸入 UserID', trigger: 'blur' }
-        ]
-      },
       departmentDialogVisible: false,
-      memberDialogVisible: false,
       dialogTitle: '',
-      memberDialogTitle: '',
       departmentForm: {
         id: null,
         parentId: null,
@@ -183,13 +149,6 @@ export default {
         nameEn: '',
         orderNum: 0,
         departmentLeader: ''
-      },
-      memberForm: {
-        id: null,
-        userid: '',
-        name: '',
-        departmentId: null,
-        openUserid: ''
       },
       treeSelectData: []
     }
@@ -205,18 +164,13 @@ export default {
           method: 'get'
         })
         
-        console.log('接口返回数据:', response)
-        
         if (response.code === 200 || response.code === 0) {
           this.departmentTree = response.data || []
-          console.log('部门树数据:', this.departmentTree)
           this.treeSelectData = this.buildTreeSelectData(this.departmentTree)
-          console.log('树选择数据:', this.treeSelectData)
           
           // 默认选中第一个部门
           if (this.departmentTree.length > 0) {
             this.currentDepartment = this.departmentTree[0]
-            console.log('选中部门:', this.currentDepartment)
             this.loadMemberList(this.departmentTree[0])
             
             // 设置树组件的选中状态
@@ -296,14 +250,12 @@ export default {
           this.memberCount = 0
         }
       }).catch(error => {
-        console.error('加载成员失败:', error)
         this.$message.error('加载失败')
         this.currentMemberList = []
         this.memberCount = 0
       })
     },
 
-    // 递归收集所有子部门 ID
     collectDepartmentIds(department) {
       const ids = [department.id]
       if (department.children && department.children.length > 0) {
@@ -355,35 +307,6 @@ export default {
       })
     },
 
-    submitMemberForm() {
-      if (!this.$refs.memberForm) {
-        return
-      }
-      
-      this.$refs.memberForm.validate(async (valid) => {
-        if (valid) {
-          try {
-            const url = '/system/schoolDepartment/member'
-            const method = this.memberForm.id ? 'put' : 'post'
-            
-            const response = await request({
-              url: url,
-              method: method,
-              data: this.memberForm
-            })
-            
-            if (response.code === 200 || response.code === 0) {
-              this.$message.success(this.memberForm.id ? '更新成功' : '新增成功')
-              this.memberDialogVisible = false
-              this.loadDepartmentTree()
-            }
-          } catch (error) {
-            this.$message.error('提交失敗')
-          }
-        }
-      })
-    },
-
     resetDepartmentForm() {
       this.departmentForm = {
         id: null,
@@ -391,26 +314,10 @@ export default {
         name: '',
         nameEn: '',
         orderNum: 0,
-        departmentLeader: '',
-        type: 1  // 默认类型为 1-学校部门通讯录
+        departmentLeader: ''
       }
       if (this.$refs.departmentForm) {
         this.$refs.departmentForm.clearValidate()
-      }
-    },
-
-    resetMemberForm() {
-      this.memberForm = {
-        id: null,
-        userid: '',
-        name: '',
-        departmentId: null,
-        openUserid: '',
-        type: 1  // 默认类型为 1-学校部门通讯录
-      }
-      this.currentDepartment = null
-      if (this.$refs.memberForm) {
-        this.$refs.memberForm.clearValidate()
       }
     }
   }
@@ -628,13 +535,6 @@ export default {
   border-radius: 12px;
 }
 
-.info-alert {
-  margin: 12px 24px;
-  background: #e6f7ff;
-  border: 1px solid #91d5ff;
-  border-radius: 6px;
-}
-
 .table-wrapper {
   flex: 1;
   overflow: hidden;
@@ -663,28 +563,6 @@ export default {
 
 :deep(.el-table__row:hover) {
   background: #fafafa;
-}
-
-.user-name {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.user-avatar {
-  background: #1890ff;
-}
-
-:deep(.el-button--primary) {
-  background: #fff;
-  border-color: #1890ff;
-  color: #1890ff;
-}
-
-:deep(.el-button--primary:hover) {
-  background: #1890ff;
-  color: #fff;
 }
 
 /* 对话框样式 */
@@ -730,16 +608,5 @@ export default {
 
 :deep(.el-button--primary:hover) {
   opacity: 0.9;
-}
-
-/* 响应式 */
-@media screen and (max-width: 1200px) {
-  .left-sidebar {
-    width: 240px;
-  }
-  
-  .school-name {
-    font-size: 18px;
-  }
 }
 </style>
