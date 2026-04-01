@@ -2,6 +2,7 @@ package com.sp.system.service.impl;
 
 import com.sp.system.entity.SysSchoolDepartment;
 import com.sp.system.mapper.SysSchoolDepartmentMapper;
+import com.sp.system.mapper.SysSchoolDepartmentMemberMapper;
 import com.sp.system.service.ISysSchoolDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,9 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
 
     @Autowired
     private SysSchoolDepartmentMapper schoolDepartmentMapper;
+
+    @Autowired
+    private SysSchoolDepartmentMemberMapper schoolDepartmentMemberMapper;
 
     /**
      * 获取学校部门树形结构（仅部门，不含人员）
@@ -84,5 +88,57 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
                         buildTree(children, childrenMap);
                     }
                 });
+    }
+
+    /**
+     * 根据 ID 删除学校部门
+     * 同时删除该部门下的所有子部门和成员
+     */
+    @Override
+    public int deleteSysSchoolDepartmentById(Long id) {
+        // 1. 查询所有部门，找到需要删除的部门及其子部门
+        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll();
+        if (allDepartments == null || allDepartments.isEmpty()) {
+            return 0;
+        }
+
+        // 2. 收集需要删除的部门 ID（包括自身和所有子部门）
+        List<Long> departmentIdsToDelete = new ArrayList<>();
+        collectDepartmentIdsToDelete(id, allDepartments, departmentIdsToDelete);
+
+        if (departmentIdsToDelete.isEmpty()) {
+            return 0;
+        }
+
+        // 3. 批量删除部门
+        int result = schoolDepartmentMapper.deleteByIds(departmentIdsToDelete.toArray(new Long[0]));
+
+        // 4. 删除相关部门成员（通过部门 ID 关联的成员）
+        for (Long deptId : departmentIdsToDelete) {
+            schoolDepartmentMemberMapper.deleteByDepartmentId(deptId);
+        }
+
+        return result;
+    }
+
+    /**
+     * 递归收集需要删除的部门 ID
+     */
+    private void collectDepartmentIdsToDelete(Long parentId, List<SysSchoolDepartment> allDepartments, 
+                                               List<Long> idsToCollect) {
+        idsToCollect.add(parentId);
+        
+        // 找到所有以当前部门为父部门的子部门
+        List<SysSchoolDepartment> children = allDepartments.stream()
+                .filter(dept -> dept != null && dept.getParentId() != null)
+                .filter(dept -> dept.getParentId().longValue() == parentId)
+                .collect(Collectors.toList());
+        
+        // 递归处理子部门
+        for (SysSchoolDepartment child : children) {
+            if (child.getId() != null) {
+                collectDepartmentIdsToDelete(child.getId(), allDepartments, idsToCollect);
+            }
+        }
     }
 }

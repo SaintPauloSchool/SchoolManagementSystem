@@ -32,4 +32,10 @@
         WHERE id = #{id}
     </delete>
 
+    <!-- 根据部门 ID 删除成员 -->
+    <delete id="deleteByDepartmentId" parameterType="Long">
+        DELETE FROM sys_school_department_member
+        WHERE department_id = #{departmentId}
+    </delete>
+
 </mapper>

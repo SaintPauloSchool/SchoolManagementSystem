@@ -25,4 +25,19 @@
         ORDER BY order_num ASC
     </select>
 
+    <!-- 根据 ID 删除学校部门 -->
+    <delete id="deleteById" parameterType="Long">
+        DELETE FROM sys_school_department
+        WHERE id = #{id}
+    </delete>
+
+    <!-- 根据 ID 批量删除学校部门 -->
+    <delete id="deleteByIds">
+        DELETE FROM sys_school_department
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
 </mapper>

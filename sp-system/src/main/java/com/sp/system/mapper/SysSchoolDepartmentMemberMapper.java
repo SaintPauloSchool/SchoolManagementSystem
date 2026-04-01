@@ -27,4 +27,12 @@ public interface SysSchoolDepartmentMemberMapper {
      */
     int deleteMemberById(@Param("id") Long id);
 
+    /**
+     * 根据部门 ID 删除成员
+     *
+     * @param departmentId 部门 ID
+     * @return 影响行数
+     */
+    int deleteByDepartmentId(@Param("departmentId") Long departmentId);
+
 }

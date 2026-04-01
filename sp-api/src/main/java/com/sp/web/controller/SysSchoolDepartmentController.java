@@ -59,4 +59,18 @@ public class SysSchoolDepartmentController extends BaseController {
             return AjaxResult.error("刪除失敗，成員不存在或已被刪除");
         }
     }
+
+    /**
+     * 根据 ID 删除部门
+     */
+    @Anonymous
+    @DeleteMapping("/{id}")
+    public AjaxResult deleteDepartment(@PathVariable Long id) {
+        int result = sysSchoolDepartmentService.deleteSysSchoolDepartmentById(id);
+        if (result > 0) {
+            return AjaxResult.success("刪除成功");
+        } else {
+            return AjaxResult.error("刪除失敗，部門不存在或已被刪除");
+        }
+    }
 }

@@ -17,4 +17,13 @@ public interface ISysSchoolDepartmentService {
      */
     List<SysSchoolDepartment> getSysSchoolDepartmentTree();
 
+    /**
+     * 根据 ID 删除学校部门
+     * 同时删除该部门下的所有子部门和成员
+     *
+     * @param id 部门 ID
+     * @return 结果
+     */
+    int deleteSysSchoolDepartmentById(Long id);
+
 }

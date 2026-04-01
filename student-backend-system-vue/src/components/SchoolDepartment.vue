@@ -27,10 +27,28 @@
           class="department-tree"
         >
           <template #default="{ node, data }">
-            <span class="custom-tree-node">
-              <el-icon class="tree-icon"><OfficeBuilding /></el-icon>
-              <span>{{ data.name }}</span>
-            </span>
+            <div class="custom-tree-node-wrapper">
+              <span class="custom-tree-node">
+                <el-icon class="tree-icon"><OfficeBuilding /></el-icon>
+                <span>{{ data.name }}</span>
+              </span>
+              <el-dropdown 
+                v-if="!data.isLeaf" 
+                trigger="click"
+                @command="(command) => handleTreeCommand(command, data)"
+                class="tree-dropdown"
+              >
+                <el-icon class="more-icon"><More /></el-icon>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="delete" :data="data">
+                      <el-icon class="dropdown-icon"><Delete /></el-icon>
+                      <span>刪除部門</span>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </template>
         </el-tree>
       </div>
@@ -116,14 +134,15 @@
 </template>
 
 <script>
-import { OfficeBuilding, Delete } from '@element-plus/icons-vue'
+import { OfficeBuilding, Delete, More } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
 export default {
   name: 'SchoolDepartment',
   components: {
     OfficeBuilding,
-    Delete
+    Delete,
+    More
   },
   data() {
     return {
@@ -347,6 +366,42 @@ export default {
       if (this.$refs.departmentForm) {
         this.$refs.departmentForm.clearValidate()
       }
+    },
+
+    handleTreeCommand(command, nodeData) {
+      if (command === 'delete') {
+        this.handleDeleteDepartment(nodeData)
+      }
+    },
+    
+    handleDeleteDepartment(data) {
+      const departmentName = data.name || '該部門'
+      this.$confirm(`確定要刪除部門 "${departmentName}" 嗎？此操作將同時刪除該部門下的所有子部門和成員！`, '提示', {
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        try {
+          const response = await request({
+            url: `/system/schoolDepartment/${data.id}`,
+            method: 'delete'
+          })
+              
+          if (response.code === 200 || response.code === 0) {
+            this.$message.success('刪除成功')
+            // 重新加载部门树
+            this.loadDepartmentTree()
+          } else {
+            this.$message.error('刪除失敗：' + (response.msg || '未知錯誤'))
+          }
+        } catch (error) {
+          if (error !== 'cancel') {
+            this.$message.error('刪除失敗：' + (error.message || '網絡錯誤'))
+          }
+        }
+      }).catch(() => {
+        // 用户取消删除
+      })
     }
   }
 }
@@ -447,6 +502,67 @@ export default {
   margin-right: 8px;
   font-size: 16px;
   color: #1890ff;
+}
+
+.custom-tree-node-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: 4px;
+}
+
+.tree-dropdown {
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.more-icon {
+  font-size: 22px;
+  color: #909399;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.3s;
+  opacity: 0;
+}
+
+.custom-tree-node-wrapper:hover .more-icon {
+  opacity: 1;
+}
+
+.more-icon:hover {
+  background-color: #409eff;
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.dropdown-icon {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+:deep(.el-dropdown-menu__item) {
+  padding: 8px 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+:deep(.el-dropdown-menu__item--divided) {
+  margin-top: 0;
+}
+
+:deep(.el-dropdown-menu__item:hover) {
+  background-color: #f5f7fa;
+}
+
+:deep(.el-dropdown-menu__item.is-danger) {
+  color: #f56c6c;
+}
+
+:deep(.el-dropdown-menu__item.is-danger:hover) {
+  background-color: #fef0f0;
 }
 
 /* 选中节点的文字和图标颜色 */
