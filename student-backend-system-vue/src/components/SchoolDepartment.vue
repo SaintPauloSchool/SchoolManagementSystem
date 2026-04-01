@@ -93,14 +93,15 @@
     <el-dialog
       :title="dialogTitle"
       v-model="departmentDialogVisible"
-      width="500px"
+      width="600px"
       @close="resetDepartmentForm"
+      class="department-dialog"
     >
-      <el-form ref="departmentForm" :model="departmentForm" label-width="100px" :rules="departmentRules">
-        <el-form-item label="上級部門" prop="parentId">
+      <el-form ref="departmentForm" :model="departmentForm" label-width="110px" :rules="departmentRules">
+        <el-form-item label="上级部门" prop="parentId">
           <el-select
             v-model="departmentForm.parentId"
-            placeholder="請選擇上級部門（不選則為根部門）"
+            placeholder="请选择上级部门（不选则为根部门）"
             clearable
             style="width: 100%"
           >
@@ -114,23 +115,30 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="部門名稱" prop="name">
-          <el-input v-model="departmentForm.name" placeholder="請輸入部門名稱" />
+        <el-form-item label="部门名称" prop="name">
+          <el-input v-model="departmentForm.name" placeholder="请输入部门名称" prefix-icon="OfficeBuilding" />
         </el-form-item>
-        <el-form-item label="英文名稱" prop="nameEn">
-          <el-input v-model="departmentForm.nameEn" placeholder="請輸入部門英文名稱" />
+        <el-form-item label="英文名称" prop="nameEn">
+          <el-input v-model="departmentForm.nameEn" placeholder="请输入部门英文名称" />
         </el-form-item>
         <el-form-item label="排序" prop="orderNum">
-          <el-input-number v-model="departmentForm.orderNum" :min="0" :max="999" />
-        </el-form-item>
-        <el-form-item label="部門負責人" prop="departmentLeader">
-          <el-input v-model="departmentForm.departmentLeader" placeholder="請輸入部門負責人 UserID" />
+          <el-input-number 
+            v-model="departmentForm.orderNum" 
+            :min="0" 
+            :max="999" 
+            controls-position="right"
+            :step="1"
+            placeholder="请输入排序值"
+            class="order-input"
+          />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="departmentDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="submitDepartmentForm">確 定</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="departmentDialogVisible = false" class="cancel-btn">取 消</el-button>
+          <el-button type="primary" @click="submitDepartmentForm" class="confirm-btn">確 定</el-button>
+        </div>
+      </template>
     </el-dialog>
 
     <!-- 选择成员对话框 -->
@@ -140,6 +148,7 @@
       width="900px"
       top="10vh"
       @close="handleMemberSelectorClose"
+      class="member-selector-dialog"
     >
       <div class="selector-wrapper">
         <div class="left-panel">
@@ -207,12 +216,14 @@
         </div>
       </div>
       
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="memberSelectorDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="confirmAddMembers" :disabled="selectedWecomMembers.length === 0">
-          確 定
-        </el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="memberSelectorDialogVisible = false" class="cancel-btn">取 消</el-button>
+          <el-button type="primary" @click="confirmAddMembers" :disabled="selectedWecomMembers.length === 0" class="confirm-btn">
+            確 定
+          </el-button>
+        </div>
+      </template>
     </el-dialog>
 
 
@@ -259,11 +270,9 @@ export default {
         parentId: null,
         name: '',
         nameEn: '',
-        orderNum: 0,
-        departmentLeader: ''
+        orderNum: 0
       },
       treeSelectData: [],
-      // 成员选择器相关
       memberSelectorDialogVisible: false,
       wecomDepartmentTree: [],
       loading: false,
@@ -280,7 +289,7 @@ export default {
     this.loadDepartmentTree()
   },
   methods: {
-    async loadDepartmentTree() {
+    async loadDepartmentTree(selectNewDepartment = false) {
       try {
         const response = await request({
           url: '/system/schoolDepartment/tree',
@@ -291,19 +300,15 @@ export default {
           this.departmentTree = response.data || []
           this.treeSelectData = this.buildTreeSelectData(this.departmentTree)
           
-          // 默认选中第一个部门
-          if (this.departmentTree.length > 0) {
+          if (!selectNewDepartment && this.departmentTree.length > 0) {
             this.currentDepartment = this.departmentTree[0]
             this.loadMemberList(this.departmentTree[0])
             
-            // 设置树组件的选中状态
             this.$nextTick(() => {
               if (this.$refs.departmentTree) {
                 this.$refs.departmentTree.setCurrentKey(this.departmentTree[0].id)
               }
             })
-          } else {
-            this.$message.info('暫無部門數據，請新增部門')
           }
         } else {
           this.$message.error('加載失敗：' + (response.msg || '未知錯誤'))
@@ -454,7 +459,7 @@ export default {
           try {
             const url = '/system/schoolDepartment'
             const method = this.departmentForm.id ? 'put' : 'post'
-            const departmentName = this.departmentForm.name  // 保存部门名称
+            const departmentName = this.departmentForm.name
             
             const response = await request({
               url: url,
@@ -465,42 +470,35 @@ export default {
             if (response.code === 200 || response.code === 0) {
               this.$message.success(this.departmentForm.id ? '更新成功' : '新增成功')
               this.departmentDialogVisible = false
-              await this.loadDepartmentTree()
               
-              // 如果是新增部门，需要更新 currentDepartment 为新创建的部门
               if (!this.departmentForm.id) {
-                console.log('新增部门成功，部门名称:', departmentName)
-                console.log('当前部门树:', this.departmentTree)
+                await this.loadDepartmentTree(true)
                 
-                // 从树中找到新创建的部门（通过名称匹配）
                 const newDept = this.findDepartmentByName(this.departmentTree, departmentName)
-                console.log('查找到的新部门:', newDept)
                 
                 if (newDept) {
                   this.currentDepartment = newDept
-                  // 设置树组件的选中状态
                   this.$nextTick(() => {
                     if (this.$refs.departmentTree) {
                       this.$refs.departmentTree.setCurrentKey(newDept.id)
                     }
                   })
                   
-                  // 询问是否添加成员
+                  this.currentMemberList = []
+                  this.memberCount = 0
+                  
                   this.$confirm('是否要為該部門添加成員？', '提示', {
                     confirmButtonText: '確定',
                     cancelButtonText: '取消',
                     type: 'question'
                   }).then(() => {
-                    // 使用新部门的 id 打开成员选择器
-                    console.log('用户确认添加成员，部门 ID:', newDept.id)
                     this.openMemberSelector(newDept)
                   }).catch(() => {
                     // 用户取消
-                    console.log('用户取消添加成员')
                   })
-                } else {
-                  console.error('未找到新创建的部门:', departmentName)
                 }
+              } else {
+                await this.loadDepartmentTree()
               }
             }
           } catch (error) {
@@ -516,8 +514,7 @@ export default {
         parentId: null,
         name: '',
         nameEn: '',
-        orderNum: 0,
-        departmentLeader: ''
+        orderNum: 0
       }
       if (this.$refs.departmentForm) {
         this.$refs.departmentForm.clearValidate()
@@ -532,17 +529,12 @@ export default {
       }
     },
     
-    // 添加成员
     handleAddMember(data) {
-      // 设置当前部门
       this.currentDepartment = data
-      // 打开成员选择器
       this.openMemberSelector(data)
     },
     
-    // 打开成员选择器
     async openMemberSelector(department = null) {
-      // 如果没有传入部门，使用当前选中的部门
       const targetDepartment = department || this.currentDepartment
       
       if (!targetDepartment) {
@@ -574,28 +566,22 @@ export default {
       }
     },
     
-    // WeCom 树复选框变化
     handleWecomCheckChange(data, checked) {
-      // 获取所有选中的节点
       const checkedNodes = this.$refs.wecomTree.getCheckedNodes()
-      // 过滤出叶子节点（成员）
       const members = checkedNodes.filter(node => node.isLeaf === true)
       this.selectedWecomMembers = members
       this.selectedWecomMemberIds = members.map(m => m.id)
     },
     
-    // 移除选中的成员
     removeWecomMember(index) {
       this.selectedWecomMembers.splice(index, 1)
       this.selectedWecomMemberIds.splice(index, 1)
       
-      // 同步更新树的选中状态
       if (this.$refs.wecomTree) {
         this.$refs.wecomTree.setCheckedKeys(this.selectedWecomMemberIds)
       }
     },
     
-    // 关闭成员选择器
     handleMemberSelectorClose() {
       this.memberSelectorDialogVisible = false
       this.selectedWecomMembers = []
@@ -605,7 +591,6 @@ export default {
       }
     },
     
-    // 确认添加成员
     async confirmAddMembers() {
       if (this.selectedWecomMembers.length === 0) {
         this.$message.warning('請選擇至少一個成員')
@@ -618,7 +603,6 @@ export default {
       }
       
       try {
-        // 批量添加成员
         const membersToAdd = this.selectedWecomMembers.map(member => ({
           userid: member.staffUserId || member.userid,
           name: member.name,
@@ -635,7 +619,6 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.$message.success('添加成員成功')
           this.memberSelectorDialogVisible = false
-          // 重新加载当前部门成员列表
           this.loadMemberList(this.currentDepartment)
         } else {
           this.$message.error('添加成員失敗：' + (response.msg || '未知錯誤'))
@@ -942,49 +925,177 @@ export default {
   background: #fafafa;
 }
 
-/* 对话框样式 */
-:deep(.el-dialog) {
-  border-radius: 8px;
+/* 部门对话框样式 */
+.department-dialog :deep(.el-dialog) {
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-:deep(.el-dialog__header) {
-  padding: 20px 24px;
-  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+.department-dialog :deep(.el-dialog__header) {
+  padding: 24px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   margin: 0;
+  border-bottom: none;
 }
 
-:deep(.el-dialog__title) {
+.department-dialog :deep(.el-dialog__title) {
   color: #fff;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
-:deep(.el-dialog__body) {
+.department-dialog :deep(.el-dialog__body) {
+  padding: 32px 24px 24px;
+  background: #fafafa;
+}
+
+.department-dialog :deep(.el-form) {
+  background: #fff;
   padding: 24px;
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
 }
 
-:deep(.el-form-item__label) {
+.department-dialog :deep(.el-form-item__label) {
   font-weight: 500;
-  color: #262626;
+  color: #333;
+  font-size: 14px;
 }
 
-:deep(.el-input__inner) {
+.department-dialog :deep(.el-input__inner) {
   border-radius: 6px;
   border-color: #d9d9d9;
+  height: 40px;
+  font-size: 14px;
+  transition: all 0.3s;
 }
 
-:deep(.el-input__inner:focus) {
-  border-color: #40a9ff;
+.department-dialog :deep(.el-input__inner:focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
 }
 
-:deep(.el-button--primary) {
-  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+.department-dialog :deep(.el-input__inner::placeholder) {
+  color: #bfbfbf;
+}
+
+.department-dialog :deep(.el-select-dropdown__item) {
+  border-radius: 4px;
+}
+
+.department-dialog :deep(.el-select-dropdown__item:hover) {
+  background-color: #f0f2f5;
+}
+
+.department-dialog :deep(.el-input-number) {
+  width: 100%;
+  border-radius: 6px;
+  border-color: #d9d9d9;
+  transition: all 0.3s;
+}
+
+.department-dialog :deep(.el-input-number:focus-within) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.department-dialog :deep(.el-input-number__decrease),
+.department-dialog :deep(.el-input-number__increase) {
+  background: #f5f5f5;
+  border-color: #d9d9d9;
+  transition: all 0.3s;
+  width: 32px;
+  height: 32px;
+}
+
+.department-dialog :deep(.el-input-number__decrease:hover),
+.department-dialog :deep(.el-input-number__increase:hover) {
+  background: #e6e6e6;
+}
+
+/* 排序输入框特殊样式 */
+.department-dialog :deep(.order-input .el-input-number__decrease),
+.department-dialog :deep(.order-input .el-input-number__increase) {
+  width: 28px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8e8e8 100%);
+  border-left-color: #d9d9d9;
+}
+
+.department-dialog :deep(.order-input .el-input-number__decrease:hover),
+.department-dialog :deep(.order-input .el-input-number__increase:hover) {
+  background: linear-gradient(135deg, #e6e6e6 0%, #d9d9d9 100%);
+}
+
+.department-dialog :deep(.order-input .el-input__inner) {
+  text-align: center;
+  font-weight: 500;
+  color: #333;
+}
+
+.department-dialog :deep(.el-button--primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 10px 24px;
+  transition: all 0.3s;
+}
+
+.department-dialog :deep(.el-button--primary:hover) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.department-dialog :deep(.el-button--primary:active) {
+  transform: translateY(0);
+}
+
+.department-dialog :deep(.el-button) {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 10px 24px;
+  transition: all 0.3s;
+}
+
+.department-dialog :deep(.cancel-btn) {
+  border-color: #d9d9d9;
+  color: #666;
+  background: #fff;
+}
+
+.department-dialog :deep(.cancel-btn:hover) {
+  border-color: #667eea;
+  color: #667eea;
+  background: #f0f2f5;
+}
+
+.department-dialog :deep(.confirm-btn) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
 }
 
-:deep(.el-button--primary:hover) {
-  opacity: 0.9;
+.department-dialog :deep(.dialog-footer) {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px 0;
+}
+
+/* 表单必填项标记 */
+.department-dialog :deep(.el-form-item.is-required:not(.is-no-asterisk)) > .el-form-item__label:before {
+  content: '*';
+  color: #ff4d4f;
+  margin-right: 4px;
+}
+
+/* 对话框底部边框 */
+.department-dialog :deep(.el-dialog__footer) {
+  padding: 16px 24px;
+  border-top: 1px solid #e8e8e8;
+  background: #fafafa;
 }
 
 /* 删除按钮 - 红色实心圆形 */
@@ -1035,6 +1146,32 @@ export default {
   width: 18px;
   height: 18px;
   font-size: 18px;
+}
+
+/* 成员选择器对话框样式 */
+.member-selector-dialog :deep(.el-dialog) {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.member-selector-dialog :deep(.el-dialog__header) {
+  padding: 24px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin: 0;
+  border-bottom: none;
+}
+
+.member-selector-dialog :deep(.el-dialog__title) {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.member-selector-dialog :deep(.el-dialog__body) {
+  padding: 32px 24px 24px;
+  background: #fafafa;
 }
 
 /* 成员选择器样式 */
@@ -1136,8 +1273,54 @@ export default {
   margin: 0;
 }
 
-:deep(.el-dialog__footer) {
-  padding: 12px 24px;
+/* 选择器底部按钮区域 - 与部门对话框统一 */
+.member-selector-dialog :deep(.dialog-footer) {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
   border-top: 1px solid #e8e8e8;
+  background: #fafafa;
+}
+
+.member-selector-dialog :deep(.cancel-btn) {
+  border-color: #d9d9d9;
+  color: #666;
+  background: #fff;
+  border-radius: 6px;
+  padding: 10px 24px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.member-selector-dialog :deep(.cancel-btn:hover) {
+  border-color: #667eea;
+  color: #667eea;
+  background: #f0f2f5;
+}
+
+.member-selector-dialog :deep(.confirm-btn) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 6px;
+  padding: 10px 24px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.member-selector-dialog :deep(.confirm-btn:hover) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.member-selector-dialog :deep(.confirm-btn:active) {
+  transform: translateY(0);
+}
+
+.member-selector-dialog :deep(.confirm-btn:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 </style>
