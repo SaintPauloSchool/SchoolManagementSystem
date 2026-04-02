@@ -96,13 +96,19 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
      */
     @Override
     public int deleteSysSchoolDepartmentById(Long id) {
-        // 1. 一次性查询所有部门（type=1 和 type=2），找到需要删除的部门及其子部门
-        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll(null);
+        // 1. 先查詢目標部門，取得它的 type
+        SysSchoolDepartment targetDept = schoolDepartmentMapper.selectById(id);
+        if (targetDept == null) {
+            return 0;
+        }
+        
+        // 2. 只查詢相同 type 的部門，避免將所有不同類型的部門資料也一起拉進記憶體
+        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll(targetDept.getType());
         if (allDepartments == null || allDepartments.isEmpty()) {
             return 0;
         }
 
-        // 2. 收集需要删除的部门 ID（包括自身和所有子部门）
+        // 3. 收集需要删除的部门 ID（包括自身和所有子部门）
         List<Long> departmentIdsToDelete = new ArrayList<>();
         collectDepartmentIdsToDelete(id, allDepartments, departmentIdsToDelete);
 

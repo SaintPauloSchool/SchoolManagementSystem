@@ -292,7 +292,8 @@ export default {
         parentId: null,
         name: '',
         nameEn: '',
-        orderNum: 0
+        orderNum: 0,
+        type: 2
       },
       treeSelectData: [],
       memberSelectorDialogVisible: false,
@@ -450,7 +451,7 @@ export default {
       }
     },
 
-    loadMemberList(department) {
+    async loadMemberList(department) {
       // 如果没有选中部门，清空列表
       if (!department || !department.id) {
         this.currentMemberList = []
@@ -461,13 +462,14 @@ export default {
       // 收集当前部门及其所有子部门的 ID
       const departmentIds = this.collectDepartmentIds(department)
       
-      // 从 /system/schoolDepartment/members 接口获取成员列表
-      request({
-        url: '/system/schoolDepartment/members',
-        method: 'post',
-        data: departmentIds,
-        params: { type: 2 }
-      }).then(response => {
+      try {
+        // 从 /system/schoolDepartment/members 接口获取成员列表
+        const response = await request({
+          url: '/system/schoolDepartment/members',
+          method: 'post',
+          data: departmentIds
+        })
+        
         if (response.code === 200 || response.code === 0) {
           const members = response.data || []
           this.currentMemberList = members.map(member => ({
@@ -476,39 +478,16 @@ export default {
           }))
           this.memberCount = members.length
         } else {
-          this.$message.error('加载成员失败')
+          this.$message.error('加載成員失敗：' + (response.msg || '未知錯誤'))
           this.currentMemberList = []
           this.memberCount = 0
         }
-      }).catch(error => {
-        this.$message.error('加载失败')
+      } catch (error) {
+        console.error('加载成员失败:', error)
+        this.$message.error('加載失敗：' + (error.message || '網絡錯誤'))
         this.currentMemberList = []
         this.memberCount = 0
-      })
-    },
-
-    // 从部门树形结构中提取所有成员（叶子节点）
-    extractMembersFromWecomTree(tree) {
-      const members = []
-      if (!tree || tree.length === 0) return members
-      
-      for (const node of tree) {
-        if (node.isLeaf) {
-          // 叶子节点是人员 - userid 使用 parent_user_id
-          members.push({
-            id: node.id,
-            userid: node.parentUserId || '',
-            name: node.name,
-            openUserid: node.groupChatId || ''
-          })
-        } else {
-          // 非叶子节点继续递归
-          if (node.children && node.children.length > 0) {
-            members.push(...this.extractMembersFromWecomTree(node.children))
-          }
-        }
       }
-      return members
     },
 
     collectDepartmentIds(department) {
@@ -622,14 +601,20 @@ export default {
       this.$refs.departmentForm.validate(async (valid) => {
         if (valid) {
           try {
-            const url = '/system/schoolDepartment?type=2'
+            const url = '/system/schoolDepartment'
             const method = this.departmentForm.id ? 'put' : 'post'
             const departmentName = this.departmentForm.name
+            
+            // 如果沒有選中上級部門，則默認傳 0
+            const payload = { ...this.departmentForm }
+            if (!payload.parentId) {
+              payload.parentId = 0
+            }
             
             const response = await request({
               url: url,
               method: method,
-              data: this.departmentForm
+              data: payload
             })
             
             if (response.code === 200 || response.code === 0) {
@@ -680,7 +665,8 @@ export default {
         parentId: null,
         name: '',
         nameEn: '',
-        orderNum: 0
+        orderNum: 0,
+        type: 2
       }
       if (this.$refs.departmentForm) {
         this.$refs.departmentForm.clearValidate()

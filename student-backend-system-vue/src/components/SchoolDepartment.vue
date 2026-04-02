@@ -292,7 +292,8 @@ export default {
         parentId: null,
         name: '',
         nameEn: '',
-        orderNum: 0
+        orderNum: 0,
+        type: 1
       },
       treeSelectData: [],
       memberSelectorDialogVisible: false,
@@ -601,10 +602,16 @@ export default {
             const method = this.departmentForm.id ? 'put' : 'post'
             const departmentName = this.departmentForm.name
             
+            // 如果沒有選中上級部門，則默認傳 0
+            const payload = { ...this.departmentForm }
+            if (!payload.parentId) {
+              payload.parentId = 0
+            }
+            
             const response = await request({
               url: url,
               method: method,
-              data: this.departmentForm
+              data: payload
             })
             
             if (response.code === 200 || response.code === 0) {
@@ -655,7 +662,8 @@ export default {
         parentId: null,
         name: '',
         nameEn: '',
-        orderNum: 0
+        orderNum: 0,
+        type: 1
       }
       if (this.$refs.departmentForm) {
         this.$refs.departmentForm.clearValidate()
@@ -754,7 +762,8 @@ export default {
           userid: member.staffUserId || member.userid,
           name: member.name,
           departmentId: this.currentDepartment.id,
-          openUserid: member.openUserid || ''
+          openUserid: member.openUserid || '',
+          type: 1
         }))
         
         const response = await request({

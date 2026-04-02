@@ -40,7 +40,7 @@
 
     <!-- 批量插入部门成员 -->
     <insert id="batchInsertMembers">
-        INSERT INTO sys_school_department_member (userid, name, department_id, open_userid, create_time, update_time)
+        INSERT INTO sys_school_department_member (userid, name, department_id, open_userid, type, create_time, update_time)
         VALUES
         <foreach collection="members" item="member" separator=",">
             (
@@ -48,6 +48,7 @@
                 #{member.name},
                 #{member.departmentId},
                 #{member.openUserid},
+                #{member.type},
                 now(),
                 now()
             )

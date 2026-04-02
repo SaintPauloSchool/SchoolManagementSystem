@@ -41,8 +41,7 @@ public class SysSchoolDepartmentController extends BaseController {
      */
     @Anonymous
     @PostMapping("/members")
-    public AjaxResult getMembersByDepartments(@RequestBody List<Long> departmentIds,
-                                              @RequestParam(required = false, defaultValue = "1") Integer type) {
+    public AjaxResult getMembersByDepartments(@RequestBody List<Long> departmentIds) {
         List<SysSchoolDepartmentMember> members = sysSchoolDepartmentMemberService.getMembersByDepartmentIds(departmentIds);
         return AjaxResult.success(members);
     }
