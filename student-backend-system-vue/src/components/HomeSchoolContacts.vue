@@ -26,8 +26,6 @@
           highlight-current
           :default-expanded-keys="expandedKeys"
           @node-click="handleNodeClick"
-          @node-expand="handleNodeExpand"
-          @node-collapse="handleNodeCollapse"
           class="department-tree"
         >
           <template #default="{ node, data }">
@@ -323,42 +321,56 @@ export default {
         })
         
         if (response.code === 200 || response.code === 0) {
-          this.isReloadingTree = true
+          // 動態擷取當前所有展開的節點，避免依賴事件產生競態條件
+          if (this.$refs.departmentTree) {
+            const nodesMap = this.$refs.departmentTree.store.nodesMap;
+            const currentExpanded = [];
+            for (const key in nodesMap) {
+              if (nodesMap[key].expanded) {
+                currentExpanded.push(nodesMap[key].data.id);
+              }
+            }
+            // 如果原本已經展開，就沿用紀錄
+            this.expandedKeys = Array.from(new Set([...this.expandedKeys, ...currentExpanded]));
+          }
+          
           this.departmentTree = response.data || []
           this.treeSelectData = this.flattenTreeSelectData(this.departmentTree)
-          this.treeComponentKey++ // 強制 el-tree 完全重新渲染以應用 default-expanded-keys
+          this.treeComponentKey++ // 確保完全重繪以套用 default-expanded-keys
           
           this.$nextTick(() => {
-            // 延遲解除鎖定，確保 DOM 渲染動畫完成前誤觸的 collapse 不會影響 expandedKeys
-            setTimeout(() => {
-              this.isReloadingTree = false
-            }, 300)
-            
-            if (!selectNewDepartment && this.departmentTree.length > 0) {
-              let preservedDept = this.currentDepartment ? this.findDepartment(this.departmentTree, this.currentDepartment.id) : null;
-              
-              // 如果當前部門不見了（被刪除了），嘗試選中它的上一級父部門，避免直接跳回根目錄
-              if (!preservedDept && this.currentDepartment && this.currentDepartment.parentId) {
-                preservedDept = this.findDepartment(this.departmentTree, this.currentDepartment.parentId);
-              }
-              
-              if (preservedDept) {
-                this.currentDepartment = preservedDept
-                this.loadMemberList(preservedDept)
-                this.$nextTick(() => {
-                  if (this.$refs.departmentTree) {
-                    this.$refs.departmentTree.setCurrentKey(preservedDept.id)
-                  }
-                })
-              } else {
-                this.currentDepartment = this.departmentTree[0]
-                this.loadMemberList(this.departmentTree[0])
+            if (!selectNewDepartment) {
+              if (this.departmentTree.length > 0) {
+                let preservedDept = this.currentDepartment ? this.findDepartment(this.departmentTree, this.currentDepartment.id) : null;
                 
-                this.$nextTick(() => {
-                  if (this.$refs.departmentTree) {
-                    this.$refs.departmentTree.setCurrentKey(this.departmentTree[0].id)
-                  }
-                })
+                // 如果當前部門不見了（被刪除了），嘗試選中它的上一級父部門
+                if (!preservedDept && this.currentDepartment && this.currentDepartment.parentId) {
+                  preservedDept = this.findDepartment(this.departmentTree, this.currentDepartment.parentId);
+                }
+                
+                if (preservedDept) {
+                  this.currentDepartment = preservedDept
+                  this.loadMemberList(preservedDept)
+                  this.$nextTick(() => {
+                    if (this.$refs.departmentTree) {
+                      this.$refs.departmentTree.setCurrentKey(preservedDept.id)
+                    }
+                  })
+                } else {
+                  this.currentDepartment = this.departmentTree[0]
+                  this.loadMemberList(this.departmentTree[0])
+                  
+                  this.$nextTick(() => {
+                    if (this.$refs.departmentTree) {
+                      this.$refs.departmentTree.setCurrentKey(this.departmentTree[0].id)
+                    }
+                  })
+                }
+              } else {
+                // 如果刪除到整個部門樹都空了，要清空人員列表與當前選中部門
+                this.currentDepartment = null;
+                this.currentMemberList = [];
+                this.memberCount = 0;
               }
             }
           })
@@ -419,7 +431,7 @@ export default {
       this.currentDepartment = data
       this.loadMemberList(data)
       
-      // 如果有子节点，自动展开
+      // 如果有子节点，自动展开，並記錄 key
       if (data.children && data.children.length > 0) {
         this.$nextTick(() => {
           const node = this.$refs.departmentTree.getNode(data.id)
@@ -431,23 +443,6 @@ export default {
             }
           }
         })
-      }
-    },
-
-    handleNodeExpand(data) {
-      if (this.isReloadingTree) return
-      const key = data.id
-      if (!this.expandedKeys.includes(key)) {
-        this.expandedKeys.push(key)
-      }
-    },
-
-    handleNodeCollapse(data) {
-      if (this.isReloadingTree) return
-      const key = data.id
-      const index = this.expandedKeys.indexOf(key)
-      if (index > -1) {
-        this.expandedKeys.splice(index, 1)
       }
     },
 
@@ -813,12 +808,7 @@ export default {
               
           if (response.code === 200 || response.code === 0) {
             this.$message.success('刪除成功')
-            const key = data.id
-            const index = this.expandedKeys.indexOf(key)
-            if (index > -1) {
-              this.expandedKeys.splice(index, 1)
-            }
-            // 重新加载部门树
+            // 不要在這裡刪除 expandedKeys，讓 tree.store 自己管理
             this.loadDepartmentTree()
           } else {
             this.$message.error('刪除失敗：' + (response.msg || '未知錯誤'))
