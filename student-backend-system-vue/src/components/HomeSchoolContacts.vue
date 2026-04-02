@@ -458,26 +458,23 @@ export default {
         return
       }
       
-      // 从 wecomSchoolDepartment/treeWithMembers 获取所有人员数据
+      // 收集当前部门及其所有子部门的 ID
+      const departmentIds = this.collectDepartmentIds(department)
+      
+      // 从 /system/schoolDepartment/members 接口获取成员列表
       request({
-        url: '/wecomSchoolDepartment/treeWithMembers',
-        method: 'get'
+        url: '/system/schoolDepartment/members',
+        method: 'post',
+        data: departmentIds,
+        params: { type: 2 }
       }).then(response => {
         if (response.code === 200 || response.code === 0) {
-          const wecomTree = response.data || []
-          // 从树形结构中提取所有叶子节点（人员）
-          const allMembers = this.extractMembersFromWecomTree(wecomTree)
-          // 根据当前选中的部门 ID 过滤人员
-          const departmentIds = this.collectDepartmentIds(department)
-          const filteredMembers = allMembers.filter(member => 
-            departmentIds.includes(member.departmentId)
-          )
-          
-          this.currentMemberList = filteredMembers.map(member => ({
+          const members = response.data || []
+          this.currentMemberList = members.map(member => ({
             ...member,
             departmentName: department.name
           }))
-          this.memberCount = filteredMembers.length
+          this.memberCount = members.length
         } else {
           this.$message.error('加载成员失败')
           this.currentMemberList = []
@@ -490,20 +487,19 @@ export default {
       })
     },
 
-    // 从 wecom 树形结构中提取所有成员（叶子节点）
+    // 从部门树形结构中提取所有成员（叶子节点）
     extractMembersFromWecomTree(tree) {
       const members = []
       if (!tree || tree.length === 0) return members
       
       for (const node of tree) {
         if (node.isLeaf) {
-          // 叶子节点是人员
+          // 叶子节点是人员 - userid 使用 parent_user_id
           members.push({
             id: node.id,
-            userid: node.staffUserId || node.userid,
+            userid: node.parentUserId || '',
             name: node.name,
-            departmentId: node.parentId,
-            openUserid: node.openUserid || ''
+            openUserid: node.groupChatId || ''
           })
         } else {
           // 非叶子节点继续递归
@@ -729,7 +725,7 @@ export default {
       
       try {
         const response = await request({
-          url: '/wecomSchoolDepartment/treeWithMembers',
+          url: '/system/department/treeWithParents',
           method: 'get'
         })
         
@@ -748,7 +744,13 @@ export default {
     
     handleWecomCheckChange(data, checked) {
       const checkedNodes = this.$refs.wecomTree.getCheckedNodes()
-      this.selectedWecomMembers = checkedNodes.filter(node => node.isLeaf === true)
+      // 过滤出叶子节点（人员），并将 parentUserId 映射为 userid
+      this.selectedWecomMembers = checkedNodes.filter(node => node.isLeaf === true).map(node => ({
+        id: node.id,
+        userid: node.parentUserId || '',
+        name: node.name,
+        openUserid: node.groupChatId || ''
+      }))
     },
     
     removeWecomMember(index) {
@@ -779,12 +781,15 @@ export default {
       }
       
       try {
+        console.log('选中的成员:', this.selectedWecomMembers)
         const membersToAdd = this.selectedWecomMembers.map(member => ({
-          userid: member.staffUserId || member.userid,
+          userid: member.userid,
           name: member.name,
           departmentId: this.currentDepartment.id,
-          openUserid: member.openUserid || ''
+          openUserid: member.openUserid || '',
+          type: 2
         }))
+        console.log('准备提交的成员数据:', membersToAdd)
         
         const response = await request({
           url: '/system/schoolDepartment/members/batch?type=2',
