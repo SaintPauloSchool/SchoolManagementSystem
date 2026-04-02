@@ -18,6 +18,7 @@
         
         <el-tree
           ref="departmentTree"
+          :key="treeComponentKey"
           :data="departmentTree"
           :props="defaultProps"
           node-key="id"
@@ -44,11 +45,15 @@
                 <el-icon class="more-icon"><More /></el-icon>
                 <template #dropdown>
                   <el-dropdown-menu>
+                    <el-dropdown-item command="addSubDepartment" :data="data">
+                      <el-icon class="dropdown-icon"><FolderAdd /></el-icon>
+                      <span>增加子部門</span>
+                    </el-dropdown-item>
                     <el-dropdown-item command="addMember" :data="data">
                       <el-icon class="dropdown-icon"><User /></el-icon>
                       <span>添加人員</span>
                     </el-dropdown-item>
-                    <el-dropdown-item command="delete" :data="data">
+                    <el-dropdown-item command="delete" :data="data" class="is-danger">
                       <el-icon class="dropdown-icon"><Delete /></el-icon>
                       <span>刪除部門</span>
                     </el-dropdown-item>
@@ -234,7 +239,7 @@
 </template>
 
 <script>
-import { OfficeBuilding, Delete, More, School, User, InfoFilled, Loading, DocumentDelete } from '@element-plus/icons-vue'
+import { OfficeBuilding, Delete, More, School, User, InfoFilled, Loading, DocumentDelete, FolderAdd } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
 export default {
@@ -247,7 +252,8 @@ export default {
     User,
     InfoFilled,
     Loading,
-    DocumentDelete
+    DocumentDelete,
+    FolderAdd
   },
   data() {
     return {
@@ -285,7 +291,8 @@ export default {
       },
       selectedWecomMembers: [],
       expandedKeys: [],
-      isReloadingTree: false
+      isReloadingTree: false,
+      treeComponentKey: 0
     }
   },
   mounted() {
@@ -302,44 +309,43 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.isReloadingTree = true
           this.departmentTree = response.data || []
-          this.treeSelectData = this.buildTreeSelectData(this.departmentTree)
+          this.treeSelectData = this.flattenTreeSelectData(this.departmentTree)
+          this.treeComponentKey++ // 強制 el-tree 完全重新渲染以應用 default-expanded-keys
           
           this.$nextTick(() => {
-            this.isReloadingTree = false
-            if (this.$refs.departmentTree) {
-              this.expandedKeys.forEach(key => {
-                let node = this.$refs.departmentTree.getNode(key)
-                if (!node && !isNaN(key)) {
-                  node = this.$refs.departmentTree.getNode(Number(key))
-                }
-                if (node && !node.expanded) {
-                  node.expand()
-                }
-              })
+            // 延遲解除鎖定，確保 DOM 渲染動畫完成前誤觸的 collapse 不會影響 expandedKeys
+            setTimeout(() => {
+              this.isReloadingTree = false
+            }, 300)
+            
+            if (!selectNewDepartment && this.departmentTree.length > 0) {
+              let preservedDept = this.currentDepartment ? this.findDepartment(this.departmentTree, this.currentDepartment.id) : null;
+              
+              // 如果當前部門不見了（被刪除了），嘗試選中它的上一級父部門，避免直接跳回根目錄
+              if (!preservedDept && this.currentDepartment && this.currentDepartment.parentId) {
+                preservedDept = this.findDepartment(this.departmentTree, this.currentDepartment.parentId);
+              }
+              
+              if (preservedDept) {
+                this.currentDepartment = preservedDept
+                this.loadMemberList(preservedDept)
+                this.$nextTick(() => {
+                  if (this.$refs.departmentTree) {
+                    this.$refs.departmentTree.setCurrentKey(preservedDept.id)
+                  }
+                })
+              } else {
+                this.currentDepartment = this.departmentTree[0]
+                this.loadMemberList(this.departmentTree[0])
+                
+                this.$nextTick(() => {
+                  if (this.$refs.departmentTree) {
+                    this.$refs.departmentTree.setCurrentKey(this.departmentTree[0].id)
+                  }
+                })
+              }
             }
           })
-          
-          if (!selectNewDepartment && this.departmentTree.length > 0) {
-            const preservedDept = this.currentDepartment ? this.findDepartment(this.departmentTree, this.currentDepartment.id) : null;
-            if (preservedDept) {
-              this.currentDepartment = preservedDept
-              this.loadMemberList(preservedDept)
-              this.$nextTick(() => {
-                if (this.$refs.departmentTree) {
-                  this.$refs.departmentTree.setCurrentKey(preservedDept.id)
-                }
-              })
-            } else {
-              this.currentDepartment = this.departmentTree[0]
-              this.loadMemberList(this.departmentTree[0])
-              
-              this.$nextTick(() => {
-                if (this.$refs.departmentTree) {
-                  this.$refs.departmentTree.setCurrentKey(this.departmentTree[0].id)
-                }
-              })
-            }
-          }
         } else {
           this.$message.error('加載失敗：' + (response.msg || '未知錯誤'))
         }
@@ -348,16 +354,17 @@ export default {
       }
     },
 
-    buildTreeSelectData(tree) {
+    // 将树形结构扁平化为列表，用于 el-select 显示
+    flattenTreeSelectData(tree) {
+      if (!Array.isArray(tree)) return []
       const result = []
       tree.forEach(node => {
-        if (!node.isLeaf) {
-          const newNode = {
-            id: node.id,
-            name: node.name,
-            children: node.children ? this.buildTreeSelectData(node.children) : []
-          }
-          result.push(newNode)
+        result.push({
+          id: node.id,
+          name: node.name
+        })
+        if (node.children && node.children.length > 0) {
+          result.push(...this.flattenTreeSelectData(node.children))
         }
       })
       return result
@@ -379,20 +386,17 @@ export default {
       return null
     },
 
-    // 递归查找部门 (通过 name)
-    findDepartmentByName(tree, name) {
-      for (const node of tree) {
-        if (node.name === name) {
-          return node
+    // 查找部门 (通过 name 和 parentId)
+    findDepartmentByNameAndParent(tree, name, parentId) {
+      if (parentId) {
+        const parentNode = this.findDepartment(tree, parentId)
+        if (parentNode && parentNode.children) {
+          return parentNode.children.find(child => child.name === name) || null
         }
-        if (node.children && node.children.length > 0) {
-          const found = this.findDepartmentByName(node.children, name)
-          if (found) {
-            return found
-          }
-        }
+        return null
+      } else {
+        return tree.find(node => node.name === name) || null
       }
-      return null
     },
 
     handleNodeClick(data) {
@@ -405,9 +409,9 @@ export default {
           const node = this.$refs.departmentTree.getNode(data.id)
           if (node && !node.expanded) {
             node.expand()
-            const idStr = String(data.id)
-            if (!this.expandedKeys.includes(idStr)) {
-              this.expandedKeys.push(idStr)
+            const key = data.id
+            if (!this.expandedKeys.includes(key)) {
+              this.expandedKeys.push(key)
             }
           }
         })
@@ -416,16 +420,16 @@ export default {
 
     handleNodeExpand(data) {
       if (this.isReloadingTree) return
-      const idStr = String(data.id)
-      if (!this.expandedKeys.includes(idStr)) {
-        this.expandedKeys.push(idStr)
+      const key = data.id
+      if (!this.expandedKeys.includes(key)) {
+        this.expandedKeys.push(key)
       }
     },
 
     handleNodeCollapse(data) {
       if (this.isReloadingTree) return
-      const idStr = String(data.id)
-      const index = this.expandedKeys.indexOf(idStr)
+      const key = data.id
+      const index = this.expandedKeys.indexOf(key)
       if (index > -1) {
         this.expandedKeys.splice(index, 1)
       }
@@ -539,9 +543,10 @@ export default {
               this.departmentDialogVisible = false
               
               if (!this.departmentForm.id) {
+                const parentId = this.departmentForm.parentId;
                 await this.loadDepartmentTree(true)
                 
-                const newDept = this.findDepartmentByName(this.departmentTree, departmentName)
+                const newDept = this.findDepartmentByNameAndParent(this.departmentTree, departmentName, parentId)
                 
                 if (newDept) {
                   this.currentDepartment = newDept
@@ -593,12 +598,23 @@ export default {
         this.handleDeleteDepartment(nodeData)
       } else if (command === 'addMember') {
         this.handleAddMember(nodeData)
+      } else if (command === 'addSubDepartment') {
+        this.handleAddSubDepartment(nodeData)
       }
     },
     
     handleAddMember(data) {
       this.currentDepartment = data
       this.openMemberSelector(data)
+    },
+    
+    handleAddSubDepartment(data) {
+      this.dialogTitle = '新增子部門'
+      this.resetDepartmentForm()
+      // 自动设置上级部门为当前部门
+      this.departmentForm.parentId = data.id
+      this.treeSelectData = this.flattenTreeSelectData(this.departmentTree)
+      this.departmentDialogVisible = true
     },
     
     async openMemberSelector(department = null) {
@@ -708,8 +724,8 @@ export default {
               
           if (response.code === 200 || response.code === 0) {
             this.$message.success('刪除成功')
-            const idStr = String(data.id)
-            const index = this.expandedKeys.indexOf(idStr)
+            const key = data.id
+            const index = this.expandedKeys.indexOf(key)
             if (index > -1) {
               this.expandedKeys.splice(index, 1)
             }

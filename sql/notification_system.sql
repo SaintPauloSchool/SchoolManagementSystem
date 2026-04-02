@@ -290,7 +290,7 @@ CREATE TABLE `sys_token` (
 -- ----------------------------
 DROP TABLE IF EXISTS sys_school_department;
 CREATE TABLE sys_school_department (
-   id                  BIGINT(20)      NOT NULL                        COMMENT '部门 id',
+   id                  BIGINT(20)      NOT NULL AUTO_INCREMENT         COMMENT '部门 id',
    parent_id           INT(11)         DEFAULT NULL                    COMMENT '父部门 id',
    name                VARCHAR(255)    DEFAULT NULL                    COMMENT '部门名称',
    name_en             VARCHAR(255)    DEFAULT NULL                    COMMENT '部门英文名称',
@@ -318,8 +318,4 @@ CREATE TABLE sys_school_department_member (
   update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系統学校部门成员表';
--- ----------------------------
--- 修改 sys_school_department 表，给 id 字段添加自增属性
-ALTER TABLE sys_school_department
-    MODIFY COLUMN id BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '部门 id';
 -- ----------------------------
