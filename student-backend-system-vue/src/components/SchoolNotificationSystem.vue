@@ -60,6 +60,14 @@
               <el-icon class="nav-icon"><OfficeBuilding /></el-icon>
               <span class="nav-text">學校部門通訊錄</span>
             </li>
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '2-2' }"
+              @click="handleMenuSelect('2-2')"
+            >
+              <el-icon class="nav-icon"><User /></el-icon>
+              <span class="nav-text">家校通訊錄</span>
+            </li>
           </ul>
         </div>
         
@@ -145,6 +153,11 @@
           <SchoolDepartment
             v-else-if="activeMenu === '2-1'"
           />
+          
+          <!-- 家校通訊錄 -->
+          <HomeSchoolContacts
+            v-else-if="activeMenu === '2-2'"
+          />
         </transition>
       </div>
     </main>
@@ -159,6 +172,7 @@ import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, Ar
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
 import SchoolDepartment from './SchoolDepartment.vue'
+import HomeSchoolContacts from './HomeSchoolContacts.vue'
 import request from '@/utils/request'
 
 export default {
@@ -166,7 +180,8 @@ export default {
   components: {
     NotificationList,
     PublishNotification,
-    SchoolDepartment
+    SchoolDepartment,
+    HomeSchoolContacts
   },
   data() {
     return {
@@ -237,6 +252,8 @@ export default {
         this.loadMySendNotifications()
       } else if (index === '2-1') {
         // 學校部門通訊錄，无需加载数据
+      } else if (index === '2-2') {
+        // 家校通訊錄，无需加载数据
       }
     },
 

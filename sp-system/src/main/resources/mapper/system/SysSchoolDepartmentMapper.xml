@@ -21,7 +21,11 @@
         SELECT id, parent_id, name, name_en, order_num, 
                department_leader, type, create_time, update_time
         FROM sys_school_department
-        WHERE type = 1
+        <where>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+        </where>
         ORDER BY order_num ASC
     </select>
 

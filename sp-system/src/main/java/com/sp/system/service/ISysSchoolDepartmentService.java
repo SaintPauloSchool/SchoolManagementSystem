@@ -13,9 +13,10 @@ public interface ISysSchoolDepartmentService {
     /**
      * 获取学校部门树形结构（仅部门，不含人员）
      *
+     * @param type 部门类型（1 学校部门 2 家校通讯录）
      * @return 部门树形结构
      */
-    List<SysSchoolDepartment> getSysSchoolDepartmentTree();
+    List<SysSchoolDepartment> getSysSchoolDepartmentTree(Integer type);
 
     /**
      * 根据 ID 删除学校部门

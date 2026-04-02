@@ -27,16 +27,16 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
      * 获取学校部门树形结构（仅部门，不含人员）
      */
     @Override
-    public List<SysSchoolDepartment> getSysSchoolDepartmentTree() {
-        return buildDepartmentTree();
+    public List<SysSchoolDepartment> getSysSchoolDepartmentTree(Integer type) {
+        return buildDepartmentTree(type);
     }
 
     /**
      * 构建部门树形结构
      */
-    private List<SysSchoolDepartment> buildDepartmentTree() {
+    private List<SysSchoolDepartment> buildDepartmentTree(Integer type) {
         // 1. 查询所有部门数据
-        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll();
+        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll(type);
         
         if (allDepartments == null || allDepartments.isEmpty()) {
             return Collections.emptyList();
@@ -96,8 +96,8 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
      */
     @Override
     public int deleteSysSchoolDepartmentById(Long id) {
-        // 1. 查询所有部门，找到需要删除的部门及其子部门
-        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll();
+        // 1. 一次性查询所有部门（type=1 和 type=2），找到需要删除的部门及其子部门
+        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll(null);
         if (allDepartments == null || allDepartments.isEmpty()) {
             return 0;
         }

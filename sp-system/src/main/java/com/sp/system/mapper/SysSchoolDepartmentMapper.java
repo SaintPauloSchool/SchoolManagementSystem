@@ -14,9 +14,10 @@ public interface SysSchoolDepartmentMapper {
     /**
      * 查询所有学校部门（按排序值排序）
      *
+     * @param type 部门类型（1 学校部门 2 家校通讯录）
      * @return 学校部门集合
      */
-    List<SysSchoolDepartment> selectAll();
+    List<SysSchoolDepartment> selectAll(@Param("type") Integer type);
 
     /**
      * 根据 ID 删除学校部门
