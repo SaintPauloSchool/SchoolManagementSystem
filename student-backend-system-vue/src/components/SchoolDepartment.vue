@@ -72,11 +72,25 @@
             <h2 class="department-title">{{ currentDepartment?.name || '選擇部門' }}</h2>
             <span class="member-count">{{ memberCount }} 位成員</span>
           </div>
+          
+          <div class="action-toolbar" v-if="currentDepartment">
+            <el-button 
+              type="danger" 
+              size="default"
+              @click="handleBatchDelete"
+              class="batch-delete-btn"
+              icon="Delete"
+              :disabled="currentMemberList.length === 0"
+            >
+              批量刪除
+            </el-button>
+          </div>
         </div>
 
         <!-- 成员表格 -->
         <div class="table-wrapper">
-          <el-table :data="currentMemberList" style="width: 100%" :max-height="'calc(100vh - 200px)'">
+          <el-table :data="currentMemberList" style="width: 100%" :max-height="'calc(100vh - 200px)'" ref="memberTable" @selection-change="handleSelectionChange">
+            <el-table-column type="selection" width="55" />
             <el-table-column prop="name" label="姓名" width="150" />
             <el-table-column prop="departmentName" label="所屬部門" width="180" />
             <el-table-column label="操作" width="100" fixed="right" align="center">
@@ -292,7 +306,8 @@ export default {
       selectedWecomMembers: [],
       expandedKeys: [],
       isReloadingTree: false,
-      treeComponentKey: 0
+      treeComponentKey: 0,
+      selectedMembers: []
     }
   },
   mounted() {
@@ -509,6 +524,60 @@ export default {
             }
           } else {
             this.$message.error('刪除失敗：' + (response.msg || '未知錯誤'))
+          }
+        } catch (error) {
+          if (error !== 'cancel') {
+            this.$message.error('刪除失敗：' + (error.message || '網絡錯誤'))
+          }
+        }
+      }).catch(() => {
+        // 用户取消删除
+      })
+    },
+
+    handleSelectionChange(selection) {
+      this.selectedMembers = selection
+    },
+
+    handleBatchDelete() {
+      if (this.selectedMembers.length === 0) {
+        this.$message.warning('請選擇至少一個成員')
+        return
+      }
+      
+      const memberNames = this.selectedMembers.map(m => m.name).join('、')
+      this.$confirm(`確定要刪除此 ${this.selectedMembers.length} 位成員嗎？\n已選中：${memberNames}`, '提示', {
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        try {
+          // 批量删除选中的成员
+          const deletePromises = this.selectedMembers.map(member => 
+            request({
+              url: `/system/schoolDepartment/member/${member.id}`,
+              method: 'delete'
+            })
+          )
+          
+          const responses = await Promise.all(deletePromises)
+          
+          // 检查是否有失败的请求
+          const hasError = responses.some(r => r.code !== 200 && r.code !== 0)
+          
+          if (!hasError) {
+            this.$message.success(`成功刪除 ${this.selectedMembers.length} 位成員`)
+            // 清空选中项
+            this.selectedMembers = []
+            if (this.$refs.memberTable) {
+              this.$refs.memberTable.clearSelection()
+            }
+            // 重新加载当前部门成员列表
+            if (this.currentDepartment) {
+              this.loadMemberList(this.currentDepartment)
+            }
+          } else {
+            this.$message.error('部分成員刪除失敗')
           }
         } catch (error) {
           if (error !== 'cancel') {
@@ -949,6 +1018,9 @@ export default {
 }
 
 .content-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   padding: 20px 24px;
   background: #fafafa;
   border-bottom: 1px solid #e8e8e8;
@@ -959,6 +1031,44 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+}
+
+.action-toolbar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px dashed #d9d9d9;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.batch-delete-btn {
+  flex-shrink: 0;
+  background: #fff1f0 !important;
+  border: 1px solid #ffccc7 !important;
+  color: #ff4d4f !important;
+  font-weight: 500;
+  box-shadow: none !important;
+  transition: all 0.3s;
+}
+
+.batch-delete-btn:hover:not(:disabled) {
+  background: #ff4d4f !important;
+  color: #ffffff !important;
+  border-color: #ff4d4f !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.2) !important;
+}
+
+.batch-delete-btn:disabled {
+  background: #f5f5f5 !important;
+  border-color: #d9d9d9 !important;
+  color: #bfbfbf !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .department-title {
