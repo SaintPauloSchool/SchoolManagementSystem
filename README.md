@@ -123,7 +123,7 @@ mvn spring-boot:run -pl sp-api
 
 ### 4. 前端啟動
 ```bash
-cd student-backend-system-vue
+cd school-management-system-vue
 npm install
 npm run dev
 ```
@@ -131,7 +131,7 @@ npm run dev
 ### 5. 前端打包部署
 ```bash
 # 進入前端項目目錄
-cd student-backend-system-vue
+cd school-management-system-vue
 
 # 安裝依賴
 npm install
@@ -248,7 +248,7 @@ SchoolManagementSystem/
 ├── sp-framework/          # 框架模塊（安全配置、攔截器等）
 ├── sql/                   # 數據庫腳本
 │   └── notification_system.sql
-├── student-backend-system-vue/  # 前端項目
+├── school-management-system-vue/  # 前端項目
 │   └── src/
 │       ├── components/           # Vue 組件
 │       │   ├── selectors/        # 選擇器組件
