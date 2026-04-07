@@ -102,7 +102,7 @@ Maven 3.6+
 ### 2. 數據庫配置
 ```sql
 # 創建數據庫
-CREATE DATABASE student_notification CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE school_student_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 # 執行初始化腳本
 source sql/notification_system.sql
