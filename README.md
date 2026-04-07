@@ -9,6 +9,7 @@
 ✅ **豐富的交互功能和用戶體驗**  
 ✅ **現代簡約風格界面設計**  
 ✅ **完善的響應式佈局**
+✅ **企業微信集成支持**
 
 ## 系統功能
 
@@ -29,11 +30,7 @@
 2. **多選題** - 提供多個選項，用戶可以選擇多個
 3. **填空題** - 用戶輸入文本回答
 4. **附件上傳** - 用戶上傳文件作為回答
-5. **分支問題** - 根據用戶回答跳轉到不同子問題
-   - 每個分支題有兩個選項
-   - 選項可填寫文字
-   - 一個選項設置為「繼續下一個問題」，需指定下一題 ID
-   - 另一個選項設置為「結束」，流程終止
+5. **邏輯表單** - 支持複雜的問卷結構和條件分支邏輯
 
 ### 📤 發送設置
 - **接收對象配置**：
@@ -46,14 +43,24 @@
 - **發送配置**：
   - 回復截止時間設置
 
+### 👥 組織架構管理
+- **部門管理**：支持學校、學段、年級、班級等多級架構
+- **家校通訊錄**：管理學生、家長關係
+- **學校部門通訊錄**：管理教職員工信息
+- **企業微信集成**：同步企業微信組織架構
+
 ## 技術架構
 
 ### 後端技術棧
-- **Spring Boot** - 核心框架
-- **MyBatis Plus** - ORM 框架
-- **MySQL** - 數據庫
+- **Spring Boot 2.5.15** - 核心框架
+- **MyBatis** - ORM 框架
+- **MySQL 8.0+** - 數據庫
 - **JWT** - 認證授權
-- **Druid** - 數據庫連接池
+- **Druid 1.2.27** - 數據庫連接池
+- **Spring Security** - 安全框架
+- **Swagger 3.0** - API 文檔
+- **FastJSON 1.2.83** - JSON 處理
+- **PageHelper 1.4.7** - 分頁插件
 
 ### 前端技術棧
 - **Vue 3.2+** - 前端框架
@@ -70,6 +77,15 @@
 - `notification_question` - 問題表
 - `user_notification_read` - 用戶閱讀狀態表
 - `notification_answer` - 回答表
+- `sys_department` - 部門表
+- `sys_parent_student_relation` - 家長學生關係表
+- `sys_department_parent_binding` - 部門家長綁定表
+- `wecom_school_department` - 企業微信學校部門表
+- `wecom_school_department_member` - 企業微信部門成員表
+- `sys_school_department` - 系統學校部門表
+- `sys_school_department_member` - 系統學校部門成員表
+- `class_section` - 課程班級表
+- `sys_token` - Token 表
 
 ## 快速開始
 
@@ -77,7 +93,7 @@
 ```bash
 # 確保安裝以下軟件
 Java 8+
-MySQL 5.7+
+MySQL 8.0+
 Node.js 16+
 npm 8+
 Maven 3.6+
@@ -95,13 +111,14 @@ source sql/notification_system.sql
 ### 3. 後端啟動
 ```bash
 # 修改數據庫連接配置
-# sp-api/src/main/resources/application.yml
+# sp-api/src/main/resources/application-dev.yml
 
 # 開發環境運行 (使用內置 Tomcat)
+cd sp-api
 mvn spring-boot:run
 
-# 或者打包成 WAR 後部署到外部 Tomcat 運行
-# 詳見「後端打包部署」章節
+# 或者在項目根目錄運行
+mvn spring-boot:run -pl sp-api
 ```
 
 ### 4. 前端啟動
@@ -147,8 +164,8 @@ npm run build
 
 ### 6. 後端打包部署
 ```bash
-# 進入後端項目根目錄
-cd StudentBackendSystem
+# 進入項目根目錄
+cd SchoolManagementSystem
 
 # 打包成 WAR 文件
 mvn clean package -DskipTests
@@ -166,16 +183,13 @@ cp sp-api/target/sp-api.war /path/to/tomcat/webapps/
 
 # 3. 訪問應用
 # http://localhost:8080/sp-api/
-
-# 或直接使用外部 Tomcat 運行 (不推薦用於開發環境)
-# 將 WAR 包部署到 Tomcat webapps 目錄後啟動
 ```
 
 ### 7. 完整部署流程
 ```bash
 # 1. 準備環境
 # - 安裝 JDK 8+
-# - 安裝 MySQL 5.7+
+# - 安裝 MySQL 8.0+
 # - 安裝 Node.js 16+
 # - 安裝 Tomcat 9+ (生產環境)
 
@@ -184,9 +198,9 @@ cp sp-api/target/sp-api.war /path/to/tomcat/webapps/
 # - 執行 sql/notification_system.sql
 
 # 3. 部署後端
+# - 修改 application-dev.yml 配置數據庫連接
 # - 打包：mvn clean package -DskipTests
 # - 部署 WAR 到 Tomcat
-# - 修改 application.yml 配置
 
 # 4. 部署前端
 # - 打包：npm run build
@@ -205,21 +219,33 @@ cp sp-api/target/sp-api.war /path/to/tomcat/webapps/
 ## 項目結構
 
 ```
-StudentBackendSystem/
-├── sp-api/                 # 後端 API 服務
-│   ├── src/main/java/
-│   │   └── com/sp/
-│   │       ├── web/controller/system/notification/    # 通知控制器
-│   │       └── ...
+SchoolManagementSystem/
+├── sp-api/                 # 後端 API 服務入口
+│   ├── src/main/java/com/sp/
+│   │   ├── SpApplication.java              # Spring Boot 啟動類
+│   │   └── web/controller/
+│   │       ├── notification/               # 通知相關控制器
+│   │       │   └── NotificationController.java
+│   │       ├── DepartmentController.java   # 部門控制器
+│   │       ├── SysSchoolDepartmentController.java
+│   │       ├── WecomSchoolDepartmentController.java
+│   │       └── common/                     # 通用控制器
 │   └── src/main/resources/
+│       ├── application.yml                 # 主配置文件
+│       ├── application-dev.yml             # 開發環境配置
+│       └── application-prod.yml            # 生產環境配置
 ├── sp-system/             # 系統業務模塊
 │   └── src/main/java/com/sp/system/
-│       ├── entity/notification/      # 通知相關實體類
-│       ├── mapper/notification/      # Mapper接口
-│       ├── service/notification/     # Service接口
-│       └── service/impl/notification/ # Service 實現
-├── sp-common/             # 公共模塊
-├── sp-framework/          # 框架模塊
+│       ├── entity/                         # 實體類
+│       │   ├── notification/              # 通知相關實體
+│       │   ├── SysDepartment.java
+│       │   ├── SysParentStudentRelation.java
+│       │   ├── WecomSchoolDepartment.java
+│       │   └── SysSchoolDepartment.java
+│       ├── mapper/                        # Mapper 接口
+│       └── service/                       # Service 層
+├── sp-common/             # 公共模塊（工具類、註解、常量等）
+├── sp-framework/          # 框架模塊（安全配置、攔截器等）
 ├── sql/                   # 數據庫腳本
 │   └── notification_system.sql
 ├── student-backend-system-vue/  # 前端項目
@@ -231,14 +257,15 @@ StudentBackendSystem/
 │       │   ├── PublishNotification.vue         # 發布通知
 │       │   ├── BasicInfoForm.vue               # 基本信息表單
 │       │   ├── SendSettingsForm.vue            # 發送設置表單
-│       │   ├── NotificationDetail.vue          # 通知詳情
-│       │   └── QuestionDialog.vue              # 問題對話框
+│       │   ├── FormQuestionDialog.vue          # 問題對話框
+│       │   ├── HomeSchoolContacts.vue          # 家校通訊錄
+│       │   └── SchoolDepartment.vue            # 學校部門管理
 │       ├── styles/
 │       │   └── modern-theme.css    # 現代主題樣式
 │       ├── App.vue
 │       └── main.js
-├── DEPLOYMENT.md          # 部署文檔
-└── REFACTOR_GUIDE.md      # 前端重構指南
+├── pom.xml                # Maven 父 POM
+└── README.md              # 項目說明文檔
 ```
 
 ## API 接口文檔
