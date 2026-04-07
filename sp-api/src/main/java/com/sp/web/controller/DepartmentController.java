@@ -40,4 +40,5 @@ public class DepartmentController extends BaseController {
         List<SysDepartment> tree = departmentService.getClassTreeWithParents();
         return AjaxResult.success(tree);
     }
+
 }
