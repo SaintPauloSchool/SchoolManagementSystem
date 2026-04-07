@@ -8,14 +8,25 @@
     top="10vh"
   >
     <div class="selector-wrapper">
-      <!-- 左侧树形结构 -->
       <div class="left-panel">
-        <div class="panel-title">
-          <el-icon><School /></el-icon>
-          <span>WeCom家校通訊錄</span>
-        </div>
-        
-        <div class="tree-container">
+        <el-tabs v-model="activeTab" class="directory-tabs">
+          <!-- WeCom 家校通訊錄 -->
+          <el-tab-pane name="wecom">
+            <template #label>
+              <div class="tab-label"><el-icon><School /></el-icon> WeCom家校通訊錄</div>
+            </template>
+          </el-tab-pane>
+          
+          <!-- 自定義家校通訊錄 -->
+          <el-tab-pane name="custom">
+            <template #label>
+              <div class="tab-label"><el-icon><Menu /></el-icon> 自定義家校通訊錄</div>
+            </template>
+          </el-tab-pane>
+        </el-tabs>
+
+        <!-- WeCom Tree -->
+        <div v-show="activeTab === 'wecom'" class="tree-container">
           <div v-if="loading" class="loading">
             <el-icon class="is-loading"><Loading /></el-icon>
             <span>加載中...</span>
@@ -36,11 +47,10 @@
           >
             <template #default="{ node, data }">
               <span class="tree-node">
-                <!-- 只在葉子節點顯示選中狀態 -->
                 <el-checkbox
                   v-if="data.isLeaf"
                   :model-value="selectedStudentIds.includes(data.id)"
-                  @click.stop="() => handleLeafNodeClick(data)"
+                  @change="() => handleLeafNodeClick(data, 'classTree')"
                   class="node-checkbox"
                 />
                 <el-icon v-if="data.type === 5" class="node-icon school-icon"><School /></el-icon>
@@ -50,6 +60,42 @@
                 <el-icon v-else-if="data.type === 1" class="node-icon class-icon"><User /></el-icon>
                 <el-icon v-else-if="data.type === 10" class="node-icon parent-icon"><UserFilled /></el-icon>
                 <el-icon v-else-if="data.isLeaf" class="node-icon relation-icon"><User /></el-icon>
+                <span class="node-label">{{ node.label }}</span>
+              </span>
+            </template>
+          </el-tree>
+        </div>
+
+        <!-- Custom Tree -->
+        <div v-show="activeTab === 'custom'" class="tree-container">
+          <div v-if="customLoading" class="loading">
+            <el-icon class="is-loading"><Loading /></el-icon>
+            <span>加載中...</span>
+          </div>
+          <div v-else-if="customTree.length === 0" class="empty">
+            <el-icon><DocumentDelete /></el-icon>
+            <span>暫無數據</span>
+          </div>
+          <el-tree
+            v-else
+            ref="customTreeRef"
+            :data="customTree"
+            :props="treeProps"
+            :expand-on-click-node="false"
+            :check-on-click-node="false"
+            :check-strictly="true"
+            node-key="id"
+          >
+            <template #default="{ node, data }">
+              <span class="tree-node">
+                <el-checkbox
+                  v-if="data.isLeaf"
+                  :model-value="selectedStudentIds.includes(data.id)"
+                  @change="() => handleLeafNodeClick(data, 'customTreeRef')"
+                  class="node-checkbox"
+                />
+                <el-icon v-if="data.isLeaf" class="node-icon relation-icon"><User /></el-icon>
+                <el-icon v-else class="node-icon folder-icon"><Folder /></el-icon>
                 <span class="node-label">{{ node.label }}</span>
               </span>
             </template>
@@ -108,7 +154,7 @@
 <script>
 import { 
   Loading, DocumentDelete, School, OfficeBuilding, 
-  Reading, Notebook, User, UserFilled, Checked, CloseBold 
+  Reading, Notebook, User, UserFilled, Checked, CloseBold, Menu, Folder 
 } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
@@ -131,9 +177,12 @@ export default {
   emits: ['update:visible', 'confirm'],
   data() {
     return {
+      activeTab: 'wecom',
       departmentTree: [],
+      customTree: [],
       selectedStudentIds: [],
-      loading: false
+      loading: false,
+      customLoading: false
     }
   },
   computed: {
@@ -157,20 +206,29 @@ export default {
     },
     selectedStudentsWithDetails() {
       const result = this.selectedStudentIds.map(id => {
-        const relation = this.findRelationInTree(id, this.departmentTree)
+        let relation = this.findRelationInTree(id, this.departmentTree)
         if (relation) {
           return {
-            id: relation.id, // sys_parent_student_relation 的 ID
+            id: relation.id,
             studentUserId: relation.studentUserId,
             parentUserId: relation.parentUserId,
-            name: relation.name, // 学生姓名 - 关系
+            name: relation.name,
             studentName: relation.name.split('-')[0],
             parentName: relation.name.split('-')[1],
             relationDesc: relation.relationDesc,
-            mobile: relation.mobile
+            mobile: relation.mobile,
+            type: 1
           }
         }
-        return { id, name: '未知學生' }
+        relation = this.findRelationInTree(id, this.customTree)
+        if (relation) {
+          return {
+            id: Math.abs(relation.id),
+            name: relation.name,
+            type: 2
+          }
+        }
+        return { id, name: '未知學生', type: 1 }
       })
       return result
     },
@@ -188,21 +246,23 @@ export default {
   methods: {
     async loadData() {
       this.loading = true
+      this.customLoading = true
       try {
-        const response = await request({
-          url: '/system/department/treeWithParents',
-          method: 'get'
-        })
+        const [response, customResponse] = await Promise.all([
+           request({ url: '/system/department/treeWithParents', method: 'get' }),
+           request({ url: '/system/schoolDepartment/treeWithMembers?type=2', method: 'get' })
+        ])
         if (response.code === 200 || response.code === 0) {
           this.departmentTree = response.data || []
-
-        } else {
-          this.$message.error('加載學生數據失敗')
+        }
+        if (customResponse.code === 200 || customResponse.code === 0) {
+          this.customTree = customResponse.data || []
         }
       } catch (error) {
-        this.$message.error('加载学生数据失败')
+        this.$message.error('載入學生通訊錄失敗')
       } finally {
         this.loading = false
+        this.customLoading = false
         this.$nextTick(() => {
           if (this.visible) {
             this.initSelectedTree()
@@ -212,34 +272,17 @@ export default {
     },
   
     initSelectedTree() {
-      if (!this.$refs.classTree) return;
-  
+      let mappedIds = []
       if (this.selectedStudents && this.selectedStudents.length > 0) {
-        const studentIds = this.selectedStudents.map(student => student.id)
-        this.$refs.classTree.setCheckedKeys(studentIds)
-        setTimeout(() => {
-          this.updateSelectedStudentIds()
-        }, 50)
-      } else {
-        this.$refs.classTree.setCheckedKeys([])
-        this.selectedStudentIds = []
+        mappedIds = this.selectedStudents.map(student => {
+           return student.type === 2 ? -Math.abs(student.id) : student.id
+        })
       }
-    },
-  
-    updateSelectedStudentIds() {
-      if (!this.$refs.classTree) return;
-      const checkedNodes = this.$refs.classTree.getCheckedNodes(false, false);
-      const topLevelNodes = checkedNodes.filter(nodeData => {
-         let node = this.$refs.classTree.getNode(nodeData.id);
-         if (!node) return false;
-         let parent = node.parent;
-         while(parent && parent.level > 0) {
-            if (parent.checked) return false;
-            parent = parent.parent;
-         }
-         return true;
-      });
-      this.selectedStudentIds = topLevelNodes.map(n => n.id);
+      this.selectedStudentIds = mappedIds
+      this.$nextTick(() => {
+        if (this.$refs.classTree) this.$refs.classTree.setCheckedKeys(mappedIds)
+        if (this.$refs.customTreeRef) this.$refs.customTreeRef.setCheckedKeys(mappedIds)
+      })
     },
   
     findRelationInTree(id, tree) {
@@ -257,9 +300,8 @@ export default {
     },
 
     handleClose() {
-      if (this.$refs.classTree) {
-        this.$refs.classTree.setCheckedKeys([])
-      }
+      if (this.$refs.classTree) this.$refs.classTree.setCheckedKeys([])
+      if (this.$refs.customTreeRef) this.$refs.customTreeRef.setCheckedKeys([])
       this.selectedStudentIds = []
       this.$emit('update:visible', false)
     },
@@ -269,28 +311,22 @@ export default {
       this.handleClose()
     },
 
-    handleLeafNodeClick(data) {
+    handleLeafNodeClick(data, refName) {
       if (!data || !data.id) return;
-      // 切换选中状态
       const index = this.selectedStudentIds.indexOf(data.id);
       if (index > -1) {
-        // 取消选中
         this.selectedStudentIds = this.selectedStudentIds.filter(id => id !== data.id);
-        // 取消树的选中状态
         this.$nextTick(() => {
-          if (this.$refs.classTree) {
-            this.$refs.classTree.setChecked(data, false);
+          if (this.$refs[refName]) {
+            this.$refs[refName].setChecked(data, false);
           }
         });
       } else {
-        // 选中
         this.selectedStudentIds.push(data.id);
-        // 设置树的选中状态
         this.$nextTick(() => {
-          if (this.$refs.classTree) {
-            this.$refs.classTree.setChecked(data, true);
+          if (this.$refs[refName]) {
+            this.$refs[refName].setChecked(data, true);
           }
-          // 自动滚动到底部
           if (this.$refs.selectedContainer) {
             this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
           }
@@ -299,18 +335,13 @@ export default {
     },
 
     removeSelectedStudent(student) {
-      const index = this.selectedStudentIds.indexOf(student.id)
+      const internalId = student.type === 2 ? -Math.abs(student.id) : student.id
+      const index = this.selectedStudentIds.indexOf(internalId)
       if (index > -1) {
-        // 使用新数组赋值以确保 Vue 响应式更新
-        this.selectedStudentIds = this.selectedStudentIds.filter(id => id !== student.id)
-        // 取消树的选中状态 - 从树中找到对应的节点
+        this.selectedStudentIds.splice(index, 1)
         this.$nextTick(() => {
-          if (this.$refs.classTree) {
-            const node = this.$refs.classTree.getNode(student.id)
-            if (node) {
-              this.$refs.classTree.setChecked(node, false)
-            }
-          }
+          if (this.$refs.classTree) this.$refs.classTree.setChecked(internalId, false)
+          if (this.$refs.customTreeRef) this.$refs.customTreeRef.setChecked(internalId, false)
         })
       }
     },

@@ -1,6 +1,7 @@
 package com.sp.system.service.impl;
 
 import com.sp.system.entity.SysSchoolDepartment;
+import com.sp.system.entity.SysSchoolDepartmentMember;
 import com.sp.system.mapper.SysSchoolDepartmentMapper;
 import com.sp.system.mapper.SysSchoolDepartmentMemberMapper;
 import com.sp.system.service.ISysSchoolDepartmentService;
@@ -29,6 +30,78 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
     @Override
     public List<SysSchoolDepartment> getSysSchoolDepartmentTree(Integer type) {
         return buildDepartmentTree(type);
+    }
+
+    /**
+     * 获取学校部门树形结构（包含人员作为叶子节点）
+     */
+    @Override
+    public List<SysSchoolDepartment> getSysSchoolDepartmentTreeWithMembers(Integer type) {
+        // 1. 获取基础部门树
+        List<SysSchoolDepartment> rootNodes = buildDepartmentTree(type);
+        if (rootNodes == null || rootNodes.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 2. 收集所有部门节点
+        List<SysSchoolDepartment> allDepartments = new ArrayList<>();
+        collectAllDepartments(rootNodes, allDepartments);
+
+        List<Long> departmentIds = allDepartments.stream()
+                .map(SysSchoolDepartment::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        if (departmentIds.isEmpty()) {
+            return rootNodes;
+        }
+
+        // 3. 批量查询所有部门成员
+        List<SysSchoolDepartmentMember> members = schoolDepartmentMemberMapper.selectMembersByDepartmentIds(departmentIds);
+        if (members == null || members.isEmpty()) {
+            return rootNodes;
+        }
+
+        // 4. 按部门分组
+        Map<Long, List<SysSchoolDepartmentMember>> membersByDeptMap = members.stream()
+                .filter(Objects::nonNull)
+                .filter(m -> m.getDepartmentId() != null)
+                .collect(Collectors.groupingBy(SysSchoolDepartmentMember::getDepartmentId));
+
+        // 5. 将成员附加到对应部门的 children 目录下
+        for (SysSchoolDepartment dept : allDepartments) {
+            List<SysSchoolDepartmentMember> deptMembers = membersByDeptMap.get(dept.getId());
+            if (deptMembers != null && !deptMembers.isEmpty()) {
+                if (dept.getChildren() == null) {
+                    dept.setChildren(new ArrayList<>());
+                }
+                for (SysSchoolDepartmentMember member : deptMembers) {
+                    dept.getChildren().add(convertMemberToNode(member));
+                }
+            }
+        }
+
+        return rootNodes;
+    }
+
+    private void collectAllDepartments(List<SysSchoolDepartment> nodes, List<SysSchoolDepartment> allDepartments) {
+        if (nodes == null) return;
+        for (SysSchoolDepartment node : nodes) {
+            if (node != null) {
+                allDepartments.add(node);
+                collectAllDepartments(node.getChildren(), allDepartments);
+            }
+        }
+    }
+
+    private SysSchoolDepartment convertMemberToNode(SysSchoolDepartmentMember member) {
+        SysSchoolDepartment node = new SysSchoolDepartment();
+        // 使用负数 ID 防止跟部门 ID 冲突
+        node.setId(-member.getId());
+        node.setName(member.getName());
+        node.setIsLeaf(true);
+        // 可选保留其他必要字段...
+        return node;
     }
 
     /**

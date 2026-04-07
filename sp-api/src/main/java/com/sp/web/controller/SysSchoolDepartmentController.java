@@ -37,6 +37,16 @@ public class SysSchoolDepartmentController extends BaseController {
     }
 
     /**
+     * 获取学校部门树形结构（包含人员节点）
+     */
+    @Anonymous
+    @GetMapping("/treeWithMembers")
+    public AjaxResult treeWithMembers(@RequestParam(required = false, defaultValue = "1") Integer type) {
+        List<SysSchoolDepartment> tree = sysSchoolDepartmentService.getSysSchoolDepartmentTreeWithMembers(type);
+        return AjaxResult.success(tree);
+    }
+
+    /**
      * 批量查询多个部门的成员列表
      */
     @Anonymous

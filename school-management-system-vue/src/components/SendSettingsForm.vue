@@ -276,8 +276,9 @@ export default {
                   dataArr.forEach(group => {
                      const ids = group.receive_ids || [];
                      const names = group.receive_names || [];
+                     const type = group.type || 1;
                      ids.forEach((id, index) => {
-                       const item = { id: id, name: names[index] || '' }
+                       const item = { id: id, name: names[index] || '', type: type }
                        if (!this.selectedStudents.some(s => s.id === id)) {
                          this.selectedStudents.push(item)
                        }
@@ -398,10 +399,25 @@ export default {
       }
       
       if (this.selectedStudents.length > 0) {
-        const studentPayload = [{
-          receive_ids: this.selectedStudents.map(s => s.id),
-          receive_names: this.selectedStudents.map(s => s.name)
-        }];
+        const type1Students = this.selectedStudents.filter(s => s.type === 1 || !s.type);
+        const type2Students = this.selectedStudents.filter(s => s.type === 2);
+        
+        const studentPayload = [];
+        if (type1Students.length > 0) {
+           studentPayload.push({
+               receive_ids: type1Students.map(s => s.id),
+               type: 1,
+               receive_names: type1Students.map(s => s.name)
+           });
+        }
+        if (type2Students.length > 0) {
+           studentPayload.push({
+               receive_ids: type2Students.map(s => s.id),
+               type: 2,
+               receive_names: type2Students.map(s => s.name)
+           });
+        }
+
         receivers.push({
           receiveType: '2',
           receiveData: JSON.stringify(studentPayload)

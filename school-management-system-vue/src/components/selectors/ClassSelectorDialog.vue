@@ -14,7 +14,7 @@
           <el-tabs v-model="activeTab" class="custom-tabs">
             <el-tab-pane name="wecom">
               <template #label>
-                <div class="tab-label"><el-icon><School /></el-icon> WeCom通訊錄</div>
+                <div class="tab-label"><el-icon><School /></el-icon> WeCom家校通訊錄</div>
               </template>
             </el-tab-pane>
             <el-tab-pane name="custom">
