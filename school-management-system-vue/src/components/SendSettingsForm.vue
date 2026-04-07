@@ -271,14 +271,19 @@ export default {
                   });
                }
             } else if (receiver.receiveType === '2') {
-               const ids = JSON.parse(receiver.receiveIds || '[]');
-               const names = JSON.parse(receiver.receiveNames || '[]');
-               ids.forEach((id, index) => {
-                 const item = { id: id, name: names[index] || '' }
-                 if (!this.selectedStudents.some(s => s.id === id)) {
-                   this.selectedStudents.push(item)
-                 }
-               })
+               if (receiver.receiveData) {
+                  const dataArr = JSON.parse(receiver.receiveData);
+                  dataArr.forEach(group => {
+                     const ids = group.receive_ids || [];
+                     const names = group.receive_names || [];
+                     ids.forEach((id, index) => {
+                       const item = { id: id, name: names[index] || '' }
+                       if (!this.selectedStudents.some(s => s.id === id)) {
+                         this.selectedStudents.push(item)
+                       }
+                     });
+                  });
+               }
             }
           } catch (e) {
             console.error('解析接收對象數據失敗:', e)
@@ -393,10 +398,13 @@ export default {
       }
       
       if (this.selectedStudents.length > 0) {
+        const studentPayload = [{
+          receive_ids: this.selectedStudents.map(s => s.id),
+          receive_names: this.selectedStudents.map(s => s.name)
+        }];
         receivers.push({
           receiveType: '2',
-          receiveIds: JSON.stringify(this.selectedStudents.map(s => s.id)),
-          receiveNames: JSON.stringify(this.selectedStudents.map(s => s.name))
+          receiveData: JSON.stringify(studentPayload)
         })
       }
       

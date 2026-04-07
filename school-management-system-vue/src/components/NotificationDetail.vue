@@ -187,7 +187,7 @@ export default {
     },
 
     getReceiverDisplayText(receiver) {
-      if (receiver.receiveType === '1' && receiver.receiveData) {
+      if (receiver.receiveData) {
         try {
           const dataArr = JSON.parse(receiver.receiveData);
           let allNames = [];
@@ -199,15 +199,6 @@ export default {
           return allNames.join(', ');
         } catch (e) {
           return '解析錯誤';
-        }
-      }
-      
-      if (receiver.receiveNames) {
-        try {
-          const names = JSON.parse(receiver.receiveNames);
-          return names.join(', ');
-        } catch (e) {
-          return String(receiver.receiveNames);
         }
       }
       return '';

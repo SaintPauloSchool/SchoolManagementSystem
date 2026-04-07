@@ -28,15 +28,7 @@ public class NotificationReceiver implements Serializable {
     @TableField("receive_type")
     private String receiveType;
 
-    /** 接收对象ID列表(JSON格式) */
-    @TableField("receive_ids")
-    private String receiveIds;
-
-    /** 接收对象名称列表(JSON格式) */
-    @TableField("receive_names")
-    private String receiveNames;
-
-    /** 接收数据来源集合(当receiveType=1时存储多源班级JSON) */
+    /** 接收数据来源集合(存储多源JSON) */
     @TableField("receive_data")
     private String receiveData;
 
@@ -67,22 +59,6 @@ public class NotificationReceiver implements Serializable {
 
     public void setReceiveType(String receiveType) {
         this.receiveType = receiveType;
-    }
-
-    public String getReceiveIds() {
-        return receiveIds;
-    }
-
-    public void setReceiveIds(String receiveIds) {
-        this.receiveIds = receiveIds;
-    }
-
-    public String getReceiveNames() {
-        return receiveNames;
-    }
-
-    public void setReceiveNames(String receiveNames) {
-        this.receiveNames = receiveNames;
     }
 
     public String getReceiveData() {

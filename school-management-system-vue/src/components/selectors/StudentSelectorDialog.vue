@@ -84,7 +84,7 @@
             </div>
           </div>
           <div v-else class="empty-selected">
-            <el-empty :image-size="80" description="請從左側選擇學生" />
+            <el-empty :image-size="80" description="請從左側選擇學生/家長" />
           </div>
         </div>
       </div>
