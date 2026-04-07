@@ -5,7 +5,7 @@
       <div class="sidebar-header">
         <div class="logo-wrapper">
           <img src="@/logo/sp.jpg" alt="School Logo" class="logo-icon" />
-          <span class="logo-text" v-show="!isCollapsed">學生後台系統</span>
+          <span class="logo-text" v-show="!isCollapsed">校園管理系統</span>
         </div>
       </div>
 
@@ -58,7 +58,7 @@
               @click="handleMenuSelect('2-1')"
             >
               <el-icon class="nav-icon"><OfficeBuilding /></el-icon>
-              <span class="nav-text">學校部門通訊錄</span>
+              <span class="nav-text">老師通訊錄</span>
             </li>
             <li 
               class="nav-item nav-subitem"
@@ -149,7 +149,7 @@
             type="mySend"
           />
           
-          <!-- 學校部門通訊錄 -->
+          <!-- 老師部門通訊錄 -->
           <SchoolDepartment
             v-else-if="activeMenu === '2-1'"
           />
@@ -199,7 +199,7 @@ export default {
       },
       menuItems: [
         { index: '1-1', title: '發布通知', icon: 'Edit' },
-        { index: '1-2', title: '抄送我的', icon: 'Message', badge: 2 },
+        { index: '1-2', title: '抄送我的', icon: 'Message'},
         { index: '1-3', title: '我發送的', icon: 'Promotion' }
       ]
     }
@@ -247,11 +247,11 @@ export default {
       if (index === '1-1') {
         // 發布通知，无需加载数据
       } else if (index === '1-2') {
-        this.loadCcToMeNotifications()
+        //需要完善加載數據功能
       } else if (index === '1-3') {
         this.loadMySendNotifications()
       } else if (index === '2-1') {
-        // 學校部門通訊錄，无需加载数据
+        // 老師通訊錄，无需加载数据
       } else if (index === '2-2') {
         // 家校通訊錄，无需加载数据
       }
@@ -259,23 +259,14 @@ export default {
 
     async loadCcToMeNotifications() {
       try {
-        // 模擬數據
-        this.ccToMeNotifications = [
-          {
-            notificationId: 1,
-            title: '學校家長會通知',
-            senderName: '張老師',
-            status: '1',
-            createTime: '2024-01-15 14:30:00'
-          },
-          {
-            notificationId: 2,
-            title: '寒假作業安排',
-            senderName: '李主任',
-            status: '1',
-            createTime: '2024-01-14 09:15:00'
-          }
-        ]
+        const response = await request({
+          url: '/system/notification/mySend',
+          method: 'get'
+        })
+        
+        if (response.code === 200 || response.code === 0) {
+          this.ccToMeNotifications = response.rows || []
+        }
       } catch (error) {
         console.error('加載失敗:', error)
         this.$message.error('數據加載失敗')
