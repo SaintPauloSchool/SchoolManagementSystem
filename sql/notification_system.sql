@@ -46,8 +46,9 @@ CREATE TABLE notification_receiver (
     receiver_id         BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '接收关系 ID',
     notification_id     BIGINT(20)      NOT NULL                   COMMENT '通知 ID',
     receive_type        CHAR(1)         NOT NULL                   COMMENT '接收类型（1 班级 2 学生/家长）',
-    receive_ids         TEXT            NOT NULL                   COMMENT '接收对象 ID 列表 (JSON 格式)',
-    receive_names       TEXT            NOT NULL                   COMMENT '接收对象名称列表 (JSON 格式)',
+    receive_ids         TEXT                                       COMMENT '接收对象 ID 列表 (JSON 格式)',
+    receive_names       TEXT                                       COMMENT '接收对象名称列表 (JSON 格式)',
+    receive_data        TEXT                                       COMMENT '當 receive_type=1 時存放包含各類型來源 ids、names 的 JSON 物件陣列';
     create_time         DATETIME                                   COMMENT '创建时间',
     PRIMARY KEY (receiver_id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知接收对象表';

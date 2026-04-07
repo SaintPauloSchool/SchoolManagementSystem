@@ -10,12 +10,23 @@
     <div class="selector-wrapper">
       <!-- 左侧树形结构 -->
       <div class="left-panel">
-        <div class="panel-title">
-          <el-icon><School /></el-icon>
-          <span>WeCom家校通訊錄</span>
+        <div class="panel-tabs">
+          <el-tabs v-model="activeTab" class="custom-tabs">
+            <el-tab-pane name="wecom">
+              <template #label>
+                <div class="tab-label"><el-icon><School /></el-icon> WeCom通訊錄</div>
+              </template>
+            </el-tab-pane>
+            <el-tab-pane name="custom">
+              <template #label>
+                <div class="tab-label"><el-icon><Menu /></el-icon> 自定義家校通訊錄</div>
+              </template>
+            </el-tab-pane>
+          </el-tabs>
         </div>
         
-        <div class="tree-container">
+        <!-- WeCom Tree -->
+        <div class="tree-container" v-show="activeTab === 'wecom'">
           <div v-if="loading" class="loading">
             <el-icon class="is-loading"><Loading /></el-icon>
             <span>加載中...</span>
@@ -28,6 +39,40 @@
             v-else
             ref="classTree"
             :data="departmentTree"
+            :props="treeProps"
+            :expand-on-click-node="false"
+            :check-on-click-node="true"
+            node-key="id"
+            show-checkbox
+            @check="handleCheckChange"
+          >
+            <template #default="{ node, data }">
+              <span class="tree-node">
+                <el-icon v-if="data.type === 5" class="node-icon school-icon"><School /></el-icon>
+                <el-icon v-else-if="data.type === 4" class="node-icon campus-icon"><OfficeBuilding /></el-icon>
+                <el-icon v-else-if="data.type === 3" class="node-icon stage-icon"><Reading /></el-icon>
+                <el-icon v-else-if="data.type === 2" class="node-icon grade-icon"><Notebook /></el-icon>
+                <el-icon v-else-if="data.type === 1" class="node-icon class-icon"><User /></el-icon>
+                <span class="node-label">{{ node.label }}</span>
+              </span>
+            </template>
+          </el-tree>
+        </div>
+
+        <!-- Custom Tree -->
+        <div class="tree-container" v-show="activeTab === 'custom'">
+          <div v-if="customLoading" class="loading">
+            <el-icon class="is-loading"><Loading /></el-icon>
+            <span>加載中...</span>
+          </div>
+          <div v-else-if="customTree.length === 0" class="empty">
+            <el-icon><DocumentDelete /></el-icon>
+            <span>暫無數據</span>
+          </div>
+          <el-tree
+            v-else
+            ref="customClassTree"
+            :data="customTree"
             :props="treeProps"
             :expand-on-click-node="false"
             :check-on-click-node="true"
@@ -100,7 +145,7 @@
 <script>
 import { 
   Loading, DocumentDelete, School, OfficeBuilding, 
-  Reading, Notebook, User, Checked, CloseBold 
+  Reading, Notebook, User, Checked, CloseBold, Menu 
 } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
@@ -108,7 +153,7 @@ export default {
   name: 'ClassSelectorDialog',
   components: {
     Loading, DocumentDelete, School, OfficeBuilding, 
-    Reading, Notebook, User, Checked, CloseBold
+    Reading, Notebook, User, Checked, CloseBold, Menu
   },
   props: {
     visible: {
@@ -123,9 +168,12 @@ export default {
   emits: ['update:visible', 'confirm'],
   data() {
     return {
+      activeTab: 'wecom',
       departmentTree: [],
+      customTree: [],
       selectedClassIds: [],
-      loading: false
+      loading: false,
+      customLoading: false
     }
   },
   computed: {
@@ -146,8 +194,13 @@ export default {
     },
     selectedClassesWithDetails() {
       return this.selectedClassIds.map(id => {
-        const cls = this.findClassInTree(id, this.departmentTree)
-        return cls || { id, name: '未知班級' }
+        let cls = this.findClassInTree(id, this.departmentTree)
+        if (cls) return { ...cls, type: 1 }
+        
+        cls = this.findClassInTree(id, this.customTree)
+        if (cls) return { ...cls, type: 2 }
+        
+        return { id, name: '未知班級', type: 1 }
       })
     }
   },
@@ -155,6 +208,7 @@ export default {
     visible(newVal) {
       if (newVal) {
         this.loadData()
+        this.loadCustomData()
         this.$nextTick(() => {
           this.initSelectedTree()
         })
@@ -172,11 +226,11 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.departmentTree = response.data || []
         } else {
-          this.$message.error('加載班級數據失敗')
+          this.$message.error('加載WeCom班級數據失敗')
         }
       } catch (error) {
-        console.error('加載班級數據失敗:', error)
-        this.$message.error('加载班级数据失败')
+        console.error('加載WeCom班級數據失敗:', error)
+        this.$message.error('加載WeCom班級數據失敗')
       } finally {
         this.loading = false
         this.$nextTick(() => {
@@ -187,35 +241,83 @@ export default {
       }
     },
 
-    initSelectedTree() {
-      if (!this.$refs.classTree) return;
+    async loadCustomData() {
+      this.customLoading = true
+      try {
+        const response = await request({
+          url: '/system/schoolDepartment/tree',
+          method: 'get',
+          params: { type: 2 }
+        })
+        if (response.code === 200 || response.code === 0) {
+          this.customTree = response.data || []
+        } else {
+          this.$message.error('加載自定義班級數據失敗')
+        }
+      } catch (error) {
+        console.error('加載自定義班級數據失敗:', error)
+        // this.$message.error('加載自定義班級數據失敗')
+      } finally {
+        this.customLoading = false
+        this.$nextTick(() => {
+          if (this.visible) {
+            this.initSelectedTree()
+          }
+        })
+      }
+    },
 
+    initSelectedTree() {
       if (this.selectedClasses && this.selectedClasses.length > 0) {
         const classIds = this.selectedClasses.map(cls => cls.id)
-        this.$refs.classTree.setCheckedKeys(classIds)
+        if (this.$refs.classTree) this.$refs.classTree.setCheckedKeys(classIds)
+        if (this.$refs.customClassTree) this.$refs.customClassTree.setCheckedKeys(classIds)
         setTimeout(() => {
           this.updateSelectedClassIds()
         }, 50)
       } else {
-        this.$refs.classTree.setCheckedKeys([])
+        if (this.$refs.classTree) this.$refs.classTree.setCheckedKeys([])
+        if (this.$refs.customClassTree) this.$refs.customClassTree.setCheckedKeys([])
         this.selectedClassIds = []
       }
     },
 
     updateSelectedClassIds() {
-      if (!this.$refs.classTree) return;
-      const checkedNodes = this.$refs.classTree.getCheckedNodes(false, false);
-      const topLevelNodes = checkedNodes.filter(nodeData => {
-         let node = this.$refs.classTree.getNode(nodeData.id);
-         if (!node) return false;
-         let parent = node.parent;
-         while(parent && parent.level > 0) {
-            if (parent.checked) return false;
-            parent = parent.parent;
-         }
-         return true;
-      });
-      this.selectedClassIds = topLevelNodes.map(n => n.id);
+      let wecomNodes = []
+      let customNodes = []
+      
+      if (this.$refs.classTree) {
+        wecomNodes = this.$refs.classTree.getCheckedNodes(false, false).filter(nodeData => {
+           let node = this.$refs.classTree.getNode(nodeData.id);
+           if (!node) return false;
+           let parent = node.parent;
+           while(parent && parent.level > 0) {
+              if (parent.checked) return false;
+              parent = parent.parent;
+           }
+           return true;
+        });
+      }
+      
+      if (this.$refs.customClassTree) {
+        customNodes = this.$refs.customClassTree.getCheckedNodes(false, false).filter(nodeData => {
+           let node = this.$refs.customClassTree.getNode(nodeData.id);
+           if (!node) return false;
+           let parent = node.parent;
+           while(parent && parent.level > 0) {
+              if (parent.checked) return false;
+              parent = parent.parent;
+           }
+           return true;
+        });
+      }
+      
+      // Merge unique IDs
+      const allIds = new Set([
+        ...wecomNodes.map(n => n.id), 
+        ...customNodes.map(n => n.id)
+      ]);
+      this.selectedClassIds = Array.from(allIds);
     },
 
     findClassInTree(id, tree) {
@@ -232,9 +334,8 @@ export default {
     },
 
     handleClose() {
-      if (this.$refs.classTree) {
-        this.$refs.classTree.setCheckedKeys([])
-      }
+      if (this.$refs.classTree) this.$refs.classTree.setCheckedKeys([])
+      if (this.$refs.customClassTree) this.$refs.customClassTree.setCheckedKeys([])
       this.selectedClassIds = []
       this.$emit('update:visible', false)
     },
@@ -248,20 +349,25 @@ export default {
       const index = this.selectedClassIds.indexOf(cls.id)
       if (index > -1) {
         this.selectedClassIds.splice(index, 1)
-        // 更新树的勾选状态
+        // 更新两边树的勾选状态
         if (this.$refs.classTree) {
           this.$refs.classTree.setCheckedKeys(this.selectedClassIds)
+        }
+        if (this.$refs.customClassTree) {
+          this.$refs.customClassTree.setCheckedKeys(this.selectedClassIds)
         }
       }
     },
 
     handleCheckChange(data, checkInfo) {
-      if (!this.$refs.classTree) return;
+      // 找到事件源树
+      const sourceTree = this.activeTab === 'wecom' ? this.$refs.classTree : this.$refs.customClassTree;
+      if (!sourceTree) return;
       
       const isChecked = checkInfo.checkedKeys.includes(data.id);
       
       if (!isChecked) {
-        let node = this.$refs.classTree.getNode(data.id);
+        let node = sourceTree.getNode(data.id);
         let parent = node ? node.parent : null;
         let ancestorInSelected = false;
         while(parent && parent.level > 0) {
@@ -274,7 +380,7 @@ export default {
         
         if (ancestorInSelected) {
            this.$message.warning('已选中上级组织，无法单独取消子项');
-           this.$refs.classTree.setCheckedKeys(this.selectedClassIds);
+           sourceTree.setCheckedKeys(this.selectedClassIds);
            return;
         }
       }
@@ -361,24 +467,28 @@ export default {
   box-shadow: none;
 }
 
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  color: #303133;
-  padding-bottom: 10px;
+.panel-tabs {
   border-bottom: 1px solid #e4e7ed;
 }
 
-.panel-title::after {
-  content: none;
+:deep(.custom-tabs .el-tabs__header) {
+  margin: 0;
 }
 
-.panel-title .el-icon {
-  font-size: 16px;
-  color: #409EFF;
+:deep(.custom-tabs .el-tabs__nav-wrap::after) {
+  height: 0;
+}
+
+:deep(.custom-tabs .el-tabs__item) {
+  height: 40px;
+  line-height: 40px;
+  font-size: 14px;
+}
+
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .tree-container {
@@ -388,6 +498,7 @@ export default {
   border-radius: 4px;
   padding: 12px;
   background: #ffffff;
+  margin-top: 12px;
 }
 
 .tree-container:hover {

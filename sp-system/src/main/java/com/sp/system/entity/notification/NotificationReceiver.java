@@ -36,6 +36,10 @@ public class NotificationReceiver implements Serializable {
     @TableField("receive_names")
     private String receiveNames;
 
+    /** 接收数据来源集合(当receiveType=1时存储多源班级JSON) */
+    @TableField("receive_data")
+    private String receiveData;
+
     /** 创建时间 */
     @TableField("create_time")
     private Date createTime;
@@ -79,6 +83,14 @@ public class NotificationReceiver implements Serializable {
 
     public void setReceiveNames(String receiveNames) {
         this.receiveNames = receiveNames;
+    }
+
+    public String getReceiveData() {
+        return receiveData;
+    }
+
+    public void setReceiveData(String receiveData) {
+        this.receiveData = receiveData;
     }
 
     public Date getCreateTime() {

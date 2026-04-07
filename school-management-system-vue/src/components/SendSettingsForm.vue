@@ -255,24 +255,31 @@ export default {
       if (this.localFormData.receivers) {
         this.localFormData.receivers.forEach(receiver => {
           try {
-            const ids = JSON.parse(receiver.receiveIds)
-            const names = JSON.parse(receiver.receiveNames)
-            
-            ids.forEach((id, index) => {
-              const item = { id: id, name: names[index] || '' }
-              switch(receiver.receiveType) {
-                case '1':
-                  if (!this.selectedClasses.some(c => c.id === id)) {
-                    this.selectedClasses.push(item)
-                  }
-                  break
-                case '2':
-                  if (!this.selectedStudents.some(s => s.id === id)) {
-                    this.selectedStudents.push(item)
-                  }
-                  break
-              }
-            })
+            if (receiver.receiveType === '1') {
+               if (receiver.receiveData) {
+                  const dataArr = JSON.parse(receiver.receiveData);
+                  dataArr.forEach(group => {
+                     const ids = group.receive_ids || [];
+                     const names = group.receive_names || [];
+                     const type = group.type || 1;
+                     ids.forEach((id, index) => {
+                        const item = { id: id, name: names[index] || '', type: type };
+                        if (!this.selectedClasses.some(c => c.id === id)) {
+                           this.selectedClasses.push(item);
+                        }
+                     });
+                  });
+               }
+            } else if (receiver.receiveType === '2') {
+               const ids = JSON.parse(receiver.receiveIds || '[]');
+               const names = JSON.parse(receiver.receiveNames || '[]');
+               ids.forEach((id, index) => {
+                 const item = { id: id, name: names[index] || '' }
+                 if (!this.selectedStudents.some(s => s.id === id)) {
+                   this.selectedStudents.push(item)
+                 }
+               })
+            }
           } catch (e) {
             console.error('解析接收對象數據失敗:', e)
           }
@@ -360,10 +367,28 @@ export default {
       const receivers = []
       
       if (this.selectedClasses.length > 0) {
+        const type1Classes = this.selectedClasses.filter(c => c.type === 1 || !c.type);
+        const type2Classes = this.selectedClasses.filter(c => c.type === 2);
+        
+        const receiveDataPayload = [];
+        if (type1Classes.length > 0) {
+           receiveDataPayload.push({
+               receive_ids: type1Classes.map(c => c.id),
+               type: 1,
+               receive_names: type1Classes.map(c => c.name)
+           });
+        }
+        if (type2Classes.length > 0) {
+           receiveDataPayload.push({
+               receive_ids: type2Classes.map(c => c.id),
+               type: 2,
+               receive_names: type2Classes.map(c => c.name)
+           });
+        }
+
         receivers.push({
           receiveType: '1',
-          receiveIds: JSON.stringify(this.selectedClasses.map(c => c.id)),
-          receiveNames: JSON.stringify(this.selectedClasses.map(c => c.name))
+          receiveData: JSON.stringify(receiveDataPayload)
         })
       }
       
