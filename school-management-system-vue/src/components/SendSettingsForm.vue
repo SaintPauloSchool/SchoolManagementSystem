@@ -1,4 +1,4 @@
-1<template>
+<template>
   <div class="send-settings-form">
     <el-form
       ref="formRef"

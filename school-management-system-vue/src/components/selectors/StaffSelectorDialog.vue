@@ -10,12 +10,23 @@
     <div class="selector-wrapper">
       <!-- 左侧树形结构 -->
       <div class="left-panel">
-        <div class="panel-title">
-          <el-icon><School /></el-icon>
-          <span>組織架構</span>
+        <div class="panel-tabs">
+          <el-tabs v-model="activeTab" class="custom-tabs">
+            <el-tab-pane name="wecom">
+              <template #label>
+                <div class="tab-label"><el-icon><School /></el-icon> WeCom老師通訊錄</div>
+              </template>
+            </el-tab-pane>
+            <el-tab-pane name="custom">
+              <template #label>
+                <div class="tab-label"><el-icon><Menu /></el-icon> 自定義老師通訊錄</div>
+              </template>
+            </el-tab-pane>
+          </el-tabs>
         </div>
         
-        <div class="tree-container">
+        <!-- WeCom Tree -->
+        <div class="tree-container" v-show="activeTab === 'wecom'">
           <div v-if="loading" class="loading">
             <el-icon class="is-loading"><Loading /></el-icon>
             <span>加載中...</span>
@@ -39,12 +50,47 @@
                 <el-checkbox
                   v-if="data.isLeaf"
                   :model-value="selectedStaffIds.includes(data.id)"
-                  @click.stop="() => handleLeafNodeClick(data)"
+                  @click.stop="() => handleLeafNodeClick(data, 'staffTree')"
                   class="node-checkbox"
                 />
                 <el-icon v-if="data.type === 20" class="node-icon department-icon"><OfficeBuilding /></el-icon>
                 <el-icon v-else-if="data.type === 10" class="node-icon position-icon"><UserFilled /></el-icon>
                 <el-icon v-else-if="data.isLeaf" class="node-icon staff-icon"><User /></el-icon>
+                <span class="node-label">{{ node.label }}</span>
+              </span>
+            </template>
+          </el-tree>
+        </div>
+
+        <!-- Custom Tree -->
+        <div class="tree-container" v-show="activeTab === 'custom'">
+          <div v-if="customLoading" class="loading">
+            <el-icon class="is-loading"><Loading /></el-icon>
+            <span>加載中...</span>
+          </div>
+          <div v-else-if="customTree.length === 0" class="empty">
+            <el-icon><DocumentDelete /></el-icon>
+            <span>暫無數據</span>
+          </div>
+          <el-tree
+            v-else
+            ref="customStaffTree"
+            :data="customTree"
+            :props="treeProps"
+            :expand-on-click-node="false"
+            :check-on-click-node="false"
+            node-key="id"
+          >
+            <template #default="{ node, data }">
+              <span class="tree-node">
+                <el-checkbox
+                  v-if="data.isLeaf"
+                  :model-value="selectedStaffIds.includes(data.id)"
+                  @click.stop="() => handleLeafNodeClick(data, 'customStaffTree')"
+                  class="node-checkbox"
+                />
+                <el-icon v-if="data.isLeaf" class="node-icon staff-icon"><User /></el-icon>
+                <el-icon v-else class="node-icon folder-icon"><Folder /></el-icon>
                 <span class="node-label">{{ node.label }}</span>
               </span>
             </template>
@@ -103,7 +149,7 @@
 <script>
 import { 
   Loading, DocumentDelete, School, OfficeBuilding, 
-  User, UserFilled, Checked, CloseBold 
+  User, UserFilled, Checked, CloseBold, Menu, Folder 
 } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
@@ -111,7 +157,7 @@ export default {
   name: 'StaffSelectorDialog',
   components: {
     Loading, DocumentDelete, School, OfficeBuilding, 
-    User, UserFilled, Checked, CloseBold
+    User, UserFilled, Checked, CloseBold, Menu, Folder
   },
   props: {
     visible: {
@@ -126,9 +172,12 @@ export default {
   emits: ['update:visible', 'confirm'],
   data() {
     return {
+      activeTab: 'wecom',
       departmentTree: [],
+      customTree: [],
       selectedStaffIds: [],
-      loading: false
+      loading: false,
+      customLoading: false
     }
   },
   computed: {
@@ -152,7 +201,7 @@ export default {
     },
     selectedStaffWithDetails() {
       const result = this.selectedStaffIds.map(id => {
-        const staff = this.findStaffInTree(id, this.departmentTree)
+        let staff = this.findStaffInTree(id, this.departmentTree)
         if (staff) {
           // 查找所属部门：沿着树形结构向上查找最近的部门节点
           const department = this.findNearestDepartment(staff, this.departmentTree)
@@ -160,10 +209,22 @@ export default {
             id: staff.id,
             name: staff.name,
             position: staff.position,
-            department: department ? department.name : '未知部门'
+            department: department ? department.name : '未知部门',
+            type: 1
           }
         }
-        return { id, name: '未知教職員工', position: '', department: '' }
+        staff = this.findStaffInTree(id, this.customTree)
+        if (staff) {
+          const department = this.findNearestDepartment(staff, this.customTree)
+          return {
+            id: Math.abs(staff.id),
+            name: staff.name,
+            position: staff.position,
+            department: department ? department.name : '未知部门',
+            type: 2
+          }
+        }
+        return { id, name: '未知教職員工', position: '', department: '', type: 1 }
       })
       return result
     },
@@ -172,6 +233,7 @@ export default {
     visible(newVal) {
       if (newVal) {
         this.loadData()
+        this.loadCustomData()
         this.$nextTick(() => {
           this.initSelectedTree()
         })
@@ -189,11 +251,11 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.departmentTree = response.data || []
         } else {
-          this.$message.error('加載教職員工數據失敗')
+          this.$message.error('加載WeCom教職員工數據失敗')
         }
       } catch (error) {
-        console.error('加載教職員工數據失敗:', error)
-        this.$message.error('加载教职员工数据失败')
+        console.error('加載WeCom教職員工數據失敗:', error)
+        this.$message.error('加載WeCom教職員工數據失敗')
       } finally {
         this.loading = false
         this.$nextTick(() => {
@@ -203,21 +265,46 @@ export default {
         })
       }
     },
+
+    async loadCustomData() {
+      this.customLoading = true
+      try {
+        const response = await request({
+          url: '/system/schoolDepartment/treeWithMembers',
+          method: 'get',
+          params: { type: 1 }
+        })
+        if (response.code === 200 || response.code === 0) {
+          this.customTree = response.data || []
+        } else {
+          this.$message.error('加載自定義教職員工數據失敗')
+        }
+      } catch (error) {
+        console.error('加載自定義教職員工數據失敗:', error)
+      } finally {
+        this.customLoading = false
+        this.$nextTick(() => {
+          if (this.visible) {
+            this.initSelectedTree()
+          }
+        })
+      }
+    },
   
     initSelectedTree() {
-      if (!this.$refs.staffTree) return;
-  
+      let mappedIds = []
       if (this.selectedStaff && this.selectedStaff.length > 0) {
-        const staffIds = this.selectedStaff.map(staff => staff.id)
-        
-        // 直接设置勾选状态，不展开所有节点
-        this.$refs.staffTree.setCheckedKeys(staffIds)
-        // 直接使用传入的 selectedStaff 数组，不从树中重新获取
-        this.selectedStaffIds = staffIds
-      } else {
-        this.$refs.staffTree.setCheckedKeys([])
-        this.selectedStaffIds = []
+        mappedIds = this.selectedStaff.map(staff => {
+           return staff.type === 2 ? -Math.abs(staff.id) : staff.id
+        })
       }
+      this.selectedStaffIds = mappedIds
+      
+      // 直接设置勾选状态，不展开所有节点
+      this.$nextTick(() => {
+        if (this.$refs.staffTree) this.$refs.staffTree.setCheckedKeys(mappedIds)
+        if (this.$refs.customStaffTree) this.$refs.customStaffTree.setCheckedKeys(mappedIds)
+      })
     },
 
     updateSelectedStaffIds() {
@@ -288,9 +375,8 @@ export default {
     },
 
     handleClose() {
-      if (this.$refs.staffTree) {
-        this.$refs.staffTree.setCheckedKeys([])
-      }
+      if (this.$refs.staffTree) this.$refs.staffTree.setCheckedKeys([])
+      if (this.$refs.customStaffTree) this.$refs.customStaffTree.setCheckedKeys([])
       this.selectedStaffIds = []
       this.$emit('update:visible', false)
     },
@@ -300,18 +386,26 @@ export default {
       this.handleClose()
     },
 
-    handleLeafNodeClick(data) {
+    handleLeafNodeClick(data, refName) {
       if (!data || !data.id) return;
       // 切换选中状态
       const index = this.selectedStaffIds.indexOf(data.id);
       if (index > -1) {
         // 取消选中
         this.selectedStaffIds = this.selectedStaffIds.filter(id => id !== data.id);
+        this.$nextTick(() => {
+          if (this.$refs[refName]) {
+            this.$refs[refName].setChecked(data, false);
+          }
+        });
       } else {
         // 选中
         this.selectedStaffIds.push(data.id);
         // 自动滚动到底部
         this.$nextTick(() => {
+          if (this.$refs[refName]) {
+            this.$refs[refName].setChecked(data, true);
+          }
           if (this.$refs.selectedContainer) {
             this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
           }
@@ -320,13 +414,19 @@ export default {
     },
 
     removeSelectedStaff(staff) {
-      const index = this.selectedStaffIds.indexOf(staff.id)
+      const internalId = staff.type === 2 ? -Math.abs(staff.id) : staff.id
+      const index = this.selectedStaffIds.indexOf(internalId)
       if (index > -1) {
-        this.selectedStaffIds = this.selectedStaffIds.filter(id => id !== staff.id)
-        // 更新树的勾选状态
-        if (this.$refs.staffTree) {
-          this.$refs.staffTree.setCheckedKeys(this.selectedStaffIds)
-        }
+        this.selectedStaffIds.splice(index, 1)
+        // 更新两边树的勾选状态
+        this.$nextTick(() => {
+          if (this.$refs.staffTree) {
+            this.$refs.staffTree.setCheckedKeys(this.selectedStaffIds)
+          }
+          if (this.$refs.customStaffTree) {
+            this.$refs.customStaffTree.setCheckedKeys(this.selectedStaffIds)
+          }
+        })
       }
     },
 
@@ -389,6 +489,30 @@ export default {
   box-shadow: none;
 }
 
+.panel-tabs {
+  border-bottom: 1px solid #e4e7ed;
+}
+
+:deep(.custom-tabs .el-tabs__header) {
+  margin: 0;
+}
+
+:deep(.custom-tabs .el-tabs__nav-wrap::after) {
+  height: 0;
+}
+
+:deep(.custom-tabs .el-tabs__item) {
+  height: 40px;
+  line-height: 40px;
+  font-size: 14px;
+}
+
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* 右侧面板 */
 .right-panel {
   flex: 1;
@@ -428,6 +552,7 @@ export default {
   border-radius: 4px;
   padding: 12px;
   background: #ffffff;
+  margin-top: 12px;
 }
 
 .tree-container:hover {

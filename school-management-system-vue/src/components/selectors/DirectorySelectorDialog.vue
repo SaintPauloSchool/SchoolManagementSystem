@@ -192,9 +192,7 @@ export default {
       }
     },
     selectedDirectoriesWithDetails() {
-      // 过滤掉子节点，只保留父节点
-      const parentIds = this.filterParentNodes(this.selectedDirectoryIds, [...this.directoryTree, ...this.customTree])
-      return parentIds.map(id => {
+      return this.selectedDirectoryIds.map(id => {
         let dir = this.findDirectoryInTree(id, this.directoryTree)
         if (dir) return { ...dir, type: 1 }
         
@@ -220,7 +218,6 @@ export default {
     async loadData() {
       this.loading = true
       try {
-        // 调用学校部门信息管理接口获取数据（仅部门，不含人员）
         const response = await request({
           url: '/wecomSchoolDepartment/tree',
           method: 'get'
@@ -258,7 +255,6 @@ export default {
         }
       } catch (error) {
         console.error('加載自定義通訊錄數據失敗:', error)
-        // this.$message.error('加載自定義通訊錄數據失敗')
       } finally {
         this.customLoading = false
         this.$nextTick(() => {
@@ -272,10 +268,8 @@ export default {
     initSelectedTree() {
       if (this.selectedDirectories && this.selectedDirectories.length > 0) {
         const directoryIds = this.selectedDirectories.map(dir => dir.id)
-        // 过滤掉子节点，只保留父节点（如果父节点也在选中列表中）
-        const filteredIds = this.filterParentNodes(directoryIds, [...this.directoryTree, ...this.customTree])
-        if (this.$refs.treeRef) this.$refs.treeRef.setCheckedKeys(filteredIds)
-        if (this.$refs.customTreeRef) this.$refs.customTreeRef.setCheckedKeys(filteredIds)
+        if (this.$refs.treeRef) this.$refs.treeRef.setCheckedKeys(directoryIds)
+        if (this.$refs.customTreeRef) this.$refs.customTreeRef.setCheckedKeys(directoryIds)
         setTimeout(() => {
           this.updateSelectedDirectoryIds()
         }, 50)
@@ -322,27 +316,6 @@ export default {
         ...customNodes.map(n => n.id)
       ]);
       this.selectedDirectoryIds = Array.from(allIds);
-    },
-
-    // 过滤出父节点（如果节点和它的父节点都在列表中，只保留父节点）
-    filterParentNodes(ids, tree) {
-      const idSet = new Set(ids)
-      const resultIds = []
-      
-      const checkNode = (node) => {
-        if (idSet.has(node.id)) {
-          // 如果这个节点在选中列表中，添加它，但不检查它的子节点
-          resultIds.push(node.id)
-          return
-        }
-        // 如果有子节点，递归检查
-        if (node.children && node.children.length > 0) {
-          node.children.forEach(child => checkNode(child))
-        }
-      }
-      
-      tree.forEach(rootNode => checkNode(rootNode))
-      return resultIds
     },
 
     findDirectoryInTree(id, tree) {
@@ -395,7 +368,6 @@ export default {
         });
       }
     },
-
 
     removeSelectedDirectory(dir) {
       const index = this.selectedDirectoryIds.indexOf(dir.id)
@@ -481,6 +453,18 @@ export default {
   box-shadow: none;
 }
 
+/* 右侧面板 */
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #ffffff;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .panel-tabs {
   border-bottom: 1px solid #e4e7ed;
 }
@@ -503,18 +487,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-/* 右侧面板 */
-.right-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  background: #ffffff;
-  padding: 0;
-  border-radius: 0;
-  box-shadow: none;
 }
 
 .panel-title {
