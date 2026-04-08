@@ -247,7 +247,7 @@ export default {
       if (index === '1-1') {
         // 發布通知，无需加载数据
       } else if (index === '1-2') {
-        //需要完善加載數據功能
+        this.loadCcToMeNotifications()
       } else if (index === '1-3') {
         this.loadMySendNotifications()
       } else if (index === '2-1') {
@@ -258,9 +258,9 @@ export default {
     },
 
     async loadCcToMeNotifications() {
-      try {
+      /*try {
         const response = await request({
-          url: '/system/notification/mySend',
+          url: '/system/notification/ccToMe',
           method: 'get'
         })
         
@@ -268,9 +268,9 @@ export default {
           this.ccToMeNotifications = response.rows || []
         }
       } catch (error) {
-        console.error('加載失敗:', error)
-        this.$message.error('數據加載失敗')
-      }
+        console.error('加载失败:', error)
+        this.$message.error('数据加载失败')
+      }*/
     },
 
     async loadMySendNotifications() {
@@ -284,8 +284,8 @@ export default {
           this.mySendNotifications = response.rows || []
         }
       } catch (error) {
-        console.error('加載失敗:', error)
-        this.$message.error('數據加載失敗')
+        console.error('加载失败:', error)
+        this.$message.error('数据加载失败')
       }
     },
 

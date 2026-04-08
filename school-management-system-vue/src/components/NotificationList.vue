@@ -1,23 +1,24 @@
 <template>
   <div class="notification-list">
-    <!-- 搜索欄 -->
+    <!-- 搜索栏 -->
     <div class="search-bar">
       <el-input
         v-model="searchQuery"
-        placeholder="搜索通知標題或發送人..."
+        placeholder="搜索通知标题或发送人..."
         clearable
         prefix-icon="Search"
         class="search-input"
+        @keyup.enter="handleSearch"
       />
       <div class="filter-actions">
         <el-select 
           v-model="statusFilter" 
-          placeholder="狀態篩選" 
+          placeholder="状态筛选" 
           clearable
           class="status-select"
         >
           <el-option label="草稿" value="0" />
-          <el-option label="已發布" value="1" />
+          <el-option label="已发布" value="1" />
           <el-option label="已撤回" value="2" />
         </el-select>
         <el-button type="primary" @click="handleSearch">
@@ -27,16 +28,16 @@
       </div>
     </div>
 
-    <!-- 列表頭部 -->
+    <!-- 列表头部 -->
     <div class="list-header">
       <div class="header-info">
         <el-icon class="header-icon"><List /></el-icon>
-        <span class="header-title">通知列表</span>
+        <span class="header-title">{{ listTitle }}</span>
         <el-tag type="info" size="small" class="count-tag">
-          {{ filteredNotifications.length }} 條記錄
+          {{ pagination.total }} 条记录
         </el-tag>
       </div>
-      <el-button plain @click="$emit('refresh')">
+      <el-button plain @click="handleRefresh">
         <el-icon><Refresh /></el-icon>
         刷新
       </el-button>
@@ -45,12 +46,13 @@
     <!-- 表格 -->
     <div class="table-container">
       <el-table 
-        :data="filteredNotifications" 
+        :data="displayData" 
         style="width: 100%"
         v-loading="loading"
         stripe
+        empty-text="暂无数据"
       >
-        <el-table-column prop="title" label="通知標題" min-width="220" show-overflow-tooltip>
+        <el-table-column prop="title" label="通知标题" min-width="200" show-overflow-tooltip>
           <template #default="scope">
             <el-link 
               type="primary" 
@@ -62,26 +64,33 @@
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="senderName" label="發送人" width="120" align="center" />
-        <el-table-column label="狀態" width="100" align="center">
+        <el-table-column prop="senderName" label="发送人" width="120" align="center" />
+        <el-table-column label="状态" width="100" align="center">
           <template #default="scope">
             <el-tag 
               :type="getStatusTagType(scope.row.status)"
               size="small"
-              round
+              effect="light"
             >
               {{ getStatusText(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="發布時間" width="180" align="center" />
-        <el-table-column label="操作" width="220" fixed="right" align="center">
+        <el-table-column prop="replyDeadline" label="回复截止" width="160" align="center">
+          <template #default="scope">
+            <span v-if="scope.row.replyDeadline" class="deadline-text">
+              {{ scope.row.replyDeadline }}
+            </span>
+            <span v-else class="no-deadline">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="发布时间" width="160" align="center" />
+        <el-table-column label="操作" width="240" fixed="right" align="center">
           <template #default="scope">
             <div class="action-buttons">
               <el-button 
                 size="small" 
-                type="primary" 
-                link
+                type="primary"
                 @click="viewNotification(scope.row)"
               >
                 <el-icon><View /></el-icon>
@@ -91,8 +100,7 @@
               <el-button 
                 v-if="type === 'mySend' && scope.row.status === '1'"
                 size="small" 
-                type="warning" 
-                link
+                type="warning"
                 @click="withdrawNotification(scope.row)"
               >
                 <el-icon><Close /></el-icon>
@@ -102,12 +110,11 @@
               <el-button 
                 v-if="type === 'mySend'"
                 size="small" 
-                type="danger" 
-                link
+                type="danger"
                 @click="deleteNotification(scope.row)"
               >
                 <el-icon><Delete /></el-icon>
-                刪除
+                删除
               </el-button>
             </div>
           </template>
@@ -115,7 +122,7 @@
       </el-table>
     </div>
 
-    <!-- 分頁 -->
+    <!-- 分页 -->
     <div class="pagination-area">
       <el-pagination
         @size-change="handleSizeChange"
@@ -129,10 +136,10 @@
       />
     </div>
 
-    <!-- 詳情對話框 -->
+    <!-- 详情对话框 -->
     <el-dialog
       v-model="detailDialogVisible"
-      title="通知詳情"
+      title="通知详情"
       width="60%"
       :before-close="handleDetailClose"
       class="notification-detail-dialog"
@@ -149,6 +156,7 @@
 <script>
 import { Search, Refresh, View, Close, Delete, List } from '@element-plus/icons-vue'
 import NotificationDetail from './NotificationDetail.vue'
+import request from '@/utils/request'
 
 export default {
   name: 'NotificationList',
@@ -177,30 +185,51 @@ export default {
         total: 0
       },
       detailDialogVisible: false,
-      selectedNotification: null
+      selectedNotification: null,
+      allNotifications: []
     }
   },
   computed: {
-    filteredNotifications() {
-      let result = [...this.notifications]
+    listTitle() {
+      const titleMap = {
+        'ccToMe': '抄送我的',
+        'mySend': '我发送的'
+      }
+      return titleMap[this.type] || '通知列表'
+    },
+    displayData() {
+      let result = [...this.allNotifications]
       
+      // 搜索过滤
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase()
         result = result.filter(n => 
           n.title.toLowerCase().includes(query) ||
-          n.senderName.toLowerCase().includes(query)
+          (n.senderName && n.senderName.toLowerCase().includes(query))
         )
       }
       
+      // 状态过滤
       if (this.statusFilter) {
         result = result.filter(n => n.status === this.statusFilter)
       }
       
+      // 更新总数
       this.pagination.total = result.length
       
+      // 分页切片
       const start = (this.pagination.currentPage - 1) * this.pagination.pageSize
       const end = start + this.pagination.pageSize
       return result.slice(start, end)
+    }
+  },
+  watch: {
+    notifications: {
+      immediate: true,
+      handler(newVal) {
+        this.allNotifications = newVal || []
+        this.pagination.total = this.allNotifications.length
+      }
     }
   },
   methods: {
@@ -216,7 +245,7 @@ export default {
     getStatusText(status) {
       const statusMap = {
         '0': '草稿',
-        '1': '已發布',
+        '1': '已发布',
         '2': '已撤回'
       }
       return statusMap[status] || '未知'
@@ -235,51 +264,84 @@ export default {
       this.pagination.currentPage = val
     },
 
+    handleRefresh() {
+      this.$emit('refresh')
+    },
+
     async viewNotification(notification) {
       try {
-        // 可以跳轉詳情頁或彈出詳情對話框
-        // this.$router.push(`/notification/detail/${id}`)
-        this.selectedNotification = notification
-        this.detailDialogVisible = true
+        this.loading = true
+        // 获取完整的通知详情（包含接收对象、抄送对象、问题等）
+        const response = await request({
+          url: `/system/notification/${notification.notificationId}`,
+          method: 'get'
+        })
+        
+        if (response.code === 200 || response.code === 0) {
+          this.selectedNotification = response.data
+          this.detailDialogVisible = true
+        }
       } catch (error) {
-        console.error('獲取詳情失敗:', error)
-        this.$message.error('獲取詳情失敗')
+        console.error('获取详情失败:', error)
+        this.$message.error('获取详情失败')
+      } finally {
+        this.loading = false
       }
     },
 
     async withdrawNotification(notification) {
       try {
-        await this.$confirm('確認撤回此通知嗎？', '提示', {
-          confirmButtonText: '確定',
+        await this.$confirm('确认撤回此通知吗？撤回后接收者将无法查看。', '提示', {
+          confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
         })
         
-        this.$message.success('撤回成功')
-        this.$emit('refresh')
+        this.loading = true
+        const response = await request({
+          url: `/system/notification/withdraw/${notification.notificationId}`,
+          method: 'put'
+        })
+        
+        if (response.code === 200 || response.code === 0) {
+          this.$message.success('撤回成功')
+          this.$emit('refresh')
+        }
       } catch (error) {
         if (error !== 'cancel') {
-          console.error('撤回失敗:', error)
-          this.$message.error('撤回失敗')
+          console.error('撤回失败:', error)
+          this.$message.error('撤回失败')
         }
+      } finally {
+        this.loading = false
       }
     },
 
     async deleteNotification(notification) {
       try {
-        await this.$confirm('確認刪除嗎？刪除後無法恢復！', '警告', {
-          confirmButtonText: '確定',
+        await this.$confirm('确认删除吗？删除后将无法恢复！', '警告', {
+          confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'error'
         })
         
-        this.$message.success('刪除成功')
-        this.$emit('refresh')
+        this.loading = true
+        const response = await request({
+          url: `/system/notification/${notification.notificationId}`,
+          method: 'delete'
+        })
+        
+        if (response.code === 200 || response.code === 0) {
+          this.$message.success('删除成功')
+          this.$emit('refresh')
+        }
       } catch (error) {
         if (error !== 'cancel') {
-          console.error('刪除失敗:', error)
-          this.$message.error('刪除失敗')
+          console.error('删除失败:', error)
+          this.$message.error('删除失败')
         }
+      } finally {
+        this.loading = false
       }
     },
 
@@ -298,22 +360,22 @@ export default {
   height: 100%;
   background-color: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
   overflow: hidden;
 }
 
-/* 搜索欄 */
+/* 搜索栏 */
 .search-bar {
   display: flex;
   gap: 16px;
-  padding: 24px 28px;
-  border-bottom: 2px solid #e5e7eb;
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-  transition: all 0.3s ease;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  transition: background-color 0.2s ease;
 }
 
 .search-bar:hover {
-  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  background-color: #f3f4f6;
 }
 
 .search-input {
@@ -322,8 +384,7 @@ export default {
 }
 
 .search-input :deep(.el-input__wrapper) {
-  border-radius: 10px;
-  font-weight: 600;
+  border-radius: 8px;
 }
 
 .filter-actions {
@@ -333,7 +394,6 @@ export default {
 
 .filter-actions .el-button {
   border-radius: 8px;
-  font-weight: 600;
 }
 
 .status-select {
@@ -342,144 +402,148 @@ export default {
 
 .status-select :deep(.el-input__wrapper) {
   border-radius: 8px;
-  font-weight: 600;
 }
 
-/* 列表頭部 */
+/* 列表头部 */
 .list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 28px;
-  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-  border-bottom: 2px solid #e5e7eb;
-  transition: all 0.3s ease;
-}
-
-.list-header:hover {
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  padding: 16px 24px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .header-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .header-icon {
   color: #3b82f6;
   font-size: 20px;
-  animation: iconFloat 3s ease-in-out infinite;
-}
-
-@keyframes iconFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
 }
 
 .header-title {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: #111827;
-  letter-spacing: 0.3px;
 }
 
 .count-tag {
   margin-left: 8px;
-  border-radius: 8px;
-  font-weight: 600;
-  padding: 4px 12px;
+  border-radius: 6px;
+  padding: 2px 10px;
 }
 
-/* 表格區域 */
+/* 表格区域 */
 .table-container {
   flex: 1;
   overflow: auto;
   padding: 0;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background-color: #ffffff;
 }
 
 .table-container :deep(.el-table) {
   border: none;
 }
 
-/* 表格列對齊優化 */
-.table-container :deep(.el-table__header th) {
+.table-container :deep(.el-table th) {
+  background-color: #f9fafb;
+  color: #374151;
+  font-weight: 600;
   text-align: center;
 }
 
-.table-container :deep(.el-table__body td) {
+.table-container :deep(.el-table td) {
   text-align: center;
 }
 
-/* 標題列保持左對齊 */
+/* 标题列保持左对齐 */
 .table-container :deep(.el-table__body tr td:first-child) {
   text-align: left;
 }
 
 .title-link {
-  font-weight: 600;
+  font-weight: 500;
   color: #3b82f6;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.2s ease;
 }
 
 .title-link:hover {
   color: #2563eb;
-  transform: translateX(4px);
+}
+
+.deadline-text {
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+.no-deadline {
+  color: #9ca3af;
 }
 
 .action-buttons {
   display: flex;
   gap: 8px;
+  justify-content: center;
 }
 
 .action-buttons .el-button {
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border: none;
+  box-shadow: none !important;
 }
 
 .action-buttons .el-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: none !important;
 }
 
-/* 對話框樣式優化 */
+.action-buttons .el-button:focus {
+  box-shadow: none !important;
+}
+
+.action-buttons .el-button .el-icon {
+  margin-right: 4px;
+}
+
+.action-buttons .el-button--small {
+  --el-button-size: 28px;
+}
+
+/* 对话框样式 */
 .notification-detail-dialog :deep(.el-dialog) {
-  border-radius: 24px;
+  border-radius: 16px;
 }
 
 .notification-detail-dialog :deep(.el-dialog__header) {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 24px;
 }
 
 .notification-detail-dialog :deep(.el-dialog__title) {
-  color: #1e40af;
+  color: #111827;
+  font-weight: 600;
 }
 
-/* 分頁區域 */
+/* 分页区域 */
 .pagination-area {
-  padding: 20px 28px;
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-  border-top: 2px solid #e5e7eb;
+  padding: 16px 24px;
+  background-color: #f9fafb;
+  border-top: 1px solid #e5e7eb;
   display: flex;
   justify-content: flex-end;
-  transition: all 0.3s ease;
 }
 
-.pagination-area:hover {
-  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-}
-
-/* 響應式設計 */
+/* 响应式设计 */
 @media (max-width: 1200px) {
   .search-bar {
     flex-wrap: wrap;
-    padding: 20px 24px;
+    padding: 16px 20px;
   }
   
   .search-input {
@@ -494,23 +558,24 @@ export default {
 
 @media (max-width: 768px) {
   .search-bar {
-    padding: 16px 20px;
+    padding: 12px 16px;
   }
   
   .list-header {
-    padding: 16px 20px;
+    padding: 12px 16px;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     align-items: flex-start;
   }
   
   .pagination-area {
-    padding: 16px 20px;
+    padding: 12px 16px;
     justify-content: center;
   }
   
   .action-buttons {
     flex-direction: column;
+    gap: 4px;
   }
 }
 </style>
