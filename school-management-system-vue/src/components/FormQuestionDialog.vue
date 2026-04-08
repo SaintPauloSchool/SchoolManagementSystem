@@ -1978,14 +1978,19 @@ export default {
         }
       }
     
-      this.$emit('save', {
-        questionnaire: this.questionnaireData,
-        questions: this.questionList
-      })
+      // 先关闭对话框，再发送保存事件，避免数据丢失
       this.$emit('update:visible', false)
-      ElMessage.success({
-        message: '保存成功',
-        offset: 100
+      
+      // 使用 nextTick 确保对话框关闭后再发送数据
+      this.$nextTick(() => {
+        this.$emit('save', {
+          questionnaire: this.questionnaireData,
+          questions: this.questionList
+        })
+        ElMessage.success({
+          message: '保存成功',
+          offset: 100
+        })
       })
     },
   }

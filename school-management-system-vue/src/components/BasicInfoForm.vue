@@ -187,8 +187,13 @@ export default {
   watch: {
     formData: {
       handler(newVal) {
-        this.localFormData = { ...newVal }
-        this.initFileList()
+        // 只在对话框关闭且数据真正变化时才同步
+        // 避免在保存问题时覆盖正在编辑的数据
+        if (!this.showFormQuestionDialog && 
+            JSON.stringify(newVal.questions || []) !== JSON.stringify(this.localFormData.questions || [])) {
+          this.localFormData = { ...newVal }
+          this.initFileList()
+        }
       },
       deep: true
     }
@@ -364,7 +369,7 @@ export default {
             questionnaireData: saveData.questionnaire, // 保存完整的問卷數據
             questions: saveData.questions || [] // 保存所有子問題
           }
-          this.localFormData.questions[index] = formQuestion
+          this.$set(this.localFormData.questions, index, formQuestion)
           ElMessage.success('更新表單問題成功')
         }
       } else {
@@ -382,8 +387,11 @@ export default {
         ElMessage.success('添加表單問題成功')
       }
       
-      // 同步到父組件的 formData
-      Object.assign(this.formData, this.localFormData)
+      // 直接同步到父組件，使用深拷貝避免引用問題
+      // 注意：这里不会触发 watch，因为 showFormQuestionDialog 还是 true
+      this.$nextTick(() => {
+        this.formData.questions = JSON.parse(JSON.stringify(this.localFormData.questions))
+      })
       
       this.editingFormQuestion = null
       this.showFormQuestionDialog = false
