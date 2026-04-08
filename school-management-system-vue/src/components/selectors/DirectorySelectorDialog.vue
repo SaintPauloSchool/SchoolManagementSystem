@@ -10,12 +10,23 @@
     <div class="selector-wrapper">
       <!-- 左侧树形结构 -->
       <div class="left-panel">
-        <div class="panel-title">
-          <el-icon><School /></el-icon>
-          <span>組織架構</span>
+        <div class="panel-tabs">
+          <el-tabs v-model="activeTab" class="custom-tabs">
+            <el-tab-pane name="wecom">
+              <template #label>
+                <div class="tab-label"><el-icon><School /></el-icon> WeCom老師通訊錄</div>
+              </template>
+            </el-tab-pane>
+            <el-tab-pane name="custom">
+              <template #label>
+                <div class="tab-label"><el-icon><Menu /></el-icon> 自定義老師通訊錄</div>
+              </template>
+            </el-tab-pane>
+          </el-tabs>
         </div>
         
-        <div class="tree-container">
+        <!-- WeCom Tree -->
+        <div class="tree-container" v-show="activeTab === 'wecom'">
           <div v-if="loading" class="loading">
             <el-icon class="is-loading"><Loading /></el-icon>
             <span>加載中...</span>
@@ -28,6 +39,41 @@
             v-else
             ref="treeRef"
             :data="directoryTree"
+            :props="treeProps"
+            :expand-on-click-node="false"
+            :check-on-click-node="true"
+            node-key="id"
+            show-checkbox
+            @check="handleCheckChange"
+          >
+            <template #default="{ node, data }">
+              <span class="tree-node">
+                <el-icon v-if="data.type === 5" class="node-icon school-icon"><School /></el-icon>
+                <el-icon v-else-if="data.type === 4" class="node-icon campus-icon"><OfficeBuilding /></el-icon>
+                <el-icon v-else-if="data.type === 3" class="node-icon stage-icon"><Reading /></el-icon>
+                <el-icon v-else-if="data.type === 2" class="node-icon grade-icon"><Notebook /></el-icon>
+                <el-icon v-else class="node-icon department-icon"><User /></el-icon>
+                <span class="node-label">{{ node.label }}</span>
+                <span v-if="data.count" class="count-tag">({{ data.count }})</span>
+              </span>
+            </template>
+          </el-tree>
+        </div>
+
+        <!-- Custom Tree -->
+        <div class="tree-container" v-show="activeTab === 'custom'">
+          <div v-if="customLoading" class="loading">
+            <el-icon class="is-loading"><Loading /></el-icon>
+            <span>加載中...</span>
+          </div>
+          <div v-else-if="customTree.length === 0" class="empty">
+            <el-icon><DocumentDelete /></el-icon>
+            <span>暫無數據</span>
+          </div>
+          <el-tree
+            v-else
+            ref="customTreeRef"
+            :data="customTree"
             :props="treeProps"
             :expand-on-click-node="false"
             :check-on-click-node="true"
@@ -101,7 +147,7 @@
 <script>
 import { 
   Loading, DocumentDelete, School, OfficeBuilding, 
-  Reading, Notebook, User, Checked, CloseBold 
+  Reading, Notebook, User, Checked, CloseBold, Menu 
 } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
@@ -109,7 +155,7 @@ export default {
   name: 'DirectorySelectorDialog',
   components: {
     Loading, DocumentDelete, School, OfficeBuilding, 
-    Reading, Notebook, User, Checked, CloseBold
+    Reading, Notebook, User, Checked, CloseBold, Menu
   },
   props: {
     visible: {
@@ -124,9 +170,12 @@ export default {
   emits: ['update:visible', 'confirm'],
   data() {
     return {
+      activeTab: 'wecom',
       directoryTree: [],
+      customTree: [],
       selectedDirectoryIds: [],
       loading: false,
+      customLoading: false,
       treeProps: {
         children: 'children',
         label: 'name'
@@ -144,10 +193,15 @@ export default {
     },
     selectedDirectoriesWithDetails() {
       // 过滤掉子节点，只保留父节点
-      const parentIds = this.filterParentNodes(this.selectedDirectoryIds, this.directoryTree)
+      const parentIds = this.filterParentNodes(this.selectedDirectoryIds, [...this.directoryTree, ...this.customTree])
       return parentIds.map(id => {
-        const dir = this.findDirectoryInTree(id, this.directoryTree)
-        return dir || { id, name: '未知通訊錄' }
+        let dir = this.findDirectoryInTree(id, this.directoryTree)
+        if (dir) return { ...dir, type: 1 }
+        
+        dir = this.findDirectoryInTree(id, this.customTree)
+        if (dir) return { ...dir, type: 2 }
+        
+        return { id, name: '未知通訊錄', type: 1 }
       })
     }
   },
@@ -155,6 +209,7 @@ export default {
     visible(newVal) {
       if (newVal) {
         this.loadData()
+        this.loadCustomData()
         this.$nextTick(() => {
           this.initSelectedTree()
         })
@@ -173,11 +228,11 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.directoryTree = response.data || []
         } else {
-          this.$message.error('加載通訊錄數據失敗')
+          this.$message.error('加載WeCom通訊錄數據失敗')
         }
       } catch (error) {
-        console.error('加載通訊錄數據失敗:', error)
-        this.$message.error('加載通訊錄數據失敗')
+        console.error('加載WeCom通訊錄數據失敗:', error)
+        this.$message.error('加載WeCom通訊錄數據失敗')
       } finally {
         this.loading = false
         this.$nextTick(() => {
@@ -188,19 +243,85 @@ export default {
       }
     },
 
-    initSelectedTree() {
-      if (!this.$refs.treeRef) return;
+    async loadCustomData() {
+      this.customLoading = true
+      try {
+        const response = await request({
+          url: '/system/schoolDepartment/tree',
+          method: 'get',
+          params: { type: 1 }
+        })
+        if (response.code === 200 || response.code === 0) {
+          this.customTree = response.data || []
+        } else {
+          this.$message.error('加載自定義通訊錄數據失敗')
+        }
+      } catch (error) {
+        console.error('加載自定義通訊錄數據失敗:', error)
+        // this.$message.error('加載自定義通訊錄數據失敗')
+      } finally {
+        this.customLoading = false
+        this.$nextTick(() => {
+          if (this.visible) {
+            this.initSelectedTree()
+          }
+        })
+      }
+    },
 
+    initSelectedTree() {
       if (this.selectedDirectories && this.selectedDirectories.length > 0) {
         const directoryIds = this.selectedDirectories.map(dir => dir.id)
         // 过滤掉子节点，只保留父节点（如果父节点也在选中列表中）
-        const filteredIds = this.filterParentNodes(directoryIds, this.directoryTree)
-        this.$refs.treeRef.setCheckedKeys(filteredIds)
-        this.selectedDirectoryIds = [...filteredIds]
+        const filteredIds = this.filterParentNodes(directoryIds, [...this.directoryTree, ...this.customTree])
+        if (this.$refs.treeRef) this.$refs.treeRef.setCheckedKeys(filteredIds)
+        if (this.$refs.customTreeRef) this.$refs.customTreeRef.setCheckedKeys(filteredIds)
+        setTimeout(() => {
+          this.updateSelectedDirectoryIds()
+        }, 50)
       } else {
-        this.$refs.treeRef.setCheckedKeys([])
+        if (this.$refs.treeRef) this.$refs.treeRef.setCheckedKeys([])
+        if (this.$refs.customTreeRef) this.$refs.customTreeRef.setCheckedKeys([])
         this.selectedDirectoryIds = []
       }
+    },
+
+    updateSelectedDirectoryIds() {
+      let wecomNodes = []
+      let customNodes = []
+      
+      if (this.$refs.treeRef) {
+        wecomNodes = this.$refs.treeRef.getCheckedNodes(false, false).filter(nodeData => {
+           let node = this.$refs.treeRef.getNode(nodeData.id);
+           if (!node) return false;
+           let parent = node.parent;
+           while(parent && parent.level > 0) {
+              if (parent.checked) return false;
+              parent = parent.parent;
+           }
+           return true;
+        });
+      }
+      
+      if (this.$refs.customTreeRef) {
+        customNodes = this.$refs.customTreeRef.getCheckedNodes(false, false).filter(nodeData => {
+           let node = this.$refs.customTreeRef.getNode(nodeData.id);
+           if (!node) return false;
+           let parent = node.parent;
+           while(parent && parent.level > 0) {
+              if (parent.checked) return false;
+              parent = parent.parent;
+           }
+           return true;
+        });
+      }
+      
+      // Merge unique IDs
+      const allIds = new Set([
+        ...wecomNodes.map(n => n.id), 
+        ...customNodes.map(n => n.id)
+      ]);
+      this.selectedDirectoryIds = Array.from(allIds);
     },
 
     // 过滤出父节点（如果节点和它的父节点都在列表中，只保留父节点）
@@ -238,79 +359,61 @@ export default {
     },
 
     handleCheckChange(data, checkInfo) {
-      const checkedKeys = [...checkInfo.checkedKeys]
-      const halfCheckedKeys = checkInfo.halfCheckedKeys || []
+      // 找到事件源树
+      const sourceTree = this.activeTab === 'wecom' ? this.$refs.treeRef : this.$refs.customTreeRef;
+      if (!sourceTree) return;
       
-      // 如果是选中操作且是父节点（有半选状态）
-      if (checkInfo.checkedKeys.includes(data.id) && halfCheckedKeys.includes(data.id)) {
-        // 获取所有子节点 ID
-        const childrenIds = this.getAllChildrenIds(data, this.directoryTree)
-        // 过滤掉子节点，只保留父节点
-        const otherCheckedKeys = checkedKeys.filter(id => id !== data.id && !childrenIds.includes(id))
-        this.selectedDirectoryIds = [...otherCheckedKeys, data.id]
-      } else if (checkInfo.checkedKeys.includes(data.id)) {
-        // 选中叶子节点
-        this.selectedDirectoryIds = [...checkedKeys]
-      } else {
-        // 取消选中
-        this.selectedDirectoryIds = checkedKeys
+      const isChecked = checkInfo.checkedKeys.includes(data.id);
+      
+      if (!isChecked) {
+        let node = sourceTree.getNode(data.id);
+        let parent = node ? node.parent : null;
+        let ancestorInSelected = false;
+        while(parent && parent.level > 0) {
+           if (this.selectedDirectoryIds.includes(parent.data.id)) {
+               ancestorInSelected = true;
+               break;
+           }
+           parent = parent.parent;
+        }
         
-        // 如果是取消父节点，也要取消所有子节点
-        if (halfCheckedKeys.includes(data.id)) {
-          const childrenIds = this.getAllChildrenIds(data, this.directoryTree)
-          this.selectedDirectoryIds = checkedKeys.filter(id => !childrenIds.includes(id))
+        if (ancestorInSelected) {
+           this.$message.warning('已选中上级组织，无法单独取消子项');
+           sourceTree.setCheckedKeys(this.selectedDirectoryIds);
+           return;
         }
       }
       
-      // 自動滾動到底部
-      this.$nextTick(() => {
-        if (this.$refs.selectedContainer) {
-          this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
-        }
-      });
+      this.updateSelectedDirectoryIds();
+      
+      // 如果是选中操作，自动滚动到底部
+      if (isChecked) {
+        this.$nextTick(() => {
+          if (this.$refs.selectedContainer) {
+            this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
+          }
+        });
+      }
     },
 
-    getAllChildrenIds(node, tree) {
-      const childrenIds = []
-      
-      const findNodeAndCollectChildren = (currentNode) => {
-        if (currentNode.children && currentNode.children.length > 0) {
-          currentNode.children.forEach(child => {
-            childrenIds.push(child.id)
-            findNodeAndCollectChildren(child)
-          })
-        }
-      }
-      
-      // 在树中找到这个节点并获取所有子节点
-      const searchInTree = (treeData) => {
-        for (const item of treeData) {
-          if (item.id === node.id) {
-            findNodeAndCollectChildren(item)
-            return
-          }
-          if (item.children && item.children.length > 0) {
-            searchInTree(item.children)
-          }
-        }
-      }
-      
-      searchInTree(tree)
-      return childrenIds
-    },
 
     removeSelectedDirectory(dir) {
-      this.selectedDirectoryIds = this.selectedDirectoryIds.filter(id => id !== dir.id)
-      // 更新樹的勾選狀態
-      if (this.$refs.treeRef) {
-        this.$refs.treeRef.setCheckedKeys(this.selectedDirectoryIds)
+      const index = this.selectedDirectoryIds.indexOf(dir.id)
+      if (index > -1) {
+        this.selectedDirectoryIds.splice(index, 1)
+        // 更新两边树的勾选状态
+        if (this.$refs.treeRef) {
+          this.$refs.treeRef.setCheckedKeys(this.selectedDirectoryIds)
+        }
+        if (this.$refs.customTreeRef) {
+          this.$refs.customTreeRef.setCheckedKeys(this.selectedDirectoryIds)
+        }
       }
     },
 
     handleClose() {
-      if (this.$refs.treeRef) {
-        this.$refs.treeRef.setCheckedKeys([])
-      }
+      if (this.$refs.treeRef) this.$refs.treeRef.setCheckedKeys([])
+      if (this.$refs.customTreeRef) this.$refs.customTreeRef.setCheckedKeys([])
       this.selectedDirectoryIds = []
       this.$emit('update:visible', false)
     },
@@ -378,6 +481,30 @@ export default {
   box-shadow: none;
 }
 
+.panel-tabs {
+  border-bottom: 1px solid #e4e7ed;
+}
+
+:deep(.custom-tabs .el-tabs__header) {
+  margin: 0;
+}
+
+:deep(.custom-tabs .el-tabs__nav-wrap::after) {
+  height: 0;
+}
+
+:deep(.custom-tabs .el-tabs__item) {
+  height: 40px;
+  line-height: 40px;
+  font-size: 14px;
+}
+
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* 右侧面板 */
 .right-panel {
   flex: 1;
@@ -417,6 +544,7 @@ export default {
   border-radius: 4px;
   padding: 12px;
   background: #ffffff;
+  margin-top: 12px;
 }
 
 .tree-container:hover {

@@ -295,23 +295,28 @@ export default {
       if (this.localFormData.ccs) {
         this.localFormData.ccs.forEach(cc => {
           try {
-            const ids = JSON.parse(cc.ccIds)
-            const names = JSON.parse(cc.ccNames)
+            const ccDataArr = JSON.parse(cc.ccData)
             
-            ids.forEach((id, index) => {
-              const item = { id: id, name: names[index] || '' }
-              switch(cc.ccType) {
-                case '1':
-                  if (!this.selectedCcStaff.some(s => s.id === id)) {
-                    this.selectedCcStaff.push(item)
-                  }
-                  break
-                case '2':
-                  if (!this.selectedCcDirectory.some(d => d.id === id)) {
-                    this.selectedCcDirectory.push(item)
-                  }
-                  break
-              }
+            ccDataArr.forEach(group => {
+              const ids = group.cc_ids || []
+              const names = group.cc_names || []
+              const type = group.type || 1
+              
+              ids.forEach((id, index) => {
+                const item = { id: id, name: names[index] || '', type: type }
+                switch(cc.ccType) {
+                  case '1':
+                    if (!this.selectedCcStaff.some(s => s.id === id)) {
+                      this.selectedCcStaff.push(item)
+                    }
+                    break
+                  case '2':
+                    if (!this.selectedCcDirectory.some(d => d.id === id)) {
+                      this.selectedCcDirectory.push(item)
+                    }
+                    break
+                }
+              })
             })
           } catch (e) {
             console.error('解析抄送對象數據失敗:', e)
@@ -426,20 +431,62 @@ export default {
       
       const ccs = []
       
+      // 处理 WeCom 老师通讯录 (type=1) 和自定义老师通讯录 (type=2)
       if (this.selectedCcStaff.length > 0) {
-        ccs.push({
-          ccType: '1',
-          ccIds: JSON.stringify(this.selectedCcStaff.map(s => s.id)),
-          ccNames: JSON.stringify(this.selectedCcStaff.map(s => s.name))
-        })
+        const type1Staff = this.selectedCcStaff.filter(s => s.type === 1 || !s.type)
+        const type2Staff = this.selectedCcStaff.filter(s => s.type === 2)
+        
+        const staffPayload = []
+        if (type1Staff.length > 0) {
+          staffPayload.push({
+            cc_ids: type1Staff.map(s => s.id),
+            type: 1,
+            cc_names: type1Staff.map(s => s.name)
+          })
+        }
+        if (type2Staff.length > 0) {
+          staffPayload.push({
+            cc_ids: type2Staff.map(s => s.id),
+            type: 2,
+            cc_names: type2Staff.map(s => s.name)
+          })
+        }
+        
+        if (staffPayload.length > 0) {
+          ccs.push({
+            ccType: '1',
+            ccData: JSON.stringify(staffPayload)
+          })
+        }
       }
       
+      // 处理 WeCom 学校通讯录 (type=1) 和自定义学校通讯录 (type=2)
       if (this.selectedCcDirectory.length > 0) {
-        ccs.push({
-          ccType: '2',
-          ccIds: JSON.stringify(this.selectedCcDirectory.map(d => d.id)),
-          ccNames: JSON.stringify(this.selectedCcDirectory.map(d => d.name))
-        })
+        const type1Dirs = this.selectedCcDirectory.filter(d => d.type === 1 || !d.type)
+        const type2Dirs = this.selectedCcDirectory.filter(d => d.type === 2)
+        
+        const dirPayload = []
+        if (type1Dirs.length > 0) {
+          dirPayload.push({
+            cc_ids: type1Dirs.map(d => d.id),
+            type: 1,
+            cc_names: type1Dirs.map(d => d.name)
+          })
+        }
+        if (type2Dirs.length > 0) {
+          dirPayload.push({
+            cc_ids: type2Dirs.map(d => d.id),
+            type: 2,
+            cc_names: type2Dirs.map(d => d.name)
+          })
+        }
+        
+        if (dirPayload.length > 0) {
+          ccs.push({
+            ccType: '2',
+            ccData: JSON.stringify(dirPayload)
+          })
+        }
       }
       
       this.localFormData.receivers = receivers

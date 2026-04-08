@@ -28,13 +28,9 @@ public class NotificationCc implements Serializable {
     @TableField("cc_type")
     private String ccType;
 
-    /** 抄送对象ID列表(JSON格式) */
-    @TableField("cc_ids")
-    private String ccIds;
-
-    /** 抄送对象名称列表(JSON格式) */
-    @TableField("cc_names")
-    private String ccNames;
+    /** 抄送数据(JSON格式)，格式：[{"cc_ids": [1,2], "type": 1, "cc_names": ["聖保祿學校-054"]}]，其中 type 1代表wecom的，type 2代表自定义的 */
+    @TableField("cc_data")
+    private String ccData;
 
     /** 创建时间 */
     @TableField("create_time")
@@ -65,20 +61,12 @@ public class NotificationCc implements Serializable {
         this.ccType = ccType;
     }
 
-    public String getCcIds() {
-        return ccIds;
+    public String getCcData() {
+        return ccData;
     }
 
-    public void setCcIds(String ccIds) {
-        this.ccIds = ccIds;
-    }
-
-    public String getCcNames() {
-        return ccNames;
-    }
-
-    public void setCcNames(String ccNames) {
-        this.ccNames = ccNames;
+    public void setCcData(String ccData) {
+        this.ccData = ccData;
     }
 
     public Date getCreateTime() {
