@@ -117,17 +117,26 @@
           <el-icon :size="16"><User /></el-icon>
         </div>
         <h3 class="section-label">接收對象</h3>
-        <span class="section-count">{{ notification.receivers.length }}</span>
       </div>
-      <div class="chip-list">
-        <div
-          v-for="receiver in notification.receivers"
-          :key="receiver.receiverId"
-          class="chip receiver-chip"
-        >
-          <el-icon :size="14"><User /></el-icon>
-          <span>{{ getReceiveTypeText(receiver.receiveType) }}: {{ getReceiverDisplayText(receiver) }}</span>
-        </div>
+      <div class="receiver-groups">
+        <template v-for="receiver in notification.receivers" :key="receiver.receiverId">
+          <div class="receiver-group-card">
+            <div class="group-header">
+              <el-icon :size="16"><User /></el-icon>
+              <span class="group-title">{{ getReceiveTypeText(receiver.receiveType) }}</span>
+            </div>
+            <div class="group-content">
+              <div
+                v-for="(groupData, index) in getReceiverGroupedData(receiver)"
+                :key="index"
+                class="source-chip"
+              >
+                <span class="source-label">{{ groupData.source }}</span>
+                <span class="source-names">{{ groupData.names.join(', ') }}</span>
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -138,17 +147,26 @@
           <el-icon :size="16"><Message /></el-icon>
         </div>
         <h3 class="section-label">抄送對象</h3>
-        <span class="section-count">{{ notification.ccs.length }}</span>
       </div>
-      <div class="chip-list">
-        <div
-          v-for="cc in notification.ccs"
-          :key="cc.ccId"
-          class="chip cc-chip"
-        >
-          <el-icon :size="14"><Message /></el-icon>
-          <span>{{ getCcTypeText(cc.ccType) }}: {{ getCcDisplayText(cc) }}</span>
-        </div>
+      <div class="cc-groups">
+        <template v-for="cc in [...notification.ccs].sort((a, b) => b.ccType - a.ccType)" :key="cc.ccId">
+          <div class="cc-group-card">
+            <div class="group-header">
+              <el-icon :size="16"><Message /></el-icon>
+              <span class="group-title">{{ getCcTypeText(cc.ccType) }}</span>
+            </div>
+            <div class="group-content">
+              <div
+                v-for="(ccData, index) in getCcGroupedData(cc)"
+                :key="index"
+                class="source-chip"
+              >
+                <span class="source-label">{{ ccData.source }}</span>
+                <span class="source-names">{{ ccData.names.join(', ') }}</span>
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -219,40 +237,64 @@ export default {
       return index + 1
     },
 
-    getReceiverDisplayText(receiver) {
-      if (receiver.receiveData) {
-        try {
-          const dataArr = JSON.parse(receiver.receiveData);
-          let allNames = [];
-          dataArr.forEach(group => {
-            if (group.receive_names && Array.isArray(group.receive_names)) {
-              allNames.push(...group.receive_names);
-            }
-          });
-          return allNames.join(', ');
-        } catch (e) {
-          return '解析錯誤';
-        }
+    getReceiverGroupedData(receiver) {
+      if (!receiver.receiveData) {
+        return [];
       }
-      return '';
+      
+      try {
+        const dataArr = JSON.parse(receiver.receiveData);
+        const grouped = {};
+        
+        dataArr.forEach(group => {
+          if (group.receive_names && Array.isArray(group.receive_names) && group.type) {
+            const type = group.type;
+            const sourceText = type === 1 ? 'WeCom家校通訊錄：' : '自定義家校通訊錄：';
+            
+            if (!grouped[type]) {
+              grouped[type] = {
+                source: sourceText,
+                names: []
+              };
+            }
+            grouped[type].names.push(...group.receive_names);
+          }
+        });
+        
+        return Object.values(grouped);
+      } catch (e) {
+        return [{ source: '解析錯誤', names: [] }];
+      }
     },
 
-    getCcDisplayText(cc) {
-      if (cc.ccData) {
-        try {
-          const dataArr = JSON.parse(cc.ccData);
-          let allNames = [];
-          dataArr.forEach(group => {
-            if (group.cc_names && Array.isArray(group.cc_names)) {
-              allNames.push(...group.cc_names);
-            }
-          });
-          return allNames.join(', ');
-        } catch (e) {
-          return '解析錯誤';
-        }
+    getCcGroupedData(cc) {
+      if (!cc.ccData) {
+        return [];
       }
-      return '';
+      
+      try {
+        const dataArr = JSON.parse(cc.ccData);
+        const grouped = {};
+        
+        dataArr.forEach(group => {
+          if (group.cc_names && Array.isArray(group.cc_names) && group.type) {
+            const type = group.type;
+            const sourceText = type === 1 ? 'WeCom老師通訊錄：' : '自定義老師通訊錄：';
+            
+            if (!grouped[type]) {
+              grouped[type] = {
+                source: sourceText,
+                names: []
+              };
+            }
+            grouped[type].names.push(...group.cc_names);
+          }
+        });
+        
+        return Object.values(grouped);
+      } catch (e) {
+        return [{ source: '解析錯誤', names: [] }];
+      }
     }
   }
 }
@@ -581,7 +623,99 @@ export default {
 
 .cc-chip:hover {
   background: #dbeafe;
-  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.1);
+}
+
+/* ===== 接收对象分组卡片 ===== */
+.receiver-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.receiver-group-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.receiver-group-card:hover {
+  border-color: #93c5fd;
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e40af;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.group-header .el-icon {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.group-content {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.source-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+}
+
+.source-chip:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.source-label {
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.source-names {
+  color: #334155;
+  font-weight: 500;
+  flex: 1;
+}
+
+/* ===== 抄送对象分组卡片 ===== */
+.cc-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cc-group-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.cc-group-card:hover {
+  border-color: #93c5fd;
 }
 
 /* ===== 问题卡片网格 ===== */
