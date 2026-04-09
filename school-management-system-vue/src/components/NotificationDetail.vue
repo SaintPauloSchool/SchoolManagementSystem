@@ -105,9 +105,6 @@
           <div class="question-index">{{ getQuestionIndex(question) }}</div>
           <div class="question-info">
             <span class="question-title">{{ question.questionTitle }}</span>
-            <el-tag size="small" effect="plain" round class="question-type-tag">
-              {{ getQuestionTypeText(question.questionType) }}
-            </el-tag>
           </div>
         </div>
       </div>
@@ -150,7 +147,7 @@
           class="chip cc-chip"
         >
           <el-icon :size="14"><Message /></el-icon>
-          <span>{{ getCcTypeText(cc.ccType) }}: {{ cc.ccNames }}</span>
+          <span>{{ getCcTypeText(cc.ccType) }}: {{ getCcDisplayText(cc) }}</span>
         </div>
       </div>
     </div>
@@ -199,15 +196,7 @@ export default {
       return statusMap[status] || '未知'
     },
 
-    getQuestionTypeText(type) {
-      const typeMap = {
-        '1': '單選',
-        '2': '多選',
-        '3': '填空',
-        '4': '附件上傳'
-      }
-      return typeMap[type] || '未知'
-    },
+
 
     getReceiveTypeText(type) {
       const typeMap = {
@@ -238,6 +227,24 @@ export default {
           dataArr.forEach(group => {
             if (group.receive_names && Array.isArray(group.receive_names)) {
               allNames.push(...group.receive_names);
+            }
+          });
+          return allNames.join(', ');
+        } catch (e) {
+          return '解析錯誤';
+        }
+      }
+      return '';
+    },
+
+    getCcDisplayText(cc) {
+      if (cc.ccData) {
+        try {
+          const dataArr = JSON.parse(cc.ccData);
+          let allNames = [];
+          dataArr.forEach(group => {
+            if (group.cc_names && Array.isArray(group.cc_names)) {
+              allNames.push(...group.cc_names);
             }
           });
           return allNames.join(', ');
@@ -523,21 +530,21 @@ export default {
 /* ===== 芯片/标签列表 ===== */
 .chip-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .chip {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 20px;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 500;
   cursor: default;
   transition: all 0.2s ease;
-  line-height: 1.3;
+  line-height: 1.4;
 }
 
 .chip:hover {
@@ -633,13 +640,7 @@ export default {
   text-overflow: ellipsis;
 }
 
-.question-type-tag {
-  flex-shrink: 0;
-  font-size: 12px;
-  border-color: #bfdbfe !important;
-  color: #2563eb !important;
-  background: #eff6ff !important;
-}
+
 
 /* ===== 动画 ===== */
 .section-card {
