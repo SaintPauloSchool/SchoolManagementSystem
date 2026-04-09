@@ -12,14 +12,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="createTime"    column="create_time"    />
     </resultMap>
     
-    <!-- 根据通知 ID 查询抄送对象列表 -->
+    <!-- 根據通知 ID 查詢抄送對象列表 -->
     <select id="selectByNotificationId" parameterType="Long" resultMap="NotificationCcResult">
         select cc_id, notification_id, cc_type, cc_data, create_time 
         from notification_cc 
         where notification_id = #{notificationId}
     </select>
     
-    <!-- 新增抄送对象 -->
+    <!-- 新增抄送對象 -->
     <insert id="insert" parameterType="NotificationCc" useGeneratedKeys="true" keyProperty="ccId">
         insert into notification_cc
         <trim prefix="(" suffix=")" suffixOverrides=",">

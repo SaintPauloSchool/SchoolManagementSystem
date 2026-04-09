@@ -1509,7 +1509,7 @@ export default {
       return content
     },
 
-    // 恢复所有填空题内容到编辑器
+    // 恢復所有填空題內容到編輯器
     restoreAllFillBlankContents() {
       this.questionList.forEach((question) => {
         if (question.type !== '3' || !question.content) {
@@ -1978,10 +1978,10 @@ export default {
         }
       }
     
-      // 先关闭对话框，再发送保存事件，避免数据丢失
+      // 先關閉對話框，再發送保存事件，避免數據丟失
       this.$emit('update:visible', false)
       
-      // 使用 nextTick 确保对话框关闭后再发送数据
+      // 使用 nextTick 確保對話框關閉後再發送數據
       this.$nextTick(() => {
         this.$emit('save', {
           questionnaire: this.questionnaireData,

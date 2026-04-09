@@ -16,7 +16,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
-    <!-- 批量查询家长学生关系 -->
+    <!-- 批量查詢家長學生關係 -->
     <select id="selectByParentUserIds" resultMap="SysParentStudentRelationResult">
         SELECT id, parent_user_id, student_user_id, student_name, relation_desc, mobile, external_userid, create_time, update_time
         FROM sys_parent_student_relation

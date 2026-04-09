@@ -12,14 +12,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="createTime"    column="create_time"    />
     </resultMap>
     
-    <!-- 根据通知 ID 查询接收对象列表 -->
+    <!-- 根據通知 ID 查詢接收對象列表 -->
     <select id="selectByNotificationId" parameterType="Long" resultMap="NotificationReceiverResult">
         select receiver_id, notification_id, receive_type, receive_data, create_time 
         from notification_receiver 
         where notification_id = #{notificationId}
     </select>
     
-    <!-- 新增接收对象 -->
+    <!-- 新增接收對象 -->
     <insert id="insert" parameterType="NotificationReceiver" useGeneratedKeys="true" keyProperty="receiverId">
         insert into notification_receiver
         <trim prefix="(" suffix=")" suffixOverrides=",">

@@ -287,7 +287,7 @@ export default {
   
     findRelationInTree(id, tree) {
       for (const node of tree) {
-        // isLeaf=true 的节点是家长学生关系节点
+        // isLeaf=true 的節點是家長學生關係節點
         if (node.isLeaf && node.id === id) {
           return node
         }

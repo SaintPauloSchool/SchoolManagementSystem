@@ -22,7 +22,7 @@ public class DepartmentController extends BaseController {
     private ISysDepartmentService departmentService;
 
     /**
-     * 获取班级树形结构
+     * 獲取班級樹形結構
      */
     @Anonymous
     @GetMapping("/tree")
@@ -32,7 +32,7 @@ public class DepartmentController extends BaseController {
     }
 
     /**
-     * 获取班级树形结构（带家长学生关系，用于学生/家长选择器）
+     * 獲取班級樹形結構（帶家長學生關係，用於學生/家長選擇器）
      */
     @Anonymous
     @GetMapping("/treeWithParents")

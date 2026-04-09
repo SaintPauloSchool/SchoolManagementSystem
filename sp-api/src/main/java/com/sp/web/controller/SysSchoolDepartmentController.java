@@ -27,7 +27,7 @@ public class SysSchoolDepartmentController extends BaseController {
     private ISysSchoolDepartmentMemberService sysSchoolDepartmentMemberService;
 
     /**
-     * 获取学校部门树形结构
+     * 獲取學校部門樹形結構
      */
     @Anonymous
     @GetMapping("/tree")
@@ -37,7 +37,7 @@ public class SysSchoolDepartmentController extends BaseController {
     }
 
     /**
-     * 获取学校部门树形结构（包含人员节点）
+     * 獲取學校部門樹形結構（包含人員節點）
      */
     @Anonymous
     @GetMapping("/treeWithMembers")
@@ -47,7 +47,7 @@ public class SysSchoolDepartmentController extends BaseController {
     }
 
     /**
-     * 批量查询多个部门的成员列表
+     * 批量查詢多個部門的成員列表
      */
     @Anonymous
     @PostMapping("/members")
@@ -57,7 +57,7 @@ public class SysSchoolDepartmentController extends BaseController {
     }
 
     /**
-     * 根据 ID 删除部门成员
+     * 根據 ID 刪除部門成員
      */
     @Anonymous
     @DeleteMapping("/member/{id}")
@@ -71,7 +71,7 @@ public class SysSchoolDepartmentController extends BaseController {
     }
 
     /**
-     * 根据 ID 删除部门
+     * 根據 ID 刪除部門
      */
     @Anonymous
     @DeleteMapping("/{id}")
@@ -85,7 +85,7 @@ public class SysSchoolDepartmentController extends BaseController {
     }
 
     /**
-     * 批量添加部门成员
+     * 批量添加部門成員
      */
     @Anonymous
     @PostMapping("/members/batch")
@@ -95,7 +95,7 @@ public class SysSchoolDepartmentController extends BaseController {
             return AjaxResult.error("成員列表不能為空");
         }
         
-        // 为每个成员设置 type
+        // 為每個成員設置 type
         for (SysSchoolDepartmentMember member : members) {
             if (member.getType() == null) {
                 member.setType(type);
@@ -111,13 +111,13 @@ public class SysSchoolDepartmentController extends BaseController {
     }
 
     /**
-     * 新增部门
+     * 新增部門
      */
     @Anonymous
     @PostMapping
     public AjaxResult addDepartment(@RequestBody SysSchoolDepartment department,
                                     @RequestParam(required = false, defaultValue = "1") Integer type) {
-        // 设置默认 type
+        // 設置默認 type
         if (department.getType() == null) {
             department.setType(type);
         }
@@ -130,7 +130,7 @@ public class SysSchoolDepartmentController extends BaseController {
     }
 
     /**
-     * 修改部门
+     * 修改部門
      */
     @Anonymous
     @PutMapping

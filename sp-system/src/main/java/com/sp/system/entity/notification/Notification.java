@@ -67,6 +67,18 @@ public class Notification extends BaseEntity {
     @TableField(exist = false)
     private List<NotificationQuestion> questions;
 
+    /** 发布时间筛选（非数据库字段） */
+    @TableField(exist = false)
+    private String publishDate;
+
+    /** 用户ID（非数据库字段，用于抄送列表） */
+    @TableField(exist = false)
+    private Long userId;
+
+    /** 用户类型（非数据库字段，用于抄送列表） */
+    @TableField(exist = false)
+    private String userType;
+
     // Getters and Setters
     public Long getNotificationId() {
         return notificationId;
@@ -162,5 +174,29 @@ public class Notification extends BaseEntity {
     
     public void setQuestions(List<NotificationQuestion> questions) {
         this.questions = questions;
+    }
+
+    public String getPublishDate() {
+        return publishDate;
+    }
+
+    public void setPublishDate(String publishDate) {
+        this.publishDate = publishDate;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getUserType() {
+        return userType;
+    }
+
+    public void setUserType(String userType) {
+        this.userType = userType;
     }
 }

@@ -71,11 +71,11 @@
           </ul>
         </div>
         
-        <!-- 占位大类 1 -->
+        <!-- 占位大類 1 -->
         <div class="nav-section">
           <div class="nav-section-title" @click="toggleSection('system')">
             <el-icon><Setting /></el-icon>
-            <span v-show="!isCollapsed">系统管理</span>
+            <span v-show="!isCollapsed">系統管理</span>
             <el-icon v-show="!isCollapsed" class="expand-icon">
               <ArrowRight v-if="!expandedSections.system" />
               <ArrowDown v-else />
@@ -89,11 +89,11 @@
           </ul>
         </div>
         
-        <!-- 占位大类 2 -->
+        <!-- 占位大類 2 -->
         <div class="nav-section">
           <div class="nav-section-title" @click="toggleSection('report')">
             <el-icon><Document /></el-icon>
-            <span v-show="!isCollapsed">数据报表</span>
+            <span v-show="!isCollapsed">數據報表</span>
             <el-icon v-show="!isCollapsed" class="expand-icon">
               <ArrowRight v-if="!expandedSections.report" />
               <ArrowDown v-else />
@@ -300,7 +300,8 @@ export default {
           method: 'get',
           params: {
             pageNum: params.pageNum || this.mySendPagination.currentPage,
-            pageSize: params.pageSize || this.mySendPagination.pageSize
+            pageSize: params.pageSize || this.mySendPagination.pageSize,
+            publishDate: params.publishDate || ''
           }
         })
         
@@ -320,10 +321,10 @@ export default {
       this.loadCcToMeNotifications({ pageNum, pageSize })
     },
 
-    handleMySendPageChange({ pageNum, pageSize }) {
+    handleMySendPageChange({ pageNum, pageSize, publishDate }) {
       this.mySendPagination.currentPage = pageNum
       this.mySendPagination.pageSize = pageSize
-      this.loadMySendNotifications({ pageNum, pageSize })
+      this.loadMySendNotifications({ pageNum, pageSize, publishDate })
     },
 
     handlePublishSuccess() {

@@ -263,7 +263,7 @@ export default {
   align-items: flex-start;
   gap: 16px;
   padding: 24px 28px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
   border-radius: 14px;
   margin-bottom: 20px;
   position: relative;
@@ -368,8 +368,8 @@ export default {
 }
 
 .info-card:hover {
-  border-color: #c7d2fe;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.1);
+  border-color: #93c5fd;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
   transform: translateY(-1px);
 }
 
@@ -384,13 +384,13 @@ export default {
 }
 
 .link-icon {
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  color: #4f46e5;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #2563eb;
 }
 
 .deadline-icon {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  color: #d97706;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1d4ed8;
 }
 
 .info-card-body {
@@ -415,7 +415,7 @@ export default {
 }
 
 .deadline-value {
-  color: #d97706;
+  color: #1d4ed8;
 }
 
 .jump-link {
@@ -462,28 +462,28 @@ export default {
 }
 
 .content-icon {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  background: #dbeafe;
   color: #2563eb;
 }
 
 .attachment-icon {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-  color: #059669;
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .question-icon {
-  background: linear-gradient(135deg, #fce7f3, #fbcfe8);
-  color: #db2777;
+  background: #dbeafe;
+  color: #1e40af;
 }
 
 .receiver-icon {
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  color: #4f46e5;
+  background: #dbeafe;
+  color: #2563eb;
 }
 
 .cc-icon {
-  background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
-  color: #7c3aed;
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .section-label {
@@ -502,8 +502,8 @@ export default {
   height: 22px;
   padding: 0 7px;
   border-radius: 11px;
-  background: #f3f4f6;
-  color: #6b7280;
+  background: #dbeafe;
+  color: #2563eb;
   font-size: 12px;
   font-weight: 600;
 }
@@ -545,36 +545,36 @@ export default {
 }
 
 .attachment-chip {
-  background: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
 }
 
 .attachment-chip:hover {
-  background: #d1fae5;
-  box-shadow: 0 3px 10px rgba(5, 150, 105, 0.12);
+  background: #dbeafe;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.1);
 }
 
 .receiver-chip {
-  background: #eef2ff;
-  color: #3730a3;
-  border: 1px solid #c7d2fe;
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
 }
 
 .receiver-chip:hover {
-  background: #e0e7ff;
-  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.12);
+  background: #dbeafe;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.1);
 }
 
 .cc-chip {
-  background: #f5f3ff;
-  color: #5b21b6;
-  border: 1px solid #ddd6fe;
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
 }
 
 .cc-chip:hover {
-  background: #ede9fe;
-  box-shadow: 0 3px 10px rgba(124, 58, 237, 0.12);
+  background: #dbeafe;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.1);
 }
 
 /* ===== 问题卡片网格 ===== */
@@ -605,7 +605,7 @@ export default {
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #2563eb, #1e40af);
   color: #fff;
   display: flex;
   align-items: center;
@@ -636,9 +636,9 @@ export default {
 .question-type-tag {
   flex-shrink: 0;
   font-size: 12px;
-  border-color: #e0e7ff !important;
-  color: #4f46e5 !important;
-  background: #eef2ff !important;
+  border-color: #bfdbfe !important;
+  color: #2563eb !important;
+  background: #eff6ff !important;
 }
 
 /* ===== 动画 ===== */

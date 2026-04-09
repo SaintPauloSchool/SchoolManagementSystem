@@ -16,7 +16,7 @@
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
-    <!-- 查询所有部门 -->
+    <!-- 查詢所有部門 -->
     <select id="selectAll" resultMap="SysSchoolDepartmentResult">
         SELECT id, parent_id, name, name_en, order_num, 
                department_leader, type, create_time, update_time
@@ -29,13 +29,13 @@
         ORDER BY order_num ASC
     </select>
 
-    <!-- 根据 ID 删除学校部门 -->
+    <!-- 根據 ID 刪除學校部門 -->
     <delete id="deleteById" parameterType="Long">
         DELETE FROM sys_school_department
         WHERE id = #{id}
     </delete>
 
-    <!-- 根据 ID 批量删除学校部门 -->
+    <!-- 根據 ID 批量刪除學校部門 -->
     <delete id="deleteByIds">
         DELETE FROM sys_school_department
         WHERE id IN
@@ -67,7 +67,7 @@
         )
     </insert>
 
-    <!-- 修改部门信息 -->
+    <!-- 修改部門信息 -->
     <update id="updateDepartment" parameterType="com.sp.system.entity.SysSchoolDepartment">
         UPDATE sys_school_department
         <set>
@@ -82,7 +82,7 @@
         WHERE id = #{id}
     </update>
 
-    <!-- 根据 ID 查询部门 -->
+    <!-- 根據 ID 查詢部門 -->
     <select id="selectById" parameterType="Long" resultMap="SysSchoolDepartmentResult">
         SELECT id, parent_id, name, name_en, order_num, 
                department_leader, type, create_time, update_time

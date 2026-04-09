@@ -179,7 +179,7 @@ export default {
     }
   },
   created() {
-    // 初始化上传头
+    // 初始化上傳頭
     this.uploadHeaders = {
       'Authorization': 'Bearer ' + localStorage.getItem('token')
     }
@@ -187,8 +187,8 @@ export default {
   watch: {
     formData: {
       handler(newVal) {
-        // 只在对话框关闭且数据真正变化时才同步
-        // 避免在保存问题时覆盖正在编辑的数据
+        // 只在對話框關閉且數據真正變化時才同步
+        // 避免在保存問題時覆蓋正在編輯的數據
         if (!this.showFormQuestionDialog && 
             JSON.stringify(newVal.questions || []) !== JSON.stringify(this.localFormData.questions || [])) {
           this.localFormData = { ...newVal }
@@ -209,15 +209,15 @@ export default {
             ? JSON.parse(this.localFormData.attachmentUrls)
             : this.localFormData.attachmentUrls
             
-          // 只在 fileList 为空或有变化时才初始化，保留已有的文件名
+          // 只在 fileList 為空或有變化時才初始化，保留已有的文件名
           if (!this.fileList || this.fileList.length === 0) {
-            // 如果是空的，创建新的 fileList，使用默认名称
+            // 如果是空的，創建新的 fileList，使用默認名稱
             this.fileList = urls.map((url, index) => ({
               name: `附件${index + 1}`,
               url: url
             }))
           } else {
-            // 如果 fileList 已有数据，只更新 URL，不改变文件名
+            // 如果 fileList 已有數據，只更新 URL，不改變文件名
             const newFileList = []
             urls.forEach((url, index) => {
               // 查找是否有相同 URL 的文件
@@ -229,13 +229,13 @@ export default {
                   url: url
                 })
               } else if (index < this.fileList.length) {
-                // 如果没有找到匹配的 URL，但索引存在，保留原文件名
+                // 如果沒有找到匹配的 URL，但索引存在，保留原文件名
                 newFileList.push({
                   ...this.fileList[index],
                   url: url
                 })
               } else {
-                // 如果是新增的 URL，使用默认名称
+                // 如果是新增的 URL，使用默認名稱
                 newFileList.push({
                   name: `附件${index + 1}`,
                   url: url
@@ -245,7 +245,7 @@ export default {
             this.fileList = newFileList
           }
         } catch (e) {
-          console.error('初始化文件列表失败:', e)
+          console.error('初始化文件列表失敗:', e)
           this.fileList = []
         }
       } else {
@@ -305,7 +305,7 @@ export default {
     },
 
     handleUploadError(error, file) {
-      console.error('上传失败:', error)
+      console.error('上傳失敗:', error)
       ElMessage.error('上傳失敗，請重試')
       const index = this.fileList.findIndex(f => f.uid === file.uid)
       if (index > -1) {
@@ -316,7 +316,7 @@ export default {
     handleChange(file, fileList) {
       // 保留原始文件名，不要用 Element Plus 的默认名称
       this.fileList = fileList.filter(f => f.status !== 'removed').map(f => {
-        // 如果是新添加的文件且名字是默认的，使用原始文件名
+        // 如果是新添加的文件且名字是默認的，使用原始文件名
         if (!f.name || f.name === file.name && f.raw && f.raw.name) {
           f.name = f.raw.name
         }
@@ -343,7 +343,7 @@ export default {
     
     editFormQuestion(index) {
       const questionData = this.localFormData.questions[index]
-      // 传递完整的 questionnaireData 和 questions 数据
+      // 傳遞完整的 questionnaireData 和 questions 數據
       this.editingFormQuestion = {
         ...questionData,
         questionnaireData: questionData.questionnaireData || { title: questionData.title || '問卷調查', description: questionData.description || '' },

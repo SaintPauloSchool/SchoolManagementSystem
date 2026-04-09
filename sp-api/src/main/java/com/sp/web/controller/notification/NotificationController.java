@@ -58,13 +58,17 @@ public class NotificationController extends BaseController {
      */
     //@PreAuthorize("@ss.hasPermi('system:notification:ccToList')")
     @GetMapping("/ccToMe")
-    public TableDataInfo ccToMe() {
+    public TableDataInfo ccToMe(Notification notification) {
         // 獲取當前登錄用戶信息
         Long userId = 1L;
         String userType = getUserType();
         
+        // 設置 userId 和 userType 到通知對象中
+        notification.setUserId(userId);
+        notification.setUserType(userType);
+        
         startPage();
-        List<Notification> list = notificationService.selectCcToMeList(userId, userType);
+        List<Notification> list = notificationService.selectCcToMeList(notification);
         return getDataTable(list);
     }
 
@@ -73,10 +77,14 @@ public class NotificationController extends BaseController {
      */
     //@PreAuthorize("@ss.hasPermi('system:notification:mySend')")
     @GetMapping("/mySend")
-    public TableDataInfo mySend() {
+    public TableDataInfo mySend(Notification notification) {
         Long senderId = 1L;
+        
+        // 設置 senderId 到通知對象中
+        notification.setSenderId(senderId);
+        
         startPage();
-        List<Notification> list = notificationService.selectMySendList(senderId);
+        List<Notification> list = notificationService.selectMySendList(notification);
         return getDataTable(list);
     }
 
@@ -110,7 +118,7 @@ public class NotificationController extends BaseController {
      * 發布通知
      */
     // @PreAuthorize("@ss.hasPermi('system:notification:add')")
-    @Log(title = "发布通知", businessType = BusinessType.INSERT)
+    @Log(title = "發布通知", businessType = BusinessType.INSERT)
     @PostMapping
     @Transactional(rollbackFor = Exception.class)
     public AjaxResult add(@RequestBody Notification notification) {
@@ -174,7 +182,7 @@ public class NotificationController extends BaseController {
      * 刪除通知
      */
     //@PreAuthorize("@ss.hasPermi('system:notification:remove')")
-    @Log(title = "删除通知", businessType = BusinessType.DELETE)
+    @Log(title = "刪除通知", businessType = BusinessType.DELETE)
     @DeleteMapping("/{notificationIds}")
     public AjaxResult remove(@PathVariable Long[] notificationIds) {
         int result = notificationService.deleteNotificationByIds(Arrays.asList(notificationIds));

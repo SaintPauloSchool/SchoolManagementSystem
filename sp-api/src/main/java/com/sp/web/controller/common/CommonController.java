@@ -46,7 +46,7 @@ public class CommonController
         }
         catch (Exception e)
         {
-            return AjaxResult.error("上传失败：" + e.getMessage());
+            return AjaxResult.error("上傳失敗：" + e.getMessage());
         }
     }
 }

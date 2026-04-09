@@ -87,24 +87,23 @@ public class NotificationServiceImpl implements INotificationService {
     /**
      * 根据用户 ID 查询抄送给我的通知列表
      *
-     * @param userId 用户 ID
-     * @param userType 用户类型
+     * @param notification 通知信息（包含 userId, userType, publishDate）
      * @return 通知集合
      */
     @Override
-    public List<Notification> selectCcToMeList(Long userId, String userType) {
-        return notificationMapper.selectCcToMeList(userId, userType);
+    public List<Notification> selectCcToMeList(Notification notification) {
+        return notificationMapper.selectCcToMeList(notification);
     }
 
     /**
      * 根据用户 ID 查询我发送的通知列表
      *
-     * @param senderId 发送人 ID
+     * @param notification 通知信息（包含 senderId, publishDate）
      * @return 通知集合
      */
     @Override
-    public List<Notification> selectMySendList(Long senderId) {
-        return notificationMapper.selectMySendList(senderId);
+    public List<Notification> selectMySendList(Notification notification) {
+        return notificationMapper.selectMySendList(notification);
     }
     
     /**

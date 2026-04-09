@@ -60,19 +60,18 @@ public interface INotificationService {
     /**
      * 根据用户 ID 查询抄送给我的通知列表
      *
-     * @param userId 用户 ID
-     * @param userType 用户类型
+     * @param notification 通知信息（包含 userId, userType, publishDate）
      * @return 通知集合
      */
-    List<Notification> selectCcToMeList(Long userId, String userType);
+    List<Notification> selectCcToMeList(Notification notification);
 
     /**
      * 根据用户 ID 查询我发送的通知列表
      *
-     * @param senderId 发送人 ID
+     * @param notification 通知信息（包含 senderId, publishDate）
      * @return 通知集合
      */
-    List<Notification> selectMySendList(Long senderId);
+    List<Notification> selectMySendList(Notification notification);
     
     /**
      * 保存通知

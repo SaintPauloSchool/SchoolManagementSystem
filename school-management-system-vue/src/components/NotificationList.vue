@@ -1,31 +1,24 @@
 <template>
   <div class="notification-list">
-    <!-- 搜索栏 -->
+    <!-- 搜索欄 -->
     <div class="search-bar">
       <el-input
         v-model="searchQuery"
-        placeholder="搜索通知标题或发送人..."
+        placeholder="搜索通知標題或發送人..."
         clearable
         prefix-icon="Search"
         class="search-input"
         @keyup.enter="handleSearch"
       />
-      <div class="filter-actions">
-        <el-select 
-          v-model="statusFilter" 
-          placeholder="状态筛选" 
-          clearable
-          class="status-select"
-        >
-          <el-option label="草稿" value="0" />
-          <el-option label="已发布" value="1" />
-          <el-option label="已撤回" value="2" />
-        </el-select>
-        <el-button type="primary" @click="handleSearch">
-          <el-icon><Search /></el-icon>
-          搜索
-        </el-button>
-      </div>
+      <el-date-picker
+        v-model="publishDate"
+        type="date"
+        placeholder="發布時間"
+        clearable
+        value-format="YYYY-MM-DD"
+        class="date-picker"
+        @change="handleSearch"
+      />
     </div>
 
     <!-- 列表头部 -->
@@ -34,7 +27,7 @@
         <el-icon class="header-icon"><List /></el-icon>
         <span class="header-title">{{ listTitle }}</span>
         <el-tag type="info" size="small" class="count-tag">
-          {{ pagination.total }} 条记录
+          {{ pagination.total }} 條記錄
         </el-tag>
       </div>
       <el-button plain @click="handleRefresh">
@@ -50,11 +43,11 @@
         style="width: 100%"
         v-loading="loading"
         stripe
-        empty-text="暂无数据"
+        empty-text="暫無數據"
         :row-style="{ height: '56px' }"
         :cell-style="{ padding: '14px 0' }"
       >
-        <el-table-column prop="title" label="通知标题" min-width="200" show-overflow-tooltip>
+        <el-table-column prop="title" label="通知標題" min-width="200" show-overflow-tooltip>
           <template #default="scope">
             <el-link 
               type="primary" 
@@ -66,8 +59,8 @@
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="senderName" label="发送人" width="120" align="center" />
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column prop="senderName" label="發送人" width="120" align="center" />
+        <el-table-column label="狀態" width="100" align="center">
           <template #default="scope">
             <el-tag 
               :type="getStatusTagType(scope.row.status)"
@@ -78,7 +71,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="replyDeadline" label="回复截止" width="160" align="center">
+        <el-table-column prop="replyDeadline" label="回覆截止" width="160" align="center">
           <template #default="scope">
             <span v-if="scope.row.replyDeadline" class="deadline-text">
               {{ scope.row.replyDeadline }}
@@ -86,8 +79,8 @@
             <span v-else class="no-deadline">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="发布时间" width="160" align="center" />
-        <el-table-column label="操作" width="240" fixed="right" align="center">
+        <el-table-column prop="createTime" label="發布時間" width="160" align="center" />
+        <el-table-column label="操作" width="120" fixed="right" align="center">
           <template #default="scope">
             <div class="action-buttons">
               <el-button 
@@ -97,26 +90,6 @@
               >
                 <el-icon><View /></el-icon>
                 查看
-              </el-button>
-              
-              <el-button 
-                v-if="type === 'mySend' && scope.row.status === '1'"
-                size="small" 
-                type="warning"
-                @click="withdrawNotification(scope.row)"
-              >
-                <el-icon><Close /></el-icon>
-                撤回
-              </el-button>
-              
-              <el-button 
-                v-if="type === 'mySend'"
-                size="small" 
-                type="danger"
-                @click="deleteNotification(scope.row)"
-              >
-                <el-icon><Delete /></el-icon>
-                删除
               </el-button>
             </div>
           </template>
@@ -141,12 +114,17 @@
     <!-- 详情对话框 -->
     <el-dialog
       v-model="detailDialogVisible"
-      title=""
+      title="通知詳情"
       width="65%"
       :before-close="handleDetailClose"
       class="notification-detail-dialog"
       top="6vh"
+      :modal="true"
+      :lock-scroll="true"
+      :close-on-click-modal="true"
+      :close-on-press-escape="true"
       :show-close="true"
+      :append-to-body="true"
     >
       <NotificationDetail 
         v-if="selectedNotification"
@@ -157,7 +135,7 @@
 </template>
 
 <script>
-import { Search, Refresh, View, Close, Delete, List } from '@element-plus/icons-vue'
+import { Search, Refresh, View, List } from '@element-plus/icons-vue'
 import NotificationDetail from './NotificationDetail.vue'
 import request from '@/utils/request'
 
@@ -189,7 +167,7 @@ export default {
     return {
       loading: false,
       searchQuery: '',
-      statusFilter: '',
+      publishDate: '',
       detailDialogVisible: false,
       selectedNotification: null
     }
@@ -198,7 +176,7 @@ export default {
     listTitle() {
       const titleMap = {
         'ccToMe': '抄送我的',
-        'mySend': '我发送的'
+        'mySend': '我發送的'
       }
       return titleMap[this.type] || '通知列表'
     },
@@ -206,18 +184,13 @@ export default {
       // 直接使用后端返回的分页数据，不做前端切片
       let result = [...this.notifications]
       
-      // 搜索过滤（仅在前端过滤当前页数据）
+      // 搜索過濾（僅在前端過濾當前頁數據）
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase()
         result = result.filter(n => 
           n.title.toLowerCase().includes(query) ||
           (n.senderName && n.senderName.toLowerCase().includes(query))
         )
-      }
-      
-      // 状态过滤
-      if (this.statusFilter) {
-        result = result.filter(n => n.status === this.statusFilter)
       }
       
       return result
@@ -236,7 +209,7 @@ export default {
     getStatusText(status) {
       const statusMap = {
         '0': '草稿',
-        '1': '已发布',
+        '1': '已發布',
         '2': '已撤回'
       }
       return statusMap[status] || '未知'
@@ -245,34 +218,37 @@ export default {
     handleSearch() {
       this.$emit('page-change', {
         pageNum: 1,
-        pageSize: this.pagination.pageSize
+        pageSize: this.pagination.pageSize,
+        publishDate: this.publishDate
       })
     },
 
     handleSizeChange(val) {
       this.$emit('page-change', {
         pageNum: 1,
-        pageSize: val
+        pageSize: val,
+        publishDate: this.publishDate
       })
     },
 
     handleCurrentChange(val) {
       this.$emit('page-change', {
         pageNum: val,
-        pageSize: this.pagination.pageSize
+        pageSize: this.pagination.pageSize,
+        publishDate: this.publishDate
       })
     },
 
     handleRefresh() {
       this.searchQuery = ''
-      this.statusFilter = ''
+      this.publishDate = ''
       this.$emit('refresh')
     },
 
     async viewNotification(notification) {
       try {
         this.loading = true
-        // 获取完整的通知详情（包含接收对象、抄送对象、问题等）
+        // 獲取完整的通知詳情（包含接收對象、抄送對象、問題等）
         const response = await request({
           url: `/system/notification/${notification.notificationId}`,
           method: 'get'
@@ -283,64 +259,8 @@ export default {
           this.detailDialogVisible = true
         }
       } catch (error) {
-        console.error('获取详情失败:', error)
-        this.$message.error('获取详情失败')
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async withdrawNotification(notification) {
-      try {
-        await this.$confirm('确认撤回此通知吗？撤回后接收者将无法查看。', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-        
-        this.loading = true
-        const response = await request({
-          url: `/system/notification/withdraw/${notification.notificationId}`,
-          method: 'put'
-        })
-        
-        if (response.code === 200 || response.code === 0) {
-          this.$message.success('撤回成功')
-          this.$emit('refresh')
-        }
-      } catch (error) {
-        if (error !== 'cancel') {
-          console.error('撤回失败:', error)
-          this.$message.error('撤回失败')
-        }
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async deleteNotification(notification) {
-      try {
-        await this.$confirm('确认删除吗？删除后将无法恢复！', '警告', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'error'
-        })
-        
-        this.loading = true
-        const response = await request({
-          url: `/system/notification/${notification.notificationId}`,
-          method: 'delete'
-        })
-        
-        if (response.code === 200 || response.code === 0) {
-          this.$message.success('删除成功')
-          this.$emit('refresh')
-        }
-      } catch (error) {
-        if (error !== 'cancel') {
-          console.error('删除失败:', error)
-          this.$message.error('删除失败')
-        }
+        console.error('獲取詳情失敗:', error)
+        this.$message.error('獲取詳情失敗')
       } finally {
         this.loading = false
       }
@@ -359,60 +279,168 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e8ecf1;
+  animation: cardAppear 0.4s ease both;
+}
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== 搜索栏 - 渐变英雄区 ===== */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 28px;
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  position: relative;
   overflow: hidden;
 }
 
-/* 搜索栏 */
-.search-bar {
-  display: flex;
-  gap: 16px;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #f9fafb;
-  transition: background-color 0.2s ease;
+.search-bar::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -8%;
+  width: 180px;
+  height: 180px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
-.search-bar:hover {
-  background-color: #f3f4f6;
+.search-bar::after {
+  content: '';
+  position: absolute;
+  bottom: -40%;
+  left: 15%;
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .search-input {
   flex: 1;
-  max-width: 400px;
+  max-width: 380px;
 }
 
 .search-input :deep(.el-input__wrapper) {
-  border-radius: 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(8px);
+  transition: all 0.25s ease;
 }
 
-.filter-actions {
-  display: flex;
-  gap: 12px;
+.search-input :deep(.el-input__wrapper:hover) {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
-.filter-actions .el-button {
-  border-radius: 8px;
+.search-input :deep(.el-input__wrapper.is-focus) {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
-.status-select {
-  width: 140px;
+.search-input :deep(.el-input__inner) {
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 400;
 }
 
-.status-select :deep(.el-input__wrapper) {
-  border-radius: 8px;
+.search-input :deep(.el-input__wrapper.is-focus .el-input__inner) {
+  color: #1f2937;
 }
 
-/* 列表头部 */
+.search-input :deep(.el-input__inner::placeholder) {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.search-input :deep(.el-input__wrapper.is-focus .el-input__inner::placeholder) {
+  color: #9ca3af;
+}
+
+.search-input :deep(.el-input__prefix .el-icon) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-input :deep(.el-input__wrapper.is-focus .el-input__prefix .el-icon) {
+  color: #6b7280;
+}
+
+.date-picker {
+  width: 180px;
+}
+
+.date-picker :deep(.el-input__wrapper) {
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(8px);
+  transition: all 0.25s ease;
+}
+
+.date-picker :deep(.el-input__wrapper:hover) {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.date-picker :deep(.el-input__wrapper.is-focus) {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.date-picker :deep(.el-input__inner) {
+  color: #ffffff;
+  font-size: 13.5px;
+}
+
+.date-picker :deep(.el-input__wrapper.is-focus .el-input__inner) {
+  color: #1f2937;
+}
+
+.date-picker :deep(.el-input__inner::placeholder) {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.date-picker :deep(.el-input__wrapper.is-focus .el-input__inner::placeholder) {
+  color: #9ca3af;
+}
+
+.date-picker :deep(.el-input__prefix .el-icon) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.date-picker :deep(.el-input__wrapper.is-focus .el-input__prefix .el-icon) {
+  color: #6b7280;
+}
+
+/* ===== 列表头部 ===== */
 .list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 14px 28px;
+  background: #fafbfc;
+  border-bottom: 1px solid #eef0f4;
 }
 
 .header-info {
@@ -422,53 +450,92 @@ export default {
 }
 
 .header-icon {
-  color: #3b82f6;
-  font-size: 20px;
+  color: #2563eb;
+  font-size: 18px;
 }
 
 .header-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: #111827;
+  color: #1f2937;
+  letter-spacing: 0.02em;
 }
 
 .count-tag {
-  margin-left: 8px;
-  border-radius: 6px;
+  margin-left: 4px;
+  border-radius: 10px;
   padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  border-color: #93c5fd !important;
 }
 
-/* 表格区域 */
+.list-header :deep(.el-button) {
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 16px;
+  border-color: #e0e3eb;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.list-header :deep(.el-button:hover) {
+  color: #2563eb;
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+/* ===== 表格区域 ===== */
 .table-container {
+  flex: 1;
   overflow: visible;
   padding: 0;
-  background-color: #ffffff;
+  background: #ffffff;
 }
 
-/* 增加表格行高和单元格内边距 */
 .table-container :deep(.el-table) {
   border: none;
+  --el-table-border-color: #f0f0f4;
+  font-size: 13.5px;
 }
 
 .table-container :deep(.el-table__row) {
-  height: 64px;
+  height: 56px;
+  transition: background-color 0.2s ease;
+}
+
+.table-container :deep(.el-table__row:hover > td) {
+  background-color: #eff6ff !important;
 }
 
 .table-container :deep(.el-table__row td) {
-  padding: 18px 0;
+  padding: 14px 0;
+  border-bottom: 1px solid #f5f5f8;
 }
 
 .table-container :deep(.el-table th) {
-  background-color: #f9fafb;
-  color: #374151;
+  background: #fafbfc !important;
+  color: #6b7280;
   font-weight: 600;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   text-align: center;
-  height: 52px;
-  padding: 16px 0;
+  height: 46px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef0f4;
+}
+
+.table-container :deep(.el-table th .cell) {
+  font-weight: 600;
 }
 
 .table-container :deep(.el-table td) {
   text-align: center;
+  color: #4b5563;
 }
 
 /* 标题列保持左对齐 */
@@ -476,25 +543,41 @@ export default {
   text-align: left;
 }
 
+/* stripe 行颜色优化 */
+.table-container :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
+  background: #fcfcfe;
+}
+
 .title-link {
   font-weight: 500;
-  color: #3b82f6;
-  transition: color 0.2s ease;
+  color: #2563eb;
+  transition: all 0.2s ease;
+  font-size: 13.5px;
 }
 
 .title-link:hover {
-  color: #2563eb;
+  color: #1d4ed8;
 }
 
 .deadline-text {
-  color: #f59e0b;
+  color: #d97706;
   font-weight: 500;
+  font-size: 13px;
 }
 
 .no-deadline {
-  color: #9ca3af;
+  color: #d1d5db;
 }
 
+/* 状态 tag 优化 */
+.table-container :deep(.el-tag) {
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 10px;
+}
+
+/* ===== 操作按钮 ===== */
 .action-buttons {
   display: flex;
   gap: 8px;
@@ -502,15 +585,18 @@ export default {
 }
 
 .action-buttons .el-button {
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 500;
+  font-size: 12.5px;
   padding: 6px 14px;
   border: none;
   box-shadow: none !important;
+  transition: all 0.2s ease;
 }
 
 .action-buttons .el-button:hover {
-  box-shadow: none !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25) !important;
+  transform: translateY(-1px);
 }
 
 .action-buttons .el-button:focus {
@@ -525,14 +611,43 @@ export default {
   --el-button-size: 28px;
 }
 
-/* 对话框样式 */
+/* ===== 对话框样式 ===== */
 .notification-detail-dialog :deep(.el-dialog) {
   border-radius: 16px;
   overflow: hidden;
 }
 
 .notification-detail-dialog :deep(.el-dialog__header) {
-  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
+  padding: 16px;
+  background: transparent;
+  border: none;
+  margin-right: 0;
+}
+
+.notification-detail-dialog :deep(.el-dialog__headerbtn) {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+  top: 0;
+  right: 0;
+}
+
+.notification-detail-dialog :deep(.el-dialog__headerbtn:hover) {
+  background: rgba(255, 255, 255, 0.45);
+  transform: scale(1.05);
+}
+
+.notification-detail-dialog :deep(.el-dialog__headerbtn .el-dialog__close) {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .notification-detail-dialog :deep(.el-dialog__body) {
@@ -554,49 +669,67 @@ export default {
   background: transparent;
 }
 
-/* 分页区域 */
+/* ===== 分页区域 ===== */
 .pagination-area {
-  padding: 16px 24px;
-  background-color: #f9fafb;
-  border-top: 1px solid #e5e7eb;
+  padding: 14px 28px;
+  background: #fafbfc;
+  border-top: 1px solid #eef0f4;
   display: flex;
   justify-content: flex-end;
 }
 
-/* 响应式设计 */
+.pagination-area :deep(.el-pagination) {
+  --el-pagination-button-bg-color: #ffffff;
+  --el-pagination-hover-color: #2563eb;
+}
+
+.pagination-area :deep(.el-pagination .btn-prev),
+.pagination-area :deep(.el-pagination .btn-next),
+.pagination-area :deep(.el-pager li) {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.pagination-area :deep(.el-pager li.is-active) {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
+  color: #ffffff;
+}
+
+/* ===== 响应式设计 ===== */
 @media (max-width: 1200px) {
   .search-bar {
     flex-wrap: wrap;
-    padding: 16px 20px;
+    padding: 18px 22px;
   }
-  
+
   .search-input {
     max-width: 100%;
+    flex: 1 1 60%;
   }
-  
-  .filter-actions {
-    width: 100%;
-    justify-content: space-between;
+
+  .date-picker {
+    flex: 0 1 auto;
   }
 }
 
 @media (max-width: 768px) {
   .search-bar {
-    padding: 12px 16px;
+    padding: 16px 18px;
+    gap: 10px;
   }
-  
+
   .list-header {
-    padding: 12px 16px;
+    padding: 12px 18px;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     align-items: flex-start;
   }
-  
+
   .pagination-area {
-    padding: 12px 16px;
+    padding: 12px 18px;
     justify-content: center;
   }
-  
+
   .action-buttons {
     flex-direction: column;
     gap: 4px;

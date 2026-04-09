@@ -17,7 +17,7 @@
         <result property="groupChatId" column="group_chat_id"/>
     </resultMap>
 
-    <!-- 查询所有部门 -->
+    <!-- 查詢所有部門 -->
     <select id="selectAll" resultMap="SysDepartmentResult">
         SELECT id, parent_id, name, type, register_year, standard_grade, order_num, 
                is_graduated, open_group_chat, group_chat_id

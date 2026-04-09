@@ -15,7 +15,7 @@
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
-    <!-- 批量查询多个部门的成员 -->
+    <!-- 批量查詢多個部門的成員 -->
     <select id="selectMembersByDepartmentIds" resultMap="SysSchoolDepartmentMemberResult">
         SELECT id, userid, name, department_id, open_userid, type, create_time, update_time
         FROM sys_school_department_member
@@ -26,19 +26,19 @@
         ORDER BY department_id ASC, name ASC
     </select>
 
-    <!-- 根据 ID 删除部门成员 -->
+    <!-- 根據 ID 刪除部門成員 -->
     <delete id="deleteMemberById" parameterType="Long">
         DELETE FROM sys_school_department_member
         WHERE id = #{id}
     </delete>
 
-    <!-- 根据部门 ID 删除成员 -->
+    <!-- 根據部門 ID 刪除成員 -->
     <delete id="deleteByDepartmentId" parameterType="Long">
         DELETE FROM sys_school_department_member
         WHERE department_id = #{departmentId}
     </delete>
 
-    <!-- 批量插入部门成员 -->
+    <!-- 批量插入部門成員 -->
     <insert id="batchInsertMembers">
         INSERT INTO sys_school_department_member (userid, name, department_id, open_userid, type, create_time, update_time)
         VALUES

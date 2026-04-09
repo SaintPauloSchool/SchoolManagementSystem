@@ -13,7 +13,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
-    <!-- 根据部门 ID 列表批量查询家长绑定列表 -->
+    <!-- 根據部門 ID 列表批量查詢家長綁定列表 -->
     <select id="selectByDepartmentIds" resultMap="SysDepartmentParentBindingResult">
         SELECT id, department_id, parent_user_id, student_user_id, create_time, update_time
         FROM sys_department_parent_binding

@@ -19,7 +19,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="createTime"    column="create_time"    />
     </resultMap>
     
-    <!-- 根据通知 ID 查询问题列表 -->
+    <!-- 根據通知 ID 查詢問題列表 -->
     <select id="selectByNotificationId" parameterType="Long" resultMap="NotificationQuestionResult">
         select question_id, notification_id, question_title, question_type, options, is_required, 
                content, sort_order, logic_rules, fill_blanks, correct_answers, create_time 
@@ -28,7 +28,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by sort_order asc
     </select>
     
-    <!-- 新增问题 -->
+    <!-- 新增問題 -->
     <insert id="insert" parameterType="NotificationQuestion" useGeneratedKeys="true" keyProperty="questionId">
         insert into notification_question
         <trim prefix="(" suffix=")" suffixOverrides=",">

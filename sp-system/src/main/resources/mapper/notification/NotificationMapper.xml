@@ -21,7 +21,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <collection property="questions" ofType="NotificationQuestion" select="com.sp.system.mapper.notification.NotificationQuestionMapper.selectByNotificationId" column="notification_id"/>
     </resultMap>
     
-    <!-- 查询通知列表 -->
+    <!-- 查詢通知列表 -->
     <select id="selectNotificationList" parameterType="Notification" resultMap="NotificationResult">
         select notification_id, title, content, sender_id, sender_name, jump_url, 
                attachment_urls, status, reply_deadline, create_time, update_time 
@@ -36,27 +36,40 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="senderId != null">
                 AND sender_id = #{senderId}
             </if>
+            <if test="publishDate != null and publishDate != ''">
+                AND DATE(create_time) = #{publishDate}
+            </if>
         </where>
         order by create_time desc
     </select>
     
-    <!-- 根据用户 ID 查询抄送给我的通知列表 -->
+    <!-- 根據用戶 ID 查詢抄送給我的通知列表 -->
     <select id="selectCcToMeList" resultMap="NotificationResult">
         select n.notification_id, n.title, n.content, n.sender_id, n.sender_name, n.jump_url, 
                n.attachment_urls, n.status, n.reply_deadline, n.create_time, n.update_time 
         from notification n
         inner join notification_cc nc on n.notification_id = nc.notification_id
-        where nc.cc_type = #{userType} 
-          and nc.cc_ids like concat('%', #{userId}, '%')
+        <where>
+            nc.cc_type = #{userType} 
+              and nc.cc_ids like concat('%', #{userId}, '%')
+            <if test="publishDate != null and publishDate != ''">
+                AND DATE(n.create_time) = #{publishDate}
+            </if>
+        </where>
         order by n.create_time desc
     </select>
     
-    <!-- 根据用户 ID 查询我发送的通知列表 -->
-    <select id="selectMySendList" parameterType="Long" resultMap="NotificationResult">
+    <!-- 根據用戶 ID 查詢我發送的通知列表 -->
+    <select id="selectMySendList" resultMap="NotificationResult">
         select notification_id, title, content, sender_id, sender_name, jump_url, 
                attachment_urls, status, reply_deadline, create_time, update_time 
         from notification 
-        where sender_id = #{senderId}
+        <where>
+            sender_id = #{senderId}
+            <if test="publishDate != null and publishDate != ''">
+                AND DATE(create_time) = #{publishDate}
+            </if>
+        </where>
         order by create_time desc
     </select>
     
@@ -87,7 +100,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
          </trim>
     </insert>
     
-    <!-- 根据 ID 查询通知 -->
+    <!-- 根據 ID 查詢通知 -->
     <select id="selectById" parameterType="Long" resultMap="NotificationResult">
         select notification_id, title, content, sender_id, sender_name, jump_url, 
                attachment_urls, status, reply_deadline, create_time, update_time 
@@ -112,12 +125,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where notification_id = #{notificationId}
     </update>
     
-    <!-- 根据 ID 删除通知 -->
+    <!-- 根據 ID 刪除通知 -->
     <delete id="deleteById" parameterType="Long">
         delete from notification where notification_id = #{notificationId}
     </delete>
     
-    <!-- 批量删除通知 -->
+    <!-- 批量刪除通知 -->
     <delete id="deleteBatchIds" parameterType="java.util.List">
         delete from notification where notification_id in
         <foreach item="notificationId" collection="list" open="(" separator="," close=")">

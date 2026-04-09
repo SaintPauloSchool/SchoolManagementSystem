@@ -24,7 +24,7 @@ public class WecomSchoolDepartmentController extends BaseController {
     private IWecomSchoolDepartmentService wecomSchoolDepartmentService;
 
     /**
-     * 获取学校部门树形结构（带成员，用于教职员工选择器）
+     * 獲取學校部門樹形結構（帶成員，用於教職員工選擇器）
      */
     @Anonymous
     @GetMapping("/treeWithMembers")
@@ -34,7 +34,7 @@ public class WecomSchoolDepartmentController extends BaseController {
     }
 
     /**
-     * 获取学校部门树形结构（仅部门，不含人员）
+     * 獲取學校部門樹形結構（僅部門，不含人員）
      */
     @Anonymous
     @GetMapping("/tree")

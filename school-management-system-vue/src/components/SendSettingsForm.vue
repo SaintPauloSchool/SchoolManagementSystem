@@ -431,7 +431,7 @@ export default {
       
       const ccs = []
       
-      // 处理 WeCom 老师通讯录 (type=1) 和自定义老师通讯录 (type=2)
+      // 處理 WeCom 老師通訊錄 (type=1) 和自定義老師通訊錄 (type=2)
       if (this.selectedCcStaff.length > 0) {
         const type1Staff = this.selectedCcStaff.filter(s => s.type === 1 || !s.type)
         const type2Staff = this.selectedCcStaff.filter(s => s.type === 2)
@@ -460,7 +460,7 @@ export default {
         }
       }
       
-      // 处理 WeCom 学校通讯录 (type=1) 和自定义学校通讯录 (type=2)
+      // 處理 WeCom 學校通訊錄 (type=1) 和自定義學校通訊錄 (type=2)
       if (this.selectedCcDirectory.length > 0) {
         const type1Dirs = this.selectedCcDirectory.filter(d => d.type === 1 || !d.type)
         const type2Dirs = this.selectedCcDirectory.filter(d => d.type === 2)
