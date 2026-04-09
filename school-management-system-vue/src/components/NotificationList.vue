@@ -1,38 +1,35 @@
 <template>
   <div class="notification-list">
-    <!-- 搜索欄 -->
-    <div class="search-bar">
-      <el-input
-        v-model="searchQuery"
-        placeholder="搜索通知標題或發送人..."
-        clearable
-        prefix-icon="Search"
-        class="search-input"
-        @keyup.enter="handleSearch"
-      />
-      <el-date-picker
-        v-model="publishDate"
-        type="date"
-        placeholder="發布時間"
-        clearable
-        value-format="YYYY-MM-DD"
-        class="date-picker"
-        @change="handleSearch"
-      />
-    </div>
-
     <!-- 列表头部 -->
     <div class="list-header">
-      <div class="header-info">
+      <div class="header-left">
         <el-icon class="header-icon"><List /></el-icon>
         <span class="header-title">{{ listTitle }}</span>
         <el-tag type="info" size="small" class="count-tag">
           {{ pagination.total }} 條記錄
         </el-tag>
+        <!-- 搜索框和发布时间筛选 -->
+        <el-input
+          v-model="searchQuery"
+          placeholder="搜索通知標題或發送人..."
+          clearable
+          prefix-icon="Search"
+          class="search-input"
+          @keyup.enter="handleSearch"
+        />
+        <el-date-picker
+          v-model="publishDate"
+          type="date"
+          placeholder="發布時間"
+          clearable
+          value-format="YYYY-MM-DD"
+          class="date-picker"
+          @change="handleSearch"
+        />
       </div>
       <el-button plain @click="handleRefresh">
         <el-icon><Refresh /></el-icon>
-        刷新
+        刷新數據
       </el-button>
     </div>
 
@@ -298,160 +295,30 @@ export default {
   }
 }
 
-/* ===== 搜索栏 - 渐变英雄区 ===== */
-.search-bar {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 22px 28px;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  position: relative;
-  overflow: hidden;
-}
-
-.search-bar::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -8%;
-  width: 180px;
-  height: 180px;
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.search-bar::after {
-  content: '';
-  position: absolute;
-  bottom: -40%;
-  left: 15%;
-  width: 100px;
-  height: 100px;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.search-input {
-  flex: 1;
-  max-width: 380px;
-}
-
-.search-input :deep(.el-input__wrapper) {
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(8px);
-  transition: all 0.25s ease;
-}
-
-.search-input :deep(.el-input__wrapper:hover) {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.35);
-}
-
-.search-input :deep(.el-input__wrapper.is-focus) {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.search-input :deep(.el-input__inner) {
-  color: #ffffff;
-  font-size: 13.5px;
-  font-weight: 400;
-}
-
-.search-input :deep(.el-input__wrapper.is-focus .el-input__inner) {
-  color: #1f2937;
-}
-
-.search-input :deep(.el-input__inner::placeholder) {
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.search-input :deep(.el-input__wrapper.is-focus .el-input__inner::placeholder) {
-  color: #9ca3af;
-}
-
-.search-input :deep(.el-input__prefix .el-icon) {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.search-input :deep(.el-input__wrapper.is-focus .el-input__prefix .el-icon) {
-  color: #6b7280;
-}
-
-.date-picker {
-  width: 180px;
-}
-
-.date-picker :deep(.el-input__wrapper) {
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(8px);
-  transition: all 0.25s ease;
-}
-
-.date-picker :deep(.el-input__wrapper:hover) {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.35);
-}
-
-.date-picker :deep(.el-input__wrapper.is-focus) {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.date-picker :deep(.el-input__inner) {
-  color: #ffffff;
-  font-size: 13.5px;
-}
-
-.date-picker :deep(.el-input__wrapper.is-focus .el-input__inner) {
-  color: #1f2937;
-}
-
-.date-picker :deep(.el-input__inner::placeholder) {
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.date-picker :deep(.el-input__wrapper.is-focus .el-input__inner::placeholder) {
-  color: #9ca3af;
-}
-
-.date-picker :deep(.el-input__prefix .el-icon) {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.date-picker :deep(.el-input__wrapper.is-focus .el-input__prefix .el-icon) {
-  color: #6b7280;
-}
-
-/* ===== 列表头部 ===== */
+/* ===== 列表头部（含搜索） ===== */
 .list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 28px;
-  background: #fafbfc;
+  padding: 14px 24px;
+  background: #ffffff;
   border-bottom: 1px solid #eef0f4;
+  gap: 16px;
+  flex-shrink: 0;
 }
 
-.header-info {
+.header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
 .header-icon {
   color: #2563eb;
   font-size: 18px;
+  flex-shrink: 0;
 }
 
 .header-title {
@@ -459,19 +326,99 @@ export default {
   font-weight: 600;
   color: #1f2937;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .count-tag {
-  margin-left: 4px;
   border-radius: 10px;
   padding: 2px 10px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   background: #eff6ff !important;
   color: #2563eb !important;
-  border-color: #93c5fd !important;
+  border-color: #bfdbfe !important;
+  flex-shrink: 0;
 }
 
+/* 搜索框 */
+.search-input {
+  flex: 1;
+  max-width: 320px;
+  margin-left: 8px;
+}
+
+.search-input :deep(.el-input__wrapper) {
+  border-radius: 8px;
+  background: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  box-shadow: none;
+  transition: all 0.25s ease;
+  height: 32px;
+}
+
+.search-input :deep(.el-input__wrapper:hover) {
+  border-color: #c0c4cc;
+}
+
+.search-input :deep(.el-input__wrapper.is-focus) {
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.search-input :deep(.el-input__inner) {
+  color: #1f2937;
+  font-size: 13px;
+}
+
+.search-input :deep(.el-input__inner::placeholder) {
+  color: #9ca3af;
+}
+
+.search-input :deep(.el-input__prefix .el-icon) {
+  color: #9ca3af;
+}
+
+/* 日期选择器 */
+.date-picker {
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.date-picker :deep(.el-input__wrapper) {
+  border-radius: 8px;
+  background: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  box-shadow: none;
+  transition: all 0.25s ease;
+  height: 32px;
+}
+
+.date-picker :deep(.el-input__wrapper:hover) {
+  border-color: #c0c4cc;
+}
+
+.date-picker :deep(.el-input__wrapper.is-focus) {
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.date-picker :deep(.el-input__inner) {
+  color: #1f2937;
+  font-size: 13px;
+}
+
+.date-picker :deep(.el-input__inner::placeholder) {
+  color: #9ca3af;
+}
+
+.date-picker :deep(.el-input__prefix .el-icon) {
+  color: #9ca3af;
+}
+
+/* 刷新按钮 */
 .list-header :deep(.el-button) {
   border-radius: 8px;
   font-size: 13px;
@@ -480,6 +427,8 @@ export default {
   border-color: #e0e3eb;
   color: #6b7280;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+  height: 34px;
 }
 
 .list-header :deep(.el-button:hover) {
@@ -491,15 +440,26 @@ export default {
 /* ===== 表格区域 ===== */
 .table-container {
   flex: 1;
-  overflow: visible;
+  overflow: hidden;
   padding: 0;
   background: #ffffff;
+  min-height: 0;
 }
 
 .table-container :deep(.el-table) {
   border: none;
   --el-table-border-color: #f0f0f4;
   font-size: 13.5px;
+  height: 100% !important;
+}
+
+.table-container :deep(.el-table__inner-wrapper) {
+  height: 100% !important;
+}
+
+.table-container :deep(.el-table__body-wrapper) {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .table-container :deep(.el-table__row) {
@@ -520,9 +480,8 @@ export default {
   background: #fafbfc !important;
   color: #6b7280;
   font-weight: 600;
-  font-size: 12.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 13px;
+  letter-spacing: 0.02em;
   text-align: center;
   height: 46px;
   padding: 12px 0;
@@ -545,7 +504,7 @@ export default {
 
 /* stripe 行颜色优化 */
 .table-container :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
-  background: #fcfcfe;
+  background: #fafbfe;
 }
 
 .title-link {
@@ -671,11 +630,12 @@ export default {
 
 /* ===== 分页区域 ===== */
 .pagination-area {
-  padding: 14px 28px;
+  padding: 14px 24px;
   background: #fafbfc;
   border-top: 1px solid #eef0f4;
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .pagination-area :deep(.el-pagination) {
@@ -697,36 +657,45 @@ export default {
 
 /* ===== 响应式设计 ===== */
 @media (max-width: 1200px) {
-  .search-bar {
+  .list-header {
+    padding: 14px 20px;
     flex-wrap: wrap;
-    padding: 18px 22px;
+  }
+
+  .header-left {
+    flex-wrap: wrap;
   }
 
   .search-input {
     max-width: 100%;
-    flex: 1 1 60%;
-  }
-
-  .date-picker {
-    flex: 0 1 auto;
+    flex: 1 1 200px;
   }
 }
 
 @media (max-width: 768px) {
-  .search-bar {
-    padding: 16px 18px;
-    gap: 10px;
-  }
-
   .list-header {
-    padding: 12px 18px;
+    padding: 12px 16px;
     flex-direction: column;
     gap: 10px;
-    align-items: flex-start;
+    align-items: stretch;
+  }
+
+  .header-left {
+    flex-wrap: wrap;
+  }
+
+  .search-input {
+    flex: 1 1 100%;
+    max-width: 100%;
+    margin-left: 0;
+  }
+
+  .date-picker {
+    width: 100%;
   }
 
   .pagination-area {
-    padding: 12px 18px;
+    padding: 12px 16px;
     justify-content: center;
   }
 
