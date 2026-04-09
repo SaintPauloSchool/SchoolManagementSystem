@@ -51,6 +51,8 @@
         v-loading="loading"
         stripe
         empty-text="暂无数据"
+        :row-style="{ height: '56px' }"
+        :cell-style="{ padding: '14px 0' }"
       >
         <el-table-column prop="title" label="通知标题" min-width="200" show-overflow-tooltip>
           <template #default="scope">
@@ -139,11 +141,12 @@
     <!-- 详情对话框 -->
     <el-dialog
       v-model="detailDialogVisible"
-      title="通知详情"
-      width="60%"
+      title=""
+      width="65%"
       :before-close="handleDetailClose"
       class="notification-detail-dialog"
-      top="10vh"
+      top="6vh"
+      :show-close="true"
     >
       <NotificationDetail 
         v-if="selectedNotification"
@@ -171,22 +174,24 @@ export default {
     type: {
       type: String,
       default: 'ccToMe'
+    },
+    pagination: {
+      type: Object,
+      default: () => ({
+        currentPage: 1,
+        pageSize: 10,
+        total: 0
+      })
     }
   },
-  emits: ['refresh'],
+  emits: ['refresh', 'page-change'],
   data() {
     return {
       loading: false,
       searchQuery: '',
       statusFilter: '',
-      pagination: {
-        currentPage: 1,
-        pageSize: 10,
-        total: 0
-      },
       detailDialogVisible: false,
-      selectedNotification: null,
-      allNotifications: []
+      selectedNotification: null
     }
   },
   computed: {
@@ -198,9 +203,10 @@ export default {
       return titleMap[this.type] || '通知列表'
     },
     displayData() {
-      let result = [...this.allNotifications]
+      // 直接使用后端返回的分页数据，不做前端切片
+      let result = [...this.notifications]
       
-      // 搜索过滤
+      // 搜索过滤（仅在前端过滤当前页数据）
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase()
         result = result.filter(n => 
@@ -214,22 +220,7 @@ export default {
         result = result.filter(n => n.status === this.statusFilter)
       }
       
-      // 更新总数
-      this.pagination.total = result.length
-      
-      // 分页切片
-      const start = (this.pagination.currentPage - 1) * this.pagination.pageSize
-      const end = start + this.pagination.pageSize
-      return result.slice(start, end)
-    }
-  },
-  watch: {
-    notifications: {
-      immediate: true,
-      handler(newVal) {
-        this.allNotifications = newVal || []
-        this.pagination.total = this.allNotifications.length
-      }
+      return result
     }
   },
   methods: {
@@ -252,19 +243,29 @@ export default {
     },
 
     handleSearch() {
-      this.pagination.currentPage = 1
+      this.$emit('page-change', {
+        pageNum: 1,
+        pageSize: this.pagination.pageSize
+      })
     },
 
     handleSizeChange(val) {
-      this.pagination.pageSize = val
-      this.pagination.currentPage = 1
+      this.$emit('page-change', {
+        pageNum: 1,
+        pageSize: val
+      })
     },
 
     handleCurrentChange(val) {
-      this.pagination.currentPage = val
+      this.$emit('page-change', {
+        pageNum: val,
+        pageSize: this.pagination.pageSize
+      })
     },
 
     handleRefresh() {
+      this.searchQuery = ''
+      this.statusFilter = ''
       this.$emit('refresh')
     },
 
@@ -439,14 +440,22 @@ export default {
 
 /* 表格区域 */
 .table-container {
-  flex: 1;
-  overflow: auto;
+  overflow: visible;
   padding: 0;
   background-color: #ffffff;
 }
 
+/* 增加表格行高和单元格内边距 */
 .table-container :deep(.el-table) {
   border: none;
+}
+
+.table-container :deep(.el-table__row) {
+  height: 64px;
+}
+
+.table-container :deep(.el-table__row td) {
+  padding: 18px 0;
 }
 
 .table-container :deep(.el-table th) {
@@ -454,6 +463,8 @@ export default {
   color: #374151;
   font-weight: 600;
   text-align: center;
+  height: 52px;
+  padding: 16px 0;
 }
 
 .table-container :deep(.el-table td) {
@@ -517,17 +528,30 @@ export default {
 /* 对话框样式 */
 .notification-detail-dialog :deep(.el-dialog) {
   border-radius: 16px;
+  overflow: hidden;
 }
 
 .notification-detail-dialog :deep(.el-dialog__header) {
-  background-color: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 20px 24px;
+  display: none;
 }
 
-.notification-detail-dialog :deep(.el-dialog__title) {
-  color: #111827;
-  font-weight: 600;
+.notification-detail-dialog :deep(.el-dialog__body) {
+  padding: 24px;
+  max-height: 78vh;
+  overflow-y: auto;
+}
+
+.notification-detail-dialog :deep(.el-dialog__body::-webkit-scrollbar) {
+  width: 6px;
+}
+
+.notification-detail-dialog :deep(.el-dialog__body::-webkit-scrollbar-thumb) {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.notification-detail-dialog :deep(.el-dialog__body::-webkit-scrollbar-track) {
+  background: transparent;
 }
 
 /* 分页区域 */

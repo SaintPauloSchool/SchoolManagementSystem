@@ -136,16 +136,20 @@
           <!-- 抄送我的 -->
           <NotificationList 
             v-else-if="activeMenu === '1-2'"
-            :notifications="ccToMeNotifications" 
+            :notifications="ccToMeNotifications"
+            :pagination="ccPagination"
             @refresh="loadCcToMeNotifications"
+            @page-change="handleCcPageChange"
             type="ccToMe"
           />
           
           <!-- 我發送的 -->
           <NotificationList 
             v-else-if="activeMenu === '1-3'"
-            :notifications="mySendNotifications" 
+            :notifications="mySendNotifications"
+            :pagination="mySendPagination"
             @refresh="loadMySendNotifications"
+            @page-change="handleMySendPageChange"
             type="mySend"
           />
           
@@ -188,6 +192,16 @@ export default {
       activeMenu: '1-1',
       ccToMeNotifications: [],
       mySendNotifications: [],
+      ccPagination: {
+        currentPage: 1,
+        pageSize: 10,
+        total: 0
+      },
+      mySendPagination: {
+        currentPage: 1,
+        pageSize: 10,
+        total: 0
+      },
       isCollapsed: false,
       isMobileMenuOpen: false,
       isMobile: false,
@@ -249,6 +263,7 @@ export default {
       } else if (index === '1-2') {
         this.loadCcToMeNotifications()
       } else if (index === '1-3') {
+        this.mySendPagination.currentPage = 1
         this.loadMySendNotifications()
       } else if (index === '2-1') {
         // 老師通訊錄，无需加载数据
@@ -257,15 +272,20 @@ export default {
       }
     },
 
-    async loadCcToMeNotifications() {
+    async loadCcToMeNotifications(params = {}) {
       /*try {
         const response = await request({
           url: '/system/notification/ccToMe',
-          method: 'get'
+          method: 'get',
+          params: {
+            pageNum: params.pageNum || this.ccPagination.currentPage,
+            pageSize: params.pageSize || this.ccPagination.pageSize
+          }
         })
         
         if (response.code === 200 || response.code === 0) {
           this.ccToMeNotifications = response.rows || []
+          this.ccPagination.total = response.total || 0
         }
       } catch (error) {
         console.error('加载失败:', error)
@@ -273,20 +293,37 @@ export default {
       }*/
     },
 
-    async loadMySendNotifications() {
+    async loadMySendNotifications(params = {}) {
       try {
         const response = await request({
           url: '/system/notification/mySend',
-          method: 'get'
+          method: 'get',
+          params: {
+            pageNum: params.pageNum || this.mySendPagination.currentPage,
+            pageSize: params.pageSize || this.mySendPagination.pageSize
+          }
         })
         
         if (response.code === 200 || response.code === 0) {
           this.mySendNotifications = response.rows || []
+          this.mySendPagination.total = response.total || 0
         }
       } catch (error) {
         console.error('加载失败:', error)
         this.$message.error('数据加载失败')
       }
+    },
+
+    handleCcPageChange({ pageNum, pageSize }) {
+      this.ccPagination.currentPage = pageNum
+      this.ccPagination.pageSize = pageSize
+      this.loadCcToMeNotifications({ pageNum, pageSize })
+    },
+
+    handleMySendPageChange({ pageNum, pageSize }) {
+      this.mySendPagination.currentPage = pageNum
+      this.mySendPagination.pageSize = pageSize
+      this.loadMySendNotifications({ pageNum, pageSize })
     },
 
     handlePublishSuccess() {
