@@ -215,6 +215,18 @@
                             </div>
                           </div>
                         </div>
+
+                        <!-- 子問題填空 -->
+                        <div v-if="subQ.type === '3' && subQ.content" class="sub-q-fill-text-container">
+                          <p class="sub-q-fill-text">{{ formatFillBlankContent(subQ.content) }}</p>
+                        </div>
+                        <div v-else-if="subQ.fillBlanks && subQ.fillBlanks.length > 0 && typeof subQ.fillBlanks[0] === 'string'" class="sub-q-options">
+                          <div v-for="(blank, bIdx) in subQ.fillBlanks" :key="bIdx" class="sub-q-opt-wrapper">
+                            <span class="sub-q-opt">
+                              填空 {{ bIdx + 1 }}：{{ blank }}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -401,7 +413,9 @@ export default {
                 logicRuleList: Array.isArray(sq.logicRuleList) ? sq.logicRuleList : [],
                 description: sq.description || '',
                 minOptions: sq.minOptions,
-                maxOptions: sq.maxOptions
+                maxOptions: sq.maxOptions,
+                fillBlanks: Array.isArray(sq.fillBlanks) ? sq.fillBlanks : [],
+                content: sq.content || ''
               }))
             }
           }
@@ -441,6 +455,12 @@ export default {
       if (hasMin) return `至少 ${min}`
       if (hasMax) return `最多 ${max}`
       return ''
+    },
+
+    formatFillBlankContent(content) {
+      if (!content) return ''
+      // 將 {{something}} 替換為可視化的橫線填空
+      return content.replace(/\{\{.*?\}\}/g, ' ________ ')
     },
 
     getSubQuestionTypeText(type) {
@@ -1411,6 +1431,22 @@ export default {
   padding: 6px 12px;
   border-radius: 6px;
   border: 1px solid #f1f5f9;
+}
+
+.sub-q-fill-text-container {
+  padding-left: 34px;
+  margin-top: 4px;
+}
+
+.sub-q-fill-text {
+  font-size: 14px;
+  color: #1e293b;
+  line-height: 1.8;
+  margin: 0;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px dashed #cbd5e1;
 }
 
 .sub-q-logic-badge {
