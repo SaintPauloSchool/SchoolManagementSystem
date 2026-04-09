@@ -173,61 +173,13 @@
                     </div>
                     <!-- 子問題列表 -->
                     <div class="sub-questions-list">
-                      <div
-                        v-for="(subQ, sIdx) in parseQuestionContent(question).questions"
+                      <LogicQuestionItem
+                        v-for="(subQ, sIdx) in getRootQuestions(parseQuestionContent(question))"
                         :key="subQ.id"
-                        class="sub-question-item"
-                      >
-                        <div class="sub-q-item-header">
-                          <span class="sub-q-index">問題 {{ sIdx + 1 }}</span>
-                          <el-tag size="small" effect="plain" round class="sub-q-type-tag">
-                            {{ getSubQuestionTypeText(subQ.type) }}
-                          </el-tag>
-                          <!-- 多選題選項數量限制 -->
-                          <span v-if="subQ.type === '2' && formatOptionsLimit(subQ.minOptions, subQ.maxOptions)" class="sub-q-limits">
-                            (可選 {{ formatOptionsLimit(subQ.minOptions, subQ.maxOptions) }} 項)
-                          </span>
-                          <el-tag v-if="subQ.required" size="small" type="danger" effect="light" round class="required-tag">
-                            必答
-                          </el-tag>
-                        </div>
-                        
-                        <div class="sub-q-fields">
-                          <div class="field-item">
-                            <span class="field-label">問題標題：</span>
-                            <span class="sub-q-name">{{ subQ.title }}</span>
-                          </div>
-                          <div class="field-item" v-if="subQ.description">
-                            <span class="field-label">問題描述：</span>
-                            <span class="sub-q-item-desc">{{ subQ.description }}</span>
-                          </div>
-                        </div>
-
-                        <!-- 子問題選項 -->
-                        <div v-if="subQ.options && subQ.options.length > 0" class="sub-q-options">
-                          <div v-for="(opt, oIdx) in subQ.options" :key="oIdx" class="sub-q-opt-wrapper">
-                            <span class="sub-q-opt">
-                              {{ String.fromCharCode(65 + oIdx) }}. {{ opt }}
-                            </span>
-                            <div v-if="getSubQuestionLogicForOption(subQ, oIdx)" class="sub-q-logic-badge">
-                              <el-icon :size="12"><Connection /></el-icon>
-                              <span>{{ formatJumpTarget(getSubQuestionLogicForOption(subQ, oIdx).jumpTarget, parseQuestionContent(question).questions) }}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- 子問題填空 -->
-                        <div v-if="subQ.type === '3' && subQ.content" class="sub-q-fill-text-container">
-                          <p class="sub-q-fill-text">{{ formatFillBlankContent(subQ.content) }}</p>
-                        </div>
-                        <div v-else-if="subQ.fillBlanks && subQ.fillBlanks.length > 0 && typeof subQ.fillBlanks[0] === 'string'" class="sub-q-options">
-                          <div v-for="(blank, bIdx) in subQ.fillBlanks" :key="bIdx" class="sub-q-opt-wrapper">
-                            <span class="sub-q-opt">
-                              填空 {{ bIdx + 1 }}：{{ blank }}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                        :subQ="subQ"
+                        :allQuestions="parseQuestionContent(question).questions"
+                        :indexStr="String(sIdx + 1)"
+                      />
                     </div>
                   </div>
                 </div>
@@ -335,10 +287,37 @@
 </template>
 
 <script>
-import { Document, FolderOpened, QuestionFilled, User, Message, Bell, Clock, Link, AlarmClock, ArrowDown, EditPen, Connection, Right, List } from '@element-plus/icons-vue'
+import {
+  Document,
+  Connection,
+  Right,
+  User,
+  Paperclip,
+  Download,
+  EditPen,
+  QuestionFilled,
+  ArrowDown,
+  List,
+  Message
+} from '@element-plus/icons-vue'
+import LogicQuestionItem from './LogicQuestionItem.vue'
 
 export default {
   name: 'NotificationDetail',
+  components: {
+    Document,
+    Connection,
+    Right,
+    User,
+    Paperclip,
+    Download,
+    EditPen,
+    QuestionFilled,
+    ArrowDown,
+    List,
+    Message,
+    LogicQuestionItem
+  },
   props: {
     notification: {
       type: Object,
@@ -379,6 +358,25 @@ export default {
         '2': '已撤回'
       }
       return statusMap[status] || '未知'
+    },
+
+    getRootQuestions(parsed) {
+      if (!parsed || !parsed.questions) return []
+      const jumpedTargetIds = new Set()
+      parsed.questions.forEach(sq => {
+        if (sq.logicRuleList) {
+          sq.logicRuleList.forEach(rule => {
+            if (rule.jumpTarget !== 'next' && rule.jumpTarget !== 'end') {
+              const tid = Number(rule.jumpTarget)
+              if (!isNaN(tid)) {
+                jumpedTargetIds.add(tid)
+              }
+            }
+          })
+        }
+      })
+      // 過濾出從未被當作 jumpTarget 的問題（即根節點）
+      return parsed.questions.filter(sq => !jumpedTargetIds.has(sq.id))
     },
 
     parseQuestionContent(question) {
