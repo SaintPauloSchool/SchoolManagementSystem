@@ -869,7 +869,7 @@ body {
   border-color: #059669;
 }
 
-/* 抄送教職員工按鈕 */
+/* 抄送教職工按鈕 */
 .send-settings-form .selection-item .el-button--info {
   background: #6b7280;
   border-color: #6b7280;
@@ -934,7 +934,7 @@ body {
   background: #d1fae5;
 }
 
-/* 抄送教職員工標籤 */
+/* 抄送教職工標籤 */
 .send-settings-form .tag-item .el-tag--info {
   background: #f9fafb;
   color: #374151;

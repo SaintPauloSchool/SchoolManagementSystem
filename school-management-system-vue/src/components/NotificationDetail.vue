@@ -476,16 +476,16 @@ export default {
 
     getReceiveTypeText(type) {
       const typeMap = {
-        '1': '班級',
-        '2': '學生/家長'
+        '1': '班級群組',
+        '2': '個別學生/家長'
       }
       return typeMap[type] || '未知'
     },
 
     getCcTypeText(type) {
       const typeMap = {
-        '1': '教职员工',
-        '2': '學校通訊錄'
+        '1': '個別教職工',
+        '2': '教職工群組'
       }
       return typeMap[type] || '未知'
     },

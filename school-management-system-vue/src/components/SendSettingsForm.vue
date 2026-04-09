@@ -78,15 +78,15 @@
         </template>
 
         <div class="cc-section">
-          <!-- 抄送教職員工 -->
-          <el-form-item label="抄送教職員工">
+          <!-- 抄送教職工 -->
+          <el-form-item label="抄送教職工">
             <div class="selection-item">
               <el-button 
                 type="primary" 
                 @click="openCcStaffSelector"
                 plain
               >
-                已抄送 {{ selectedCcStaff.length }} 位教職員工
+                已抄送 {{ selectedCcStaff.length }} 位教職工
                 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
               </el-button>
               <div v-if="selectedCcStaff.length > 0" class="selected-tags">
@@ -103,8 +103,8 @@
             </div>
           </el-form-item>
 
-          <!-- 抄送學校通訊錄 -->
-          <el-form-item label="抄送學校通訊錄">
+          <!-- 抄送教職工群組 -->
+          <el-form-item label="抄送教職工群組">
             <div class="selection-item">
               <el-button 
                 type="primary" 
@@ -184,7 +184,7 @@
     <StaffSelectorDialog
       v-model:visible="ccStaffSelectorVisible"
       :selected-staff="selectedCcStaff"
-      title="選擇抄送教職員工"
+      title="選擇抄送教職工"
       @confirm="handleCcStaffSelect"
     />
 
