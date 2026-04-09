@@ -115,7 +115,7 @@
       width="65%"
       :before-close="handleDetailClose"
       class="notification-detail-dialog"
-      top="6vh"
+      top="1vh"
       :modal="true"
       :lock-scroll="true"
       :close-on-click-modal="true"

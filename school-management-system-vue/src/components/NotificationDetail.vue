@@ -101,11 +101,161 @@
           v-for="question in notification.questions"
           :key="question.questionId"
           class="question-card"
+          :class="{ 'is-expanded': isQuestionExpanded(question.questionId) }"
         >
-          <div class="question-index">{{ getQuestionIndex(question) }}</div>
-          <div class="question-info">
-            <span class="question-title">{{ question.questionTitle }}</span>
+          <!-- 問題頭部（可點擊展開） -->
+          <div class="question-header" @click="toggleQuestion(question.questionId)">
+            <div class="question-index">{{ getQuestionIndex(question) }}</div>
+            <div class="question-info">
+              <span class="question-title">{{ question.questionTitle }}</span>
+              <el-tag v-if="question.questionType !== '5'" size="small" effect="plain" round class="question-type-tag">
+                {{ getQuestionTypeText(question.questionType) }}
+              </el-tag>
+              <el-tag v-if="question.isRequired === '1'" size="small" type="danger" effect="light" round class="required-tag">
+                必答
+              </el-tag>
+            </div>
+            <el-icon class="expand-arrow" :class="{ 'is-rotated': isQuestionExpanded(question.questionId) }">
+              <ArrowDown />
+            </el-icon>
           </div>
+
+          <!-- 展開內容 -->
+          <transition name="expand">
+            <div v-show="isQuestionExpanded(question.questionId)" class="question-detail">
+              <!-- 選項列表（單選/多選） -->
+              <div v-if="getQuestionOptions(question).length > 0" class="detail-block">
+                <div class="detail-block-label">
+                  <el-icon :size="14"><List /></el-icon>
+                  <span>{{ question.questionType === '1' ? '單選選項' : '多選選項' }}</span>
+                </div>
+                <div class="options-list">
+                  <div v-for="(opt, idx) in getQuestionOptions(question)" :key="idx" class="option-item">
+                    <span class="option-letter">{{ String.fromCharCode(65 + idx) }}</span>
+                    <span class="option-text">{{ opt }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 填空題欄位 -->
+              <div v-if="getQuestionFillBlanks(question).length > 0" class="detail-block">
+                <div class="detail-block-label">
+                  <el-icon :size="14"><EditPen /></el-icon>
+                  <span>填空欄位</span>
+                </div>
+                <div class="options-list">
+                  <div v-for="(blank, idx) in getQuestionFillBlanks(question)" :key="idx" class="option-item">
+                    <span class="option-letter">{{ idx + 1 }}</span>
+                    <span class="option-text">{{ blank }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 題目內容 -->
+              <template v-if="question.content">
+                <!-- 邼輯表單類型：解析JSON問卷結構 -->
+                <div v-if="parseQuestionContent(question)" class="detail-block">
+                  <div class="detail-block-label">
+                    <el-icon :size="14"><Document /></el-icon>
+                    <span>表單內容</span>
+                  </div>
+                  <div class="sub-questionnaire">
+                    <!-- 表單標題與描述 -->
+                    <div class="sub-q-header">
+                      <div class="field-item">
+                        <span class="field-label">表單標題：</span>
+                        <h4 class="sub-q-title">{{ parseQuestionContent(question).title || '無標題' }}</h4>
+                      </div>
+                      <div class="field-item" v-if="parseQuestionContent(question).description">
+                        <span class="field-label">表單描述：</span>
+                        <p class="sub-q-desc">{{ parseQuestionContent(question).description }}</p>
+                      </div>
+                    </div>
+                    <!-- 子問題列表 -->
+                    <div class="sub-questions-list">
+                      <div
+                        v-for="(subQ, sIdx) in parseQuestionContent(question).questions"
+                        :key="subQ.id"
+                        class="sub-question-item"
+                      >
+                        <div class="sub-q-item-header">
+                          <span class="sub-q-index">問題 {{ sIdx + 1 }}</span>
+                          <el-tag size="small" effect="plain" round class="sub-q-type-tag">
+                            {{ getSubQuestionTypeText(subQ.type) }}
+                          </el-tag>
+                          <!-- 多選題選項數量限制 -->
+                          <span v-if="subQ.type === '2' && formatOptionsLimit(subQ.minOptions, subQ.maxOptions)" class="sub-q-limits">
+                            (可選 {{ formatOptionsLimit(subQ.minOptions, subQ.maxOptions) }} 項)
+                          </span>
+                          <el-tag v-if="subQ.required" size="small" type="danger" effect="light" round class="required-tag">
+                            必答
+                          </el-tag>
+                        </div>
+                        
+                        <div class="sub-q-fields">
+                          <div class="field-item">
+                            <span class="field-label">問題標題：</span>
+                            <span class="sub-q-name">{{ subQ.title }}</span>
+                          </div>
+                          <div class="field-item" v-if="subQ.description">
+                            <span class="field-label">問題描述：</span>
+                            <span class="sub-q-item-desc">{{ subQ.description }}</span>
+                          </div>
+                        </div>
+
+                        <!-- 子問題選項 -->
+                        <div v-if="subQ.options && subQ.options.length > 0" class="sub-q-options">
+                          <div v-for="(opt, oIdx) in subQ.options" :key="oIdx" class="sub-q-opt-wrapper">
+                            <span class="sub-q-opt">
+                              {{ String.fromCharCode(65 + oIdx) }}. {{ opt }}
+                            </span>
+                            <div v-if="getSubQuestionLogicForOption(subQ, oIdx)" class="sub-q-logic-badge">
+                              <el-icon :size="12"><Connection /></el-icon>
+                              <span>{{ formatJumpTarget(getSubQuestionLogicForOption(subQ, oIdx).jumpTarget, parseQuestionContent(question).questions) }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- 普通HTML內容 -->
+                <div v-else class="detail-block">
+                  <div class="detail-block-label">
+                    <el-icon :size="14"><Document /></el-icon>
+                    <span>題目內容</span>
+                  </div>
+                  <div class="detail-content" v-html="question.content"></div>
+                </div>
+              </template>
+
+              <!-- 邏輯規則 -->
+              <div v-if="getLogicRules(question).length > 0" class="detail-block logic-block">
+                <div class="detail-block-label">
+                  <el-icon :size="14"><Connection /></el-icon>
+                  <span>邏輯規則</span>
+                </div>
+                <div class="logic-rules-list">
+                  <div v-for="(rule, idx) in getLogicRules(question)" :key="idx" class="logic-rule-item">
+                    <div class="logic-condition">
+                      <span class="logic-keyword">當</span>
+                      <span class="logic-text">選擇「{{ rule.optionText || ('選項 ' + (rule.optionIndex + 1)) }}」</span>
+                    </div>
+                    <el-icon class="logic-arrow-icon" :size="14"><Right /></el-icon>
+                    <div class="logic-action">
+                      <span class="logic-keyword">{{ rule.action === 'skip' ? '跳轉至' : '顯示' }}</span>
+                      <span class="logic-text">問題 {{ rule.targetQuestionIndex || rule.targetQuestionId }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 無內容提示 -->
+              <div v-if="!question.content && getQuestionOptions(question).length === 0 && getQuestionFillBlanks(question).length === 0 && getLogicRules(question).length === 0" class="empty-detail">
+                <span>無額外內容</span>
+              </div>
+            </div>
+          </transition>
         </div>
       </div>
     </div>
@@ -173,7 +323,7 @@
 </template>
 
 <script>
-import { Document, FolderOpened, QuestionFilled, User, Message, Bell, Clock, Link, AlarmClock } from '@element-plus/icons-vue'
+import { Document, FolderOpened, QuestionFilled, User, Message, Bell, Clock, Link, AlarmClock, ArrowDown, EditPen, Connection, Right, List } from '@element-plus/icons-vue'
 
 export default {
   name: 'NotificationDetail',
@@ -181,6 +331,11 @@ export default {
     notification: {
       type: Object,
       required: true
+    }
+  },
+  data() {
+    return {
+      expandedQuestions: []
     }
   },
   computed: {
@@ -214,6 +369,91 @@ export default {
       return statusMap[status] || '未知'
     },
 
+    parseQuestionContent(question) {
+      if (!question.content) return null
+      try {
+        let parsed = question.content
+        if (typeof parsed === 'string') {
+          parsed = JSON.parse(parsed)
+        }
+        // Handle double serialization just in case
+        if (typeof parsed === 'string') {
+          parsed = JSON.parse(parsed)
+        }
+
+        if (parsed && typeof parsed === 'object') {
+          // It could be directly the questionnaire object or wrapped in { questionnaire: ... }
+          const title = parsed.questionnaire ? parsed.questionnaire.title : (parsed.title || '')
+          const description = parsed.questionnaire ? parsed.questionnaire.description : (parsed.description || '')
+          const questionsArray = parsed.questions || (parsed.questionnaire ? parsed.questionnaire.questions : []) || []
+          
+          if (questionsArray.length > 0) {
+            return {
+              title: title,
+              description: description,
+              questions: questionsArray.map(sq => ({
+                id: sq.id,
+                title: sq.title || '',
+                type: sq.type || '',
+                required: sq.required || false,
+                options: Array.isArray(sq.options) ? sq.options : [],
+                uploadNote: sq.uploadNote || '',
+                logicRuleList: Array.isArray(sq.logicRuleList) ? sq.logicRuleList : [],
+                description: sq.description || '',
+                minOptions: sq.minOptions,
+                maxOptions: sq.maxOptions
+              }))
+            }
+          }
+        }
+        return null
+      } catch (e) {
+        console.error('Error parsing question content JSON:', e)
+        return null
+      }
+    },
+
+    getSubQuestionLogicForOption(subQ, index) {
+      if (!subQ.logicRuleList || subQ.logicRuleList.length === 0) return null
+      return subQ.logicRuleList.find(rule => rule.optionIndex === index)
+    },
+
+    formatJumpTarget(target, questionsArray) {
+      if (target === 'next') return '跳轉至下一題'
+      if (target === 'end') return '跳轉至結束作答'
+      
+      const targetId = Number(target)
+      if (questionsArray && Array.isArray(questionsArray)) {
+        const idx = questionsArray.findIndex(q => q.id === targetId)
+        if (idx > -1) {
+          return `跳轉至第 ${idx + 1} 題`
+        }
+      }
+      return `跳轉至第 ${targetId} 題`
+    },
+
+    formatOptionsLimit(min, max) {
+      const hasMin = min !== undefined && min !== null && min !== ''
+      const hasMax = max !== undefined && max !== null && max !== ''
+      
+      if (hasMin && hasMax && min === max) return `${min}`
+      if (hasMin && hasMax) return `${min} ~ ${max}`
+      if (hasMin) return `至少 ${min}`
+      if (hasMax) return `最多 ${max}`
+      return ''
+    },
+
+    getSubQuestionTypeText(type) {
+      const typeMap = {
+        '1': '單選',
+        '2': '多選',
+        '3': '填空',
+        '4': '附件上傳',
+        '5': '邏輯表單'
+      }
+      return typeMap[String(type)] || '未知'
+    },
+
 
 
     getReceiveTypeText(type) {
@@ -235,6 +475,75 @@ export default {
     getQuestionIndex(question) {
       const index = this.notification.questions.findIndex(q => q.questionId === question.questionId)
       return index + 1
+    },
+
+    getQuestionTypeText(type) {
+      const typeMap = {
+        '1': '單選',
+        '2': '多選',
+        '3': '填空',
+        '4': '附件上傳',
+        '5': '邏輯表單'
+      }
+      return typeMap[type] || '未知'
+    },
+
+    isQuestionExpanded(questionId) {
+      return this.expandedQuestions.includes(questionId)
+    },
+
+    toggleQuestion(questionId) {
+      const idx = this.expandedQuestions.indexOf(questionId)
+      if (idx > -1) {
+        this.expandedQuestions.splice(idx, 1)
+      } else {
+        this.expandedQuestions.push(questionId)
+      }
+    },
+
+    getQuestionOptions(question) {
+      if (!question.options) return []
+      try {
+        const opts = JSON.parse(question.options)
+        return Array.isArray(opts) ? opts : []
+      } catch (e) {
+        return []
+      }
+    },
+
+    getQuestionFillBlanks(question) {
+      if (!question.fillBlanks) return []
+      try {
+        const blanks = JSON.parse(question.fillBlanks)
+        return Array.isArray(blanks) ? blanks : []
+      } catch (e) {
+        return []
+      }
+    },
+
+    getLogicRules(question) {
+      if (!question.logicRules) return []
+      try {
+        const rules = JSON.parse(question.logicRules)
+        if (!Array.isArray(rules)) return []
+        const options = this.getQuestionOptions(question)
+        return rules.map(rule => {
+          const optIndex = rule.optionIndex !== undefined ? rule.optionIndex : 0
+          return {
+            ...rule,
+            optionText: options[optIndex] || null,
+            targetQuestionIndex: this.getTargetQuestionIndex(rule.targetQuestionId)
+          }
+        })
+      } catch (e) {
+        return []
+      }
+    },
+
+    getTargetQuestionIndex(targetId) {
+      if (!targetId || !this.notification.questions) return '?'
+      const idx = this.notification.questions.findIndex(q => q.questionId === targetId)
+      return idx > -1 ? idx + 1 : '?'
     },
 
     getReceiverGroupedData(receiver) {
@@ -718,7 +1027,7 @@ export default {
   border-color: #93c5fd;
 }
 
-/* ===== 问题卡片网格 ===== */
+/* ===== 問題卡片网格 ===== */
 .questions-grid {
   display: flex;
   flex-direction: column;
@@ -726,20 +1035,35 @@ export default {
 }
 
 .question-card {
+  background: #fafbfc;
+  border: 1px solid #f0f0f4;
+  border-radius: 10px;
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.question-card:hover {
+  border-color: #d0d5dd;
+}
+
+.question-card.is-expanded {
+  border-color: #93c5fd;
+  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.08);
+}
+
+/* 問題頭部 */
+.question-header {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 14px 18px;
-  background: #fafbfc;
-  border: 1px solid #f0f0f4;
-  border-radius: 10px;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  user-select: none;
 }
 
-.question-card:hover {
-  background: #f5f6fa;
-  border-color: #e0e3eb;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+.question-header:hover {
+  background: #f0f4f8;
 }
 
 .question-index {
@@ -759,7 +1083,7 @@ export default {
 .question-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex: 1;
   min-width: 0;
 }
@@ -772,6 +1096,334 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.question-type-tag {
+  flex-shrink: 0;
+  font-size: 12px;
+  border-color: #bfdbfe !important;
+  color: #2563eb !important;
+  background: #eff6ff !important;
+}
+
+.required-tag {
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.expand-arrow {
+  color: #9ca3af;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.expand-arrow.is-rotated {
+  transform: rotate(180deg);
+  color: #2563eb;
+}
+
+/* 展開過渡動畫 */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+  max-height: 600px;
+  overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* 展開內容區 */
+.question-detail {
+  padding: 0 18px 16px;
+  border-top: 1px solid #eef0f4;
+  margin-top: 0;
+}
+
+.detail-block {
+  margin-top: 14px;
+}
+
+.detail-block-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.detail-block-label .el-icon {
+  color: #2563eb;
+}
+
+/* 選項列表 */
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #e8ecf1;
+  border-radius: 8px;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.option-item:hover {
+  background: #f8fafc;
+  border-color: #bfdbfe;
+}
+
+.option-letter {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.option-text {
+  color: #374151;
+  font-weight: 400;
+  flex: 1;
+}
+
+/* 題目內容 */
+.detail-content {
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid #e8ecf1;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #374151;
+}
+
+/* 邏輯規則 */
+.logic-block {
+  margin-top: 14px;
+}
+
+.logic-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.logic-rule-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.logic-condition,
+.logic-action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.logic-keyword {
+  font-weight: 600;
+  color: #b45309;
+  font-size: 12px;
+}
+
+.logic-text {
+  color: #92400e;
+  font-weight: 500;
+}
+
+.logic-arrow-icon {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+/* 無內容 */
+.empty-detail {
+  padding: 16px 0 4px;
+  text-align: center;
+  color: #d1d5db;
+  font-size: 13px;
+}
+
+/* 子問卷 (邏輯表單) UI */
+.sub-questionnaire {
+  background: #ffffff;
+  border: 1px solid #e8ecf1;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sub-q-header {
+  padding: 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e8ecf1;
+}
+
+.field-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.field-item:last-child {
+  margin-bottom: 0;
+}
+
+.field-label {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sub-q-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e3a8a;
+  flex: 1;
+}
+
+.sub-q-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.sub-questions-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.sub-question-item {
+  padding: 18px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sub-question-item:last-child {
+  border-bottom: none;
+}
+
+.sub-q-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.sub-q-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 4px;
+}
+
+.sub-q-item-desc {
+  font-size: 13px;
+  color: #475569;
+  flex: 1;
+}
+
+.sub-q-index {
+  padding: 2px 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.sub-q-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.sub-q-limits {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.sub-q-type-tag {
+  background: #f8fafc !important;
+  color: #64748b !important;
+  border-color: #e2e8f0 !important;
+}
+
+.sub-q-options {
+  width: 100%;
+  padding-left: 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sub-q-opt-wrapper {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sub-q-opt {
+  font-size: 13px;
+  color: #475569;
+  background: #f8fafc;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
+
+.sub-q-logic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fffbeb;
+  border: 1px solid #fef08a;
+  color: #b45309;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 

@@ -82,7 +82,7 @@ CREATE TABLE notification_question (
     logic_rules         TEXT            DEFAULT NULL               COMMENT '跳转逻辑规则 (JSON 格式)',
     fill_blanks         TEXT            DEFAULT NULL               COMMENT '填空题的填空列表 (JSON 格式)',
     correct_answers     TEXT            DEFAULT NULL               COMMENT '填空题的正确答案 (JSON 格式)',
-    content             TEXT            DEFAULT NULL               COMMENT '题目内容（富文本/HTML）',
+    content             TEXT            DEFAULT NULL               COMMENT '题目内容，根据题型存储不同格式数据：①逻辑表单(type=5)存储JSON格式{"questionnaire":{"title":"问卷标题","description":"问卷描述"},"questions":[{"id":1,"type":"1/2/3/4","title":"子问题标题","description":"子问题描述","required":true/false,"options":["选项1","选项2"],"placeholder":"占位符文本","defaultValue":"默认值","validation":[],"minLength":0,"maxLength":200,"randomOrder":false,"logicRuleList":[],"minOptions":1,"maxOptions":null,"uploadNote":"上传说明","fillBlanks":[],"correctAnswers":[]}]}；②填空题(type=3)存储带占位符的纯文本如"这是{{fillblank-1}}一个{{fillblank-2}}填空题"；③其他题型可存储富文本/HTML内容或题目描述',
     create_time         DATETIME                                   COMMENT '创建时间',
     PRIMARY KEY (question_id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知问题表';
