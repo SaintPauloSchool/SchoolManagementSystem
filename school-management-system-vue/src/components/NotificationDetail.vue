@@ -61,14 +61,16 @@
         <span class="section-count">{{ attachmentUrls.length }}</span>
       </div>
       <div class="chip-list">
-        <div
-          v-for="(url, index) in attachmentUrls"
+        <a
+          v-for="(item, index) in attachmentUrls"
           :key="index"
-          class="chip attachment-chip"
+          :href="getAttachmentUrl(item)"
+          target="_blank"
+          class="chip attachment-chip attachment-link"
         >
           <el-icon :size="14"><Document /></el-icon>
-          <span>附件 {{ index + 1 }}</span>
-        </div>
+          <span>{{ getAttachmentName(item, index) }}</span>
+        </a>
       </div>
     </div>
 
@@ -351,6 +353,37 @@ export default {
         '2': '已撤回'
       }
       return statusMap[status] || '未知'
+    },
+
+    getAttachmentName(item, index) {
+      if (!item) return `附件 ${index + 1}`
+      
+      let urlStr = ''
+      let providedName = ''
+      
+      if (typeof item === 'string') {
+        urlStr = item
+        providedName = ''
+      } else {
+        urlStr = item.url || ''
+        providedName = item.name || ''
+      }
+      
+      // 如果沒有名字，我們強制從 URL 提取
+      if (!providedName || /^附件\s*\d+$/.test(providedName.trim())) {
+        if (urlStr) {
+          const parsed = urlStr.substring(urlStr.lastIndexOf('/') + 1)
+          if (parsed) {
+            return decodeURIComponent(parsed)
+          }
+        }
+      }
+      
+      return providedName || `附件 ${index + 1}`
+    },
+
+    getAttachmentUrl(item) {
+      return typeof item === 'string' ? item : item.url
     },
 
     getRootQuestions(parsed) {
@@ -839,6 +872,12 @@ export default {
   background: #eff6ff;
   color: #1e40af;
   border: 1px solid #bfdbfe;
+}
+
+.attachment-link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .attachment-chip:hover {

@@ -62,12 +62,20 @@
             :on-remove="handleUploadRemove"
             :before-upload="beforeUpload"
             :on-change="handleChange"
+            :on-exceed="handleExceed"
             multiple
             :limit="5"
           >
-            <el-button class="custom-upload-btn" size="large">
+            <el-button 
+              class="custom-upload-btn" 
+              size="large"
+              :disabled="fileList.length >= 5"
+              :class="{ 'is-disabled': fileList.length >= 5 }"
+            >
               <el-icon class="btn-icon"><Upload /></el-icon>
-              <span class="btn-text">點擊上傳附件</span>
+              <span class="btn-text">
+                {{ fileList.length >= 5 ? '最大附件數量已達標' : '點擊上傳附件' }}
+              </span>
             </el-button>
           </el-upload>
         </div>
@@ -209,41 +217,22 @@ export default {
             ? JSON.parse(this.localFormData.attachmentUrls)
             : this.localFormData.attachmentUrls
             
-          // 只在 fileList 為空或有變化時才初始化，保留已有的文件名
-          if (!this.fileList || this.fileList.length === 0) {
-            // 如果是空的，創建新的 fileList，使用默認名稱
-            this.fileList = urls.map((url, index) => ({
-              name: `附件${index + 1}`,
-              url: url
-            }))
-          } else {
-            // 如果 fileList 已有數據，只更新 URL，不改變文件名
-            const newFileList = []
-            urls.forEach((url, index) => {
-              // 查找是否有相同 URL 的文件
-              const existingFile = this.fileList.find(f => f.url === url)
-              if (existingFile) {
-                // 保留原有文件名和 uid
-                newFileList.push({
-                  ...existingFile,
-                  url: url
-                })
-              } else if (index < this.fileList.length) {
-                // 如果沒有找到匹配的 URL，但索引存在，保留原文件名
-                newFileList.push({
-                  ...this.fileList[index],
-                  url: url
-                })
-              } else {
-                // 如果是新增的 URL，使用默認名稱
-                newFileList.push({
-                  name: `附件${index + 1}`,
-                  url: url
-                })
-              }
-            })
-            this.fileList = newFileList
-          }
+          // 確保始終根據最新的 urls 重新構建 fileList
+          this.fileList = urls.map((item, index) => {
+            if (typeof item === 'string') {
+               // 舊資料：字串陣列
+               return {
+                 name: decodeURIComponent(item.substring(item.lastIndexOf('/') + 1)) || `附件${index + 1}`,
+                 url: item
+               }
+            } else {
+               // 新資料：物件陣列 { name: '...', url: '...' }
+               return {
+                 name: item.name || `附件${index + 1}`,
+                 url: item.url
+               }
+            }
+          })
         } catch (e) {
           console.error('初始化文件列表失敗:', e)
           this.fileList = []
@@ -291,8 +280,8 @@ export default {
           })
         }
         
-        const urls = this.fileList.map(f => f.url).filter(url => url)
-        this.localFormData.attachmentUrls = urls
+        const attachments = this.fileList.filter(f => f.url).map(f => ({ name: f.name, url: f.url }))
+        this.localFormData.attachmentUrls = attachments
         
         ElMessage.success('上傳成功')
       } else {
@@ -313,6 +302,10 @@ export default {
       }
     },
 
+    handleExceed(files, fileList) {
+      ElMessage.warning(`最多只能上傳 5 個附件！您選擇了 ${files.length} 個文件，加上現有共 ${files.length + fileList.length} 個。`)
+    },
+
     handleChange(file, fileList) {
       // 保留原始文件名，不要用 Element Plus 的默认名称
       this.fileList = fileList.filter(f => f.status !== 'removed').map(f => {
@@ -325,7 +318,9 @@ export default {
     },
 
     handleUploadRemove(file) {
-      const index = this.localFormData.attachmentUrls.indexOf(file.url)
+      const index = this.localFormData.attachmentUrls.findIndex(item => 
+        (typeof item === 'string' ? item : item.url) === file.url
+      )
       if (index > -1) {
         this.localFormData.attachmentUrls.splice(index, 1)
       }
@@ -571,7 +566,22 @@ export default {
   margin-top: 28px;
   padding-top: 28px;
   border-top: 2px solid #e5e7eb;
-  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.form-actions .el-button {
+  min-width: 120px;
+  height: 38px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.form-actions .el-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* 上傳區域 - 與問題設置協調的風格 */
@@ -617,15 +627,23 @@ export default {
   letter-spacing: 0.5px;
 }
 
-.custom-upload-btn.el-button:hover {
+.custom-upload-btn.el-button:hover:not(.is-disabled) {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   box-shadow: 0 5px 16px rgba(59, 130, 246, 0.35);
   transform: translateY(-1px);
 }
 
-.custom-upload-btn.el-button:active {
+.custom-upload-btn.el-button:active:not(.is-disabled) {
   transform: translateY(0);
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+}
+
+.custom-upload-btn.is-disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  box-shadow: none;
+  cursor: not-allowed;
+  border: 1px solid #d1d5db;
 }
 
 .add-form-question-btn.el-button {

@@ -75,12 +75,23 @@ export default {
     }
   },
   methods: {
+    scrollToTop() {
+      this.$nextTick(() => {
+        const wrapper = document.querySelector('.content-wrapper')
+        if (wrapper) {
+          wrapper.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+      })
+    },
+
     handleNext() {
       this.currentStep = 1
+      this.scrollToTop()
     },
 
     handlePrev() {
       this.currentStep = 0
+      this.scrollToTop()
     },
 
     async handleSubmit() {
@@ -193,7 +204,7 @@ export default {
 .publish-notification {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;
   background-color: #f9fafb;
 }
 
@@ -201,6 +212,7 @@ export default {
   padding: 16px 36px;
   background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .simple-steps {
@@ -246,7 +258,6 @@ export default {
 
 .form-wrapper {
   flex: 1;
-  overflow-y: auto;
   padding: 32px;
 }
 

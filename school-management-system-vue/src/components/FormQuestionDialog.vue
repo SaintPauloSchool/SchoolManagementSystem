@@ -227,7 +227,7 @@
             <!-- 問題頭部 - 只在編輯模式顯示 -->
             <div class="questionnaire-header" v-if="viewMode === 'edit'">
               <div class="header-row">
-                <span class="header-label">標題:</span>
+                <span class="header-label">表單標題:</span>
                 <el-input
                   v-model="questionnaireData.title"
                   placeholder="請輸入標題"
