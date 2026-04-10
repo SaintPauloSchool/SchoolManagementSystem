@@ -2,22 +2,9 @@
   <div class="notification-detail">
     <!-- 顶部标题横幅 -->
     <div class="detail-hero">
-      <div class="hero-icon-wrap">
-        <el-icon :size="28"><Bell /></el-icon>
-      </div>
       <div class="hero-text">
-        <h2 class="hero-title">{{ notification.title }}</h2>
+        <h2 class="hero-title">通知標題：{{ notification.title }}</h2>
         <div class="hero-meta">
-          <span class="meta-item">
-            <el-icon :size="14"><User /></el-icon>
-            {{ notification.senderName }}
-          </span>
-          <span class="meta-divider">·</span>
-          <span class="meta-item">
-            <el-icon :size="14"><Clock /></el-icon>
-            {{ notification.createTime }}
-          </span>
-          <span class="meta-divider">·</span>
           <el-tag
             :type="getStatusType(notification.status)"
             size="small"
@@ -27,30 +14,28 @@
           >
             {{ getStatusText(notification.status) }}
           </el-tag>
-        </div>
-      </div>
-    </div>
-
-    <!-- 信息卡片 -->
-    <div class="info-cards">
-      <div class="info-card" v-if="notification.jumpUrl">
-        <div class="info-card-icon link-icon">
-          <el-icon :size="18"><Link /></el-icon>
-        </div>
-        <div class="info-card-body">
-          <span class="info-card-label">跳轉連結</span>
-          <el-link type="primary" :href="notification.jumpUrl" target="_blank" :underline="false" class="jump-link">
-            {{ notification.jumpUrl }}
-          </el-link>
-        </div>
-      </div>
-      <div class="info-card" v-if="notification.replyDeadline">
-        <div class="info-card-icon deadline-icon">
-          <el-icon :size="18"><AlarmClock /></el-icon>
-        </div>
-        <div class="info-card-body">
-          <span class="info-card-label">回复截止時間</span>
-          <span class="info-card-value deadline-value">{{ notification.replyDeadline }}</span>
+          <span class="meta-divider">·</span>
+          <span class="meta-item">
+            <el-icon :size="14"><User /></el-icon>
+            發送人：{{ notification.senderName }}
+          </span>
+          <span class="meta-divider">·</span>
+          <span class="meta-item">
+            <el-icon :size="14"><Clock /></el-icon>
+            發佈時間：{{ notification.createTime }}
+          </span>
+          <span v-if="notification.replyDeadline" class="meta-divider">·</span>
+          <span v-if="notification.replyDeadline" class="meta-item">
+            <el-icon :size="14"><AlarmClock /></el-icon>
+            回复截止：{{ notification.replyDeadline }}
+          </span>
+          <span v-if="notification.jumpUrl" class="meta-divider">·</span>
+          <span v-if="notification.jumpUrl" class="meta-item">
+            <el-icon :size="14"><Link /></el-icon>
+            <el-link :href="notification.jumpUrl" target="_blank" :underline="false" class="hero-jump-link">
+              跳轉連接：{{ notification.jumpUrl }}
+            </el-link>
+          </span>
         </div>
       </div>
     </div>
@@ -298,7 +283,11 @@ import {
   QuestionFilled,
   ArrowDown,
   List,
-  Message
+  Message,
+  Clock,
+  Bell,
+  AlarmClock,
+  Link
 } from '@element-plus/icons-vue'
 import LogicQuestionItem from './LogicQuestionItem.vue'
 
@@ -316,6 +305,10 @@ export default {
     ArrowDown,
     List,
     Message,
+    Clock,
+    Bell,
+    AlarmClock,
+    Link,
     LogicQuestionItem
   },
   props: {
@@ -637,7 +630,6 @@ export default {
 .detail-hero {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
   padding: 24px 28px;
   background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
   border-radius: 14px;
@@ -668,19 +660,6 @@ export default {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 50%;
   pointer-events: none;
-}
-
-.hero-icon-wrap {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  flex-shrink: 0;
 }
 
 .hero-text {
@@ -722,85 +701,21 @@ export default {
   letter-spacing: 0.05em;
 }
 
-/* ===== 信息卡片行 ===== */
-.info-cards {
-  display: flex;
-  gap: 14px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.info-card {
-  flex: 1;
-  min-width: 240px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
-  background: #ffffff;
-  border: 1px solid #e8ecf1;
-  border-radius: 12px;
-  transition: all 0.25s ease;
-}
-
-.info-card:hover {
-  border-color: #93c5fd;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
-  transform: translateY(-1px);
-}
-
-.info-card-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.link-icon {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-  color: #2563eb;
-}
-
-.deadline-icon {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-  color: #1d4ed8;
-}
-
-.info-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.info-card-label {
-  font-size: 12px;
-  color: #9ca3af;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.info-card-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.deadline-value {
-  color: #1d4ed8;
-}
-
-.jump-link {
+/* ===== 跳转链接样式 ===== */
+.hero-jump-link {
+  color: rgba(255, 255, 255, 0.9) !important;
   font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
+  max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
+  font-weight: 500;
+}
+
+.hero-jump-link:hover {
+  color: #ffffff !important;
 }
 
 /* ===== 区块卡片 ===== */
