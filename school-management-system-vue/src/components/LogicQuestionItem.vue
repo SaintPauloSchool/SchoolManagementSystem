@@ -35,7 +35,7 @@
           </span>
           <div v-if="getSubQuestionLogicForOption(subQ, oIdx)" class="sub-q-logic-badge">
             <el-icon :size="12"><Connection /></el-icon>
-            <span>{{ formatJumpTarget(getSubQuestionLogicForOption(subQ, oIdx).jumpTarget, allQuestions) }}</span>
+            <span>{{ formatJumpTarget(getSubQuestionLogicForOption(subQ, oIdx).jumpTarget, indexStr, oIdx) }}</span>
           </div>
         </div>
         
@@ -126,18 +126,14 @@ export default {
       return subQ.logicRuleList.find(rule => rule.optionIndex === index)
     },
 
-    formatJumpTarget(target, questionsArray) {
+    formatJumpTarget(target, currentIndexStr, optIndex) {
       if (target === 'next') return '跳轉至下一題'
       if (target === 'end') return '跳轉至結束作答'
       
       const targetId = Number(target)
-      if (questionsArray && Array.isArray(questionsArray)) {
-        const idx = questionsArray.findIndex(q => q.id === targetId)
-        if (idx > -1) {
-          return `跳轉至第 ${idx + 1} 題`
-        }
-      }
-      return `跳轉至第 ${targetId} 題`
+      if (isNaN(targetId)) return '跳轉失敗'
+      
+      return `跳轉至問題 ${currentIndexStr}.${optIndex + 1}`
     },
 
     hasValidJumpTarget(subQ, index) {
