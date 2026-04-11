@@ -842,6 +842,8 @@ export default {
   color: #374151;
   font-size: 14px;
   border: 1px solid #f3f4f6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* ===== 芯片/标签列表 ===== */
