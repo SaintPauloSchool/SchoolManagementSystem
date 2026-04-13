@@ -68,15 +68,24 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="replyDeadline" label="回覆截止" width="180" align="center">
+        <el-table-column prop="replyDeadline" label="回覆截止" width="140" align="center">
           <template #default="scope">
-            <span v-if="scope.row.replyDeadline" class="deadline-text">
-              {{ scope.row.replyDeadline }}
-            </span>
+            <div v-if="scope.row.replyDeadline" class="datetime-block is-deadline">
+              <span class="date-part">{{ scope.row.replyDeadline.split(' ')[0] }}</span>
+              <span class="time-part" v-if="scope.row.replyDeadline.split(' ')[1]">{{ scope.row.replyDeadline.split(' ')[1] }}</span>
+            </div>
             <span v-else class="no-deadline">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="發布時間" width="180" align="center" />
+        <el-table-column prop="createTime" label="發布時間" width="140" align="center">
+          <template #default="scope">
+            <div v-if="scope.row.createTime" class="datetime-block">
+              <span class="date-part">{{ scope.row.createTime.split(' ')[0] }}</span>
+              <span class="time-part" v-if="scope.row.createTime.split(' ')[1]">{{ scope.row.createTime.split(' ')[1] }}</span>
+            </div>
+            <span v-else class="no-deadline">-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="120" fixed="right" align="center">
           <template #default="scope">
             <div class="action-buttons">
@@ -518,10 +527,33 @@ export default {
   color: #1d4ed8;
 }
 
-.deadline-text {
-  color: #d97706;
+.datetime-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.35;
+}
+
+.datetime-block .date-part {
+  color: #374151;
   font-weight: 500;
   font-size: 14px;
+}
+
+.datetime-block .time-part {
+  color: #8c98a9;
+  font-size: 12.5px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  margin-top: 2px;
+}
+
+.datetime-block.is-deadline .date-part {
+  color: #d97706;
+}
+
+.datetime-block.is-deadline .time-part {
+  color: #f59e0b;
 }
 
 .no-deadline {
