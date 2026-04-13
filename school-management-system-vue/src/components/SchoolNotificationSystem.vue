@@ -189,7 +189,7 @@ export default {
   },
   data() {
     return {
-      activeMenu: '1-1',
+      activeMenu: this.getInitialActiveMenu(),
       ccToMeNotifications: [],
       mySendNotifications: [],
       ccPagination: {
@@ -205,12 +205,7 @@ export default {
       isCollapsed: false,
       isMobileMenuOpen: false,
       isMobile: false,
-      expandedSections: {
-        homeSchool: true,
-        contact: false,
-        system: false,
-        report: false
-      },
+      expandedSections: this.getInitialExpandedSections(),
       menuItems: [
         { index: '1-1', title: '發布通知', icon: 'Edit' },
         { index: '1-2', title: '抄送我的', icon: 'Message'},
@@ -221,12 +216,57 @@ export default {
   mounted() {
     this.checkScreenSize()
     window.addEventListener('resize', this.handleResize)
-    this.loadCcToMeNotifications()
+    // 根据当前激活的菜单加载对应数据
+    this.loadInitialData()
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize)
   },
   methods: {
+    getInitialActiveMenu() {
+      // 从 sessionStorage 获取上次访问的菜单，如果没有则默认为 '1-1'
+      const savedMenu = sessionStorage.getItem('activeMenu')
+      return savedMenu || '1-1'
+    },
+    
+    saveActiveMenu(menu) {
+      // 保存当前菜单到 sessionStorage
+      sessionStorage.setItem('activeMenu', menu)
+    },
+    
+    getInitialExpandedSections() {
+      // 从 sessionStorage 获取上次菜单展开状态
+      const savedSections = sessionStorage.getItem('expandedSections')
+      if (savedSections) {
+        try {
+          return JSON.parse(savedSections)
+        } catch (e) {
+          console.error('解析菜单展开状态失败:', e)
+        }
+      }
+      // 默认状态：家校通知展开，其他折叠
+      return {
+        homeSchool: true,
+        contact: false,
+        system: false,
+        report: false
+      }
+    },
+    
+    saveExpandedSections() {
+      // 保存菜单展开状态到 sessionStorage
+      sessionStorage.setItem('expandedSections', JSON.stringify(this.expandedSections))
+    },
+    loadInitialData() {
+      // 根据当前激活的菜单加载对应的数据
+      if (this.activeMenu === '1-2') {
+        this.loadCcToMeNotifications()
+      } else if (this.activeMenu === '1-3') {
+        this.loadMySendNotifications()
+      }
+      // 其他菜单无需加载数据
+    },
+    
     checkScreenSize() {
       this.isMobile = window.innerWidth <= 768
       if (!this.isMobile) {
@@ -251,10 +291,12 @@ export default {
         this.isCollapsed = false
       }
       this.expandedSections[sectionName] = !this.expandedSections[sectionName]
+      this.saveExpandedSections() // 保存展开状态
     },
     
     handleMenuSelect(index) {
       this.activeMenu = index
+      this.saveActiveMenu(index) // 保存菜单选择
       if (this.isMobile) {
         this.isMobileMenuOpen = false
       }
