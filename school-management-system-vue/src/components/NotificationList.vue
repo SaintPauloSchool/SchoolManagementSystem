@@ -449,7 +449,7 @@ export default {
 .table-container :deep(.el-table) {
   border: none;
   --el-table-border-color: #f0f0f4;
-  font-size: 13.5px;
+  font-size: 14px;
   height: 100% !important;
 }
 
@@ -480,7 +480,7 @@ export default {
   background: #fafbfc !important;
   color: #6b7280;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0.02em;
   text-align: center;
   height: 46px;
@@ -511,7 +511,7 @@ export default {
   font-weight: 500;
   color: #2563eb;
   transition: all 0.2s ease;
-  font-size: 13.5px;
+  font-size: 14px;
 }
 
 .title-link:hover {
@@ -521,7 +521,7 @@ export default {
 .deadline-text {
   color: #d97706;
   font-weight: 500;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .no-deadline {
@@ -546,7 +546,7 @@ export default {
 .action-buttons .el-button {
   border-radius: 8px;
   font-weight: 500;
-  font-size: 12.5px;
+  font-size: 13px;
   padding: 6px 14px;
   border: none;
   box-shadow: none !important;
