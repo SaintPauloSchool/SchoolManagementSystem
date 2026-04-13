@@ -68,7 +68,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="replyDeadline" label="回覆截止" width="160" align="center">
+        <el-table-column prop="replyDeadline" label="回覆截止" width="180" align="center">
           <template #default="scope">
             <span v-if="scope.row.replyDeadline" class="deadline-text">
               {{ scope.row.replyDeadline }}
@@ -76,7 +76,7 @@
             <span v-else class="no-deadline">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="發布時間" width="160" align="center" />
+        <el-table-column prop="createTime" label="發布時間" width="180" align="center" />
         <el-table-column label="操作" width="120" fixed="right" align="center">
           <template #default="scope">
             <div class="action-buttons">
