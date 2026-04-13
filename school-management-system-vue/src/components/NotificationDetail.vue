@@ -29,13 +29,6 @@
             <el-icon :size="14"><AlarmClock /></el-icon>
             回复截止：{{ notification.replyDeadline }}
           </span>
-          <span v-if="notification.jumpUrl" class="meta-divider">·</span>
-          <span v-if="notification.jumpUrl" class="meta-item">
-            <el-icon :size="14"><Link /></el-icon>
-            <el-link :href="notification.jumpUrl" target="_blank" :underline="false" class="hero-jump-link">
-              跳轉連接：{{ notification.jumpUrl }}
-            </el-link>
-          </span>
         </div>
       </div>
     </div>
@@ -49,6 +42,17 @@
         <h3 class="section-label">通知正文</h3>
       </div>
       <div class="content-body" v-html="notification.content"></div>
+      
+      <!-- 外部連結區塊 -->
+      <div v-if="notification.jumpUrl" class="content-jump-link">
+        <div class="jump-link-header">
+          <el-icon :size="15"><Link /></el-icon>
+          <span>外部跳轉連結：</span>
+        </div>
+        <a :href="notification.jumpUrl" target="_blank" class="actual-link">
+          {{ notification.jumpUrl }}
+        </a>
+      </div>
     </div>
 
     <!-- 附件 -->
@@ -734,21 +738,39 @@ export default {
   letter-spacing: 0.05em;
 }
 
-/* ===== 跳转链接样式 ===== */
-.hero-jump-link {
-  color: rgba(255, 255, 255, 0.9) !important;
-  font-size: 13px;
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: inline-block;
-  vertical-align: middle;
-  font-weight: 500;
+/* ===== 外部跳轉連結 (正文底部) ===== */
+.content-jump-link {
+  margin-top: 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.hero-jump-link:hover {
-  color: #ffffff !important;
+.jump-link-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1e40af;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.actual-link {
+  color: #2563eb;
+  font-size: 14px;
+  word-break: break-all;
+  line-height: 1.5;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: all 0.2s ease;
+}
+
+.actual-link:hover {
+  color: #1d4ed8;
 }
 
 /* ===== 区块卡片 ===== */
