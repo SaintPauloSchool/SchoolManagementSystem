@@ -3,15 +3,15 @@
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.sp</groupId>
-    <artifactId>sp</artifactId>
+    <groupId>com.sms</groupId>
+    <artifactId>sms</artifactId>
     <version>0.0.0</version>
 
-    <name>sp</name>
+    <name>sms</name>
     <description>系统</description>
     
     <properties>
-        <sp.version>0.0.0</sp.version>
+        <sms.version>0.0.0</sms.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
@@ -27,17 +27,14 @@
         <commons.io.version>2.19.0</commons.io.version>
         <poi.version>4.1.2</poi.version>
         <velocity.version>2.3</velocity.version>
-        <!-- override dependency version -->
         <tomcat.version>9.0.108</tomcat.version>
         <logback.version>1.2.13</logback.version>
         <spring-framework.version>5.3.39</spring-framework.version>
     </properties>
 
-    <!-- 依赖声明 -->
     <dependencyManagement>
         <dependencies>
 
-            <!-- 覆盖SpringFramework的依赖配置-->
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-framework-bom</artifactId>
@@ -46,7 +43,6 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- SpringBoot的依赖配置-->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -55,7 +51,6 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- 覆盖logback的依赖配置-->
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-core</artifactId>
@@ -68,7 +63,6 @@
                 <version>${logback.version}</version>
             </dependency>
 
-            <!-- 覆盖tomcat的依赖配置-->
             <dependency>
                 <groupId>org.apache.tomcat.embed</groupId>
                 <artifactId>tomcat-embed-core</artifactId>
@@ -87,48 +81,41 @@
                 <version>${tomcat.version}</version>
             </dependency>
 
-            <!-- 阿里数据库连接池 -->
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>druid-spring-boot-starter</artifactId>
                 <version>${druid.version}</version>
             </dependency>
             
-            <!-- 验证码 -->
             <dependency>
                 <groupId>pro.fessional</groupId>
                 <artifactId>kaptcha</artifactId>
                 <version>${kaptcha.version}</version>
             </dependency>
 
-            <!-- Spring Security -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-security</artifactId>
             </dependency>
 
-            <!-- 解析客户端操作系统、浏览器等 -->
             <dependency>
                 <groupId>eu.bitwalker</groupId>
                 <artifactId>UserAgentUtils</artifactId>
                 <version>${bitwalker.version}</version>
             </dependency>
 
-            <!-- pagehelper 分页插件 -->
             <dependency>
                 <groupId>com.github.pagehelper</groupId>
                 <artifactId>pagehelper-spring-boot-starter</artifactId>
                 <version>${pagehelper.boot.version}</version>
             </dependency>
 
-            <!-- 获取系统信息 -->
             <dependency>
                 <groupId>com.github.oshi</groupId>
                 <artifactId>oshi-core</artifactId>
                 <version>${oshi.version}</version>
             </dependency>
 
-            <!-- Swagger3依赖 -->
             <dependency>
                 <groupId>io.springfox</groupId>
                 <artifactId>springfox-boot-starter</artifactId>
@@ -141,73 +128,64 @@
                 </exclusions>
             </dependency>
 
-            <!-- io常用工具类 -->
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons.io.version}</version>
             </dependency>
 
-            <!-- excel工具 -->
             <dependency>
                 <groupId>org.apache.poi</groupId>
                 <artifactId>poi-ooxml</artifactId>
                 <version>${poi.version}</version>
             </dependency>
 
-            <!-- velocity代码生成使用模板 -->
             <dependency>
                 <groupId>org.apache.velocity</groupId>
                 <artifactId>velocity-engine-core</artifactId>
                 <version>${velocity.version}</version>
             </dependency>
 
-            <!-- 阿里JSON解析器 -->
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>fastjson</artifactId>
                 <version>${fastjson.version}</version>
             </dependency>
 
-            <!-- JWT -->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt</artifactId>
                 <version>0.9.1</version>
             </dependency>
 
-            <!-- 核心模块-->
             <dependency>
-                <groupId>com.sp</groupId>
-                <artifactId>sp-framework</artifactId>
-                <version>${sp.version}</version>
+                <groupId>com.sms</groupId>
+                <artifactId>sms-framework</artifactId>
+                <version>${sms.version}</version>
             </dependency>
 
-            <!-- 系统模块-->
             <dependency>
-                <groupId>com.sp</groupId>
-                <artifactId>sp-system</artifactId>
-                <version>${sp.version}</version>
+                <groupId>com.sms</groupId>
+                <artifactId>sms-system</artifactId>
+                <version>${sms.version}</version>
             </dependency>
 
-            <!-- 通用工具-->
             <dependency>
-                <groupId>com.sp</groupId>
-                <artifactId>sp-common</artifactId>
-                <version>${sp.version}</version>
+                <groupId>com.sms</groupId>
+                <artifactId>sms-common</artifactId>
+                <version>${sms.version}</version>
             </dependency>
 
         </dependencies>
     </dependencyManagement>
 
     <modules>
-        <module>sp-api</module>
-        <module>sp-framework</module>
-        <module>sp-system</module>
-        <module>sp-common</module>
+        <module>sms-api</module>
+        <module>sms-framework</module>
+        <module>sms-system</module>
+        <module>sms-common</module>
     </modules>
     <packaging>pom</packaging>
-
 
     <dependencies>
 

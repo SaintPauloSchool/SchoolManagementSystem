@@ -161,7 +161,7 @@
         </el-button>
         <el-button type="primary" @click="handleSubmit" :loading="submitting">
           <el-icon><Promotion /></el-icon>
-          提交發布
+          提交發佈
         </el-button>
       </el-form-item>
     </el-form>

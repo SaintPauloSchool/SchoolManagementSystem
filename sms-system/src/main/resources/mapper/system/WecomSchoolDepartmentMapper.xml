@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sms.system.mapper.WecomSchoolDepartmentMapper">
+
+    <resultMap type="com.sms.system.entity.WecomSchoolDepartment" id="WecomSchoolDepartmentResult">
+        <result property="id" column="id"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="name" column="name"/>
+        <result property="nameEn" column="name_en"/>
+        <result property="orderNum" column="order_num"/>
+        <result property="departmentLeader" column="department_leader"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- 查询所有学校部门 -->
+    <select id="selectAll" resultMap="WecomSchoolDepartmentResult">
+        SELECT id, parent_id, name, name_en, order_num, department_leader, create_time, update_time
+        FROM wecom_school_department
+        ORDER BY order_num desc
+    </select>
+
+</mapper>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>sms</artifactId>
+        <groupId>com.sms</groupId>
+        <version>0.0.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <packaging>war</packaging>
+    <artifactId>sms-api</artifactId>
+
+    <description>
+        web?çÂä°?•Âè£
+    </description>
+
+    <dependencies>
+
+        <!-- SpringBoot?ÜÊ?thymeleafÊ®°Êùø -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- spring-boot-devtools -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional> <!-- Ë°®Á§∫‰æùË?‰∏ç‰?‰º†ÈÄ?-->
+        </dependency>
+
+        <!-- swagger3-->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-boot-starter</artifactId>
+        </dependency>
+
+        <!-- ?≤Ê≠¢ËøõÂÖ•swaggerÈ°µÈù¢?•Á±ª?ãËΩ¨?¢È?ËØØÔ??íÈô§3.0.0‰∏≠Á?ÂºïÁî®ÔºåÊ??®Â???.6.2?àÊú¨ -->
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-models</artifactId>
+            <version>1.6.2</version>
+        </dependency>
+
+        <!-- MysqlÈ©±Âä®??-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+
+        <!-- Servlet API -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- ?∏Â?Ê®°Â?-->
+        <dependency>
+            <groupId>com.sms</groupId>
+            <artifactId>sms-framework</artifactId>
+        </dependency>
+        
+        <!-- Á≥ªÁ?Ê®°Â?-->
+        <dependency>
+            <groupId>com.sms</groupId>
+            <artifactId>sms-system</artifactId>
+        </dependency>
+
+        <!-- ?öÁî®Â∑•ÂÖ∑Ê®°Â?-->
+        <dependency>
+            <groupId>com.sms</groupId>
+            <artifactId>sms-common</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>2.5.15</version>
+                <configuration>
+                    <fork>true</fork> <!-- Â¶ÇÊ?Ê≤°Ê?ËØ•È?ÁΩÆÔ?devtools‰∏ç‰??üÊ? -->
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>   
+                <groupId>org.apache.maven.plugins</groupId>   
+                <artifactId>maven-war-plugin</artifactId>   
+                <version>3.3.2</version>   
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                </configuration>   
+            </plugin>
+        </plugins>
+        <finalName>sms-api</finalName>
+    </build>
+
+</project>
+
+
+
+
+

@@ -296,6 +296,7 @@ import {
   Link
 } from '@element-plus/icons-vue'
 import LogicQuestionItem from './LogicQuestionItem.vue'
+import { normalizeProfileUrl } from '../utils/deployment'
 
 export default {
   name: 'NotificationDetail',
@@ -332,7 +333,16 @@ export default {
     attachmentUrls() {
       if (this.notification.attachmentUrls) {
         try {
-          return JSON.parse(this.notification.attachmentUrls)
+          return JSON.parse(this.notification.attachmentUrls).map(item => {
+            if (typeof item === 'string') {
+              return normalizeProfileUrl(item)
+            }
+
+            return {
+              ...item,
+              url: normalizeProfileUrl(item.url)
+            }
+          })
         } catch (e) {
           return []
         }
@@ -387,7 +397,7 @@ export default {
     },
 
     getAttachmentUrl(item) {
-      return typeof item === 'string' ? item : item.url
+      return typeof item === 'string' ? normalizeProfileUrl(item) : normalizeProfileUrl(item.url)
     },
 
     getRootQuestions(parsed) {

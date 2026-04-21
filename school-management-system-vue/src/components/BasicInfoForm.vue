@@ -153,6 +153,7 @@
 import { Upload, Edit, Delete, ArrowRight } from '@element-plus/icons-vue'
 import FormQuestionDialog from './FormQuestionDialog.vue'
 import { ElMessage } from 'element-plus'
+import { API_BASE_PATH, normalizeProfileUrl } from '../utils/deployment'
 
 export default {
   name: 'BasicInfoForm',
@@ -170,7 +171,7 @@ export default {
     return {
       localFormData: { ...this.formData },
       fileList: [],
-      uploadUrl: '/api/common/upload',
+      uploadUrl: `${API_BASE_PATH}/common/upload`,
       uploadHeaders: {},
       showFormQuestionDialog: false,
       editingFormQuestion: null,
@@ -223,16 +224,20 @@ export default {
                // 舊資料：字串陣列
                return {
                  name: decodeURIComponent(item.substring(item.lastIndexOf('/') + 1)) || `附件${index + 1}`,
-                 url: item
+                 url: normalizeProfileUrl(item)
                }
             } else {
                // 新資料：物件陣列 { name: '...', url: '...' }
                return {
                  name: item.name || `附件${index + 1}`,
-                 url: item.url
-               }
+                 url: normalizeProfileUrl(item.url)
+              }
             }
           })
+          this.localFormData.attachmentUrls = this.fileList.map(file => ({
+            name: file.name,
+            url: file.url
+          }))
         } catch (e) {
           console.error('初始化文件列表失敗:', e)
           this.fileList = []
@@ -264,7 +269,7 @@ export default {
 
     handleUploadSuccess(response, file) {
       if (response.code === 0) {
-        const url = response.data.url
+        const url = normalizeProfileUrl(response.data.url)
         const uploadedFile = this.fileList.find(f => f.uid === file.uid)
         if (uploadedFile) {
           uploadedFile.url = url
@@ -319,7 +324,7 @@ export default {
 
     handleUploadRemove(file) {
       const index = this.localFormData.attachmentUrls.findIndex(item => 
-        (typeof item === 'string' ? item : item.url) === file.url
+        normalizeProfileUrl(typeof item === 'string' ? item : item.url) === file.url
       )
       if (index > -1) {
         this.localFormData.attachmentUrls.splice(index, 1)
