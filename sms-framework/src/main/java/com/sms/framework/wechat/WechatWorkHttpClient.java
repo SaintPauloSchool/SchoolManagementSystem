@@ -24,12 +24,20 @@ public class WechatWorkHttpClient {
     /**
      * 獲取 Access Token 的 API 接口地址
      */
-    private static final String ACCESS_TOKEN_URL = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={corpId}&corpsecret={corpSecret}";
+    @Value("${wechat.work.api.accessTokenUrl:https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={corpId}&corpsecret={corpSecret}}")
+    private String accessTokenUrl;
     
     /**
      * 發送家校通知消息的 API 接口地址
      */
-    private static final String SEND_MESSAGE_URL = "https://qyapi.weixin.qq.com/cgi-bin/externalcontact/message/send?access_token={accessToken}";
+    @Value("${wechat.work.api.sendMessageUrl:https://qyapi.weixin.qq.com/cgi-bin/externalcontact/message/send?access_token={accessToken}}")
+    private String sendMessageUrl;
+
+    /**
+     * 發送應用消息的 API 接口地址
+     */
+    @Value("${wechat.work.api.sendAppMessageUrl:https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={accessToken}}")
+    private String sendAppMessageUrl;
 
     /**
      * 企業微信 CropId
@@ -72,7 +80,7 @@ public class WechatWorkHttpClient {
 
         try {
             // 構造請求 URL
-            String url = ACCESS_TOKEN_URL.replace("{corpId}", corpId)
+            String url = accessTokenUrl.replace("{corpId}", corpId)
                 .replace("{corpSecret}", secret);
 
             log.info("請求微信獲取access token");
@@ -114,7 +122,7 @@ public class WechatWorkHttpClient {
         try {
             validateMessageConfig();
             String accessToken = getAccessToken();
-            String url = SEND_MESSAGE_URL.replace("{accessToken}", accessToken);
+            String url = sendMessageUrl.replace("{accessToken}", accessToken);
             
             // 發送 POST 請求到微信接口
             String response = HttpUtils.sendPost(url, messageData.toJSONString(), MediaType.APPLICATION_JSON_VALUE);
@@ -149,8 +157,7 @@ public class WechatWorkHttpClient {
         try {
             validateMessageConfig();
             String accessToken = getAccessToken();
-            // 應用消息接口地址
-            String url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + accessToken;
+            String url = sendAppMessageUrl.replace("{accessToken}", accessToken);
             
             // 發送 POST 請求到微信接口
             String response = HttpUtils.sendPost(url, messageData.toJSONString(), MediaType.APPLICATION_JSON_VALUE);

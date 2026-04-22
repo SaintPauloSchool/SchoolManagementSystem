@@ -46,10 +46,9 @@ wechat:
     corpId: ww04fad852e91fd490
     agentId: 1000033
     secret: I31-B5clKayPf4vNl2bibhL1ia8x4cwIc884xK888Fc
-    redirectUri: https://mo-stu-sys.org-assistant.com/sms-api/wechat/oauth/callback
     noticeBaseUrl: http://10.32.96.55:8080/notice/
-    callback:
-      token: YWhmCsbcN5dtvkN44t5aywaOxcxDWWMO
-      encodingAesKey: 4C7hzSn2qFrO1hzMIJBY5iTL7UPKFZSUwmMX9TLF80D
-      corpId: wpV9pWDAAA1nyVENSNCp5_m185fWSXEg
-      permanentCode: I31-B5clKayPf4vNl2bibhL1ia8x4cwIc884xK888Fc
+    # 企業微信 API 接口地址
+    api:
+      accessTokenUrl: https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={corpId}&corpsecret={corpSecret}
+      sendMessageUrl: https://qyapi.weixin.qq.com/cgi-bin/externalcontact/message/send?access_token={accessToken}
+      sendAppMessageUrl: https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={accessToken}
