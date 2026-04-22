@@ -2,7 +2,6 @@ package com.sms.handler.notification;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.sms.framework.config.WechatWorkProperties;
 import com.sms.framework.wechat.WechatWorkHttpClient;
 import com.sms.system.entity.notification.Notification;
 import com.sms.system.entity.notification.NotificationReceiver;
@@ -10,6 +9,7 @@ import com.sms.system.service.notification.INotificationReceiverService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -28,16 +28,17 @@ public class NotificationPublishHandler {
     /**
      * 默認的通告查看基礎 URL。如果通告本身沒有跳轉鏈接，將使用此基礎 URL 拼接通告 ID。
      */
-    private static final String DEFAULT_NOTICE_BASE_URL = "http://10.32.96.55:8080/notice/";
+    @Value("${wechat.work.noticeBaseUrl:http://10.32.96.55:8080/notice/}")
+    private String noticeBaseUrl;
+
+    @Value("${wechat.work.agentId:#{null}}")
+    private Integer agentId;
 
     @Autowired
     private INotificationReceiverService notificationReceiverService;
 
     @Autowired
     private WechatWorkHttpClient wechatWorkHttpClient;
-
-    @Autowired
-    private WechatWorkProperties wechatWorkProperties;
 
     /**
      * 將通告發佈到企業微信（家校通信/外部聯繫人消息）
@@ -93,7 +94,7 @@ public class NotificationPublishHandler {
         
         // 消息類型與應用ID
         payload.put("msgtype", "text");
-        payload.put("agentid", wechatWorkProperties.getAgentId());
+        payload.put("agentid", agentId);
 
         // 構建文本內容
         JSONObject text = new JSONObject();
@@ -120,7 +121,7 @@ public class NotificationPublishHandler {
         
         // 如果通告沒有自定義的跳轉鏈接，則使用默認的詳情頁鏈接
         if (noticeUrl == null || noticeUrl.trim().isEmpty()) {
-            noticeUrl = DEFAULT_NOTICE_BASE_URL + notification.getNotificationId();
+            noticeUrl = noticeBaseUrl + notification.getNotificationId();
         }
         
         return "您有一條新的通告\n"
