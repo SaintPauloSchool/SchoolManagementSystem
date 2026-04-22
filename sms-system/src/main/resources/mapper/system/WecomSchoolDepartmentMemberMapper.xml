@@ -25,4 +25,15 @@
         ORDER BY department_id ASC, name ASC
     </select>
 
+    <!-- 根据 ID 批量查询部门成员 -->
+    <select id="selectMembersByIds" resultMap="WecomSchoolDepartmentMemberResult">
+        SELECT id, userid, name, department_id, open_userid, create_time, update_time
+        FROM wecom_school_department_member
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY department_id ASC, name ASC
+    </select>
+
 </mapper>

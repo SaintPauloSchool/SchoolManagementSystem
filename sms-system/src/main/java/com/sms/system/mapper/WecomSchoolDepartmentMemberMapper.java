@@ -18,4 +18,12 @@ public interface WecomSchoolDepartmentMemberMapper {
      * @return 成员集合
      */
     List<WecomSchoolDepartmentMember> selectMembersByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
+
+    /**
+     * 根据 ID 批量查询部门成员
+     *
+     * @param ids 成员 ID 列表
+     * @return 成员集合
+     */
+    List<WecomSchoolDepartmentMember> selectMembersByIds(@Param("ids") List<Long> ids);
 }

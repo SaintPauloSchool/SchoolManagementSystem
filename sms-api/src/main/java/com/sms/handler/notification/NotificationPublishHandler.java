@@ -4,7 +4,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.framework.wechat.WechatWorkHttpClient;
 import com.sms.system.entity.notification.Notification;
+import com.sms.system.entity.notification.NotificationCc;
 import com.sms.system.entity.notification.NotificationReceiver;
+import com.sms.system.service.notification.INotificationCcService;
 import com.sms.system.service.notification.INotificationReceiverService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 通告發佈處理器
@@ -36,6 +36,9 @@ public class NotificationPublishHandler {
 
     @Autowired
     private INotificationReceiverService notificationReceiverService;
+
+    @Autowired
+    private INotificationCcService notificationCcService;
 
     @Autowired
     private WechatWorkHttpClient wechatWorkHttpClient;
@@ -62,6 +65,33 @@ public class NotificationPublishHandler {
 
         // 2. 分批發送通知
         sendInBatches(notification, parentUserIds, studentUserIds, partyIds);
+    }
+
+    /**
+     * 發送抄送通知到企業微信應用消息
+     *
+     * @param notification 通告實體對象
+     */
+    public void sendCcNotifications(Notification notification) {
+        // 1. 查詢該通知的抄送對象
+        List<NotificationCc> ccs = notificationCcService.selectByNotificationId(notification.getNotificationId());
+        
+        if (ccs == null || ccs.isEmpty()) {
+            log.info("通知 {} 沒有設置抄送對象", notification.getNotificationId());
+            return;
+        }
+        
+        // 2. 使用 Service 解析所有抄送對象，獲取 userid 列表
+        Set<String> allUserIds = notificationCcService.resolveCcUserIds(ccs);
+        
+        // 3. 如果沒有有效的 userid，直接返回
+        if (allUserIds.isEmpty()) {
+            log.warn("通知 {} 的抄送對象中沒有解析出有效的 userid", notification.getNotificationId());
+            return;
+        }
+        
+        // 4. 分批發送抄送消息
+        sendCcInBatches(notification, new ArrayList<>(allUserIds));
     }
 
     /**
@@ -104,7 +134,9 @@ public class NotificationPublishHandler {
      * @return 格式化後的文本內容
      */
     private String buildContent(Notification notification) {
+        // 標題
         String title = notification.getTitle() == null ? "" : notification.getTitle().trim();
+        // 設置跳轉地址
         String noticeUrl = notification.getJumpUrl();
         
         // 如果通告沒有自定義的跳轉鏈接，則使用默認的詳情頁鏈接
@@ -112,9 +144,15 @@ public class NotificationPublishHandler {
             noticeUrl = noticeBaseUrl + notification.getNotificationId();
         }
         
-        return "您有一條新的通告\n\n"
-            + "標題：" + title + "\n\n"
-            + "請點擊以下連接查看詳情：\n" + noticeUrl;
+        // 格式化發佈時間
+        String publishTime = formatPublishTime(notification.getCreateTime());
+        
+        return "📢 您有一條新的通告\n"
+            + "──────────────\n"
+            + "📌 標題：\n" + title + "\n\n"
+            + "🕒 發佈時間：\n" + publishTime + "\n"
+            + "──────────────\n"
+            + "👉 請點擊以下連接查看詳情：\n" + noticeUrl;
     }
 
     /**
@@ -209,5 +247,124 @@ public class NotificationPublishHandler {
             array.addAll(values);
         }
         return array;
+    }
+
+    /**
+     * 格式化發佈時間
+     *
+     * @param createTime 創建時間
+     * @return 格式化後的時間字符串 (yyyy-MM-dd HH:mm:ss)
+     */
+    private String formatPublishTime(Date createTime) {
+        if (createTime == null) {
+            return "未知";
+        }
+        
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return sdf.format(createTime);
+    }
+    
+    /**
+     * 分批發送抄送消息
+     *
+     * @param notification 通知實體
+     * @param userIds      接收者 userid 列表
+     */
+    private void sendCcInBatches(Notification notification, List<String> userIds) {
+        int batchSize = 1000; // 每批最多 1000 個用戶
+        
+        // 計算需要的批次數量
+        int totalBatches = (int) Math.ceil((double) userIds.size() / batchSize);
+        
+        log.info("通知 {} 的抄送消息需要分 {} 批發送，共 {} 個接收者",
+                notification.getNotificationId(), totalBatches, userIds.size());
+        
+        // 分批發送
+        for (int i = 0; i < totalBatches; i++) {
+            // 截取當前批次的數據
+            List<String> currentUserIds = extractBatch(userIds, i, batchSize);
+            
+            // 如果當前批次沒有任何接收者，跳過
+            if (currentUserIds.isEmpty()) {
+                continue;
+            }
+            
+            // 構建並發送當前批次的消息
+            JSONObject payload = buildCcWechatPayload(currentUserIds, notification);
+            
+            log.info("發送通知 {} 的抄送消息第 {}/{} 批，接收者: {}",
+                    notification.getNotificationId(), i + 1, totalBatches, currentUserIds.size());
+            
+            JSONObject result = wechatWorkHttpClient.sendAppMessage(payload);
+            
+            Integer errcode = result.getInteger("errcode");
+            // 如果返回的錯誤碼不是 0，則表示發送失敗
+            if (errcode == null || errcode != 0) {
+                log.error("通知 {} 抄送消息第 {} 批發送失敗: code={}, msg={}",
+                        notification.getNotificationId(), i + 1, errcode, result.getString("errmsg"));
+                throw new IllegalStateException("企業微信抄送消息發送失敗（第 " + (i + 1) + " 批）: " + result.toJSONString());
+            }
+            
+            log.info("通知 {} 抄送消息第 {}/{} 批發送成功", notification.getNotificationId(), i + 1, totalBatches);
+        }
+        
+        log.info("通知 {} 的抄送消息已全部發送完成，共 {} 批", notification.getNotificationId(), totalBatches);
+    }
+
+    /**
+     * 構建抄送消息的企業微信應用消息 Payload (文本卡片消息)
+     *
+     * @param userIds      接收者 userid 列表
+     * @param notification 通知實體
+     * @return 企業微信應用消息 JSON
+     */
+    private JSONObject buildCcWechatPayload(List<String> userIds, Notification notification) {
+        JSONObject payload = new JSONObject();
+        
+        // 設置接收者，多個 userid 用 '|' 分隔
+        String touser = String.join("|", userIds);
+        payload.put("touser", touser);
+        
+        // 消息類型與應用ID
+        payload.put("msgtype", "textcard");
+        payload.put("agentid", agentId);
+        
+        // 構建文本卡片內容
+        JSONObject textcard = new JSONObject();
+        
+        // 標題 (固定文字)
+        textcard.put("title", "📨 您有一條抄送的通知");
+        
+        // 描述 (支持 HTML 格式) - 顯示通知標題和發佈時間
+        String title = notification.getTitle() == null ? "" : notification.getTitle().trim();
+        // 發佈時間
+        String publishTime = formatPublishTime(notification.getCreateTime());
+        // 內容
+        String description = "<div class=\"gray\">⏰ " + publishTime + "</div> "
+            + "<div class=\"normal\">📋 " + title + "</div>";
+        // 截取前 512 個字符
+        if (description.length() > 512) {
+            description = description.substring(0, 512);
+        }
+        // 設置描述
+        textcard.put("description", description);
+        // 跳轉鏈接
+        String noticeUrl = notification.getJumpUrl();
+        if (noticeUrl == null || noticeUrl.trim().isEmpty()) {
+            noticeUrl = noticeBaseUrl + notification.getNotificationId();
+        }
+        textcard.put("url", noticeUrl);
+        
+        // 按鈕文字
+        textcard.put("btntxt", "查看詳情");
+        
+        payload.put("textcard", textcard);
+        
+        // 其他發送配置
+        payload.put("enable_id_trans", 0);
+        payload.put("enable_duplicate_check", 0);
+        payload.put("duplicate_check_interval", 1800); // 防重覆發送校驗時間，默認1800秒
+        
+        return payload;
     }
 }

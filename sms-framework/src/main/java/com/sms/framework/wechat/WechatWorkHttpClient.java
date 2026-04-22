@@ -139,6 +139,42 @@ public class WechatWorkHttpClient {
     }
 
     /**
+     * 發送應用消息（內部應用消息推送）
+     * 用於向企業內部成員發送消息
+     *
+     * @param messageData 消息 JSON 數據內容
+     * @return 微信接口調用結果
+     */
+    public JSONObject sendAppMessage(JSONObject messageData) {
+        try {
+            validateMessageConfig();
+            String accessToken = getAccessToken();
+            // 應用消息接口地址
+            String url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + accessToken;
+            
+            // 發送 POST 請求到微信接口
+            String response = HttpUtils.sendPost(url, messageData.toJSONString(), MediaType.APPLICATION_JSON_VALUE);
+            JSONObject result = JSONObject.parseObject(response);
+
+            if (result == null) {
+                throw new RuntimeException("發送應用消息失敗：回應為空");
+            }
+
+            // 判斷發送結果
+            if (result.getInteger("errcode") == 0) {
+                log.info("微信應用消息已成功發送");
+            } else {
+                log.error("微信應用消息發送失敗: {} - {}", result.getInteger("errcode"), result.getString("errmsg"));
+            }
+
+            return result;
+        } catch (Exception e) {
+            log.error("微信應用消息發送失敗", e);
+            throw new RuntimeException("發送應用消息失敗: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * 驗證基礎配置（企業 CorpId 和 Secret 必須存在）
      */
     private void validateBaseConfig() {

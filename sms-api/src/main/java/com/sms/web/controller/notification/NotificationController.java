@@ -164,8 +164,13 @@ public class NotificationController extends BaseController {
                 }
             }
 
+            // 5. 如果狀態為發布，則發送通知和抄送消息
             if ("1".equals(notification.getStatus())) {
+                // 發送通知給接收者
                 notificationPublishHandler.publishToWechat(notification, notification.getReceivers());
+                
+                // 發送抄送消息
+                notificationPublishHandler.sendCcNotifications(notification);
             }
             
             return AjaxResult.success();
