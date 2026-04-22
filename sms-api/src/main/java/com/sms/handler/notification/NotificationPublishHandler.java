@@ -41,7 +41,7 @@ public class NotificationPublishHandler {
     private WechatWorkHttpClient wechatWorkHttpClient;
 
     /**
-     * 將通告發佈到企業微信（家校通信/外部聯繫人消息）
+     * 將通告發佈到微信（家校通信/外部聯繫人消息）
      *
      * @param notification 通告實體對象
      * @param receivers    通告的接收者列表設置
@@ -60,20 +60,8 @@ public class NotificationPublishHandler {
             throw new IllegalStateException("未解析出有效的微信接收者");
         }
 
-        // 2. 構建微信家校消息(家校通知)的請求 Payload
-        JSONObject payload = buildWechatPayload(parentUserIds, studentUserIds, partyIds, notification);
-
-        // 3. 調用企業微信客戶端發送消息
-        log.info("發布通知 {} 到微信，有效載荷：{}", notification.getNotificationId(), payload.toJSONString());
-        JSONObject result = wechatWorkHttpClient.sendSchoolNotification(payload);
-        
-        Integer errcode = result.getInteger("errcode");
-        if (errcode == null || errcode != 0) {
-            log.error("Wechat notification publish failed: code={}, msg={}", errcode, result.getString("errmsg"));
-            throw new IllegalStateException("企業微信消息發送失敗: " + result.toJSONString());
-        }
-        
-        log.info("通知 {} 已成功發佈到微信", notification.getNotificationId());
+        // 2. 分批發送通知
+        sendInBatches(notification, parentUserIds, studentUserIds, partyIds);
     }
 
     /**
@@ -130,7 +118,90 @@ public class NotificationPublishHandler {
     }
 
     /**
-     * 輔助方法：將 List 轉換為 JSON 數組
+     * 分批發送通知，根據企業微信 API 的人數限制進行分批
+     * - to_parent_userid 和 to_student_userid: 每批最多 1000 個
+     * - to_party: 每批最多 100 個
+     *
+     * @param notification   通知實體
+     * @param parentUserIds  家長用戶 ID 列表
+     * @param studentUserIds 學生用戶 ID 列表
+     * @param partyIds       部門 ID 列表
+     */
+    private void sendInBatches(Notification notification, List<String> parentUserIds, 
+                               List<String> studentUserIds, List<String> partyIds) {
+        int parentBatchSize = 1000;
+        int studentBatchSize = 1000;
+        int partyBatchSize = 100;
+
+        // 計算需要的批次數量
+        int parentBatches = (int) Math.ceil((double) parentUserIds.size() / parentBatchSize);
+        int studentBatches = (int) Math.ceil((double) studentUserIds.size() / studentBatchSize);
+        int partyBatches = (int) Math.ceil((double) partyIds.size() / partyBatchSize);
+        
+        int totalBatches = Math.max(Math.max(parentBatches, studentBatches), partyBatches);
+        
+        log.info("通知 {} 需要分 {} 批發送（家長 {} 批，學生 {} 批，部門 {} 批）",
+                notification.getNotificationId(), totalBatches, parentBatches, studentBatches, partyBatches);
+
+        // 分批發送
+        for (int i = 0; i < totalBatches; i++) {
+            // 截取當前批次的數據
+            List<String> currentParentIds = extractBatch(parentUserIds, i, parentBatchSize);
+            List<String> currentStudentIds = extractBatch(studentUserIds, i, studentBatchSize);
+            List<String> currentPartyIds = extractBatch(partyIds, i, partyBatchSize);
+        
+            // 如果當前批次沒有任何接收者，跳過
+            if (currentParentIds.isEmpty() && currentStudentIds.isEmpty() && currentPartyIds.isEmpty()) {
+                continue;
+            }
+        
+            // 構建並發送當前批次的消息
+            JSONObject payload = buildWechatPayload(currentParentIds, currentStudentIds, currentPartyIds, notification);
+                    
+            log.info("發送通知 {} 的第 {}/{} 批，家長: {}, 學生: {}, 部門: {}",
+                    notification.getNotificationId(), i + 1, totalBatches,
+                    currentParentIds.size(), currentStudentIds.size(), currentPartyIds.size());
+                    
+            JSONObject result = wechatWorkHttpClient.sendSchoolNotification(payload);
+                    
+            Integer errcode = result.getInteger("errcode");
+            // 如果返回的錯誤碼不是 0，則表示發送失敗
+            if (errcode == null || errcode != 0) {
+                log.error("通知 {} 第 {} 批發送失敗: code={}, msg={}",
+                        notification.getNotificationId(), i + 1, errcode, result.getString("errmsg"));
+                throw new IllegalStateException("企業微信消息發送失敗（第 " + (i + 1) + " 批）: " + result.toJSONString());
+            }
+                    
+            log.info("通知 {} 第 {}/{} 批發送成功", notification.getNotificationId(), i + 1, totalBatches);
+        }
+        
+        log.info("通知 {} 已全部發送完成，共 {} 批", notification.getNotificationId(), totalBatches);
+    }
+
+    /**
+     * 從列表中截取指定批次的數據
+     *
+     * @param list      原始列表
+     * @param batchIndex 批次索引（從 0 開始）
+     * @param batchSize  每批大小
+     * @return 當前批次的子列表
+     */
+    private List<String> extractBatch(List<String> list, int batchIndex, int batchSize) {
+        if (list == null || list.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        int fromIndex = batchIndex * batchSize;
+        if (fromIndex >= list.size()) {
+            return Collections.emptyList();
+        }
+        
+        int toIndex = Math.min(fromIndex + batchSize, list.size());
+        return list.subList(fromIndex, toIndex);
+    }
+
+    /**
+     * 構建發送給企業微信接口的 JSON 數據實體
      */
     private JSONArray toJsonArray(List<String> values) {
         JSONArray array = new JSONArray();
