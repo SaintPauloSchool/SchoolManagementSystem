@@ -124,8 +124,8 @@ public class NotificationPublishHandler {
             noticeUrl = noticeBaseUrl + notification.getNotificationId();
         }
         
-        return "您有一條新的通告\n"
-            + "標題：" + title + "\n"
+        return "您有一條新的通告\n\n"
+            + "標題：" + title + "\n\n"
             + "請點擊以下連接查看詳情：\n" + noticeUrl;
     }
 

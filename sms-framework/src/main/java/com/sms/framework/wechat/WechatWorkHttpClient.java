@@ -75,12 +75,12 @@ public class WechatWorkHttpClient {
             String url = ACCESS_TOKEN_URL.replace("{corpId}", corpId)
                 .replace("{corpSecret}", secret);
 
-            log.info("requesting wechat work access token");
+            log.info("請求微信獲取access token");
             String response = HttpUtils.sendGet(url);
             JSONObject jsonObject = JSONObject.parseObject(response);
 
             if (jsonObject == null) {
-                throw new RuntimeException("failed to get access token: empty response");
+                throw new RuntimeException("取得access token失敗：回應為空");
             }
 
             // errcode 為 0 表示請求成功
@@ -92,15 +92,15 @@ public class WechatWorkHttpClient {
                 long expireTimeMs = System.currentTimeMillis() + (expiresIn - 300L) * 1000L;
                 tokenCache.put(corpId, new TokenCache(accessToken, expireTimeMs));
                 
-                log.info("wechat work access token refreshed");
+                log.info("微信access token已刷新");
                 return accessToken;
             }
 
-            log.error("failed to get wechat work access token: {}", jsonObject.getString("errmsg"));
-            throw new RuntimeException("failed to get access token: " + jsonObject.getString("errmsg"));
+            log.error("取得微信access token失敗: {}", jsonObject.getString("errmsg"));
+            throw new RuntimeException("取得微信access token失敗: " + jsonObject.getString("errmsg"));
         } catch (Exception e) {
-            log.error("failed to get wechat work access token", e);
-            throw new RuntimeException("failed to get access token: " + e.getMessage(), e);
+            log.error("取得微信access token失敗", e);
+            throw new RuntimeException("取得微信access token失敗: " + e.getMessage(), e);
         }
     }
 
@@ -121,20 +121,20 @@ public class WechatWorkHttpClient {
             JSONObject result = JSONObject.parseObject(response);
 
             if (result == null) {
-                throw new RuntimeException("failed to send notification: empty response");
+                throw new RuntimeException("發送通知失敗：回應為空");
             }
 
             // 判斷發送結果
             if (result.getInteger("errcode") == 0) {
-                log.info("wechat work notification sent successfully");
+                log.info("微信通知已成功發送");
             } else {
-                log.error("wechat work notification failed: {} - {}", result.getInteger("errcode"), result.getString("errmsg"));
+                log.error("微信通知發送失敗: {} - {}", result.getInteger("errcode"), result.getString("errmsg"));
             }
 
             return result;
         } catch (Exception e) {
-            log.error("failed to send wechat work notification", e);
-            throw new RuntimeException("failed to send notification: " + e.getMessage(), e);
+            log.error("微信通知發送失敗", e);
+            throw new RuntimeException("發送通知失敗: " + e.getMessage(), e);
         }
     }
 
