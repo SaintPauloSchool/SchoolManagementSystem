@@ -26,6 +26,16 @@
         ORDER BY department_id ASC, name ASC
     </select>
 
+    <select id="selectMembersByIds" resultMap="SysSchoolDepartmentMemberResult">
+        SELECT id, userid, name, department_id, open_userid, type, create_time, update_time
+        FROM sys_school_department_member
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY department_id ASC, name ASC
+    </select>
+
     <!-- 根據 ID 刪除部門成員 -->
     <delete id="deleteMemberById" parameterType="Long">
         DELETE FROM sys_school_department_member

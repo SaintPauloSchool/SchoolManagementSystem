@@ -26,4 +26,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </select>
 
+    <select id="selectByIds" resultMap="SysParentStudentRelationResult">
+        SELECT id, parent_user_id, student_user_id, student_name, relation_desc, mobile, external_userid, create_time, update_time
+        FROM sys_parent_student_relation
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
 </mapper>

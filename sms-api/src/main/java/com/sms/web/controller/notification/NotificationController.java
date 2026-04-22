@@ -3,9 +3,9 @@ package com.sms.web.controller.notification;
 import com.sms.common.annotation.Log;
 import com.sms.common.core.controller.BaseController;
 import com.sms.common.core.domain.AjaxResult;
-import com.sms.common.core.domain.entity.SysUser;
 import com.sms.common.core.page.TableDataInfo;
 import com.sms.common.enums.BusinessType;
+import com.sms.handler.notification.NotificationPublishHandler;
 import com.sms.system.entity.notification.Notification;
 import com.sms.system.entity.notification.NotificationReceiver;
 import com.sms.system.entity.notification.NotificationCc;
@@ -41,6 +41,9 @@ public class NotificationController extends BaseController {
 
     @Autowired
     private INotificationQuestionService notificationQuestionService;
+
+    @Autowired
+    private NotificationPublishHandler notificationPublishHandler;
 
     /**
      * 查詢通知列表
@@ -159,6 +162,10 @@ public class NotificationController extends BaseController {
                     question.setCreateTime(new Date());
                     notificationQuestionService.save(question);
                 }
+            }
+
+            if ("1".equals(notification.getStatus())) {
+                notificationPublishHandler.publishToWechat(notification, notification.getReceivers());
             }
             
             return AjaxResult.success();

@@ -20,6 +20,13 @@ public interface SysSchoolDepartmentMemberMapper {
     List<SysSchoolDepartmentMember> selectMembersByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
 
     /**
+     * 根据 ID 批量查询部门成员
+     * @param ids
+     * @return
+     */
+    List<SysSchoolDepartmentMember> selectMembersByIds(@Param("ids") List<Long> ids);
+
+    /**
      * 根据 ID 删除部门成员
      *
      * @param id 成员 ID

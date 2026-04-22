@@ -18,4 +18,13 @@ public interface SysParentStudentRelationMapper {
      * @return 家长学生关系集合
      */
     List<SysParentStudentRelation> selectByParentUserIds(@Param("parentUserIds") List<String> parentUserIds);
+
+    /**
+     * 根据 ID 批量查询家长学生关系
+     *
+     * @param ids 家长学生关系 ID 列表
+     * @return 家长学生关系集合
+     */
+    List<SysParentStudentRelation> selectByIds(@Param("ids") List<Long> ids);
+
 }

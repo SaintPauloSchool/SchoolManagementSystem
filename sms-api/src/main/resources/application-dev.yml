@@ -9,9 +9,9 @@ spring:
     druid:
       # 主庫數據源
       master:
-        url: jdbc:mysql://localhost:3306/school_student_management?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
-        username: root
-        password: root
+        url: jdbc:mysql://10.32.96.45:3306/school_student_management_test?useSSL=false&serverTimezone=Asia/Taipei&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&autoReconnect=true&failOverReadOnly=false&maxReconnects=10&initialTimeout=2&connectTimeout=60000&socketTimeout=60000
+        username: dba_user
+        password: StrongP@ssw0rd
       # Druid 通用配置（供 DruidProperties 使用）
       # 初始連接數
       initialSize: 5
@@ -40,3 +40,15 @@ spring:
 # 開發階段日誌配置 - 詳細調試模式
 logging:
   config: classpath:logback-dev.xml
+
+wechat:
+  work:
+    corpId: ww04fad852e91fd490
+    agentId: 1000033
+    secret: I31-B5clKayPf4vNl2bibhL1ia8x4cwIc884xK888Fc
+    redirectUri: https://mo-stu-sys.org-assistant.com/sms-api/wechat/oauth/callback
+    callback:
+      token: YWhmCsbcN5dtvkN44t5aywaOxcxDWWMO
+      encodingAesKey: 4C7hzSn2qFrO1hzMIJBY5iTL7UPKFZSUwmMX9TLF80D
+      corpId: wpV9pWDAAA1nyVENSNCp5_m185fWSXEg
+      permanentCode: I31-B5clKayPf4vNl2bibhL1ia8x4cwIc884xK888Fc
