@@ -274,6 +274,38 @@
         </template>
       </div>
     </div>
+
+    <!-- 發送統計 -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon statistics-icon">
+          <el-icon :size="16"><TrendCharts /></el-icon>
+        </div>
+        <h3 class="section-label">發送統計</h3>
+      </div>
+      <div class="statistics-grid">
+        <div class="stat-item">
+          <div class="stat-value">{{ (notification.statistics && notification.statistics.totalCount) || 0 }}</div>
+          <div class="stat-label">應發總數</div>
+        </div>
+        <div class="stat-item success">
+          <div class="stat-value">{{ (notification.statistics && notification.statistics.successCount) || 0 }}</div>
+          <div class="stat-label">發送成功</div>
+        </div>
+        <div class="stat-item fail">
+          <div class="stat-value">{{ (notification.statistics && notification.statistics.failCount) || 0 }}</div>
+          <div class="stat-label">發送失敗</div>
+        </div>
+        <div class="stat-item read">
+          <div class="stat-value">{{ (notification.statistics && notification.statistics.readCount) || 0 }}</div>
+          <div class="stat-label">已讀總數</div>
+        </div>
+        <div class="stat-item reply">
+          <div class="stat-value">{{ (notification.statistics && notification.statistics.replyCount) || 0 }}</div>
+          <div class="stat-label">回復總數</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -293,7 +325,8 @@ import {
   Clock,
   Bell,
   AlarmClock,
-  Link
+  Link,
+  TrendCharts
 } from '@element-plus/icons-vue'
 import LogicQuestionItem from './LogicQuestionItem.vue'
 import { normalizeProfileUrl } from '../utils/deployment'
@@ -316,6 +349,7 @@ export default {
     Bell,
     AlarmClock,
     Link,
+    TrendCharts,
     LogicQuestionItem
   },
   props: {
@@ -1012,6 +1046,85 @@ export default {
   color: #334155;
   font-weight: 500;
   flex: 1;
+}
+
+/* ===== 統計卡片 ===== */
+.statistics-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.statistics-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.25s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stat-item.success {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #bbf7d0;
+}
+
+.stat-item.fail {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #fecaca;
+}
+
+.stat-item.read {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #bfdbfe;
+}
+
+.stat-item.reply {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border-color: #e9d5ff;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-item.success .stat-value {
+  color: #16a34a;
+}
+
+.stat-item.fail .stat-value {
+  color: #dc2626;
+}
+
+.stat-item.read .stat-value {
+  color: #2563eb;
+}
+
+.stat-item.reply .stat-value {
+  color: #9333ea;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
 }
 
 /* ===== 抄送对象分组卡片 ===== */

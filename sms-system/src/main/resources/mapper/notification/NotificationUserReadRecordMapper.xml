@@ -25,4 +25,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </insert>
 
+    <select id="selectBySendRecordId" resultMap="NotificationUserReadRecordResult">
+        select read_id, send_record_id, user_id, user_type, is_read,
+               read_time, reply_status, reply_time, create_time
+        from notification_user_read_record
+        where send_record_id = #{sendRecordId}
+    </select>
+
 </mapper>

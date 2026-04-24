@@ -15,4 +15,12 @@ public interface NotificationSendRecordMapper {
      */
     int insert(NotificationSendRecord sendRecord);
 
+    /**
+     * 根据通知ID查询发送记录
+     *
+     * @param notificationId 通知ID
+     * @return 发送记录
+     */
+    NotificationSendRecord selectByNotificationId(Long notificationId);
+
 }

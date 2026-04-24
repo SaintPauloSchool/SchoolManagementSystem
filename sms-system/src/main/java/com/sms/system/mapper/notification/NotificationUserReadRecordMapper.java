@@ -17,4 +17,12 @@ public interface NotificationUserReadRecordMapper {
      * @return 结果
      */
     int batchInsert(@Param("list") List<NotificationUserReadRecord> readRecords);
+
+    /**
+     * 根据发送记录ID查询阅读记录列表
+     *
+     * @param sendRecordId 发送记录ID
+     * @return 阅读记录列表
+     */
+    List<NotificationUserReadRecord> selectBySendRecordId(Long sendRecordId);
 }

@@ -261,7 +261,19 @@ export default {
         })
         
         if (response.code === 200 || response.code === 0) {
-          this.selectedNotification = response.data
+          const vo = response.data
+          // 將後端 NotificationDetailVO 重新組合為 NotificationDetail.vue 期望的扁平格式：
+          // notification.title / notification.receivers / notification.statistics 等
+          this.selectedNotification = {
+            ...vo.notification,
+            receivers: vo.receivers || [],
+            ccs: vo.ccs || [],
+            questions: vo.questions || [],
+            statistics: {
+              ...(vo.sendStatistics || {}),
+              ...(vo.readStatistics || {})
+            }
+          }
           this.detailDialogVisible = true
         }
       } catch (error) {

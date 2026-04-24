@@ -10,17 +10,18 @@ import com.sms.system.entity.notification.Notification;
 import com.sms.system.entity.notification.NotificationReceiver;
 import com.sms.system.entity.notification.NotificationCc;
 import com.sms.system.entity.notification.NotificationQuestion;
+import com.sms.system.entity.vo.NotificationDetailVO;
 import com.sms.system.service.notification.INotificationService;
 import com.sms.system.service.notification.INotificationReceiverService;
 import com.sms.system.service.notification.INotificationCcService;
 import com.sms.system.service.notification.INotificationQuestionService;
+import com.sms.system.service.notification.INotificationSendRecordService;
+import com.sms.system.service.notification.INotificationUserReadRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 
 /**
  * 通知 Controller
@@ -44,6 +45,12 @@ public class NotificationController extends BaseController {
 
     @Autowired
     private NotificationPublishHandler notificationPublishHandler;
+
+    @Autowired
+    private INotificationSendRecordService notificationSendRecordService;
+
+    @Autowired
+    private INotificationUserReadRecordService notificationUserReadRecordService;
 
     /**
      * 查詢通知列表
@@ -101,20 +108,16 @@ public class NotificationController extends BaseController {
         if (notification == null) {
             return AjaxResult.error("通知不存在");
         }
-        
-        // 獲取接收對象信息
-        List<NotificationReceiver> receivers = notificationReceiverService.selectByNotificationId(notificationId);
-        // 獲取抄送對象信息
-        List<NotificationCc> ccs = notificationCcService.selectByNotificationId(notificationId);
-        // 獲取問題信息
-        List<NotificationQuestion> questions = notificationQuestionService.selectByNotificationId(notificationId);
-        
-        AjaxResult result = AjaxResult.success(notification);
-        result.put("receivers", receivers);
-        result.put("ccs", ccs);
-        result.put("questions", questions);
-        
-        return result;
+
+        NotificationDetailVO vo = new NotificationDetailVO();
+        vo.setNotification(notification);
+        vo.setReceivers(notificationReceiverService.selectByNotificationId(notificationId));
+        vo.setCcs(notificationCcService.selectByNotificationId(notificationId));
+        vo.setQuestions(notificationQuestionService.selectByNotificationId(notificationId));
+        vo.setSendStatistics(notificationSendRecordService.getSendStatisticsVO(notificationId));
+        vo.setReadStatistics(notificationUserReadRecordService.getReadStatisticsVO(notificationId));
+
+        return AjaxResult.success(vo);
     }
 
     /**

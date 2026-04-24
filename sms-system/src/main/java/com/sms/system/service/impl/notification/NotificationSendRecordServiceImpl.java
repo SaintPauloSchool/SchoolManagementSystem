@@ -1,6 +1,7 @@
 package com.sms.system.service.impl.notification;
 
 import com.sms.system.entity.notification.NotificationSendRecord;
+import com.sms.system.entity.vo.SendStatisticsVO;
 import com.sms.system.mapper.notification.NotificationSendRecordMapper;
 import com.sms.system.service.notification.INotificationSendRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,5 +26,24 @@ public class NotificationSendRecordServiceImpl implements INotificationSendRecor
     @Override
     public int save(NotificationSendRecord sendRecord) {
         return notificationSendRecordMapper.insert(sendRecord);
+    }
+
+    /**
+     * 查询通知发送统计信息（強類型 VO）
+     *
+     * @param notificationId 通知ID
+     * @return 發送統計 VO
+     */
+    @Override
+    public SendStatisticsVO getSendStatisticsVO(Long notificationId) {
+        NotificationSendRecord sendRecord = notificationSendRecordMapper.selectByNotificationId(notificationId);
+        if (sendRecord != null) {
+            return new SendStatisticsVO(
+                sendRecord.getTotalCount() != null ? sendRecord.getTotalCount() : 0,
+                sendRecord.getSuccessCount() != null ? sendRecord.getSuccessCount() : 0,
+                sendRecord.getFailCount() != null ? sendRecord.getFailCount() : 0
+            );
+        }
+        return new SendStatisticsVO(0, 0, 0);
     }
 }
