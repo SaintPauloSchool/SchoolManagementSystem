@@ -81,8 +81,9 @@ public class NotificationPublishHandler {
         NotificationSendRecord sendRecord = createSendRecord(notification, parentUserIds, studentUserIds, sendResult);
         notificationSendRecordService.save(sendRecord);
 
-        // 4. 創建用戶閱讀記錄
-        List<NotificationUserReadRecord> readRecords = createUserReadRecords(sendRecord.getSendRecordId(), parentUserIds, studentUserIds);
+        // 4. 創建用戶閱讀記錄（帶入每個用戶的發送成功狀態）
+        List<NotificationUserReadRecord> readRecords = createUserReadRecords(
+                sendRecord.getSendRecordId(), parentUserIds, studentUserIds, sendResult.getSuccessUserIds());
         notificationUserReadRecordService.batchSave(readRecords);
     }
 
@@ -203,6 +204,8 @@ public class NotificationPublishHandler {
 
         int successCount = 0;
         int failCount = 0;
+        // 用於記錄成功接收到通知的用戶 ID（家長 + 學生）
+        Set<String> successUserIds = new HashSet<>();
 
         // 分批發送
         for (int i = 0; i < totalBatches; i++) {
@@ -234,13 +237,16 @@ public class NotificationPublishHandler {
             } else {
                 log.info("通知 {} 第 {}/{} 批發送成功", notification.getNotificationId(), i + 1, totalBatches);
                 successCount += currentParentIds.size() + currentStudentIds.size();
+                // 記錄此批次中成功的用戶 ID
+                successUserIds.addAll(currentParentIds);
+                successUserIds.addAll(currentStudentIds);
             }
         }
         
         log.info("通知 {} 已全部發送完成，共 {} 批，成功: {}, 失敗: {}", 
                 notification.getNotificationId(), totalBatches, successCount, failCount);
         
-        return new SendResult(successCount, failCount);
+        return new SendResult(successCount, failCount, successUserIds);
     }
 
     /**
@@ -439,9 +445,11 @@ public class NotificationPublishHandler {
      * @param sendRecordId   發送記錄 ID
      * @param parentUserIds  家長用戶 ID 列表
      * @param studentUserIds 學生用戶 ID 列表
+     * @param successUserIds 企業微信發送成功的用戶 ID 集合
      * @return 閱讀記錄列表
      */
-    private List<NotificationUserReadRecord> createUserReadRecords(Long sendRecordId, List<String> parentUserIds, List<String> studentUserIds) {
+    private List<NotificationUserReadRecord> createUserReadRecords(Long sendRecordId, List<String> parentUserIds,
+                                                                    List<String> studentUserIds, Set<String> successUserIds) {
         // 用戶閱讀記錄列表
         List<NotificationUserReadRecord> readRecords = new ArrayList<>();
         Date now = new Date();
@@ -454,6 +462,8 @@ public class NotificationPublishHandler {
             record.setUserType("2"); // 2-家長
             record.setIsRead("0"); // 0-未讀
             record.setReplyStatus("0"); // 0-未回覆
+            // 根據發送結果設置 send_status（1-成功，0-失敗）
+            record.setSendStatus(successUserIds.contains(userId) ? "1" : "0");
             record.setCreateTime(now);
             readRecords.add(record);
         }
@@ -466,6 +476,8 @@ public class NotificationPublishHandler {
             record.setUserType("1"); // 1-學生
             record.setIsRead("0"); // 0-未讀
             record.setReplyStatus("0"); // 0-未回覆
+            // 根據發送結果設置 send_status（1-成功，0-失敗）
+            record.setSendStatus(successUserIds.contains(userId) ? "1" : "0");
             record.setCreateTime(now);
             readRecords.add(record);
         }

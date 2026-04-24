@@ -51,6 +51,10 @@ public class NotificationUserReadRecord implements Serializable {
     @TableField("reply_time")
     private Date replyTime;
 
+    /** 發送狀態（0發送失敗 1發送成功） */
+    @TableField("send_status")
+    private String sendStatus;
+
     /** 创建时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("create_time")
@@ -121,6 +125,14 @@ public class NotificationUserReadRecord implements Serializable {
         this.replyTime = replyTime;
     }
 
+    public String getSendStatus() {
+        return sendStatus;
+    }
+
+    public void setSendStatus(String sendStatus) {
+        this.sendStatus = sendStatus;
+    }
+
     public Date getCreateTime() {
         return createTime;
     }
@@ -140,6 +152,7 @@ public class NotificationUserReadRecord implements Serializable {
                 ", readTime=" + readTime +
                 ", replyStatus='" + replyStatus + '\'' +
                 ", replyTime=" + replyTime +
+                ", sendStatus='" + sendStatus + '\'' +
                 ", createTime=" + createTime +
                 '}';
     }

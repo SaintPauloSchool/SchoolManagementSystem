@@ -13,21 +13,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="readTime"    column="read_time"    />
         <result property="replyStatus"    column="reply_status"    />
         <result property="replyTime"    column="reply_time"    />
+        <result property="sendStatus"    column="send_status"    />
         <result property="createTime"    column="create_time"    />
     </resultMap>
 
     <insert id="batchInsert" parameterType="java.util.List">
         insert into notification_user_read_record
-        (send_record_id, user_id, user_type, is_read, reply_status, create_time)
+        (send_record_id, user_id, user_type, is_read, reply_status, send_status, create_time)
         values
         <foreach collection="list" item="item" separator=",">
-            (#{item.sendRecordId}, #{item.userId}, #{item.userType}, #{item.isRead}, #{item.replyStatus}, #{item.createTime})
+            (#{item.sendRecordId}, #{item.userId}, #{item.userType}, #{item.isRead}, #{item.replyStatus}, #{item.sendStatus}, #{item.createTime})
         </foreach>
     </insert>
 
     <select id="selectBySendRecordId" resultMap="NotificationUserReadRecordResult">
         select read_id, send_record_id, user_id, user_type, is_read,
-               read_time, reply_status, reply_time, create_time
+               read_time, reply_status, reply_time, send_status, create_time
         from notification_user_read_record
         where send_record_id = #{sendRecordId}
     </select>

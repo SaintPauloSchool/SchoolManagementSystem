@@ -133,6 +133,7 @@ CREATE TABLE notification_user_read_record (
        read_time           DATETIME        DEFAULT NULL               COMMENT '閱讀時間',
        reply_status        CHAR(1)         DEFAULT '0'                COMMENT '回覆狀態（0未回覆 1已回覆）',
        reply_time          DATETIME        DEFAULT NULL               COMMENT '回覆時間',
+       send_status         CHAR(1)         DEFAULT '0'                COMMENT '發送狀態（0發送失敗 1發送成功）',
        create_time         DATETIME                                   COMMENT '創建時間',
        PRIMARY KEY (read_id),
        KEY idx_send_record (send_record_id),
