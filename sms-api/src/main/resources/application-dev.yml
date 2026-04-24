@@ -46,7 +46,7 @@ wechat:
     corpId: ww04fad852e91fd490
     agentId: 1000033
     secret: I31-B5clKayPf4vNl2bibhL1ia8x4cwIc884xK888Fc
-    noticeBaseUrl: http://10.32.96.55:8080/notice/
+    noticeBaseUrl: http://10.32.96.55:8082/notice/
     # 企業微信 API 接口地址
     api:
       accessTokenUrl: https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={corpId}&corpsecret={corpSecret}

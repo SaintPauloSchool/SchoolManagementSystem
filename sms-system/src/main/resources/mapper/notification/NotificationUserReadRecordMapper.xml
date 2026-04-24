@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sms.system.mapper.notification.NotificationUserReadRecordMapper">
+    
+    <resultMap type="NotificationUserReadRecord" id="NotificationUserReadRecordResult">
+        <result property="readId"    column="read_id"    />
+        <result property="sendRecordId"    column="send_record_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="userType"    column="user_type"    />
+        <result property="isRead"    column="is_read"    />
+        <result property="readTime"    column="read_time"    />
+        <result property="replyStatus"    column="reply_status"    />
+        <result property="replyTime"    column="reply_time"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        insert into notification_user_read_record
+        (send_record_id, user_id, user_type, is_read, reply_status, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.sendRecordId}, #{item.userId}, #{item.userType}, #{item.isRead}, #{item.replyStatus}, #{item.createTime})
+        </foreach>
+    </insert>
+
+</mapper>

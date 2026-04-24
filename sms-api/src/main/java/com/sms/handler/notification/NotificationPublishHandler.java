@@ -6,8 +6,13 @@ import com.sms.framework.wechat.WechatWorkHttpClient;
 import com.sms.system.entity.notification.Notification;
 import com.sms.system.entity.notification.NotificationCc;
 import com.sms.system.entity.notification.NotificationReceiver;
+import com.sms.system.entity.notification.NotificationSendRecord;
+import com.sms.system.entity.notification.NotificationUserReadRecord;
+import com.sms.system.entity.notification.SendResult;
 import com.sms.system.service.notification.INotificationCcService;
 import com.sms.system.service.notification.INotificationReceiverService;
+import com.sms.system.service.notification.INotificationSendRecordService;
+import com.sms.system.service.notification.INotificationUserReadRecordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +48,12 @@ public class NotificationPublishHandler {
     @Autowired
     private WechatWorkHttpClient wechatWorkHttpClient;
 
+    @Autowired
+    private INotificationSendRecordService notificationSendRecordService;
+
+    @Autowired
+    private INotificationUserReadRecordService notificationUserReadRecordService;
+
     /**
      * 將通告發佈到微信（家校通信/外部聯繫人消息）
      *
@@ -63,8 +74,16 @@ public class NotificationPublishHandler {
             throw new IllegalStateException("未解析出有效的微信接收者");
         }
 
-        // 2. 分批發送通知
-        sendInBatches(notification, parentUserIds, studentUserIds, partyIds);
+        // 2. 分批發送通知，並獲取發送結果
+        SendResult sendResult = sendInBatches(notification, parentUserIds, studentUserIds, partyIds);
+
+        // 3. 創建發送記錄（包含成功/失敗統計）
+        NotificationSendRecord sendRecord = createSendRecord(notification, parentUserIds, studentUserIds, sendResult);
+        notificationSendRecordService.save(sendRecord);
+
+        // 4. 創建用戶閱讀記錄
+        List<NotificationUserReadRecord> readRecords = createUserReadRecords(sendRecord.getSendRecordId(), parentUserIds, studentUserIds);
+        notificationUserReadRecordService.batchSave(readRecords);
     }
 
     /**
@@ -164,8 +183,9 @@ public class NotificationPublishHandler {
      * @param parentUserIds  家長用戶 ID 列表
      * @param studentUserIds 學生用戶 ID 列表
      * @param partyIds       部門 ID 列表
+     * @return 發送結果（成功數、失敗數）
      */
-    private void sendInBatches(Notification notification, List<String> parentUserIds, 
+    private SendResult sendInBatches(Notification notification, List<String> parentUserIds, 
                                List<String> studentUserIds, List<String> partyIds) {
         int parentBatchSize = 1000;
         int studentBatchSize = 1000;
@@ -180,6 +200,9 @@ public class NotificationPublishHandler {
         
         log.info("通知 {} 需要分 {} 批發送（家長 {} 批，學生 {} 批，部門 {} 批）",
                 notification.getNotificationId(), totalBatches, parentBatches, studentBatches, partyBatches);
+
+        int successCount = 0;
+        int failCount = 0;
 
         // 分批發送
         for (int i = 0; i < totalBatches; i++) {
@@ -207,13 +230,17 @@ public class NotificationPublishHandler {
             if (errcode == null || errcode != 0) {
                 log.error("通知 {} 第 {} 批發送失敗: code={}, msg={}",
                         notification.getNotificationId(), i + 1, errcode, result.getString("errmsg"));
-                throw new IllegalStateException("企業微信消息發送失敗（第 " + (i + 1) + " 批）: " + result.toJSONString());
+                failCount += currentParentIds.size() + currentStudentIds.size();
+            } else {
+                log.info("通知 {} 第 {}/{} 批發送成功", notification.getNotificationId(), i + 1, totalBatches);
+                successCount += currentParentIds.size() + currentStudentIds.size();
             }
-                    
-            log.info("通知 {} 第 {}/{} 批發送成功", notification.getNotificationId(), i + 1, totalBatches);
         }
         
-        log.info("通知 {} 已全部發送完成，共 {} 批", notification.getNotificationId(), totalBatches);
+        log.info("通知 {} 已全部發送完成，共 {} 批，成功: {}, 失敗: {}", 
+                notification.getNotificationId(), totalBatches, successCount, failCount);
+        
+        return new SendResult(successCount, failCount);
     }
 
     /**
@@ -366,5 +393,83 @@ public class NotificationPublishHandler {
         payload.put("duplicate_check_interval", 1800); // 防重覆發送校驗時間，默認1800秒
         
         return payload;
+    }
+
+    /**
+     * 創建發送記錄
+     *
+     * @param notification   通知實體
+     * @param parentUserIds  家長用戶 ID 列表
+     * @param studentUserIds 學生用戶 ID 列表
+     * @param sendResult     發送結果
+     * @return 發送記錄
+     */
+    private NotificationSendRecord createSendRecord(Notification notification, List<String> parentUserIds, 
+                                                     List<String> studentUserIds, SendResult sendResult) {
+        // 發送記錄
+        NotificationSendRecord sendRecord = new NotificationSendRecord();
+        sendRecord.setNotificationId(notification.getNotificationId());
+        sendRecord.setSenderId(notification.getSenderId());
+        sendRecord.setSenderName(notification.getSenderName());
+        sendRecord.setSendTime(new Date());
+        
+        // 根據發送結果設置狀態和統計
+        int totalCount = parentUserIds.size() + studentUserIds.size();
+        sendRecord.setTotalCount(totalCount);
+        sendRecord.setSuccessCount(sendResult.getSuccessCount());
+        sendRecord.setFailCount(sendResult.getFailCount());
+        
+        // 設置發送狀態：全部成功=2，全部失敗=3，部分成功=4
+        if (sendResult.getFailCount() == 0) {
+            sendRecord.setSendStatus("2"); // 2-發送成功
+        } else if (sendResult.getSuccessCount() == 0) {
+            sendRecord.setSendStatus("3"); // 3-發送失敗
+        } else {
+            sendRecord.setSendStatus("4"); // 4-部分成功
+        }
+        
+        sendRecord.setCreateTime(new Date());
+        
+        return sendRecord;
+    }
+
+    /**
+     * 創建用戶閱讀記錄列表
+     *
+     * @param sendRecordId   發送記錄 ID
+     * @param parentUserIds  家長用戶 ID 列表
+     * @param studentUserIds 學生用戶 ID 列表
+     * @return 閱讀記錄列表
+     */
+    private List<NotificationUserReadRecord> createUserReadRecords(Long sendRecordId, List<String> parentUserIds, List<String> studentUserIds) {
+        // 用戶閱讀記錄列表
+        List<NotificationUserReadRecord> readRecords = new ArrayList<>();
+        Date now = new Date();
+        
+        // 為每個家長創建閱讀記錄（user_type = 2）
+        for (String userId : parentUserIds) {
+            NotificationUserReadRecord record = new NotificationUserReadRecord();
+            record.setSendRecordId(sendRecordId);
+            record.setUserId(userId);
+            record.setUserType("2"); // 2-家長
+            record.setIsRead("0"); // 0-未讀
+            record.setReplyStatus("0"); // 0-未回覆
+            record.setCreateTime(now);
+            readRecords.add(record);
+        }
+        
+        // 為每個學生創建閱讀記錄（user_type = 1）
+        for (String userId : studentUserIds) {
+            NotificationUserReadRecord record = new NotificationUserReadRecord();
+            record.setSendRecordId(sendRecordId);
+            record.setUserId(userId);
+            record.setUserType("1"); // 1-學生
+            record.setIsRead("0"); // 0-未讀
+            record.setReplyStatus("0"); // 0-未回覆
+            record.setCreateTime(now);
+            readRecords.add(record);
+        }
+        
+        return readRecords;
     }
 }

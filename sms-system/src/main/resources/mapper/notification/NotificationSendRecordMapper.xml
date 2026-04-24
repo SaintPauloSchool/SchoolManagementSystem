@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sms.system.mapper.notification.NotificationSendRecordMapper">
+    
+    <resultMap type="NotificationSendRecord" id="NotificationSendRecordResult">
+        <result property="sendRecordId"    column="send_record_id"    />
+        <result property="notificationId"    column="notification_id"    />
+        <result property="senderId"    column="sender_id"    />
+        <result property="senderName"    column="sender_name"    />
+        <result property="sendTime"    column="send_time"    />
+        <result property="sendStatus"    column="send_status"    />
+        <result property="totalCount"    column="total_count"    />
+        <result property="successCount"    column="success_count"    />
+        <result property="failCount"    column="fail_count"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <insert id="insert" parameterType="NotificationSendRecord" useGeneratedKeys="true" keyProperty="sendRecordId">
+        insert into notification_send_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="notificationId != null">notification_id,</if>
+            <if test="senderId != null">sender_id,</if>
+            <if test="senderName != null and senderName != ''">sender_name,</if>
+            <if test="sendTime != null">send_time,</if>
+            <if test="sendStatus != null and sendStatus != ''">send_status,</if>
+            <if test="totalCount != null">total_count,</if>
+            <if test="successCount != null">success_count,</if>
+            <if test="failCount != null">fail_count,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null and updateBy != ''">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="notificationId != null">#{notificationId},</if>
+            <if test="senderId != null">#{senderId},</if>
+            <if test="senderName != null and senderName != ''">#{senderName},</if>
+            <if test="sendTime != null">#{sendTime},</if>
+            <if test="sendStatus != null and sendStatus != ''">#{sendStatus},</if>
+            <if test="totalCount != null">#{totalCount},</if>
+            <if test="successCount != null">#{successCount},</if>
+            <if test="failCount != null">#{failCount},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null and updateBy != ''">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+</mapper>
