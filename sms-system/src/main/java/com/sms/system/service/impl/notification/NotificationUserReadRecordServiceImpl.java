@@ -9,7 +9,9 @@ import com.sms.system.service.notification.INotificationUserReadRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 通知用户阅读记录 Service 业务层处理
@@ -46,25 +48,38 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
      */
     @Override
     public ReadStatisticsVO getReadStatisticsVO(Long notificationId) {
+        // 查詢發送記錄
         NotificationSendRecord sendRecord = notificationSendRecordMapper.selectByNotificationId(notificationId);
+        // 沒有發送記錄，返回空
         if (sendRecord == null || sendRecord.getSendRecordId() == null) {
             return new ReadStatisticsVO(0, 0);
         }
-
+        // 查詢閱讀記錄
         List<NotificationUserReadRecord> readRecords =
             notificationUserReadRecordMapper.selectBySendRecordId(sendRecord.getSendRecordId());
 
         int readCount = 0;
         int replyCount = 0;
         if (readRecords != null) {
+            Set<String> readStudents = new HashSet<>();
+            Set<String> repliedStudents = new HashSet<>();
+            
             for (NotificationUserReadRecord record : readRecords) {
+                // 以 studentUserId 爲分組依據，若無則降級使用 userId
+                String groupId = record.getStudentUserId();
+                if (groupId == null || groupId.trim().isEmpty()) {
+                    groupId = record.getUserId();
+                }
+                
                 if ("1".equals(record.getIsRead())) {
-                    readCount++;
+                    readStudents.add(groupId);
                 }
                 if ("1".equals(record.getReplyStatus())) {
-                    replyCount++;
+                    repliedStudents.add(groupId);
                 }
             }
+            readCount = readStudents.size();
+            replyCount = repliedStudents.size();
         }
         return new ReadStatisticsVO(readCount, replyCount);
     }
