@@ -7,6 +7,7 @@ import com.sms.system.entity.SysDepartmentParentBinding;
 import com.sms.system.entity.SysParentStudentRelation;
 import com.sms.system.entity.SysSchoolDepartmentMember;
 import com.sms.system.entity.notification.NotificationReceiver;
+import com.sms.system.entity.vo.ResolvedReceiversVO;
 import com.sms.system.mapper.SysDepartmentParentBindingMapper;
 import com.sms.system.mapper.SysParentStudentRelationMapper;
 import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
@@ -18,10 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -94,14 +93,15 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
      * @return 包含 to_parent_userid、to_student_userid、to_party 的 Map 集合
      */
     @Override
-    public Map<String, List<String>> resolveReceivers(List<NotificationReceiver> receivers) {
+    public ResolvedReceiversVO resolveReceivers(List<NotificationReceiver> receivers) {
         Set<String> parentUserIds = new HashSet<>();
         Set<String> studentUserIds = new HashSet<>();
         Set<String> partyIds = new HashSet<>(); // 暫時未實現具體部門 ID 的解析，保留擴展性
+        List<SysDepartmentParentBinding> bindings = new ArrayList<>();
 
         if (receivers == null || receivers.isEmpty()) {
             log.warn("notification receivers are empty");
-            return buildResult(parentUserIds, studentUserIds, partyIds);
+            return buildResult(parentUserIds, studentUserIds, partyIds, bindings);
         }
 
         for (NotificationReceiver receiver : receivers) {
@@ -121,20 +121,20 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
                 // 遍歷所有數據項進行解析
                 for (int i = 0; i < dataArray.size(); i++) {
                     JSONObject dataItem = dataArray.getJSONObject(i);
-                    parseAndResolveDataItem(receiveType, dataItem, parentUserIds, studentUserIds);
+                    parseAndResolveDataItem(receiveType, dataItem, parentUserIds, studentUserIds, bindings);
                 }
             } catch (Exception e) {
                 log.error("failed to resolve notification receivers, data: {}", receiveData, e);
             }
         }
 
-        return buildResult(parentUserIds, studentUserIds, partyIds);
+        return buildResult(parentUserIds, studentUserIds, partyIds, bindings);
     }
 
     /**
      * 解析單個接收者數據元素
      */
-    private void parseAndResolveDataItem(String receiveType, JSONObject dataItem, Set<String> parentUserIds, Set<String> studentUserIds) {
+    private void parseAndResolveDataItem(String receiveType, JSONObject dataItem, Set<String> parentUserIds, Set<String> studentUserIds, List<SysDepartmentParentBinding> bindings) {
         Integer type = dataItem.getInteger("type");
         JSONArray ids = dataItem.getJSONArray("receive_ids");
         
@@ -152,18 +152,18 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
 
         // 根據接收類型分發到不同的解析處理邏輯
         if (RECEIVE_TYPE_PERSONAL.equals(receiveType)) {
-            resolvePersonalReceivers(type, idList, parentUserIds, studentUserIds);
+            resolvePersonalReceivers(type, idList, parentUserIds, studentUserIds, bindings);
         } else if (RECEIVE_TYPE_DEPARTMENT.equals(receiveType)) {
-            resolveDepartmentReceivers(type, idList, parentUserIds, studentUserIds);
+            resolveDepartmentReceivers(type, idList, parentUserIds, studentUserIds, bindings);
         }
     }
 
     /**
      * 處理個人維度的接收者（直接根據 ID 查詢）
      */
-    private void resolvePersonalReceivers(Integer type, List<Long> idList, Set<String> parentUserIds, Set<String> studentUserIds) {
+    private void resolvePersonalReceivers(Integer type, List<Long> idList, Set<String> parentUserIds, Set<String> studentUserIds, List<SysDepartmentParentBinding> bindings) {
         if (TARGET_TYPE_PARENT.equals(type)) {
-            resolveParentUserIds(idList, parentUserIds);
+            resolveParentUserIds(idList, parentUserIds, bindings);
         } else if (TARGET_TYPE_STUDENT.equals(type)) {
             resolveStudentUserIds(idList, studentUserIds);
         }
@@ -172,9 +172,9 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
     /**
      * 處理部門維度的接收者（根據部門 ID 查詢下屬成員）
      */
-    private void resolveDepartmentReceivers(Integer type, List<Long> idList, Set<String> parentUserIds, Set<String> studentUserIds) {
+    private void resolveDepartmentReceivers(Integer type, List<Long> idList, Set<String> parentUserIds, Set<String> studentUserIds, List<SysDepartmentParentBinding> outBindings) {
         if (TARGET_TYPE_PARENT.equals(type)) {
-            resolveParentUserIdsByDepartment(idList, parentUserIds);
+            resolveParentUserIdsByDepartment(idList, parentUserIds, outBindings);
         } else if (TARGET_TYPE_STUDENT.equals(type)) {
             resolveStudentUserIdsByDepartment(idList, studentUserIds);
         }
@@ -183,7 +183,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
     /**
      * 根據家長學生關係 ID 列表，獲取對應的家長 UserID
      */
-    private void resolveParentUserIds(List<Long> ids, Set<String> parentUserIds) {
+    private void resolveParentUserIds(List<Long> ids, Set<String> parentUserIds, List<SysDepartmentParentBinding> bindings) {
         if (ids == null || ids.isEmpty()) {
             return;
         }
@@ -193,6 +193,12 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
             for (SysParentStudentRelation relation : relations) {
                 if (relation.getParentUserId() != null && !relation.getParentUserId().trim().isEmpty()) {
                     parentUserIds.add(relation.getParentUserId());
+                    
+                    // 提取精確的綁定關係，避免後續重複查庫導致包含未選擇的學生
+                    SysDepartmentParentBinding binding = new SysDepartmentParentBinding();
+                    binding.setParentUserId(relation.getParentUserId());
+                    binding.setStudentUserId(relation.getStudentUserId());
+                    bindings.add(binding);
                 }
             }
         }
@@ -219,7 +225,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
     /**
      * 根據部門 ID 列表，獲取部門下綁定的所有家長 UserID
      */
-    private void resolveParentUserIdsByDepartment(List<Long> departmentIds, Set<String> parentUserIds) {
+    private void resolveParentUserIdsByDepartment(List<Long> departmentIds, Set<String> parentUserIds, List<SysDepartmentParentBinding> outBindings) {
         if (departmentIds == null || departmentIds.isEmpty()) {
             return;
         }
@@ -229,6 +235,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
             for (SysDepartmentParentBinding binding : bindings) {
                 if (binding.getParentUserId() != null && !binding.getParentUserId().trim().isEmpty()) {
                     parentUserIds.add(binding.getParentUserId());
+                    outBindings.add(binding);
                 }
             }
         }
@@ -255,11 +262,12 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
     /**
      * 封裝並構建最終的返回結果
      */
-    private Map<String, List<String>> buildResult(Set<String> parentUserIds, Set<String> studentUserIds, Set<String> partyIds) {
-        Map<String, List<String>> result = new HashMap<>();
-        result.put("to_parent_userid", new ArrayList<>(parentUserIds));
-        result.put("to_student_userid", new ArrayList<>(studentUserIds));
-        result.put("to_party", new ArrayList<>(partyIds));
-        return result;
+    private ResolvedReceiversVO buildResult(Set<String> parentUserIds, Set<String> studentUserIds, Set<String> partyIds, List<SysDepartmentParentBinding> bindings) {
+        return new ResolvedReceiversVO(
+                new ArrayList<>(parentUserIds),
+                new ArrayList<>(studentUserIds),
+                new ArrayList<>(partyIds),
+                bindings
+        );
     }
 }

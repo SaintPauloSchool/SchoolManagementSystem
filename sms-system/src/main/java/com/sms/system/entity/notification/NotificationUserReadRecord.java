@@ -51,9 +51,13 @@ public class NotificationUserReadRecord implements Serializable {
     @TableField("reply_time")
     private Date replyTime;
 
-    /** 發送狀態（0發送失敗 1發送成功） */
+    /** 发送状态（0发送失败 1发送成功） */
     @TableField("send_status")
     private String sendStatus;
+
+    /** 关联的学生ID（当接收者是家长时记录，若发送给学生本身则与userId相同） */
+    @TableField("student_user_id")
+    private String studentUserId;
 
     /** 创建时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -141,6 +145,14 @@ public class NotificationUserReadRecord implements Serializable {
         this.createTime = createTime;
     }
 
+    public String getStudentUserId() {
+        return studentUserId;
+    }
+
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
+    }
+
     @Override
     public String toString() {
         return "NotificationUserReadRecord{" +
@@ -153,6 +165,7 @@ public class NotificationUserReadRecord implements Serializable {
                 ", replyStatus='" + replyStatus + '\'' +
                 ", replyTime=" + replyTime +
                 ", sendStatus='" + sendStatus + '\'' +
+                ", studentUserId='" + studentUserId + '\'' +
                 ", createTime=" + createTime +
                 '}';
     }

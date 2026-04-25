@@ -1,9 +1,9 @@
 package com.sms.system.service.notification;
 
 import com.sms.system.entity.notification.NotificationReceiver;
+import com.sms.system.entity.vo.ResolvedReceiversVO;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 通知接收对象 Service 接口
@@ -27,10 +27,10 @@ public interface INotificationReceiverService {
     int save(NotificationReceiver receiver);
 
     /**
-     * 解析接收者列表，將其轉換為企業微信可識別的 userid 集合
+     * 解析接收者列表，將其轉換為企業微信可識別的 userid 集合以及精確的家長學生綁定關係
      *
      * @param receivers 原始通告接收者配置列表
-     * @return 包含 to_parent_userid、to_student_userid、to_party 的 Map 集合
+     * @return 包含 to_parent_userid、to_student_userid、to_party 和 bindings 的 VO 對象
      */
-    Map<String, List<String>> resolveReceivers(List<NotificationReceiver> receivers);
+    ResolvedReceiversVO resolveReceivers(List<NotificationReceiver> receivers);
 }
