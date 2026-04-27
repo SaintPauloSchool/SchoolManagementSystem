@@ -150,6 +150,18 @@
               :disabled-date="disabledDate"
             />
           </el-form-item>
+
+          <el-form-item label="提示回覆時間">
+            <el-date-picker
+              v-model="localFormData.reminderTime"
+              type="date"
+              placeholder="請選擇提示回覆時間"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              :disabled-date="disabledReminderDate"
+            />
+            <div class="form-tip">提示回覆時間必須從明天開始，且不能晚於回覆截止時間</div>
+          </el-form-item>
         </div>
       </el-card>
 
@@ -236,6 +248,12 @@ export default {
       selectedStudents: [],
       selectedCcStaff: [],
       selectedCcDirectory: []
+    }
+  },
+  computed: {
+    // 获取当前发布日期（通知创建时间）
+    publishDate() {
+      return this.localFormData.createTime || new Date()
     }
   },
   watch: {
@@ -346,6 +364,29 @@ export default {
           }
         }
 
+        // 验证提示回覆时间
+        if (this.localFormData.reminderTime) {
+          const reminderDate = dayjs(this.localFormData.reminderTime)
+          const tomorrow = dayjs().add(1, 'day').startOf('day')
+          
+          // 必须从明天开始（不能是今天或更早）
+          if (reminderDate.isBefore(tomorrow)) {
+            this.$message.warning('提示回覆時間必須從明天開始')
+            reject()
+            return
+          }
+          
+          // 如果设置了回覆截止时间，不能晚于回覆截止时间
+          if (this.localFormData.replyDeadline) {
+            const deadline = dayjs(this.localFormData.replyDeadline).startOf('day')
+            if (reminderDate.isAfter(deadline)) {
+              this.$message.warning('提示回覆時間不能晚於回覆截止時間')
+              reject()
+              return
+            }
+          }
+        }
+
         resolve()
       })
     },
@@ -358,7 +399,8 @@ export default {
       this.localFormData = {
         receivers: [],
         ccs: [],
-        replyDeadline: null
+        replyDeadline: null,
+        reminderTime: null
       }
     },
 
@@ -557,6 +599,28 @@ export default {
 
     disabledDate(date) {
       return date && date.valueOf() < Date.now() - 86400000
+    },
+
+    disabledReminderDate(date) {
+      // 提示回覆时间必须从明天开始（不能是今天或更早）
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      tomorrow.setHours(0, 0, 0, 0)
+      
+      if (date && date < tomorrow) {
+        return true
+      }
+      
+      // 如果设置了回覆截止时间，提示回覆时间不能晚于回覆截止时间
+      if (this.localFormData.replyDeadline) {
+        const deadline = new Date(this.localFormData.replyDeadline)
+        deadline.setHours(0, 0, 0, 0)
+        if (date && date > deadline) {
+          return true
+        }
+      }
+      
+      return false
     }
   }
 }

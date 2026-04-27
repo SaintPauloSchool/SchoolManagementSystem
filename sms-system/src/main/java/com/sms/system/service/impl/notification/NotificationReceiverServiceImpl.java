@@ -3,11 +3,13 @@ package com.sms.system.service.impl.notification;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.sms.system.entity.SysDepartment;
 import com.sms.system.entity.SysDepartmentParentBinding;
 import com.sms.system.entity.SysParentStudentRelation;
 import com.sms.system.entity.SysSchoolDepartmentMember;
 import com.sms.system.entity.notification.NotificationReceiver;
 import com.sms.system.entity.vo.ResolvedReceiversVO;
+import com.sms.system.mapper.SysDepartmentMapper;
 import com.sms.system.mapper.SysDepartmentParentBindingMapper;
 import com.sms.system.mapper.SysParentStudentRelationMapper;
 import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
@@ -18,10 +20,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 通知接收对象 Service 业务层处理
@@ -63,6 +63,9 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
 
     @Autowired
     private SysDepartmentParentBindingMapper departmentParentBindingMapper;
+
+    @Autowired
+    private SysDepartmentMapper sysDepartmentMapper;
 
     /**
      * 根据通知 ID 查询接收对象列表
@@ -224,19 +227,110 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
 
     /**
      * 根據部門 ID 列表，獲取部門下綁定的所有家長 UserID
+     * 注意：如果傳入的是上層部門 ID（type > 1），需要遞歸找到所有 type=1 的班級部門 ID
      */
     private void resolveParentUserIdsByDepartment(List<Long> departmentIds, Set<String> parentUserIds, List<SysDepartmentParentBinding> outBindings) {
         if (departmentIds == null || departmentIds.isEmpty()) {
             return;
         }
 
-        List<SysDepartmentParentBinding> bindings = departmentParentBindingMapper.selectByDepartmentIds(departmentIds);
+        // 1. 遞歸獲取所有 type=1 的班級部門 ID
+        List<Long> classDepartmentIds = resolveClassDepartmentIds(departmentIds);
+        
+        log.info("解析部門家長綁定 - 輸入部門 IDs: {}, 解析後班級部門 IDs: {}", departmentIds, classDepartmentIds);
+        
+        if (classDepartmentIds.isEmpty()) {
+            return;
+        }
+
+        // 2. 根據班級部門 ID 查詢家長綁定關係
+        List<SysDepartmentParentBinding> bindings = departmentParentBindingMapper.selectByDepartmentIds(classDepartmentIds);
         if (bindings != null) {
             for (SysDepartmentParentBinding binding : bindings) {
                 if (binding.getParentUserId() != null && !binding.getParentUserId().trim().isEmpty()) {
                     parentUserIds.add(binding.getParentUserId());
                     outBindings.add(binding);
                 }
+            }
+        }
+    }
+
+    /**
+     * 遞歸獲取所有 type=1 的班級部門 ID
+     * 如果傳入的部門 ID 是上層部門（type > 1），則找到其下所有 type=1 的子部門
+     *
+     * @param departmentIds 部門 ID 列表
+     * @return 所有 type=1 的班級部門 ID 列表
+     */
+    private List<Long> resolveClassDepartmentIds(List<Long> departmentIds) {
+        // 如果傳入的部門 ID 列表為空，則返回空列表
+        if (departmentIds == null || departmentIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 1. 查詢所有部門信息
+        List<SysDepartment> allDepartments = sysDepartmentMapper.selectAll();
+        if (allDepartments == null || allDepartments.isEmpty()) {
+            return departmentIds;
+        }
+
+        // 2. 構建部門 ID 到部門對象的映射
+        Map<Long, SysDepartment> deptMap = allDepartments.stream()
+                .filter(Objects::nonNull)
+                .filter(dept -> dept.getId() != null)
+                .collect(Collectors.toMap(SysDepartment::getId, dept -> dept, (a, b) -> a));
+
+        // 3. 對每個傳入的部門 ID，遞歸查找其下所有 type=1 的子部門
+        Set<Long> classDepartmentIds = new HashSet<>();
+        for (Long deptId : departmentIds) {
+            SysDepartment dept = deptMap.get(deptId);
+            if (dept == null) {
+                continue;
+            }
+
+            // 如果已經是 type=1，直接添加
+            if (Integer.valueOf(1).equals(dept.getType())) {
+                classDepartmentIds.add(deptId);
+            } else {
+                // 否則遞歸查找所有 type=1 的子部門
+                collectClassDepartmentIds(deptId, allDepartments, classDepartmentIds);
+            }
+        }
+
+        return new ArrayList<>(classDepartmentIds);
+    }
+
+    /**
+     * 遞歸收集某個部門下所有 type=1 的班級部門 ID
+     *
+     * @param parentId 父部門 ID
+     * @param allDepartments 所有部門列表
+     * @param classDepartmentIds 收集結果的集合
+     */
+    private void collectClassDepartmentIds(Long parentId, List<SysDepartment> allDepartments, Set<Long> classDepartmentIds) {
+        // 如果輸入參數為空，則返回
+        if (parentId == null || allDepartments == null) {
+            return;
+        }
+
+        // 找到所有直接子部門
+        List<SysDepartment> children = allDepartments.stream()
+                .filter(Objects::nonNull)
+                .filter(dept -> dept.getParentId() != null)
+                .filter(dept -> dept.getParentId().longValue() == parentId)
+                .collect(Collectors.toList());
+
+        for (SysDepartment child : children) {
+            if (child.getId() == null) {
+                continue;
+            }
+
+            // 如果是 type=1 的班級部門，添加到結果集
+            if (Integer.valueOf(1).equals(child.getType())) {
+                classDepartmentIds.add(child.getId());
+            } else {
+                // 否則繼續遞歸查找
+                collectClassDepartmentIds(child.getId(), allDepartments, classDepartmentIds);
             }
         }
     }
