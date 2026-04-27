@@ -306,6 +306,30 @@
         </div>
       </div>
     </div>
+
+    <!-- 操作按鈕 -->
+    <div class="section-card action-card">
+      <div class="section-header">
+        <div class="section-icon action-icon">
+          <el-icon :size="16"><Operation /></el-icon>
+        </div>
+        <h3 class="section-label">操作選項</h3>
+      </div>
+      <div class="action-buttons">
+        <el-button type="warning" size="large" round @click="handleRemindParents">
+          <el-icon :size="18"><BellFilled /></el-icon>
+          <span>提示家長回覆</span>
+        </el-button>
+        <el-button type="primary" size="large" round @click="handleResendFailed">
+          <el-icon :size="18"><RefreshRight /></el-icon>
+          <span>重新發送失敗通知</span>
+        </el-button>
+        <el-button type="success" size="large" round @click="handleExportReplies">
+          <el-icon :size="18"><Download /></el-icon>
+          <span>導出回覆答案</span>
+        </el-button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -326,7 +350,10 @@ import {
   Bell,
   AlarmClock,
   Link,
-  TrendCharts
+  TrendCharts,
+  Operation,
+  BellFilled,
+  RefreshRight
 } from '@element-plus/icons-vue'
 import LogicQuestionItem from './LogicQuestionItem.vue'
 import { normalizeProfileUrl } from '../utils/deployment'
@@ -350,6 +377,9 @@ export default {
     AlarmClock,
     Link,
     TrendCharts,
+    Operation,
+    BellFilled,
+    RefreshRight,
     LogicQuestionItem
   },
   props: {
@@ -696,6 +726,21 @@ export default {
       } catch (e) {
         return [{ source: '解析錯誤', names: [] }];
       }
+    },
+
+    handleRemindParents() {
+      // TODO: 實現提示家長回覆功能
+      console.log('提示家長回覆')
+    },
+
+    handleResendFailed() {
+      // TODO: 實現重新發送失敗通知功能
+      console.log('重新發送失敗通知')
+    },
+
+    handleExportReplies() {
+      // TODO: 實現導出回覆答案 Excel 功能
+      console.log('導出回覆答案 Excel')
     }
   }
 }
@@ -1591,5 +1636,40 @@ export default {
 
 .info-cards {
   animation: fadeSlideUp 0.3s ease 0.05s both;
+}
+
+/* ===== 操作卡片 ===== */
+.action-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 12px 0;
+}
+
+.action-buttons .el-button {
+  flex: 1;
+  height: 48px;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.action-buttons .el-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.action-buttons .el-button .el-icon {
+  flex-shrink: 0;
 }
 </style>
