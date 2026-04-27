@@ -302,7 +302,7 @@
         </div>
         <div class="stat-item reply">
           <div class="stat-value">{{ (notification.statistics && notification.statistics.replyCount) || 0 }}</div>
-          <div class="stat-label">回復總數</div>
+          <div class="stat-label">回覆總數</div>
         </div>
       </div>
     </div>
