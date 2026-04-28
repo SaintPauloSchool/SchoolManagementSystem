@@ -54,6 +54,11 @@ public class Notification extends BaseEntity {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField("reply_deadline")
     private Date replyDeadline;
+
+    /** 提示回覆時間（只到日期） */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    @TableField("reminder_time")
+    private Date reminderTime;
     
     /** 接收对象列表（非数据库字段） */
     @TableField(exist = false)
@@ -150,6 +155,14 @@ public class Notification extends BaseEntity {
 
     public void setReplyDeadline(Date replyDeadline) {
         this.replyDeadline = replyDeadline;
+    }
+
+    public Date getReminderTime() {
+        return reminderTime;
+    }
+
+    public void setReminderTime(Date reminderTime) {
+        this.reminderTime = reminderTime;
     }
     
     public List<NotificationReceiver> getReceivers() {

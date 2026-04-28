@@ -72,5 +72,5 @@ public interface NotificationMapper {
      * @param notificationIds 通知 ID 集合
      * @return 结果
      */
-    int deleteBatchIds(List<Long> notificationIds);
+    int deleteBatchIds(@Param("notificationIds") List<Long> notificationIds);
 }

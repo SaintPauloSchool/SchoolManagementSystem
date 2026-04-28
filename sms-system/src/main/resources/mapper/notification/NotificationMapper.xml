@@ -14,6 +14,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="attachmentUrls"    column="attachment_urls"    />
         <result property="status"    column="status"    />
         <result property="replyDeadline"    column="reply_deadline"    />
+        <result property="reminderTime"    column="reminder_time"    />
         <result property="createTime"    column="create_time"    />
         <result property="updateTime"    column="update_time"    />
         <collection property="receivers" ofType="NotificationReceiver" select="com.sms.system.mapper.notification.NotificationReceiverMapper.selectByNotificationId" column="notification_id"/>
@@ -24,7 +25,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 查詢通知列表 -->
     <select id="selectNotificationList" parameterType="Notification" resultMap="NotificationResult">
         select notification_id, title, content, sender_id, sender_name, jump_url, 
-               attachment_urls, status, reply_deadline, create_time, update_time 
+               attachment_urls, status, reply_deadline, reminder_time, create_time, update_time 
         from notification
         <where>  
             <if test="title != null and title != ''">
@@ -46,7 +47,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 根據用戶 ID 查詢抄送給我的通知列表 -->
     <select id="selectCcToMeList" resultMap="NotificationResult">
         select n.notification_id, n.title, n.content, n.sender_id, n.sender_name, n.jump_url, 
-               n.attachment_urls, n.status, n.reply_deadline, n.create_time, n.update_time 
+               n.attachment_urls, n.status, n.reply_deadline, n.reminder_time, n.create_time, n.update_time 
         from notification n
         inner join notification_cc nc on n.notification_id = nc.notification_id
         <where>
@@ -62,7 +63,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 根據用戶 ID 查詢我發送的通知列表 -->
     <select id="selectMySendList" resultMap="NotificationResult">
         select notification_id, title, content, sender_id, sender_name, jump_url, 
-               attachment_urls, status, reply_deadline, create_time, update_time 
+               attachment_urls, status, reply_deadline, reminder_time, create_time, update_time 
         from notification 
         <where>
             sender_id = #{senderId}
@@ -85,6 +86,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="attachmentUrls != null">attachment_urls,</if>
             <if test="status != null">status,</if>
             <if test="replyDeadline != null">reply_deadline,</if>
+            <if test="reminderTime != null">reminder_time,</if>
             <if test="createTime != null">create_time,</if>
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -96,6 +98,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="attachmentUrls != null">#{attachmentUrls},</if>
             <if test="status != null">#{status},</if>
             <if test="replyDeadline != null">#{replyDeadline},</if>
+            <if test="reminderTime != null">#{reminderTime},</if>
             <if test="createTime != null">#{createTime},</if>
          </trim>
     </insert>
@@ -103,7 +106,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 根據 ID 查詢通知 -->
     <select id="selectById" parameterType="Long" resultMap="NotificationResult">
         select notification_id, title, content, sender_id, sender_name, jump_url, 
-               attachment_urls, status, reply_deadline, create_time, update_time 
+               attachment_urls, status, reply_deadline, reminder_time, create_time, update_time 
         from notification 
         where notification_id = #{notificationId}
     </select>
@@ -120,6 +123,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="attachmentUrls != null">attachment_urls = #{attachmentUrls},</if>
             <if test="status != null">status = #{status},</if>
             <if test="replyDeadline != null">reply_deadline = #{replyDeadline},</if>
+            <if test="reminderTime != null">reminder_time = #{reminderTime},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
         </trim>
         where notification_id = #{notificationId}
@@ -133,7 +137,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 批量刪除通知 -->
     <delete id="deleteBatchIds" parameterType="java.util.List">
         delete from notification where notification_id in
-        <foreach item="notificationId" collection="list" open="(" separator="," close=")">
+        <foreach item="notificationId" collection="notificationIds" open="(" separator="," close=")">
             #{notificationId}
         </foreach>
     </delete>

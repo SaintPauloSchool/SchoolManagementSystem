@@ -70,6 +70,7 @@ export default {
         receivers: [],
         ccs: [],
         replyDeadline: null,
+        reminderTime: null,
         questions: []
       }
     }
@@ -112,6 +113,7 @@ export default {
           attachmentUrls: this.formData.attachmentUrls ? JSON.stringify(this.formData.attachmentUrls) : null,
           status: this.formData.status,
           replyDeadline: this.formData.replyDeadline ? this.formatDate(this.formData.replyDeadline) : null,
+          reminderTime: this.formData.reminderTime || null,
           
           // 接收對象
           receivers: this.formData.receivers,
@@ -180,6 +182,7 @@ export default {
         receivers: [],
         ccs: [],
         replyDeadline: null,
+        reminderTime: null,
         questions: []
       }
       this.currentStep = 0

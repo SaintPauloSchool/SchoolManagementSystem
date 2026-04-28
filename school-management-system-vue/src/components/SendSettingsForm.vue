@@ -155,12 +155,12 @@
             <el-date-picker
               v-model="localFormData.reminderTime"
               type="date"
-              placeholder="請選擇提示回覆時間"
+              placeholder="請先選擇回覆截止時間"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               :disabled-date="disabledReminderDate"
+              :disabled="!localFormData.replyDeadline"
             />
-            <div class="form-tip">提示回覆時間必須從明天開始，且不能晚於回覆截止時間</div>
           </el-form-item>
         </div>
       </el-card>
@@ -674,13 +674,6 @@ export default {
   gap: 16px;
 }
 
-/* 表单提示文字 */
-.form-tip {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 6px;
-  line-height: 1.5;
-}
 
 /* 日期选择器 */
 .el-date-picker {
