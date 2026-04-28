@@ -729,6 +729,17 @@ export default {
     },
 
     handleRemindParents() {
+      // 檢查是否超過回覆截止時間
+      if (this.notification.replyDeadline) {
+        const deadline = new Date(this.notification.replyDeadline)
+        const now = new Date()
+        
+        if (now > deadline) {
+          this.$message.warning('已超過回覆截止時間，無法提示家長回覆')
+          return
+        }
+      }
+      
       // TODO: 實現提示家長回覆功能
       console.log('提示家長回覆')
     },
