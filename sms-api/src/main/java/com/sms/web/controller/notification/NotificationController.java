@@ -220,4 +220,28 @@ public class NotificationController extends BaseController {
         int result = notificationService.updateNotification(notification);
         return result > 0 ? AjaxResult.success() : AjaxResult.error("撤回失敗");
     }
+
+    /**
+     * 提示家长回复（重新发送通知给未回复的学生家长）
+     */
+    //@PreAuthorize("@ss.hasPermi('system:notification:remind')")
+    @Log(title = "提示家长回复", businessType = BusinessType.UPDATE)
+    @PostMapping("/remindParents/{notificationId}")
+    public AjaxResult remindParents(@PathVariable Long notificationId) {
+        try {
+            Map<String, Object> result = notificationPublishHandler.remindParentsToReply(notificationId);
+            
+            // 根据 Handler 返回的 success 字段决定返回状态
+            Boolean success = (Boolean) result.get("success");
+            if (success != null && success) {
+                // 成功或部分成功
+                return AjaxResult.success(result);
+            } else {
+                // 全部失败，返回 402
+                return AjaxResult.error(402, (String) result.get("message"));
+            }
+        } catch (Exception e) {
+            return AjaxResult.error(402, "提示家长回复失败: " + e.getMessage());
+        }
+    }
 }

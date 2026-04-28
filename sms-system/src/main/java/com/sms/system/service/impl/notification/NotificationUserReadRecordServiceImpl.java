@@ -3,15 +3,15 @@ package com.sms.system.service.impl.notification;
 import com.sms.system.entity.notification.NotificationSendRecord;
 import com.sms.system.entity.notification.NotificationUserReadRecord;
 import com.sms.system.entity.vo.ReadStatisticsVO;
+import com.sms.system.entity.vo.UnrepliedStudentVO;
 import com.sms.system.mapper.notification.NotificationSendRecordMapper;
 import com.sms.system.mapper.notification.NotificationUserReadRecordMapper;
 import com.sms.system.service.notification.INotificationUserReadRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 通知用户阅读记录 Service 业务层处理
@@ -82,5 +82,63 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
             replyCount = repliedStudents.size();
         }
         return new ReadStatisticsVO(readCount, replyCount);
+    }
+
+    /**
+     * 查询未回复的学生列表（按学生分组，只要有一个家长回复就算已回复）
+     *
+     * @param sendRecordId 发送记录ID
+     * @return 未回复学生列表
+     */
+    @Override
+    public List<UnrepliedStudentVO> selectUnrepliedStudents(Long sendRecordId) {
+        // 1. 查询所有阅读记录
+        List<NotificationUserReadRecord> allRecords = notificationUserReadRecordMapper.selectBySendRecordId(sendRecordId);
+        
+        if (allRecords == null || allRecords.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        // 2. 过滤出有 studentUserId 的记录
+        List<NotificationUserReadRecord> validRecords = allRecords.stream()
+            .filter(record -> record.getStudentUserId() != null && !record.getStudentUserId().trim().isEmpty())
+            .collect(Collectors.toList());
+        
+        if (validRecords.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        // 3. 找出已回复的学生和未回复的学生及其对应的家长列表
+        // 已回复的学生
+        Set<String> repliedStudents = new HashSet<>();
+        // 未回复的学生
+        Map<String, UnrepliedStudentVO> unrepliedStudentVOMap = new HashMap<>();
+        // 家长列表
+        for (NotificationUserReadRecord record : validRecords) {
+            // 以 studentUserId 爲分組依據，若無則降級使用 userId
+            String studentId = record.getStudentUserId();
+            
+            // 只要有任何一个用户（学生或家长）回复了，该学生就算已回复
+            if ("1".equals(record.getReplyStatus())) {
+                repliedStudents.add(studentId);
+            }
+            
+            // 只考虑家长类型，收集未回复学生的家长列表
+            if ("2".equals(record.getUserType())) {
+                // 如果该学生还没有创建 VO，则创建一个新的
+                UnrepliedStudentVO vo = unrepliedStudentVOMap.computeIfAbsent(
+                    studentId, 
+                    k -> new UnrepliedStudentVO(k, new ArrayList<>())
+                );
+                // 添加家长 ID 到列表中
+                vo.getParentUserIds().add(record.getUserId());
+            }
+        }
+        
+        // 4. 移除已回复的学生
+        repliedStudents.forEach(unrepliedStudentVOMap::remove);
+        
+        // 5. 构建返回结果
+        return new ArrayList<>(unrepliedStudentVOMap.values());
     }
 }

@@ -357,6 +357,7 @@ import {
 } from '@element-plus/icons-vue'
 import LogicQuestionItem from './LogicQuestionItem.vue'
 import { normalizeProfileUrl } from '../utils/deployment'
+import request from '@/utils/request'
 
 export default {
   name: 'NotificationDetail',
@@ -740,8 +741,54 @@ export default {
         }
       }
       
-      // TODO: 實現提示家長回覆功能
-      console.log('提示家長回覆')
+      // 确认对话框
+      this.$confirm('系统将向未回复的学生家长重新发送提醒通知，是否继续？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 调用后端 API
+        const loading = this.$loading({
+          lock: true,
+          text: '正在发送提醒通知...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        })
+        
+        request({
+          url: `/system/notification/remindParents/${this.notification.notificationId}`,
+          method: 'post'
+        }).then(response => {
+          loading.close()
+          
+          // 调试日志：查看实际接收到的响应
+          console.log('=== 完整响应对象 ===', response)
+          console.log('response.code:', response.code)
+          console.log('response.data:', response.data)
+          
+          // 根据响应码显示不同类型的消息
+          if (response.code === 200) {
+            // 成功
+            const result = response.data
+            console.log('result对象:', result)
+            this.$message.success(result.message || '提醒通知发送成功')
+            console.log('提醒结果:', result)
+          } else if (response.code === 402) {
+            // 全部失败
+            this.$message.error(response.msg || '微信发送失败')
+            console.error('微信发送失败:', response.msg)
+          } else {
+            // 其他错误
+            this.$message.error(response.msg || '提醒通知发送失败')
+          }
+        }).catch(error => {
+          loading.close()
+          console.error('=== 捕获的错误 ===', error)
+          this.$message.error('提醒通知发送失败: ' + (error.message || '未知错误'))
+        })
+      }).catch(() => {
+        // 用户取消操作
+      })
     },
 
     handleResendFailed() {

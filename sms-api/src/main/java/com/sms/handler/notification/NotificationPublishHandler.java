@@ -14,8 +14,11 @@ import com.sms.system.service.notification.INotificationCcService;
 import com.sms.system.service.notification.INotificationReceiverService;
 import com.sms.system.service.notification.INotificationSendRecordService;
 import com.sms.system.service.notification.INotificationUserReadRecordService;
-import com.sms.system.mapper.SysDepartmentParentBindingMapper;
+import com.sms.system.service.notification.INotificationReminderRecordService;
+import com.sms.system.service.notification.INotificationService;
 import com.sms.system.entity.SysDepartmentParentBinding;
+import com.sms.system.entity.notification.NotificationReminderRecord;
+import com.sms.system.entity.vo.UnrepliedStudentVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +61,10 @@ public class NotificationPublishHandler {
     private INotificationUserReadRecordService notificationUserReadRecordService;
 
     @Autowired
-    private SysDepartmentParentBindingMapper sysDepartmentParentBindingMapper;
+    private INotificationReminderRecordService notificationReminderRecordService;
+
+    @Autowired
+    private INotificationService notificationService;
 
     /**
      * 將通告發佈到微信（家校通信/外部聯繫人消息）
@@ -615,5 +621,229 @@ public class NotificationPublishHandler {
         }
 
         return readRecords;
+    }
+
+    /**
+     * 提示家长回复（重新发送通知给未回复的学生家长）
+     *
+     * @param notificationId 通知ID
+     * @return 发送结果统计
+     */
+    public Map<String, Object>  remindParentsToReply(Long notificationId) {
+        Map<String, Object> result = new HashMap<>();
+        
+        // 1. 查询发送记录
+        NotificationSendRecord sendRecord = notificationSendRecordService.selectByNotificationId(notificationId);
+        if (sendRecord == null) {
+            throw new IllegalStateException("未找到发送记录");
+        }
+        
+        // 2. 查询原始通知
+        Notification notification = notificationService.selectNotificationById(notificationId);
+        if (notification == null) {
+            throw new IllegalStateException("未找到通知信息");
+        }
+        
+        // 3. 检查是否超过回复截止时间
+        if (notification.getReplyDeadline() != null) {
+            Date now = new Date();
+            if (now.after(notification.getReplyDeadline())) {
+                result.put("success", false);
+                result.put("message", "已超过回复截止时间，无法提示家长回复");
+                result.put("remindCount", 0);
+                return result;
+            }
+        }
+        
+        // 4. 查询未回复的学生列表（按学生分组，只要有一个家长回复就算已回复）
+        List<UnrepliedStudentVO> unrepliedStudents = 
+            notificationUserReadRecordService.selectUnrepliedStudents(sendRecord.getSendRecordId());
+
+        // 5. 如果没有未回复的学生，则返回成功
+        if (unrepliedStudents == null || unrepliedStudents.isEmpty()) {
+            result.put("success", true);
+            result.put("message", "所有学生家长均已回复");
+            result.put("remindCount", 0);
+            return result;
+        }
+        
+        log.info("开始发送提醒通知，共 {} 个学生未回复", unrepliedStudents.size());
+        
+        // 创建提醒记录列表
+        int successCount = 0;
+        int failCount = 0;
+        List<NotificationReminderRecord> reminderRecords = new ArrayList<>();
+        Date now = new Date();
+        
+        // 构建提醒消息内容（只需要构建一次）
+        String remindContent = buildRemindContent(notification);
+
+        // 6. 为每个未回复的学生发送提醒通知
+        for (UnrepliedStudentVO student : unrepliedStudents) {
+            String studentUserId = student.getStudentUserId();
+            List<String> parentUserIdList = student.getParentUserIds();
+            
+            if (studentUserId == null || parentUserIdList == null || parentUserIdList.isEmpty()) {
+                continue;
+            }
+            
+            // 直接使用 List 的 toString() 方法存储为字符串
+            String parentUserIdsStr = parentUserIdList.toString();
+            
+            try {
+                // 分批发送提醒消息
+                boolean sendSuccess = sendRemindInBatches(parentUserIdList, remindContent);
+                
+                // 创建提醒记录
+                NotificationReminderRecord reminderRecord = new NotificationReminderRecord();
+                reminderRecord.setNotificationId(notificationId);
+                reminderRecord.setSendRecordId(sendRecord.getSendRecordId());
+                reminderRecord.setStudentUserId(studentUserId);
+                reminderRecord.setParentUserIds(parentUserIdsStr);
+                reminderRecord.setRemindSendTime(now);
+                reminderRecord.setRemindSendStatus(sendSuccess ? "1" : "2");
+                reminderRecord.setCreateTime(now);
+                reminderRecords.add(reminderRecord);
+                
+                if (sendSuccess) {
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+            } catch (Exception e) {
+                log.error("发送提醒通知失败，学生ID: {}", studentUserId, e);
+                failCount++;
+                
+                // 即使失败也创建记录
+                NotificationReminderRecord reminderRecord = new NotificationReminderRecord();
+                reminderRecord.setNotificationId(notificationId);
+                reminderRecord.setSendRecordId(sendRecord.getSendRecordId());
+                reminderRecord.setStudentUserId(studentUserId);
+                reminderRecord.setParentUserIds(parentUserIdsStr);
+                reminderRecord.setRemindSendTime(now);
+                reminderRecord.setRemindSendStatus("2");
+                reminderRecord.setCreateTime(now);
+                reminderRecords.add(reminderRecord);
+            }
+        }
+        
+        // 7. 批量保存提醒记录
+        if (!reminderRecords.isEmpty()) {
+            notificationReminderRecordService.batchSave(reminderRecords);
+        }
+        
+        // 8. 构建返回结果
+        result.put("success", true);
+        result.put("remindCount", unrepliedStudents.size());
+        result.put("successCount", successCount);
+        result.put("failCount", failCount);
+        
+        // 根据发送结果生成不同的提示信息
+        if (failCount == 0) {
+            // 全部成功
+            result.put("message", String.format("提醒发送成功，共发送 %d 个学生", successCount));
+        } else if (successCount == 0) {
+            // 全部失败
+            result.put("success", false);
+            result.put("message", String.format("微信发送失败，共 %d 个学生未能发送提醒", failCount));
+        } else {
+            // 部分成功
+            result.put("message", String.format("提醒发送完成，成功 %d 个，失败 %d 个（微信发送异常）", successCount, failCount));
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 构建提醒消息内容
+     *
+     * @param notification 通知对象
+     * @return 提醒消息内容
+     */
+    private String buildRemindContent(Notification notification) {
+        // 标题
+        String title = notification.getTitle() == null ? "" : notification.getTitle().trim();
+        // 跳转链接
+        String noticeUrl = notification.getJumpUrl();
+        
+        // 如果通告没有自定义的跳转链接，则使用默认的详情页链接
+        if (noticeUrl == null || noticeUrl.trim().isEmpty()) {
+            noticeUrl = noticeBaseUrl + notification.getNotificationId();
+        }
+        
+        // 格式化回复截止时间
+        String replyDeadline = "";
+        if (notification.getReplyDeadline() != null) {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            replyDeadline = sdf.format(notification.getReplyDeadline());
+        }
+        
+        return "🔔 溫馨提示\n" +
+               "───────────────\n" +
+               "您有一條通告需要回覆\n" +
+               "───────────────\n" +
+               "📌 標題：\n" + title + "\n\n" +
+               "⏰ 回復截止時間：\n" + replyDeadline + "\n\n" +
+               "👉 請點擊以下連接查看詳情：\n" + noticeUrl;
+    }
+    
+    /**
+     * 分批发送提醒消息
+     *
+     * @param parentUserIds 家长用户ID列表
+     * @param content       消息内容
+     * @return 是否发送成功
+     */
+    private boolean sendRemindInBatches(List<String> parentUserIds, String content) {
+        if (parentUserIds == null || parentUserIds.isEmpty()) {
+            return false;
+        }
+        
+        int batchSize = 1000;
+        int totalBatches = (int) Math.ceil((double) parentUserIds.size() / batchSize);
+        
+        for (int i = 0; i < totalBatches; i++) {
+            List<String> currentBatch = extractBatch(parentUserIds, i, batchSize);
+            
+            if (currentBatch.isEmpty()) {
+                continue;
+            }
+            
+            // 构建企业微信消息payload
+            JSONObject payload = new JSONObject();
+            payload.put("recv_scope", 0);
+            payload.put("to_parent_userid", toJsonArray(currentBatch));
+            payload.put("to_student_userid", new JSONArray());
+            payload.put("to_party", new JSONArray());
+            payload.put("toall", 0);
+            payload.put("msgtype", "text");
+            payload.put("agentid", agentId);
+            
+            JSONObject text = new JSONObject();
+            text.put("content", content);
+            payload.put("text", text);
+            
+            payload.put("enable_id_trans", 0);
+            payload.put("enable_duplicate_check", 0);
+            payload.put("duplicate_check_interval", 1800);
+            
+            try {
+                JSONObject result = wechatWorkHttpClient.sendSchoolNotification(payload);
+                Integer errcode = result.getInteger("errcode");
+                
+                if (errcode != null && errcode == 0) {
+                    log.info("第 {}/{} 批提醒消息发送成功", i + 1, totalBatches);
+                } else {
+                    log.error("第 {}/{} 批提醒消息发送失败: code={}, msg={}", 
+                             i + 1, totalBatches, errcode, result.getString("errmsg"));
+                    return false;
+                }
+            } catch (Exception e) {
+                log.error("第 {}/{} 批提醒消息发送异常", i + 1, totalBatches, e);
+                return false;
+            }
+        }
+        
+        return true;
     }
 }

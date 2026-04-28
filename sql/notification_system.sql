@@ -145,6 +145,25 @@ CREATE TABLE notification_user_read_record (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知用戶閱讀記錄表';
 
 -- ----------------------------
+-- 通知提醒記錄表（用於收集提示家長回覆的記錄）
+-- ----------------------------
+DROP TABLE IF EXISTS notification_reminder_record;
+CREATE TABLE notification_reminder_record (
+       reminder_id         BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '提醒記錄ID',
+       notification_id     BIGINT(20)      NOT NULL                   COMMENT '原通知ID',
+       send_record_id      BIGINT(20)      NOT NULL                   COMMENT '原發送記錄ID',
+       student_user_id     VARCHAR(64)     NOT NULL                   COMMENT '學生用戶ID',
+       parent_user_ids     TEXT            DEFAULT NULL               COMMENT '未回覆的家長用戶ID列表(JSON格式)',
+       remind_send_time    DATETIME        DEFAULT NULL               COMMENT '提醒發送時間',
+       remind_send_status  CHAR(1)         DEFAULT '0'                COMMENT '提醒發送狀態（0待發送 1發送成功 2發送失敗）',
+       create_time         DATETIME                                   COMMENT '創建時間',
+       PRIMARY KEY (reminder_id),
+       KEY idx_notification (notification_id),
+       KEY idx_send_record (send_record_id),
+       KEY idx_student (student_user_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知提醒記錄表';
+
+-- ----------------------------
 -- 回覆答案表
 -- ----------------------------
 DROP TABLE IF EXISTS notification_answer;

@@ -23,4 +23,12 @@ public interface INotificationSendRecordService {
      * @return 發送統計 VO
      */
     SendStatisticsVO getSendStatisticsVO(Long notificationId);
+
+    /**
+     * 根据通知ID查询发送记录
+     *
+     * @param notificationId 通知ID
+     * @return 发送记录
+     */
+    NotificationSendRecord selectByNotificationId(Long notificationId);
 }

@@ -46,4 +46,15 @@ public class NotificationSendRecordServiceImpl implements INotificationSendRecor
         }
         return new SendStatisticsVO(0, 0, 0);
     }
+
+    /**
+     * 根据通知ID查询发送记录
+     *
+     * @param notificationId 通知ID
+     * @return 发送记录
+     */
+    @Override
+    public NotificationSendRecord selectByNotificationId(Long notificationId) {
+        return notificationSendRecordMapper.selectByNotificationId(notificationId);
+    }
 }

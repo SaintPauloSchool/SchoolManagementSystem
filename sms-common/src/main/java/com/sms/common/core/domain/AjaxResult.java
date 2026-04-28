@@ -30,7 +30,7 @@ AjaxResult extends HashMap<String, Object>
     public enum Type
     {
         /** 成功 */
-        SUCCESS(0),
+        SUCCESS(200),
         /** 警告 */
         WARN(301),
         /** 错误 */
@@ -169,6 +169,21 @@ AjaxResult extends HashMap<String, Object>
     public static AjaxResult error(String msg)
     {
         return AjaxResult.error(msg, null);
+    }
+
+    /**
+     * 返回错误消息（自定义状态码）
+     *
+     * @param code 状态码
+     * @param msg 返回内容
+     * @return 错误消息
+     */
+    public static AjaxResult error(int code, String msg)
+    {
+        AjaxResult result = new AjaxResult();
+        result.put(CODE_TAG, code);
+        result.put(MSG_TAG, msg);
+        return result;
     }
 
     /**

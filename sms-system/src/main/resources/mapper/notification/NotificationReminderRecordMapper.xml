@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sms.system.mapper.notification.NotificationReminderRecordMapper">
+
+    <resultMap type="NotificationReminderRecord" id="NotificationReminderRecordResult">
+        <result property="reminderId"        column="reminder_id"         />
+        <result property="notificationId"    column="notification_id"     />
+        <result property="sendRecordId"      column="send_record_id"      />
+        <result property="studentUserId"     column="student_user_id"     />
+        <result property="parentUserIds"     column="parent_user_ids"     />
+        <result property="remindSendTime"    column="remind_send_time"    />
+        <result property="remindSendStatus"  column="remind_send_status"  />
+        <result property="createTime"        column="create_time"         />
+    </resultMap>
+
+    <insert id="insert" parameterType="NotificationReminderRecord" useGeneratedKeys="true" keyProperty="reminderId">
+        insert into notification_reminder_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="notificationId != null">notification_id,</if>
+            <if test="sendRecordId != null">send_record_id,</if>
+            <if test="studentUserId != null and studentUserId != ''">student_user_id,</if>
+            <if test="parentUserIds != null">parent_user_ids,</if>
+            <if test="remindSendTime != null">remind_send_time,</if>
+            <if test="remindSendStatus != null and remindSendStatus != ''">remind_send_status,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="notificationId != null">#{notificationId},</if>
+            <if test="sendRecordId != null">#{sendRecordId},</if>
+            <if test="studentUserId != null and studentUserId != ''">#{studentUserId},</if>
+            <if test="parentUserIds != null">#{parentUserIds},</if>
+            <if test="remindSendTime != null">#{remindSendTime},</if>
+            <if test="remindSendStatus != null and remindSendStatus != ''">#{remindSendStatus},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        insert into notification_reminder_record
+        (notification_id, send_record_id, student_user_id, parent_user_ids, remind_send_time, remind_send_status, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.notificationId}, #{item.sendRecordId}, #{item.studentUserId}, #{item.parentUserIds}, #{item.remindSendTime}, #{item.remindSendStatus}, #{item.createTime})
+        </foreach>
+    </insert>
+
+    <select id="selectByNotificationId" resultMap="NotificationReminderRecordResult">
+        select reminder_id, notification_id, send_record_id, student_user_id, parent_user_ids,
+               remind_send_time, remind_send_status, create_time
+        from notification_reminder_record
+        where notification_id = #{notificationId}
+        order by create_time desc
+    </select>
+
+</mapper>

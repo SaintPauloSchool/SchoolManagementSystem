@@ -34,6 +34,11 @@ service.interceptors.response.use(
   response => {
     const res = response.data
 
+    // 402 业务状态码由组件自行处理，拦截器不显示错误提示
+    if (res.code === 402) {
+      return res
+    }
+
     if (res.code !== 200 && res.code !== 0) {
       ElMessage({
         message: res.msg || res.message || '请求失败',
