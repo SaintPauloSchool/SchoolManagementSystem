@@ -6,7 +6,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.sms.system.entity.SysDepartment;
 import com.sms.system.entity.SysDepartmentParentBinding;
 import com.sms.system.entity.SysParentStudentRelation;
-import com.sms.system.entity.SysSchoolDepartment;
 import com.sms.system.entity.SysSchoolDepartmentMember;
 import com.sms.system.entity.notification.NotificationReceiver;
 import com.sms.system.entity.vo.ResolvedReceiversVO;
@@ -16,6 +15,7 @@ import com.sms.system.mapper.SysParentStudentRelationMapper;
 import com.sms.system.mapper.SysSchoolDepartmentMapper;
 import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
 import com.sms.system.mapper.notification.NotificationReceiverMapper;
+import com.sms.system.service.impl.SysSchoolDepartmentServiceImpl;
 import com.sms.system.service.notification.INotificationReceiverService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +70,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
     private SysDepartmentMapper sysDepartmentMapper;
 
     @Autowired
-    private SysSchoolDepartmentMapper sysSchoolDepartmentMapper;
+    private SysSchoolDepartmentServiceImpl sysSchoolDepartmentService;
 
     /**
      * 根据通知 ID 查询接收对象列表
@@ -351,7 +351,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
         }
 
         // 1. 遞歸獲取所有子孫部門 ID（包括傳入的部門本身）
-        List<Long> allDescendantDepartmentIds = resolveAllDescendantDepartmentIds(departmentIds);
+        List<Long> allDescendantDepartmentIds = sysSchoolDepartmentService.resolveAllDescendantDepartmentIdsByType(departmentIds, 2);
         
         log.info("解析部門學生成員 - 輸入部門 IDs: {}, 解析後所有子孫部門 IDs: {}", departmentIds, allDescendantDepartmentIds);
         
@@ -367,66 +367,6 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
                     studentUserIds.add(member.getUserid());
                 }
             }
-        }
-    }
-
-    /**
-     * 遞歸獲取傳入部門及其所有子孫部門的 ID
-     *
-     * @param departmentIds 部門 ID 列表
-     * @return 所有部門 ID 列表（包括傳入的部門及其所有子孫部門）
-     */
-    private List<Long> resolveAllDescendantDepartmentIds(List<Long> departmentIds) {
-        //  如果輸入參數為空，則返回空列表
-        if (departmentIds == null || departmentIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        // 1. 查詢所有部門信息
-        List<SysSchoolDepartment> allDepartments = sysSchoolDepartmentMapper.selectAll(null);
-        if (allDepartments == null || allDepartments.isEmpty()) {
-            return departmentIds;
-        }
-
-        // 2. 對每個傳入的部門 ID，遞歸查找其所有子孫部門
-        Set<Long> allDepartmentIds = new HashSet<>(departmentIds);
-        for (Long deptId : departmentIds) {
-            collectAllDescendantDepartmentIds(deptId, allDepartments, allDepartmentIds);
-        }
-
-        return new ArrayList<>(allDepartmentIds);
-    }
-
-    /**
-     * 遞歸收集某個部門的所有子孫部門 ID
-     *
-     * @param parentId 父部門 ID
-     * @param allDepartments 所有部門列表
-     * @param allDepartmentIds 收集結果的集合
-     */
-    private void collectAllDescendantDepartmentIds(Long parentId, List<SysSchoolDepartment> allDepartments, Set<Long> allDepartmentIds) {
-        // 如果輸入參數為空，則返回
-        if (parentId == null || allDepartments == null) {
-            return;
-        }
-
-        // 找到所有直接子部門
-        List<SysSchoolDepartment> children = allDepartments.stream()
-                .filter(Objects::nonNull)
-                .filter(dept -> dept.getParentId() != null)
-                .filter(dept -> dept.getParentId().longValue() == parentId)
-                .collect(Collectors.toList());
-
-        for (SysSchoolDepartment child : children) {
-            if (child.getId() == null) {
-                continue;
-            }
-
-            // 添加子部門 ID
-            allDepartmentIds.add(child.getId());
-            
-            // 繼續遞歸查找孫部門
-            collectAllDescendantDepartmentIds(child.getId(), allDepartments, allDepartmentIds);
         }
     }
 

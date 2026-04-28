@@ -201,4 +201,60 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
         node.setStaffUserId(member.getUserid());
         return node;
     }
+
+    /**
+     * 遞歸獲取 WeCom 部門及其所有子孫部門的 ID
+     *
+     * @param departmentIds 部門 ID 列表
+     * @return 所有部門 ID 列表（包括傳入的部門及其所有子孫部門）
+     */
+    public List<Long> resolveAllDescendantDepartmentIds(List<Long> departmentIds) {
+        // 如果傳入的部門 ID 列表為空，則返回空列表
+        if (departmentIds == null || departmentIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 1. 查詢所有 WeCom 部門信息
+        List<WecomSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll();
+
+        // 2. 對每個傳入的部門 ID，遞歸查找其所有子孫部門
+        Set<Long> allDepartmentIds = new HashSet<>(departmentIds);
+        for (Long deptId : departmentIds) {
+            collectAllDescendantDepartmentIds(deptId, allDepartments, allDepartmentIds);
+        }
+
+        return new ArrayList<>(allDepartmentIds);
+    }
+
+    /**
+     * 遞歸收集 WeCom 某個部門的所有子孫部門 ID
+     *
+     * @param parentId 父部門 ID
+     * @param allDepartments 所有部門列表
+     * @param allDepartmentIds 收集結果的集合
+     */
+    private void collectAllDescendantDepartmentIds(Long parentId, List<WecomSchoolDepartment> allDepartments, Set<Long> allDepartmentIds) {
+        if (parentId == null || allDepartments == null) {
+            return;
+        }
+
+        // 找到所有直接子部門
+        List<WecomSchoolDepartment> children = allDepartments.stream()
+                .filter(Objects::nonNull)
+                .filter(dept -> dept.getParentId() != null)
+                .filter(dept -> dept.getParentId().longValue() == parentId)
+                .collect(Collectors.toList());
+
+        for (WecomSchoolDepartment child : children) {
+            if (child.getId() == null) {
+                continue;
+            }
+
+            // 添加子部門 ID
+            allDepartmentIds.add(child.getId());
+            
+            // 繼續遞歸查找孫部門
+            collectAllDescendantDepartmentIds(child.getId(), allDepartments, allDepartmentIds);
+        }
+    }
 }

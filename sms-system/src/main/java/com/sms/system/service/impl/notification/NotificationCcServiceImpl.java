@@ -8,6 +8,8 @@ import com.sms.system.entity.notification.NotificationCc;
 import com.sms.system.mapper.WecomSchoolDepartmentMemberMapper;
 import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
 import com.sms.system.mapper.notification.NotificationCcMapper;
+import com.sms.system.service.impl.SysSchoolDepartmentServiceImpl;
+import com.sms.system.service.impl.WecomSchoolDepartmentServiceImpl;
 import com.sms.system.service.notification.INotificationCcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,12 @@ public class NotificationCcServiceImpl implements INotificationCcService {
 
     @Autowired
     private SysSchoolDepartmentMemberMapper sysSchoolDepartmentMemberMapper;
+
+    @Autowired
+    private SysSchoolDepartmentServiceImpl sysSchoolDepartmentService;
+
+    @Autowired
+    private WecomSchoolDepartmentServiceImpl wecomSchoolDepartmentService;
 
     /**
      * 根据通知 ID 查询抄送对象列表
@@ -125,8 +133,11 @@ public class NotificationCcServiceImpl implements INotificationCcService {
                     if (type != null && type == 1) {
                         // type = 1: 用 id 去關聯 wecom_school_department_member 表中的 id 的所有 userid
                         List<Long> ids = ccIds.toJavaList(Long.class);
+                        // 用 id 去關聯 wecom_school_department_member 表中的 id 的所有 userid
                         List<WecomSchoolDepartmentMember> members = wecomSchoolDepartmentMemberMapper.selectMembersByIds(ids);
+                        //  如果結果非空
                         if (members != null) {
+                            // 將 userid 添加到 userIds 中
                             members.stream()
                                 .map(WecomSchoolDepartmentMember::getUserid)
                                 .filter(userid -> userid != null && !userid.trim().isEmpty())
@@ -135,8 +146,11 @@ public class NotificationCcServiceImpl implements INotificationCcService {
                     } else if (type != null && type == 2) {
                         // type = 2: 用 id 去關聯 sys_school_department_member 表中的 id 的 type = 1 的 userid
                         List<Long> ids = ccIds.toJavaList(Long.class);
+                        // 用 id 去關聯 sys_school_department_member 表中的 id 的 type = 1 的 userid
                         List<SysSchoolDepartmentMember> members = sysSchoolDepartmentMemberMapper.selectMembersByIds(ids);
+                        // 如果結果非空
                         if (members != null) {
+                            // 將 type = 1 的 userid 添加到 userIds 中
                             members.stream()
                                 .filter(m -> m.getType() != null && m.getType() == 1)
                                 .map(SysSchoolDepartmentMember::getUserid)
@@ -149,8 +163,14 @@ public class NotificationCcServiceImpl implements INotificationCcService {
                     if (type != null && type == 1) {
                         // type = 1: 用 id 去查詢 wecom_school_department_member 表中的 department_id 下的所有 userid
                         List<Long> departmentIds = ccIds.toJavaList(Long.class);
-                        List<WecomSchoolDepartmentMember> members = wecomSchoolDepartmentMemberMapper.selectMembersByDepartmentIds(departmentIds);
+                        // 遞歸獲取所有子孫部門 ID
+                        List<Long> allDepartmentIds = wecomSchoolDepartmentService.resolveAllDescendantDepartmentIds(departmentIds);
+                        log.info("解析 WeCom 抄送部門 - 輸入部門 IDs: {}, 解析後所有子孫部門 IDs: {}", departmentIds, allDepartmentIds);
+                        // 用所有子孫部門 ID 去查詢
+                        List<WecomSchoolDepartmentMember> members = wecomSchoolDepartmentMemberMapper.selectMembersByDepartmentIds(allDepartmentIds);
+                        // 如果結果非空
                         if (members != null) {
+                            // 將所有 userid 添加到 userIds 中
                             members.stream()
                                 .map(WecomSchoolDepartmentMember::getUserid)
                                 .filter(userid -> userid != null && !userid.trim().isEmpty())
@@ -159,8 +179,14 @@ public class NotificationCcServiceImpl implements INotificationCcService {
                     } else if (type != null && type == 2) {
                         // type = 2: 用 id 去查詢 sys_school_department_member 表中的 department_id 下的 type = 1 的所有 userid
                         List<Long> departmentIds = ccIds.toJavaList(Long.class);
-                        List<SysSchoolDepartmentMember> members = sysSchoolDepartmentMemberMapper.selectMembersByDepartmentIds(departmentIds);
+                        // 遞歸獲取所有子孫部門 ID
+                        List<Long> allDepartmentIds = sysSchoolDepartmentService.resolveAllDescendantDepartmentIdsByType(departmentIds, 1);
+                        log.info("解析 Sys 抄送部門 - 輸入部門 IDs: {}, 解析後所有子孫部門 IDs: {}", departmentIds, allDepartmentIds);
+                        // 用所有子孫部門 ID 去查詢
+                        List<SysSchoolDepartmentMember> members = sysSchoolDepartmentMemberMapper.selectMembersByDepartmentIds(allDepartmentIds);
+                        // 如果結果非空
                         if (members != null) {
+                            // 將所有 type = 1 的 userid 添加到 userIds 中
                             members.stream()
                                 .filter(m -> m.getType() != null && m.getType() == 1)
                                 .map(SysSchoolDepartmentMember::getUserid)
