@@ -252,7 +252,7 @@ public class NotificationController extends BaseController {
     @PostMapping("/resendFailed/{notificationId}")
     public AjaxResult resendFailed(@PathVariable Long notificationId) {
         try {
-            Map<String, Object> result = notificationPublishHandler.resendFailedNotifications(notificationId);
+            Map<String, Object> result = notificationPublishHandler.resendFailedNotifications(notificationId, false);
             Boolean success = (Boolean) result.get("success");
             if (success != null && success) {
                 return AjaxResult.success(result);

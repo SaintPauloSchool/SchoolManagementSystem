@@ -29,7 +29,7 @@ public class NotificationResendTask {
     /**
      * 每天9点到18点之间每小时自动发送失败的通知
      */
-    @Scheduled(cron = "0 0 9-18 * * ?")
+    //@Scheduled(cron = "0 0 9-18 * * ?")
     public void resendFailedNotificationsTask() {
         log.info("开始执行定时重新发送失败通知的任务...");
 
@@ -48,11 +48,13 @@ public class NotificationResendTask {
             int successNotifications = 0;
             int failNotifications = 0;
 
+            // 遍历发送失败的通知记录
             for (NotificationSendRecord sendRecord : failedSendRecords) {
                 Long notificationId = sendRecord.getNotificationId();
                 try {
                     log.info("重发失败通知: notificationId={}", notificationId);
-                    notificationPublishHandler.resendFailedNotifications(notificationId);
+                    // 重发失败的通知
+                    notificationPublishHandler.resendFailedNotifications(notificationId, true);
                     successNotifications++;
                 } catch (Exception e) {
                     log.error("重发失败通知异常: notificationId={}", notificationId, e);

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sms.system.mapper.notification.NotificationResendFailRecordMapper">
+
+    <resultMap type="com.sms.system.entity.notification.NotificationResendFailRecord" id="ResendFailRecordResult">
+        <result property="id"              column="id"              />
+        <result property="notificationId"  column="notification_id" />
+        <result property="sendRecordId"    column="send_record_id"  />
+        <result property="userId"          column="user_id"         />
+        <result property="userType"        column="user_type"       />
+        <result property="studentUserId"   column="student_user_id" />
+        <result property="failReason1"     column="fail_reason_1"   />
+        <result property="failMessage1"    column="fail_message_1"  />
+        <result property="failReason2"     column="fail_reason_2"   />
+        <result property="failMessage2"    column="fail_message_2"  />
+        <result property="failReason3"     column="fail_reason_3"   />
+        <result property="failMessage3"    column="fail_message_3"  />
+        <result property="failCount"       column="fail_count"      />
+        <result property="status"          column="status"          />
+        <result property="createTime"      column="create_time"     />
+        <result property="updateTime"      column="update_time"     />
+    </resultMap>
+
+    <!-- 新增重发失败记录 -->
+    <insert id="insert" parameterType="com.sms.system.entity.notification.NotificationResendFailRecord"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into notification_resend_fail_record
+        (notification_id, send_record_id, user_id, user_type, student_user_id,
+         fail_reason_1, fail_message_1, fail_reason_2, fail_message_2, fail_reason_3, fail_message_3, fail_count, status, create_time, update_time)
+        values
+        (#{notificationId}, #{sendRecordId}, #{userId}, #{userType}, #{studentUserId},
+         #{failReason1}, #{failMessage1}, #{failReason2}, #{failMessage2}, #{failReason3}, #{failMessage3}, #{failCount}, #{status}, #{createTime}, #{updateTime})
+    </insert>
+
+    <!-- 更新重发失败记录 -->
+    <update id="updateById" parameterType="com.sms.system.entity.notification.NotificationResendFailRecord">
+        update notification_resend_fail_record
+        <set>
+            <if test="failReason1 != null">fail_reason_1 = #{failReason1},</if>
+            <if test="failMessage1 != null">fail_message_1 = #{failMessage1},</if>
+            <if test="failReason2 != null">fail_reason_2 = #{failReason2},</if>
+            <if test="failMessage2 != null">fail_message_2 = #{failMessage2},</if>
+            <if test="failReason3 != null">fail_reason_3 = #{failReason3},</if>
+            <if test="failMessage3 != null">fail_message_3 = #{failMessage3},</if>
+            <if test="failCount != null">fail_count = #{failCount},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!-- 根据通知ID查询所有重发失败记录 -->
+    <select id="selectByNotificationId" resultMap="ResendFailRecordResult">
+        select id, notification_id, send_record_id, user_id, user_type, student_user_id,
+               fail_reason_1, fail_message_1, fail_reason_2, fail_message_2, fail_reason_3, fail_message_3, fail_count, status, create_time, update_time
+        from notification_resend_fail_record
+        where notification_id = #{notificationId}
+    </select>
+
+    <!-- 根据通知ID和用户ID查询单条记录 -->
+    <select id="selectByNotificationIdAndUserId" resultMap="ResendFailRecordResult">
+        select id, notification_id, send_record_id, user_id, user_type, student_user_id,
+               fail_reason_1, fail_message_1, fail_reason_2, fail_message_2, fail_reason_3, fail_message_3, fail_count, status, create_time, update_time
+        from notification_resend_fail_record
+        where notification_id = #{notificationId}
+          and user_id = #{userId}
+        limit 1
+    </select>
+
+</mapper>

@@ -377,3 +377,25 @@ CREATE TABLE sys_school_department_member (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系統學校部門成員表';
 -- ----------------------------
+-- 通知重发失败记录表
+-- 用于追踪每个用户的重发失败情况，失败次数达到 3 次则放弃重发
+DROP TABLE IF EXISTS notification_resend_fail_record;
+CREATE TABLE `notification_resend_fail_record` (
+   `id`              bigint       NOT NULL AUTO_INCREMENT          COMMENT '主键ID',
+   `notification_id` bigint       NOT NULL                         COMMENT '通知ID',
+   `send_record_id`  bigint       NOT NULL                         COMMENT '发送记录ID',
+   `user_id`         varchar(64)  NOT NULL                         COMMENT '接收用户ID（家长或学生）',
+   `user_type`       char(1)      NOT NULL DEFAULT '2'             COMMENT '用户类型（1学生 2家长）',
+   `student_user_id` varchar(64)           DEFAULT NULL            COMMENT '关联学生ID',
+   `fail_reason_1`   varchar(255)          DEFAULT NULL            COMMENT '第1次失败原因',
+   `fail_message_1`  varchar(1000)         DEFAULT NULL            COMMENT '第1次失败详细信息',
+   `fail_reason_2`   varchar(255)          DEFAULT NULL            COMMENT '第2次失败原因',
+   `fail_message_2`  varchar(1000)         DEFAULT NULL            COMMENT '第2次失败详细信息',
+   `fail_reason_3`   varchar(255)          DEFAULT NULL            COMMENT '第3次失败原因',
+   `fail_message_3`  varchar(1000)         DEFAULT NULL            COMMENT '第3次失败详细信息',
+   `fail_count`      int          NOT NULL DEFAULT 1               COMMENT '累计失败次数（最大3次，达到后放弃重发）',
+   `status`          char(1)      NOT NULL DEFAULT '0'             COMMENT '状态：0-待重发 1-已放弃',
+   `create_time`     datetime              DEFAULT NULL            COMMENT '首次失败时间',
+   `update_time`     datetime              DEFAULT NULL            COMMENT '最近更新时间',
+   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='通知重发失败记录表';

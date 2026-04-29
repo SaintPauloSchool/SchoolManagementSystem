@@ -3,21 +3,10 @@ package com.sms.handler.notification;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.framework.wechat.WechatWorkHttpClient;
-import com.sms.system.entity.notification.Notification;
-import com.sms.system.entity.notification.NotificationCc;
-import com.sms.system.entity.notification.NotificationReceiver;
-import com.sms.system.entity.notification.NotificationSendRecord;
-import com.sms.system.entity.notification.NotificationUserReadRecord;
+import com.sms.system.entity.notification.*;
 import com.sms.system.entity.vo.ResolvedReceiversVO;
-import com.sms.system.entity.notification.SendResult;
-import com.sms.system.service.notification.INotificationCcService;
-import com.sms.system.service.notification.INotificationReceiverService;
-import com.sms.system.service.notification.INotificationSendRecordService;
-import com.sms.system.service.notification.INotificationUserReadRecordService;
-import com.sms.system.service.notification.INotificationReminderRecordService;
-import com.sms.system.service.notification.INotificationService;
+import com.sms.system.service.notification.*;
 import com.sms.system.entity.SysDepartmentParentBinding;
-import com.sms.system.entity.notification.NotificationReminderRecord;
 import com.sms.system.entity.vo.UnrepliedStudentVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +54,9 @@ public class NotificationPublishHandler {
 
     @Autowired
     private INotificationService notificationService;
+
+    @Autowired
+    private INotificationResendFailRecordService notificationResendFailRecordService;
 
     /**
      * 將通告發佈到微信（家校通信/外部聯繫人消息）
@@ -220,6 +212,8 @@ public class NotificationPublishHandler {
         int failCount = 0;
         // 用於記錄成功接收到通知的用戶 ID（家長 + 學生）
         Set<String> successUserIds = new HashSet<>();
+        // 用于记录失败用户的失败原因
+        Map<String, String> failedUserReasons = new HashMap<>();
 
         // 分批發送
         for (int i = 0; i < totalBatches; i++) {
@@ -245,9 +239,14 @@ public class NotificationPublishHandler {
             Integer errcode = result.getInteger("errcode");
             // 如果返回的錯誤碼不是 0，則表示發送失敗
             if (errcode == null || errcode != 0) {
+                String errmsg = result.getString("errmsg");
                 log.error("通知 {} 第 {} 批發送失敗: code={}, msg={}",
-                        notification.getNotificationId(), i + 1, errcode, result.getString("errmsg"));
+                        notification.getNotificationId(), i + 1, errcode, errmsg);
                 failCount += currentParentIds.size() + currentStudentIds.size();
+                
+                String reason = "接口返回错误: " + errcode;
+                for (String uid : currentParentIds) failedUserReasons.put(uid, reason);
+                for (String uid : currentStudentIds) failedUserReasons.put(uid, reason);
             } else {
                 log.info("通知 {} 第 {}/{} 批發送成功", notification.getNotificationId(), i + 1, totalBatches);
                 
@@ -280,6 +279,14 @@ public class NotificationPublishHandler {
                     }
                 }
                 
+                // 收集失败用户及原因
+                Set<String> batchFailedUsers = new HashSet<>(currentParentIds);
+                batchFailedUsers.addAll(currentStudentIds);
+                batchFailedUsers.removeAll(batchSuccessUsers);
+                for (String failedId : batchFailedUsers) {
+                    failedUserReasons.put(failedId, "无效用户或微信端未关注");
+                }
+                
                 int batchTotal = currentParentIds.size() + currentStudentIds.size();
                 int batchFailCount = batchTotal - batchSuccessUsers.size();
                 
@@ -296,7 +303,7 @@ public class NotificationPublishHandler {
         log.info("通知 {} 已全部發送完成，共 {} 批，成功: {}, 失敗: {}", 
                 notification.getNotificationId(), totalBatches, successCount, failCount);
         
-        return new SendResult(successCount, failCount, successUserIds);
+        return new SendResult(successCount, failCount, successUserIds, failedUserReasons);
     }
 
     /**
@@ -866,9 +873,10 @@ public class NotificationPublishHandler {
      * 重新发送失败通知（根据通知ID找到发送失败的用户重新发送）
      *
      * @param notificationId 通知ID
+     * @param isAutoTask     是否是定时任务自动重发（自动重发会记录失败次数，满3次不再重发）
      * @return 发送结果统计
      */
-    public Map<String, Object> resendFailedNotifications(Long notificationId) {
+    public Map<String, Object> resendFailedNotifications(Long notificationId, boolean isAutoTask) {
         Map<String, Object> result = new HashMap<>();
 
         // 1. 查询原始通知
@@ -887,6 +895,17 @@ public class NotificationPublishHandler {
         List<NotificationUserReadRecord> failedRecords =
             notificationUserReadRecordService.selectFailedRecords(sendRecord.getSendRecordId());
 
+        // 4. 如果是自动任务，过滤掉已经达到最大失败次数（放弃重发）的用户
+        if (isAutoTask && failedRecords != null) {
+            // 如果是自动重发，过滤掉已经达到最大失败次数（放弃重发）的用户
+            Set<String> abandonedIds = notificationResendFailRecordService.selectAbandonedUserIds(notificationId);
+            // 过滤掉已经放弃重发的用户
+            failedRecords = failedRecords.stream()
+                    .filter(record -> !abandonedIds.contains(record.getUserId()))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        // 沒有失敗的記錄則結束
         if (failedRecords == null || failedRecords.isEmpty()) {
             result.put("success", true);
             result.put("message", "没有需要重发的失败记录");
@@ -896,7 +915,7 @@ public class NotificationPublishHandler {
 
         log.info("开始重新发送失败通知，共 {} 条失败记录", failedRecords.size());
 
-        // 4. 按用户类型分组失败记录
+        // 5. 按用户类型分组失败记录
         List<String> failedParentIds = new ArrayList<>();
         List<String> failedStudentIds = new ArrayList<>();
         for (NotificationUserReadRecord record : failedRecords) {
@@ -907,8 +926,10 @@ public class NotificationPublishHandler {
             }
         }
 
-        // 5. 重新发送并更新每条阅读记录的 send_status
+        // 6. 重新发送并更新每条阅读记录的 send_status
         Set<String> overallSuccessUserIds = new HashSet<>();
+        // 保存所有失败用户的失败原因
+        Map<String, String> allFailedUserReasons = new HashMap<>();
 
         // 重新发送家长消息
         if (!failedParentIds.isEmpty()) {
@@ -922,7 +943,13 @@ public class NotificationPublishHandler {
                     notificationUserReadRecordService.updateSendStatus(record.getReadId(), newStatus);
                 }
             }
+            // 保存成功用户
             overallSuccessUserIds.addAll(parentResult.getSuccessUserIds());
+            // 如果存在失败原因，保存
+            if (parentResult.getFailedUserReasons() != null) {
+                // 保存失败原因
+                allFailedUserReasons.putAll(parentResult.getFailedUserReasons());
+            }
         }
 
         // 重新发送学生消息
@@ -937,10 +964,39 @@ public class NotificationPublishHandler {
                     notificationUserReadRecordService.updateSendStatus(record.getReadId(), newStatus);
                 }
             }
+            // 保存成功用户
             overallSuccessUserIds.addAll(studentResult.getSuccessUserIds());
+            // 如果存在失败原因，保存
+            if (studentResult.getFailedUserReasons() != null) {
+                // 保存失败原因
+                allFailedUserReasons.putAll(studentResult.getFailedUserReasons());
+            }
         }
 
-        // 6. 以学生为维度统计成功/失败数（与 createSendRecord 逻辑一致）
+        // 如果是自动重发， 记录自动重发的失败信息
+        if (isAutoTask) {
+            // 遍歷失败记录
+            for (NotificationUserReadRecord record : failedRecords) {
+                // 存在失败
+                if (!overallSuccessUserIds.contains(record.getUserId())) {
+                    // 创建失败记录
+                    NotificationResendFailRecord failRecord = new NotificationResendFailRecord();
+                    failRecord.setNotificationId(notificationId);
+                    failRecord.setSendRecordId(sendRecord.getSendRecordId());
+                    failRecord.setUserId(record.getUserId());
+                    failRecord.setUserType(record.getUserType());
+                    failRecord.setStudentUserId(record.getStudentUserId());
+                    String reason = allFailedUserReasons.get(record.getUserId());
+                    if (reason == null) reason = "未知原因";
+                    failRecord.setFailReason1("自动重发失败");
+                    failRecord.setFailMessage1(reason);
+                    // 保存或者更新
+                    notificationResendFailRecordService.saveOrUpdate(failRecord);
+                }
+            }
+        }
+
+        // 7. 以学生为维度统计成功/失败数（与 createSendRecord 逻辑一致）
         //    - 按 studentUserId 分组失败记录
         //    - 只要该学生下任意一个家长重发成功，就算该学生成功
         // 建立 studentUserId -> 该学生下所有 userId 集合
@@ -971,16 +1027,16 @@ public class NotificationPublishHandler {
             if (anySuccess) successCount++; else failCount++;
         }
 
-        // 7. 更新发送记录的统计信息（以学生为维度）
+        // 8. 更新发送记录的统计信息（以学生为维度）
         NotificationSendRecord updateRecord = buildSendRecordUpdate(sendRecord, successCount);
         notificationSendRecordService.update(updateRecord);
 
-        // 8. 构建返回结果
+        // 9. 构建返回结果
         result.put("resendCount", studentToUsersMap.size());
         result.put("successCount", successCount);
         result.put("failCount", failCount);
 
-        // 9. 构建返回结果
+        // 10. 构建返回结果
         if (failCount == 0) {
             result.put("success", true);
             result.put("message", String.format("重发成功，共 %d 个学生", successCount));
