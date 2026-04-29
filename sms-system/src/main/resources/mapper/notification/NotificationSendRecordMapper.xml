@@ -73,4 +73,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where send_record_id = #{sendRecordId}
     </update>
 
+    <select id="selectAllFailedRecords" resultMap="NotificationSendRecordResult">
+        select send_record_id, notification_id, sender_id, sender_name, send_time,
+               send_status, total_count, success_count, fail_count,
+               create_by, create_time, update_by, update_time
+        from notification_send_record
+        where send_status in ('3', '4')
+    </select>
+
 </mapper>

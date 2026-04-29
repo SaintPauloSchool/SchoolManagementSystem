@@ -3,6 +3,8 @@ package com.sms.system.service.notification;
 import com.sms.system.entity.notification.NotificationSendRecord;
 import com.sms.system.entity.vo.SendStatisticsVO;
 
+import java.util.List;
+
 /**
  * 通知发送记录 Service 接口
  *
@@ -39,4 +41,11 @@ public interface INotificationSendRecordService {
      * @return 结果
      */
     int update(NotificationSendRecord sendRecord);
+
+    /**
+     * 查询所有发送失败的记录
+     *
+     * @return 列表
+     */
+    List<NotificationSendRecord> selectAllFailedRecords();
 }

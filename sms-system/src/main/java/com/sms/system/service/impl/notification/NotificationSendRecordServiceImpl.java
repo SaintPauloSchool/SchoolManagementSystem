@@ -7,6 +7,8 @@ import com.sms.system.service.notification.INotificationSendRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * 通知发送记录 Service 业务层处理
  *
@@ -67,5 +69,15 @@ public class NotificationSendRecordServiceImpl implements INotificationSendRecor
     @Override
     public int update(NotificationSendRecord sendRecord) {
         return notificationSendRecordMapper.updateById(sendRecord);
+    }
+
+    /**
+     * 查询所有发送失败的记录
+     *
+     * @return 列表
+     */
+    @Override
+    public List<NotificationSendRecord> selectAllFailedRecords() {
+        return notificationSendRecordMapper.selectAllFailedRecords();
     }
 }
