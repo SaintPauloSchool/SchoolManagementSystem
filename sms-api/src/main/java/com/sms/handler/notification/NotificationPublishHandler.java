@@ -631,20 +631,14 @@ public class NotificationPublishHandler {
      */
     public Map<String, Object>  remindParentsToReply(Long notificationId) {
         Map<String, Object> result = new HashMap<>();
-        
-        // 1. 查询发送记录
-        NotificationSendRecord sendRecord = notificationSendRecordService.selectByNotificationId(notificationId);
-        if (sendRecord == null) {
-            throw new IllegalStateException("未找到发送记录");
-        }
-        
-        // 2. 查询原始通知
+
+        // 1. 查询原始通知
         Notification notification = notificationService.selectNotificationById(notificationId);
         if (notification == null) {
             throw new IllegalStateException("未找到通知信息");
         }
         
-        // 3. 检查是否超过回复截止时间
+        // 2. 检查是否超过回复截止时间
         if (notification.getReplyDeadline() != null) {
             Date now = new Date();
             if (now.after(notification.getReplyDeadline())) {
@@ -653,6 +647,27 @@ public class NotificationPublishHandler {
                 result.put("remindCount", 0);
                 return result;
             }
+        }
+        
+        return remindParentsToReply(notification);
+    }
+
+    /**
+     * 提示家长回复（根据通知实体）
+     *
+     * @param notification 通知实体
+     * @return 发送结果统计
+     */
+    public Map<String, Object> remindParentsToReply(Notification notification) {
+        // 发送结果统计
+        Map<String, Object> result = new HashMap<>();
+        // 1. 获取通知ID
+        Long notificationId = notification.getNotificationId();
+
+        // 3. 查询发送记录
+        NotificationSendRecord sendRecord = notificationSendRecordService.selectByNotificationId(notificationId);
+        if (sendRecord == null) {
+            throw new IllegalStateException("未找到发送记录");
         }
         
         // 4. 查询未回复的学生列表（按学生分组，只要有一个家长回复就算已回复）

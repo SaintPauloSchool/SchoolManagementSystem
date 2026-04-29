@@ -40,6 +40,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="publishDate != null and publishDate != ''">
                 AND DATE(create_time) = #{publishDate}
             </if>
+            <if test="reminderTime != null">
+                AND DATE(reminder_time) = DATE(#{reminderTime})
+            </if>
         </where>
         order by create_time desc
     </select>
