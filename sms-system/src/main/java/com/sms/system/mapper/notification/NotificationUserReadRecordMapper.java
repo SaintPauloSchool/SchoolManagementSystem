@@ -25,4 +25,12 @@ public interface NotificationUserReadRecordMapper {
      * @return 阅读记录列表
      */
     List<NotificationUserReadRecord> selectBySendRecordId(Long sendRecordId);
+
+    /**
+     * 更新阅读记录
+     *
+     * @param record 阅读记录
+     * @return 结果
+     */
+    int updateById(NotificationUserReadRecord record);
 }

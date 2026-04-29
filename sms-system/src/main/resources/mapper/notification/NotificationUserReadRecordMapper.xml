@@ -34,4 +34,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where send_record_id = #{sendRecordId}
     </select>
 
+    <update id="updateById" parameterType="NotificationUserReadRecord">
+        update notification_user_read_record
+        <set>
+            <if test="sendStatus != null">send_status = #{sendStatus},</if>
+            <if test="replyStatus != null">reply_status = #{replyStatus},</if>
+            <if test="replyTime != null">reply_time = #{replyTime},</if>
+            <if test="isRead != null">is_read = #{isRead},</if>
+            <if test="readTime != null">read_time = #{readTime},</if>
+        </set>
+        where read_id = #{readId}
+    </update>
+
 </mapper>

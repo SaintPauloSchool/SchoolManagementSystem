@@ -244,4 +244,23 @@ public class NotificationController extends BaseController {
             return AjaxResult.error(402, "提示家长回复失败: " + e.getMessage());
         }
     }
+    /**
+     * 重新发送失败通知
+     */
+    //@PreAuthorize("@ss.hasPermi('system:notification:resend')")
+    @Log(title = "重新发送失败通知", businessType = BusinessType.UPDATE)
+    @PostMapping("/resendFailed/{notificationId}")
+    public AjaxResult resendFailed(@PathVariable Long notificationId) {
+        try {
+            Map<String, Object> result = notificationPublishHandler.resendFailedNotifications(notificationId);
+            Boolean success = (Boolean) result.get("success");
+            if (success != null && success) {
+                return AjaxResult.success(result);
+            } else {
+                return AjaxResult.error(402, (String) result.get("message"));
+            }
+        } catch (Exception e) {
+            return AjaxResult.error(402, "重发失败通知失败: " + e.getMessage());
+        }
+    }
 }

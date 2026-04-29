@@ -792,8 +792,42 @@ export default {
     },
 
     handleResendFailed() {
-      // TODO: 實現重新發送失敗通知功能
-      console.log('重新發送失敗通知')
+      this.$confirm('系统将重新向发送失败的家长/学生发送通知，是否继续？', '重新發送失敗通知', {
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        const loading = this.$loading({
+          lock: true,
+          text: '正在重新發送失敗通知...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        })
+
+        request({
+          url: `/system/notification/resendFailed/${this.notification.notificationId}`,
+          method: 'post'
+        }).then(response => {
+          loading.close()
+          console.log('=== 重發失敗通知響應 ===', response)
+
+          if (response.code === 200) {
+            const result = response.data
+            this.$message.success(result.message || '重新發送成功')
+            console.log('重發結果:', result)
+          } else if (response.code === 402) {
+            this.$message.error(response.msg || '重新發送失敗')
+          } else {
+            this.$message.error(response.msg || '重新發送失敗')
+          }
+        }).catch(error => {
+          loading.close()
+          console.error('=== 重發失敗通知錯誤 ===', error)
+          this.$message.error('重新發送失敗: ' + (error.message || '未知錯誤'))
+        })
+      }).catch(() => {
+        // 用戶取消操作
+      })
     },
 
     handleExportReplies() {

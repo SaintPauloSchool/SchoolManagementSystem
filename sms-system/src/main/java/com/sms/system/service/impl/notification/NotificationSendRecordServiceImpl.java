@@ -57,4 +57,15 @@ public class NotificationSendRecordServiceImpl implements INotificationSendRecor
     public NotificationSendRecord selectByNotificationId(Long notificationId) {
         return notificationSendRecordMapper.selectByNotificationId(notificationId);
     }
+
+    /**
+     * 更新发送记录
+     *
+     * @param sendRecord 发送记录
+     * @return 结果
+     */
+    @Override
+    public int update(NotificationSendRecord sendRecord) {
+        return notificationSendRecordMapper.updateById(sendRecord);
+    }
 }

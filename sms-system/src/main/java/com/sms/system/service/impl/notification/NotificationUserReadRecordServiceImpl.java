@@ -141,4 +141,38 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
         // 5. 构建返回结果
         return new ArrayList<>(unrepliedStudentVOMap.values());
     }
+
+    /**
+     * 查询发送失败的阅读记录
+     *
+     * @param sendRecordId 发送记录ID
+     * @return 失败记录列表
+     */
+    @Override
+    public List<NotificationUserReadRecord> selectFailedRecords(Long sendRecordId) {
+        List<NotificationUserReadRecord> allRecords = notificationUserReadRecordMapper.selectBySendRecordId(sendRecordId);
+        if (allRecords == null || allRecords.isEmpty()) {
+            return Collections.emptyList();
+        }
+        // 发送状态为 0 表示失败
+        return allRecords.stream()
+                .filter(record -> "0".equals(record.getSendStatus()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 更新阅读记录的发送状态
+     *
+     * @param readId 阅读记录ID
+     * @param sendStatus 发送状态
+     * @return 结果
+     */
+    @Override
+    public int updateSendStatus(Long readId, String sendStatus) {
+        // 由于没有提供 updateById，我们可以创建一个新的 record 更新它
+        NotificationUserReadRecord record = new NotificationUserReadRecord();
+        record.setReadId(readId);
+        record.setSendStatus(sendStatus);
+        return notificationUserReadRecordMapper.updateById(record);
+    }
 }

@@ -61,4 +61,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         limit 1
     </select>
 
+    <update id="updateById" parameterType="NotificationSendRecord">
+        update notification_send_record
+        <set>
+            <if test="sendStatus != null">send_status = #{sendStatus},</if>
+            <if test="totalCount != null">total_count = #{totalCount},</if>
+            <if test="successCount != null">success_count = #{successCount},</if>
+            <if test="failCount != null">fail_count = #{failCount},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        where send_record_id = #{sendRecordId}
+    </update>
+
 </mapper>

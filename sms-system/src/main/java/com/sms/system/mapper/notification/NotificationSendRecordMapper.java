@@ -23,4 +23,12 @@ public interface NotificationSendRecordMapper {
      */
     NotificationSendRecord selectByNotificationId(Long notificationId);
 
+    /**
+     * 更新发送记录
+     *
+     * @param sendRecord 发送记录
+     * @return 结果
+     */
+    int updateById(NotificationSendRecord sendRecord);
+
 }

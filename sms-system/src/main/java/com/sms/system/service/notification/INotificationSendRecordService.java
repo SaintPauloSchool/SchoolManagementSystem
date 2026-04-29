@@ -31,4 +31,12 @@ public interface INotificationSendRecordService {
      * @return 发送记录
      */
     NotificationSendRecord selectByNotificationId(Long notificationId);
+    
+    /**
+     * 更新发送记录
+     *
+     * @param sendRecord 发送记录
+     * @return 结果
+     */
+    int update(NotificationSendRecord sendRecord);
 }
