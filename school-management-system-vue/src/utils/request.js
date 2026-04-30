@@ -32,6 +32,11 @@ service.interceptors.request.use(
 
 service.interceptors.response.use(
   response => {
+    // 如果是 blob 类型（文件下载），直接返回原始 response
+    if (response.config.responseType === 'blob') {
+      return response.data
+    }
+
     const res = response.data
 
     // 402 业务状态码由组件自行处理，拦截器不显示错误提示

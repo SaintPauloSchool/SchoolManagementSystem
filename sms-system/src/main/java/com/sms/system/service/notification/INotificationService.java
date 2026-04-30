@@ -26,38 +26,6 @@ public interface INotificationService {
     Notification selectNotificationById(Long notificationId);
 
     /**
-     * 新增通知
-     *
-     * @param notification 通知信息
-     * @return 结果
-     */
-    int insertNotification(Notification notification);
-
-    /**
-     * 修改通知
-     *
-     * @param notification 通知信息
-     * @return 结果
-     */
-    int updateNotification(Notification notification);
-
-    /**
-     * 删除通知
-     *
-     * @param notificationId 通知主键
-     * @return 结果
-     */
-    int deleteNotificationById(Long notificationId);
-
-    /**
-     * 批量删除通知
-     *
-     * @param notificationIds 需要删除的通知主键集合
-     * @return 结果
-     */
-    int deleteNotificationByIds(List<Long> notificationIds);
-
-    /**
      * 根据用户 ID 查询抄送给我的通知列表
      *
      * @param notification 通知信息（包含 userId, userType, publishDate）

@@ -17,9 +17,12 @@ import com.sms.system.service.notification.INotificationCcService;
 import com.sms.system.service.notification.INotificationQuestionService;
 import com.sms.system.service.notification.INotificationSendRecordService;
 import com.sms.system.service.notification.INotificationUserReadRecordService;
+import com.sms.system.service.notification.INotificationExportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
 
 import java.util.*;
 
@@ -51,6 +54,9 @@ public class NotificationController extends BaseController {
 
     @Autowired
     private INotificationUserReadRecordService notificationUserReadRecordService;
+
+    @Autowired
+    private INotificationExportService notificationExportService;
 
     /**
      * 查詢通知列表
@@ -183,45 +189,6 @@ public class NotificationController extends BaseController {
     }
 
     /**
-     * 修改通知
-     */
-    //@PreAuthorize("@ss.hasPermi('system:notification:edit')")
-    @Log(title = "修改通知", businessType = BusinessType.UPDATE)
-    @PutMapping
-    public AjaxResult edit(@RequestBody Notification notification) {
-        int result = notificationService.updateNotification(notification);
-        return result > 0 ? AjaxResult.success() : AjaxResult.error("修改失敗");
-    }
-
-    /**
-     * 刪除通知
-     */
-    //@PreAuthorize("@ss.hasPermi('system:notification:remove')")
-    @Log(title = "刪除通知", businessType = BusinessType.DELETE)
-    @DeleteMapping("/{notificationIds}")
-    public AjaxResult remove(@PathVariable Long[] notificationIds) {
-        int result = notificationService.deleteNotificationByIds(Arrays.asList(notificationIds));
-        return result > 0 ? AjaxResult.success() : AjaxResult.error("刪除失敗");
-    }
-
-    /**
-     * 撤回通知
-     */
-    //@PreAuthorize("@ss.hasPermi('system:notification:withdraw')")
-    @Log(title = "撤回通知", businessType = BusinessType.UPDATE)
-    @PutMapping("/withdraw/{notificationId}")
-    public AjaxResult withdraw(@PathVariable Long notificationId) {
-        Notification notification = notificationService.selectNotificationById(notificationId);
-        if (notification == null) {
-            return AjaxResult.error("通知不存在");
-        }
-        
-        notification.setStatus("2"); // 設置為已撤回狀態
-        int result = notificationService.updateNotification(notification);
-        return result > 0 ? AjaxResult.success() : AjaxResult.error("撤回失敗");
-    }
-
-    /**
      * 提示家长回复（重新发送通知给未回复的学生家长）
      */
     //@PreAuthorize("@ss.hasPermi('system:notification:remind')")
@@ -262,5 +229,15 @@ public class NotificationController extends BaseController {
         } catch (Exception e) {
             return AjaxResult.error(402, "重发失败通知失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 导出通知回复答案（包含统计和详情两个Sheet）
+     */
+    //@PreAuthorize("@ss.hasPermi('system:notification:export')")
+    @Log(title = "导出通知回复答案", businessType = BusinessType.EXPORT)
+    @GetMapping("/exportAnswers/{notificationId}")
+    public void exportAnswers(@PathVariable Long notificationId, HttpServletResponse response) {
+        notificationExportService.exportNotificationAnswers(notificationId, response);
     }
 }

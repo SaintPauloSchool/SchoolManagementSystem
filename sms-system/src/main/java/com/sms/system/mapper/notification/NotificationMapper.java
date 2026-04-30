@@ -49,28 +49,5 @@ public interface NotificationMapper {
      * @return 通知
      */
     Notification selectById(Long notificationId);
-    
-    /**
-     * 修改通知
-     *
-     * @param notification 通知
-     * @return 结果
-     */
-    int updateById(Notification notification);
-    
-    /**
-     * 根据 ID 删除通知
-     *
-     * @param notificationId 通知 ID
-     * @return 结果
-     */
-    int deleteById(Long notificationId);
-    
-    /**
-     * 批量删除通知
-     *
-     * @param notificationIds 通知 ID 集合
-     * @return 结果
-     */
-    int deleteBatchIds(@Param("notificationIds") List<Long> notificationIds);
+
 }

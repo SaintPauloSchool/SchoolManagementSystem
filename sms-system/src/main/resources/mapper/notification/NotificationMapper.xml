@@ -113,36 +113,5 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from notification 
         where notification_id = #{notificationId}
     </select>
-    
-    <!-- 修改通知 -->
-    <update id="updateById" parameterType="Notification">
-        update notification
-        <trim prefix="SET" suffixOverrides=",">
-            <if test="title != null">title = #{title},</if>
-            <if test="content != null">content = #{content},</if>
-            <if test="senderId != null">sender_id = #{senderId},</if>
-            <if test="senderName != null">sender_name = #{senderName},</if>
-            <if test="jumpUrl != null">jump_url = #{jumpUrl},</if>
-            <if test="attachmentUrls != null">attachment_urls = #{attachmentUrls},</if>
-            <if test="status != null">status = #{status},</if>
-            <if test="replyDeadline != null">reply_deadline = #{replyDeadline},</if>
-            <if test="reminderTime != null">reminder_time = #{reminderTime},</if>
-            <if test="updateTime != null">update_time = #{updateTime},</if>
-        </trim>
-        where notification_id = #{notificationId}
-    </update>
-    
-    <!-- 根據 ID 刪除通知 -->
-    <delete id="deleteById" parameterType="Long">
-        delete from notification where notification_id = #{notificationId}
-    </delete>
-    
-    <!-- 批量刪除通知 -->
-    <delete id="deleteBatchIds" parameterType="java.util.List">
-        delete from notification where notification_id in
-        <foreach item="notificationId" collection="notificationIds" open="(" separator="," close=")">
-            #{notificationId}
-        </foreach>
-    </delete>
-    
+
 </mapper>

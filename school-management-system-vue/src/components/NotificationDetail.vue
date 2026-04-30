@@ -831,8 +831,57 @@ export default {
     },
 
     handleExportReplies() {
-      // TODO: 實現導出回覆答案 Excel 功能
-      console.log('導出回覆答案 Excel')
+      // 確認對話框
+      this.$confirm('確定要導出該通知的回覆答案嗎？將生成包含統計和詳情的 Excel 文件。', '導出確認', {
+        confirmButtonText: '確定導出',
+        cancelButtonText: '取消',
+        type: 'info'
+      }).then(() => {
+        // 顯示加載提示
+        const loading = this.$loading({
+          lock: true,
+          text: '正在生成 Excel 文件...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        })
+
+        // 使用 axios 下載文件
+        request({
+          url: `/system/notification/exportAnswers/${this.notification.notificationId}`,
+          method: 'GET',
+          responseType: 'blob' // 重要：設置為 blob 類型以接收文件
+        })
+        .then(response => {
+          // 創建下載鏈接
+          const blob = new Blob([response], { 
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+          })
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          
+          // 設置文件名
+          const filename = `通知回覆統計_${this.notification.title || this.notification.notificationId}.xlsx`
+          link.download = filename
+          
+          document.body.appendChild(link)
+          link.click()
+          
+          // 清理
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(url)
+          
+          loading.close()
+          this.$message.success('導出成功')
+        })
+        .catch(error => {
+          loading.close()
+          console.error('導出失敗:', error)
+          this.$message.error('導出失敗: ' + (error.message || '未知錯誤'))
+        })
+      }).catch(() => {
+        // 用戶取消操作
+      })
     }
   }
 }

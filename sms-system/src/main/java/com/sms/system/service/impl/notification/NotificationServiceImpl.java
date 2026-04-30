@@ -41,50 +41,6 @@ public class NotificationServiceImpl implements INotificationService {
     }
 
     /**
-     * 新增通知
-     *
-     * @param notification 通知信息
-     * @return 结果
-     */
-    @Override
-    public int insertNotification(Notification notification) {
-        return notificationMapper.insert(notification);
-    }
-
-    /**
-     * 修改通知
-     *
-     * @param notification 通知信息
-     * @return 结果
-     */
-    @Override
-    public int updateNotification(Notification notification) {
-        return notificationMapper.updateById(notification);
-    }
-
-    /**
-     * 删除通知
-     *
-     * @param notificationId 通知主键
-     * @return 结果
-     */
-    @Override
-    public int deleteNotificationById(Long notificationId) {
-        return notificationMapper.deleteById(notificationId);
-    }
-
-    /**
-     * 批量删除通知
-     *
-     * @param notificationIds 需要删除的通知主键集合
-     * @return 结果
-     */
-    @Override
-    public int deleteNotificationByIds(List<Long> notificationIds) {
-        return notificationMapper.deleteBatchIds(notificationIds);
-    }
-
-    /**
      * 根据用户 ID 查询抄送给我的通知列表
      *
      * @param notification 通知信息（包含 userId, userType, publishDate）
@@ -114,6 +70,6 @@ public class NotificationServiceImpl implements INotificationService {
      */
     @Override
     public boolean save(Notification notification) {
-        return insertNotification(notification) > 0;
+        return notificationMapper.insert(notification) > 0;
     }
 }
