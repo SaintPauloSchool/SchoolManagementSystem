@@ -93,10 +93,10 @@ public class NotificationExportServiceImpl implements INotificationExportService
             Workbook workbook = new XSSFWorkbook();
 
             // 8. 创建统计Sheet
-            createStatisticsSheet(workbook, notification, sendRecord, questions, allAnswers, totalCount, (int) processedCount);
+            createStatisticsSheet(workbook, notification, questions, allAnswers, totalCount, (int) processedCount);
 
             // 9. 创建详情Sheet
-            createDetailSheet(workbook, notification, questions, allAnswers, readRecords);
+            createDetailSheet(workbook, notification, sendRecord, questions, allAnswers, readRecords);
 
             // 10. 导出Excel
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -121,7 +121,6 @@ public class NotificationExportServiceImpl implements INotificationExportService
      * 创建统计Sheet
      */
     private void createStatisticsSheet(Workbook workbook, Notification notification,
-                                       NotificationSendRecord sendRecord,
                                        List<NotificationQuestion> questions,
                                        List<NotificationAnswer> allAnswers,
                                        Integer totalCount, Integer processedCount) {
@@ -131,7 +130,6 @@ public class NotificationExportServiceImpl implements INotificationExportService
         CellStyle headerStyle = createHeaderStyle(workbook);
         CellStyle dataStyle = createDataStyle(workbook);
         CellStyle titleStyle = createTitleStyle(workbook);
-        CellStyle infoStyle = createInfoStyle(workbook);
 
         int rowNum = 0;
 
@@ -141,13 +139,12 @@ public class NotificationExportServiceImpl implements INotificationExportService
         Cell headerInfoCell = headerInfoRow.createCell(0);
         
         // 构建多行文本
-        StringBuilder infoBuilder = new StringBuilder();
-        infoBuilder.append(notification.getTitle()).append("\n");
-        infoBuilder.append("发送时间：").append(formatDate(notification.getCreateTime())).append("\n");
-        infoBuilder.append("接收人数：").append(totalCount).append("\n");
-        infoBuilder.append("已处理人数：").append(processedCount);
+        String infoBuilder = notification.getTitle() + "\n" +
+                "发送时间：" + formatDate(notification.getCreateTime()) + "\n" +
+                "接收人数：" + totalCount + "\n" +
+                "已处理人数：" + processedCount;
         
-        headerInfoCell.setCellValue(infoBuilder.toString());
+        headerInfoCell.setCellValue(infoBuilder);
         headerInfoCell.setCellStyle(titleStyle);
         
         // 合并 A1:C4 (行0-3, 列0-2)
@@ -250,6 +247,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
      * 创建详情Sheet
      */
     private void createDetailSheet(Workbook workbook, Notification notification,
+                                   NotificationSendRecord sendRecord,
                                    List<NotificationQuestion> questions,
                                    List<NotificationAnswer> allAnswers,
                                    List<NotificationUserReadRecord> readRecords) {
@@ -273,9 +271,10 @@ public class NotificationExportServiceImpl implements INotificationExportService
         Row headerInfoRow = sheet.createRow(rowNum);
         headerInfoRow.setHeightInPoints(80);
         Cell headerInfoCell = headerInfoRow.createCell(0);
-        
-        NotificationSendRecord sendRecord = notificationSendRecordMapper.selectByNotificationId(notification.getNotificationId());
+
+        // 创建合并单元格
         int totalCount = sendRecord != null ? sendRecord.getTotalCount() : 0;
+        // 已处理数
         long processedCount = allAnswers.stream()
                 .map(NotificationAnswer::getUserId)
                 .distinct()
@@ -307,7 +306,6 @@ public class NotificationExportServiceImpl implements INotificationExportService
         Row headerRow = sheet.createRow(rowNum);
         headerRow.setHeightInPoints(35); // 增加行高以容纳多行文本
         List<String> fixedHeaders = Arrays.asList("姓名", "班级", "发送状态", "阅读时间", "确认时间");
-        colNum = 0;
         
         // 创建固定列表头（合并2行：表头行和选项行）
         for (String header : fixedHeaders) {
@@ -445,16 +443,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
             dataRow.createCell(colNum++).setCellValue(className);
 
             // 发送状态（1=发送成功，0=发送失败）
-            String sendStatusText = "";
-            if (record.getSendStatus() != null) {
-                if ("1".equals(record.getSendStatus()) || "1".equals(String.valueOf(record.getSendStatus()))) {
-                    sendStatusText = "发送成功";
-                } else if ("0".equals(record.getSendStatus()) || "0".equals(String.valueOf(record.getSendStatus()))) {
-                    sendStatusText = "发送失败";
-                } else {
-                    sendStatusText = record.getSendStatus();
-                }
-            }
+            String sendStatusText = getString(record);
             dataRow.createCell(colNum++).setCellValue(sendStatusText);
 
             // 阅读时间
@@ -546,6 +535,23 @@ public class NotificationExportServiceImpl implements INotificationExportService
     }
 
     /**
+     * 獲取發送狀態
+     */
+    private static String getString(NotificationUserReadRecord record) {
+        String sendStatusText = "";
+        if (record.getSendStatus() != null) {
+            if ("1".equals(record.getSendStatus()) || "1".equals(String.valueOf(record.getSendStatus()))) {
+                sendStatusText = "发送成功";
+            } else if ("0".equals(record.getSendStatus()) || "0".equals(String.valueOf(record.getSendStatus()))) {
+                sendStatusText = "发送失败";
+            } else {
+                sendStatusText = record.getSendStatus();
+            }
+        }
+        return sendStatusText;
+    }
+
+    /**
      * 解析问题内容，提取问题项
      */
     private List<QuestionItemVO> parseQuestionContent(NotificationQuestion question) {
@@ -555,7 +561,6 @@ public class NotificationExportServiceImpl implements INotificationExportService
             if ("5".equals(question.getQuestionType()) && question.getContent() != null) {
                 // 逻辑表单类型，解析content字段
                 JSONObject contentJson = JSON.parseObject(question.getContent());
-                JSONObject questionnaire = contentJson.getJSONObject("questionnaire");
                 JSONArray questionsArray = contentJson.getJSONArray("questions");
 
                 if (questionsArray != null) {
@@ -656,23 +661,6 @@ public class NotificationExportServiceImpl implements INotificationExportService
         style.setAlignment(HorizontalAlignment.LEFT); // 靠左对齐
         style.setVerticalAlignment(VerticalAlignment.CENTER); // 垂直置中
         style.setWrapText(true); // 自动换行
-        style.setBorderTop(BorderStyle.THIN);
-        style.setBorderBottom(BorderStyle.THIN);
-        style.setBorderLeft(BorderStyle.THIN);
-        style.setBorderRight(BorderStyle.THIN);
-        return style;
-    }
-
-    /**
-     * 创建信息样式（用于发送时间、接收人数等）
-     */
-    private CellStyle createInfoStyle(Workbook workbook) {
-        CellStyle style = workbook.createCellStyle();
-        Font font = workbook.createFont();
-        font.setFontHeightInPoints((short) 11);
-        style.setFont(font);
-        style.setAlignment(HorizontalAlignment.LEFT);
-        style.setVerticalAlignment(VerticalAlignment.CENTER);
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
