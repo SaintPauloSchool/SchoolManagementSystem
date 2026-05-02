@@ -465,28 +465,32 @@ public class NotificationExportServiceImpl implements INotificationExportService
 
             // 问题答案
             List<NotificationAnswer> userAnswers = answersByUser.getOrDefault(record.getUserId(), new ArrayList<>());
-            Map<String, NotificationAnswer> answerMap = userAnswers.stream()
-                    .collect(Collectors.toMap(a -> String.valueOf(a.getQuestionId()), a -> a, (a1, a2) -> a1));
-
+            
+            // 对于每个问题项，从用户答案中查找匹配的选项
             for (QuestionItemVO item : allQuestionItems) {
-                NotificationAnswer answer = answerMap.get(String.valueOf(item.getId()));
                 List<String> selectedOptions = new ArrayList<>();
-
-                if (answer != null && answer.getAnswerData() != null) {
-                    try {
-                        JSONArray answerArray = JSON.parseArray(answer.getAnswerData());
-                        for (int i = 0; i < answerArray.size(); i++) {
-                            JSONObject answerObj = answerArray.getJSONObject(i);
-                            if (String.valueOf(item.getId()).equals(answerObj.getString("nodeId"))) {
-                                String answerContent = answerObj.getString("answerContent");
-                                if (answerContent != null) {
-                                    selectedOptions = JSON.parseArray(answerContent, String.class);
+                
+                // 遍历用户的所有答案，查找匹配的nodeId
+                for (NotificationAnswer answer : userAnswers) {
+                    if (answer.getAnswerData() != null) {
+                        try {
+                            JSONArray answerArray = JSON.parseArray(answer.getAnswerData());
+                            for (int i = 0; i < answerArray.size(); i++) {
+                                JSONObject answerObj = answerArray.getJSONObject(i);
+                                String nodeId = answerObj.getString("nodeId");
+                                
+                                // 匹配 nodeId
+                                if (String.valueOf(item.getId()).equals(nodeId)) {
+                                    String answerContent = answerObj.getString("answerContent");
+                                    if (answerContent != null) {
+                                        selectedOptions = JSON.parseArray(answerContent, String.class);
+                                    }
+                                    break;
                                 }
-                                break;
                             }
+                        } catch (Exception e) {
+                            log.error("解析答案数据失败", e);
                         }
-                    } catch (Exception e) {
-                        log.error("解析答案数据失败", e);
                     }
                 }
 
