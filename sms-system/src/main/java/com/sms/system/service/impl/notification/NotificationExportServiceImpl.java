@@ -170,6 +170,11 @@ public class NotificationExportServiceImpl implements INotificationExportService
             List<QuestionItemVO> questionItems = parseQuestionContent(question);
 
             for (QuestionItemVO item : questionItems) {
+                // 统计Sheet不显示填空题（type="3"）
+                if ("3".equals(item.getType())) {
+                    continue;
+                }
+                
                 // 统计每个选项的选择人数
                 Map<String, Long> optionCountMap = countOptionSelections(allAnswers, item.getId());
                 int optionCount = item.getOptions().size();
@@ -483,13 +488,27 @@ public class NotificationExportServiceImpl implements INotificationExportService
                     }
                 }
 
-                // 标记选中的选项
+                // 标记选中的选项或填写的答案
                 for (String option : item.getOptions()) {
                     Cell cell = dataRow.createCell(colNum++);
-                    if (selectedOptions.contains(option)) {
-                        cell.setCellValue("√");
+                    
+                    // 判断是否为填空题（type="3"）
+                    if ("3".equals(item.getType())) {
+                        // 填空题：直接显示答案内容，用逗号连接数组元素
+                        if (!selectedOptions.isEmpty()) {
+                            // 将数组 ["1", "1"] 转换为 "1,1"
+                            String answerText = String.join(",", selectedOptions);
+                            cell.setCellValue(answerText);
+                        } else {
+                            cell.setCellValue("");
+                        }
                     } else {
-                        cell.setCellValue("");
+                        // 选择题：标记选中的选项
+                        if (selectedOptions.contains(option)) {
+                            cell.setCellValue("√");
+                        } else {
+                            cell.setCellValue("");
+                        }
                     }
                     cell.setCellStyle(dataStyle);
                 }
@@ -558,6 +577,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
         List<QuestionItemVO> items = new ArrayList<>();
 
         try {
+            // 只处理逻辑表单类型（type="5"）
             if ("5".equals(question.getQuestionType()) && question.getContent() != null) {
                 // 逻辑表单类型，解析content字段
                 JSONObject contentJson = JSON.parseObject(question.getContent());
@@ -573,38 +593,26 @@ public class NotificationExportServiceImpl implements INotificationExportService
                         item.setTitle(q.getString("title"));
                         item.setType(type);
 
-                        JSONArray optionsArray = q.getJSONArray("options");
-                        if (optionsArray != null && !optionsArray.isEmpty()) {
-                            List<String> options = new ArrayList<>();
-                            for (int j = 0; j < optionsArray.size(); j++) {
-                                options.add(optionsArray.getString(j));
-                            }
-                            item.setOptions(options);
-                            // 只有有选项的问题才添加（过滤掉附件上传、文本输入等无选项题型）
-                            items.add(item);
+                        // 处理填空题（type="3"）
+                        if ("3".equals(type)) {
+                            handleFillBlankQuestion(item, q.getString("content"), items);
                         } else {
-                            item.setOptions(new ArrayList<>());
-                            // 没有选项的问题不添加（如附件上传、文本输入等）
+                            // 其他题型：处理选项
+                            JSONArray optionsArray = q.getJSONArray("options");
+                            if (optionsArray != null && !optionsArray.isEmpty()) {
+                                List<String> options = new ArrayList<>();
+                                for (int j = 0; j < optionsArray.size(); j++) {
+                                    options.add(optionsArray.getString(j));
+                                }
+                                item.setOptions(options);
+                                // 只有有选项的问题才添加（过滤掉附件上传、文本输入等无选项题型）
+                                items.add(item);
+                            } else {
+                                item.setOptions(new ArrayList<>());
+                                // 没有选项的问题不添加（如附件上传、文本输入等）
+                            }
                         }
                     }
-                }
-            } else {
-                // 普通题型
-                QuestionItemVO item = new QuestionItemVO();
-                item.setId(question.getQuestionId());
-                item.setTitle(question.getQuestionTitle());
-                item.setType(question.getQuestionType());
-
-                if (question.getOptions() != null) {
-                    List<String> options = JSON.parseArray(question.getOptions(), String.class);
-                    item.setOptions(options);
-                    // 只有有选项的问题才添加（过滤掉附件上传、文本输入等无选项题型）
-                    if (!options.isEmpty()) {
-                        items.add(item);
-                    }
-                } else {
-                    item.setOptions(new ArrayList<>());
-                    // 没有选项的问题不添加
                 }
             }
         } catch (Exception e) {
@@ -612,6 +620,27 @@ public class NotificationExportServiceImpl implements INotificationExportService
         }
 
         return items;
+    }
+
+    /**
+     * 处理填空题：从content中提取文本，将{{fillblank-n}}占位符替换为___
+     */
+    private void handleFillBlankQuestion(QuestionItemVO item, String content, List<QuestionItemVO> items) {
+        if (content != null && !content.isEmpty()) {
+            // 将所有{{fillblank-n}}格式的占位符（包括可能的特殊字符）替换为___
+            String optionText = content.replaceAll("\\{\\{fillblank-\\d+}}", "___").trim();
+            List<String> options = new ArrayList<>();
+            if (!optionText.isEmpty()) {
+                options.add(optionText);
+            }
+            item.setOptions(options);
+            // 填空题有内容就添加
+            if (!options.isEmpty()) {
+                items.add(item);
+            }
+        } else {
+            item.setOptions(new ArrayList<>());
+        }
     }
 
     /**
