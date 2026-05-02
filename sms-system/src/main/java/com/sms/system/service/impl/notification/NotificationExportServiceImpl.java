@@ -261,49 +261,95 @@ public class NotificationExportServiceImpl implements INotificationExportService
         CellStyle titleStyle = createTitleStyle(workbook);
 
         int rowNum = 0;
-
-        // 第1行：问卷标题
-        Row titleRow = sheet.createRow(rowNum++);
-        Cell titleCell = titleRow.createCell(0);
-        titleCell.setCellValue(notification.getTitle());
-        titleCell.setCellStyle(titleStyle);
-
-        // 第2行：发送信息
-        Row infoRow = sheet.createRow(rowNum++);
-        NotificationSendRecord sendRecord = notificationSendRecordMapper.selectByNotificationId(notification.getNotificationId());
-        infoRow.createCell(0).setCellValue("发送时间：" + formatDate(notification.getCreateTime()));
-        infoRow.createCell(1).setCellValue("接收人数：" + (sendRecord != null ? sendRecord.getTotalCount() : 0));
-        infoRow.createCell(2).setCellValue("已处理人数：" + allAnswers.stream()
-                .map(NotificationAnswer::getUserId).distinct().count());
-
-        // 第3行：表头（固定列 + 动态问题列）
-        Row headerRow = sheet.createRow(rowNum++);
-        List<String> fixedHeaders = Arrays.asList("姓名", "班级", "身份", "发送状态", "阅读时间", "确认时间");
         int colNum = 0;
-        for (String header : fixedHeaders) {
-            Cell cell = headerRow.createCell(colNum++);
-            cell.setCellValue(header);
-            cell.setCellStyle(headerStyle);
-        }
 
-        // 添加问题标题作为表头
+        // 解析所有问题
         List<QuestionItemVO> allQuestionItems = new ArrayList<>();
         for (NotificationQuestion question : questions) {
             allQuestionItems.addAll(parseQuestionContent(question));
         }
 
+        // 第1-2行：合并单元格显示问卷信息（与统计Sheet一致）
+        Row headerInfoRow = sheet.createRow(rowNum);
+        headerInfoRow.setHeightInPoints(80);
+        Cell headerInfoCell = headerInfoRow.createCell(0);
+        
+        NotificationSendRecord sendRecord = notificationSendRecordMapper.selectByNotificationId(notification.getNotificationId());
+        int totalCount = sendRecord != null ? sendRecord.getTotalCount() : 0;
+        long processedCount = allAnswers.stream()
+                .map(NotificationAnswer::getUserId)
+                .distinct()
+                .count();
+        
+        // 构建多行文本
+        String infoBuilder = notification.getTitle() + "\n" +
+                "发送时间：" + formatDate(notification.getCreateTime()) + "\n" +
+                "接收人数：" + totalCount + "\n" +
+                "已处理人数：" + processedCount;
+        
+        headerInfoCell.setCellValue(infoBuilder);
+        headerInfoCell.setCellStyle(titleStyle);
+        
+        // 计算需要合并的列数（固定5列 + 所有问题的选项数）
+        int totalOptionCols = 5; // 姓名、班级、发送状态、阅读时间、确认时间
         for (QuestionItemVO item : allQuestionItems) {
-            Cell cell = headerRow.createCell(colNum++);
-            cell.setCellValue(item.getTitle());
+            totalOptionCols += item.getOptions().size();
+        }
+        
+        // 合并 A1:第N列1-2行 (行0-1, 列0到totalOptionCols-1)
+        sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 1, 0, totalOptionCols - 1));
+        setRegionBorder(sheet, 0, 1, 0, totalOptionCols - 1, titleStyle);
+        
+        // 跳过已合并的行
+        rowNum = 2;
+
+        // 第3行：表头（固定列合并2行 + 问题标题合并单元格 + 选项）
+        Row headerRow = sheet.createRow(rowNum);
+        headerRow.setHeightInPoints(35); // 增加行高以容纳多行文本
+        List<String> fixedHeaders = Arrays.asList("姓名", "班级", "发送状态", "阅读时间", "确认时间");
+        colNum = 0;
+        
+        // 创建固定列表头（合并2行：表头行和选项行）
+        for (String header : fixedHeaders) {
+            Cell cell = headerRow.createCell(colNum);
+            cell.setCellValue(header);
             cell.setCellStyle(headerStyle);
+            colNum++;
         }
 
-        // 第4行：问题选项作为第二行表头
-        Row optionHeaderRow = sheet.createRow(rowNum++);
-        for (int i = 0; i < fixedHeaders.size(); i++) {
-            optionHeaderRow.createCell(i); // 固定列留空
+        // 添加问题标题和问题选项作为表头
+        for (QuestionItemVO item : allQuestionItems) {
+            int optionCount = item.getOptions().size();
+            int firstCol = colNum;
+            int lastCol = colNum + optionCount - 1;
+            
+            // 问题标题（合并单元格）
+            Cell titleCell = headerRow.createCell(firstCol);
+            titleCell.setCellValue(item.getTitle());
+            titleCell.setCellStyle(headerStyle);
+            
+            // 合并问题标题单元格
+            if (lastCol > firstCol) {
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(rowNum, rowNum, firstCol, lastCol));
+            }
+            
+            // 为合并区域的标题列所有列设置样式
+            for (int c = firstCol; c <= lastCol; c++) {
+                Cell cell = headerRow.getCell(c);
+                if (cell == null) {
+                    cell = headerRow.createCell(c);
+                }
+                cell.setCellStyle(headerStyle);
+            }
+            
+            colNum = lastCol + 1;
         }
 
+        // 第4行：问题选项作为第二行表头（固定列已合并，不再创建）
+        Row optionHeaderRow = sheet.createRow(rowNum + 1);
+        optionHeaderRow.setHeightInPoints(35);
+        
+        colNum = 5;
         for (QuestionItemVO item : allQuestionItems) {
             for (String option : item.getOptions()) {
                 Cell cell = optionHeaderRow.createCell(colNum++);
@@ -311,6 +357,29 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 cell.setCellStyle(headerStyle);
             }
         }
+        
+        // 合并固定列的2行（rowNum 到 rowNum+1）并设置边框
+        for (int i = 0; i < 5; i++) {
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(rowNum, rowNum + 1, i, i));
+            setRegionBorder(sheet, rowNum, rowNum + 1, i, i, headerStyle);
+        }
+        
+        // 为问题标题合并区域设置边框
+        int borderColNum = 5;
+        for (QuestionItemVO item : allQuestionItems) {
+            int optionCount = item.getOptions().size();
+            int firstCol = borderColNum;
+            int lastCol = borderColNum + optionCount - 1;
+            
+            if (lastCol > firstCol) {
+                setRegionBorder(sheet, rowNum, rowNum, firstCol, lastCol, headerStyle);
+            }
+            
+            borderColNum = lastCol + 1;
+        }
+        
+        // 移动到下一行
+        rowNum += 2;
 
         // 查询所有家长学生关系
         List<String> allUserIds = readRecords.stream()
@@ -354,6 +423,9 @@ public class NotificationExportServiceImpl implements INotificationExportService
         Map<String, List<NotificationAnswer>> answersByUser = allAnswers.stream()
                 .collect(Collectors.groupingBy(NotificationAnswer::getUserId));
 
+        // 记录数据开始行
+        int dataStartRow = rowNum;
+
         // 写入数据行
         for (NotificationUserReadRecord record : readRecords) {
             Row dataRow = sheet.createRow(rowNum++);
@@ -372,11 +444,18 @@ public class NotificationExportServiceImpl implements INotificationExportService
             String className = departmentMap.getOrDefault(record.getUserId(), "");
             dataRow.createCell(colNum++).setCellValue(className);
 
-            // 身份
-            dataRow.createCell(colNum++).setCellValue("家长");
-
-            // 发送状态
-            dataRow.createCell(colNum++).setCellValue(record.getSendStatus() != null ? record.getSendStatus() : "");
+            // 发送状态（1=发送成功，0=发送失败）
+            String sendStatusText = "";
+            if (record.getSendStatus() != null) {
+                if ("1".equals(record.getSendStatus()) || "1".equals(String.valueOf(record.getSendStatus()))) {
+                    sendStatusText = "发送成功";
+                } else if ("0".equals(record.getSendStatus()) || "0".equals(String.valueOf(record.getSendStatus()))) {
+                    sendStatusText = "发送失败";
+                } else {
+                    sendStatusText = record.getSendStatus();
+                }
+            }
+            dataRow.createCell(colNum++).setCellValue(sendStatusText);
 
             // 阅读时间
             dataRow.createCell(colNum++).setCellValue(formatDate(record.getReadTime()));
@@ -424,9 +503,41 @@ public class NotificationExportServiceImpl implements INotificationExportService
             }
         }
 
-        // 设置列宽
-        for (int i = 0; i < 10; i++) {
-            sheet.setColumnWidth(i, 4000);
+        // 设置列宽（增加宽度）
+        sheet.setColumnWidth(0, 5000);  // 姓名
+        sheet.setColumnWidth(1, 5000);  // 班级
+        sheet.setColumnWidth(2, 3500);  // 发送状态
+        sheet.setColumnWidth(3, 5000);  // 阅读时间
+        sheet.setColumnWidth(4, 5000);  // 确认时间
+        
+        // 问题列的宽度
+        int colIndex = 5;
+        for (QuestionItemVO item : allQuestionItems) {
+            for (int i = 0; i < item.getOptions().size(); i++) {
+                sheet.setColumnWidth(colIndex++, 5000);
+            }
+        }
+        
+        // 为所有数据行设置边框
+        for (int r = dataStartRow; r < rowNum; r++) {
+            Row dataRow = sheet.getRow(r);
+            if (dataRow != null) {
+                int totalCols = 5; // 固定5列
+                for (QuestionItemVO item : allQuestionItems) {
+                    totalCols += item.getOptions().size();
+                }
+                
+                for (int c = 0; c < totalCols; c++) {
+                    Cell cell = dataRow.getCell(c);
+                    if (cell != null) {
+                        cell.setCellStyle(dataStyle);
+                    } else {
+                        // 如果单元格不存在，创建它并设置样式
+                        cell = dataRow.createCell(c);
+                        cell.setCellStyle(dataStyle);
+                    }
+                }
+            }
         }
     }
 
@@ -446,23 +557,26 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 if (questionsArray != null) {
                     for (int i = 0; i < questionsArray.size(); i++) {
                         JSONObject q = questionsArray.getJSONObject(i);
+                        String type = q.getString("type");
+                        
                         QuestionItemVO item = new QuestionItemVO();
                         item.setId(q.getLong("id"));
                         item.setTitle(q.getString("title"));
-                        item.setType(q.getString("type"));
+                        item.setType(type);
 
                         JSONArray optionsArray = q.getJSONArray("options");
-                        if (optionsArray != null) {
+                        if (optionsArray != null && !optionsArray.isEmpty()) {
                             List<String> options = new ArrayList<>();
                             for (int j = 0; j < optionsArray.size(); j++) {
                                 options.add(optionsArray.getString(j));
                             }
                             item.setOptions(options);
+                            // 只有有选项的问题才添加（过滤掉附件上传、文本输入等无选项题型）
+                            items.add(item);
                         } else {
                             item.setOptions(new ArrayList<>());
+                            // 没有选项的问题不添加（如附件上传、文本输入等）
                         }
-
-                        items.add(item);
                     }
                 }
             } else {
@@ -475,11 +589,14 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 if (question.getOptions() != null) {
                     List<String> options = JSON.parseArray(question.getOptions(), String.class);
                     item.setOptions(options);
+                    // 只有有选项的问题才添加（过滤掉附件上传、文本输入等无选项题型）
+                    if (!options.isEmpty()) {
+                        items.add(item);
+                    }
                 } else {
                     item.setOptions(new ArrayList<>());
+                    // 没有选项的问题不添加
                 }
-
-                items.add(item);
             }
         } catch (Exception e) {
             log.error("解析问题内容失败，questionId: {}", question.getQuestionId(), e);
@@ -614,6 +731,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
         style.setBorderRight(BorderStyle.THIN);
+        style.setWrapText(true); // 自动换行
         return style;
     }
 
