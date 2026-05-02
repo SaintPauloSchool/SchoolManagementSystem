@@ -25,6 +25,8 @@ import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -494,14 +496,9 @@ public class NotificationExportServiceImpl implements INotificationExportService
                     
                     // 判断是否为填空题（type="3"）
                     if ("3".equals(item.getType())) {
-                        // 填空题：直接显示答案内容，用逗号连接数组元素
-                        if (!selectedOptions.isEmpty()) {
-                            // 将数组 ["1", "1"] 转换为 "1,1"
-                            String answerText = String.join(",", selectedOptions);
-                            cell.setCellValue(answerText);
-                        } else {
-                            cell.setCellValue("");
-                        }
+                        // 填空题：解析新的答案格式并显示对应的值
+                        String answerText = parseFillBlankAnswer(userAnswers, item.getId());
+                        cell.setCellValue(answerText);
                     } else {
                         // 选择题：标记选中的选项
                         if (selectedOptions.contains(option)) {
@@ -623,16 +620,13 @@ public class NotificationExportServiceImpl implements INotificationExportService
     }
 
     /**
-     * 处理填空题：从content中提取文本，将{{fillblank-n}}占位符替换为___
+     * 处理填空题：从content中提取文本，将{{fillblank-n}}占位符替换为回答n（n是序号）
      */
     private void handleFillBlankQuestion(QuestionItemVO item, String content, List<QuestionItemVO> items) {
         if (content != null && !content.isEmpty()) {
-            // 将所有{{fillblank-n}}格式的占位符（包括可能的特殊字符）替换为___
-            String optionText = content.replaceAll("\\{\\{fillblank-\\d+}}", "___").trim();
-            List<String> options = new ArrayList<>();
-            if (!optionText.isEmpty()) {
-                options.add(optionText);
-            }
+            // 提取所有fillblank的ID，按出现顺序编号
+            Pattern pattern = Pattern.compile("\\{\\{fillblank-(\\d+)}}");
+            List<String> options = getStrings(content, pattern);
             item.setOptions(options);
             // 填空题有内容就添加
             if (!options.isEmpty()) {
@@ -641,6 +635,30 @@ public class NotificationExportServiceImpl implements INotificationExportService
         } else {
             item.setOptions(new ArrayList<>());
         }
+    }
+
+    /**
+     * 获取内容中的字符串
+     * @param content
+     * @param pattern
+     * @return
+     */
+    private static List<String> getStrings(String content, Pattern pattern) {
+        Matcher matcher = pattern.matcher(content);
+
+        int index = 1;
+        StringBuffer sb = new StringBuffer();
+        while (matcher.find()) {
+            matcher.appendReplacement(sb, "{答" + index++ + "}");
+        }
+        matcher.appendTail(sb);
+
+        String optionText = sb.toString().trim();
+        List<String> options = new ArrayList<>();
+        if (!optionText.isEmpty()) {
+            options.add(optionText);
+        }
+        return options;
     }
 
     /**
@@ -676,6 +694,55 @@ public class NotificationExportServiceImpl implements INotificationExportService
         }
 
         return countMap;
+    }
+
+    /**
+     * 解析填空题答案，根据blankId匹配显示对应的值
+     * @param userAnswers 用户的所有答案
+     * @param questionId 问题ID（即nodeId）
+     * @return 格式化的答案字符串，如："回答1：12，回答2：123，回答3：1234"
+     */
+    private String parseFillBlankAnswer(List<NotificationAnswer> userAnswers, Long questionId) {
+        String targetNodeId = String.valueOf(questionId);
+        
+        for (NotificationAnswer answer : userAnswers) {
+            if (answer.getAnswerData() != null) {
+                try {
+                    JSONArray answerArray = JSON.parseArray(answer.getAnswerData());
+                    for (int i = 0; i < answerArray.size(); i++) {
+                        JSONObject answerObj = answerArray.getJSONObject(i);
+                        String nodeId = answerObj.getString("nodeId");
+                        
+                        // 匹配 nodeId
+                        if (targetNodeId.equals(nodeId)) {
+                            String answerContent = answerObj.getString("answerContent");
+                            if (answerContent != null && !answerContent.isEmpty()) {
+                                // 解析新的答案格式：[{"blankId":"fillblank-xxx","value":"12"},...]
+                                JSONArray fillBlanksArray = JSON.parseArray(answerContent);
+                                
+                                StringBuilder result = new StringBuilder();
+                                int index = 1;
+                                for (int j = 0; j < fillBlanksArray.size(); j++) {
+                                    JSONObject fillBlank = fillBlanksArray.getJSONObject(j);
+                                    String value = fillBlank.getString("value");
+                                    
+                                    if (j > 0) {
+                                        result.append("，");
+                                    }
+                                    result.append("答").append(index++).append("：").append(value != null ? value : "");
+                                }
+                                
+                                return result.toString();
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("解析填空题答案失败", e);
+                }
+            }
+        }
+        
+        return "";
     }
 
     /**
