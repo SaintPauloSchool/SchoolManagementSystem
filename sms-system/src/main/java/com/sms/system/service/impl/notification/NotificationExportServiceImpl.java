@@ -649,7 +649,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
         int index = 1;
         StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
-            matcher.appendReplacement(sb, "{答" + index++ + "}");
+            matcher.appendReplacement(sb, "(答" + index++ + ")");
         }
         matcher.appendTail(sb);
 

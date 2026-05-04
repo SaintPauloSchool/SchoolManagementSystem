@@ -156,15 +156,15 @@ export default {
         })
         
         if (response.code === 200 || response.code === 0) {
-          this.$message.success('通知發布成功')
+          this.$message.success('已發佈')
           this.$emit('publish-success')
           this.resetForm()
         } else {
-          throw new Error(response.msg || '發布失敗')
+          throw new Error(response.msg || '發佈失敗')
         }
       } catch (error) {
-        console.error('發布失敗:', error)
-        this.$message.error(error.message || '發布失敗，請稍後重試')
+        console.error('發佈失敗:', error)
+        this.$message.error(error.message || '發佈失敗，請稍後重試')
       } finally {
         this.submitting = false
       }

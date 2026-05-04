@@ -370,7 +370,6 @@ export default {
     },
 
     handlePublishSuccess() {
-      this.$message.success('通知發布成功')
       this.activeMenu = '1-3'
       this.loadMySendNotifications()
     }

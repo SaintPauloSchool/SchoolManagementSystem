@@ -27,7 +27,12 @@
           <span v-if="notification.replyDeadline" class="meta-divider">·</span>
           <span v-if="notification.replyDeadline" class="meta-item">
             <el-icon :size="14"><AlarmClock /></el-icon>
-            回复截止：{{ notification.replyDeadline }}
+            回覆截止時間：{{ notification.replyDeadline }}
+          </span>
+          <span v-if="notification.reminderTime" class="meta-divider">·</span>
+          <span v-if="notification.reminderTime" class="meta-item">
+            <el-icon :size="14"><AlarmClock /></el-icon>
+            提示回覆時間：{{ notification.reminderTime }}
           </span>
         </div>
       </div>
