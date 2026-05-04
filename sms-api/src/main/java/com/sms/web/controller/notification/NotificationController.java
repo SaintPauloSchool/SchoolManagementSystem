@@ -127,10 +127,10 @@ public class NotificationController extends BaseController {
     }
 
     /**
-     * 發布通知
+     * 發佈通知
      */
     // @PreAuthorize("@ss.hasPermi('system:notification:add')")
-    @Log(title = "發布通知", businessType = BusinessType.INSERT)
+    @Log(title = "發佈通知", businessType = BusinessType.INSERT)
     @PostMapping
     @Transactional(rollbackFor = Exception.class)
     public AjaxResult add(@RequestBody Notification notification) {
@@ -173,7 +173,7 @@ public class NotificationController extends BaseController {
                 }
             }
 
-            // 5. 如果狀態為發布，則發送通知和抄送消息
+            // 5. 如果狀態為發佈，則發送通知和抄送消息
             if ("1".equals(notification.getStatus())) {
                 // 發送通知給接收者
                 notificationPublishHandler.publishToWechat(notification, notification.getReceivers());
@@ -184,7 +184,7 @@ public class NotificationController extends BaseController {
             
             return AjaxResult.success();
         } else {
-            return AjaxResult.error("發布失敗");
+            return AjaxResult.error("發佈通知");
         }
     }
 

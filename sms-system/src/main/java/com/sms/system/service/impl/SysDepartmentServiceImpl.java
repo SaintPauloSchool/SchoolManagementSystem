@@ -245,8 +245,14 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
                     continue;
                 }
                 
-                // 为每个家长关系创建独立节点
+                // 只添加屬於該班級的學生關係記錄
+                // 當一個家長綁定了多個班級的學生時，需要根據 binding.studentUserId 過濾，
+                // 避免在某班顯示該家長與其他班學生的關係
+                String bindingStudentUserId = binding.getStudentUserId();
                 for (SysParentStudentRelation relation : relations) {
+                    if (bindingStudentUserId != null && !bindingStudentUserId.equals(relation.getStudentUserId())) {
+                        continue;
+                    }
                     SysDepartment node = convertToDepartmentNode(relation);
                     classNode.getChildren().add(node);
                 }

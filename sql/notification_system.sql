@@ -35,7 +35,7 @@ CREATE TABLE notification (
     sender_name         VARCHAR(100)    NOT NULL                   COMMENT '發送人姓名',
     jump_url            VARCHAR(500)    DEFAULT NULL               COMMENT '跳轉鏈接',
     attachment_urls     TEXT            DEFAULT NULL               COMMENT '附件/圖片 URL 列表 (JSON 格式)',
-    status              CHAR(1)         DEFAULT '0'                COMMENT '狀態（0 草稿 1 已發布 2 已撤回）',
+    status              CHAR(1)         DEFAULT '0'                COMMENT '狀態（0 草稿 1 已發佈 2 已撤回）',
     reply_deadline      DATETIME        DEFAULT NULL               COMMENT '回覆截止時間',
     reminder_time       DATETIME        DEFAULT NULL               COMMENT '提示回覆時間（只到日期）',
     create_by           VARCHAR(64)     DEFAULT ''                 COMMENT '創建者',

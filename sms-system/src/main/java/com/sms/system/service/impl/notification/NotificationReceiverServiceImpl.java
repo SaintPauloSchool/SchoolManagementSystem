@@ -35,12 +35,12 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
     private static final Logger log = LoggerFactory.getLogger(NotificationReceiverServiceImpl.class);
 
     /**
-     * 接收類別常量：按部門發布
+     * 接收類別常量：按部門發佈
      */
     private static final String RECEIVE_TYPE_DEPARTMENT = "1";
 
     /**
-     * 接收類別常量：按個人發布
+     * 接收類別常量：按個人發佈
      */
     private static final String RECEIVE_TYPE_PERSONAL = "2";
 

@@ -433,7 +433,7 @@ export default {
     getStatusText(status) {
       const statusMap = {
         '0': '草稿',
-        '1': '已發布',
+        '1': '已發佈',
         '2': '已撤回'
       }
       return statusMap[status] || '未知'

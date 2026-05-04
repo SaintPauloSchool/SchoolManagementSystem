@@ -20,7 +20,7 @@
         <el-date-picker
           v-model="publishDate"
           type="date"
-          placeholder="發布時間"
+          placeholder="發佈時間"
           clearable
           value-format="YYYY-MM-DD"
           class="date-picker"
@@ -77,7 +77,7 @@
             <span v-else class="no-deadline">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="發布時間" width="140" align="center">
+        <el-table-column prop="createTime" label="發佈時間" width="140" align="center">
           <template #default="scope">
             <div v-if="scope.row.createTime" class="datetime-block">
               <span class="date-part">{{ scope.row.createTime.split(' ')[0] }}</span>
@@ -215,7 +215,7 @@ export default {
     getStatusText(status) {
       const statusMap = {
         '0': '草稿',
-        '1': '已發布',
+        '1': '已發佈',
         '2': '已撤回'
       }
       return statusMap[status] || '未知'

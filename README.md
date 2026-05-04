@@ -1,6 +1,6 @@
 # 校園管理系統
 
-一個完整的校園管理系統，支持通知發布、問題設置、靈活的接收對象配置等功能。
+一個完整的校園管理系統，支持通知發佈、問題設置、靈活的接收對象配置等功能。
 
 ## 項目特點
 
@@ -15,8 +15,8 @@
 
 ### 📢 通知管理
 - **抄送我的**：查看抄送給當前用戶的通知
-- **我發送的**：管理自己發布的通知
-- **發布通知**：創建新的通知（兩步發布流程）
+- **我發送的**：管理自己發佈的通知
+- **發佈通知**：創建新的通知（兩步發佈流程）
 
 ### ✏️ 內容編輯
 - 通知標題和正文編輯
@@ -254,7 +254,7 @@ SchoolManagementSystem/
 │       │   ├── selectors/        # 選擇器組件
 │       │   ├── SchoolNotificationSystem.vue    # 主系統組件
 │       │   ├── NotificationList.vue            # 通知列表
-│       │   ├── PublishNotification.vue         # 發布通知
+│       │   ├── PublishNotification.vue         # 發佈通知
 │       │   ├── BasicInfoForm.vue               # 基本信息表單
 │       │   ├── SendSettingsForm.vue            # 發送設置表單
 │       │   ├── FormQuestionDialog.vue          # 問題對話框
@@ -275,7 +275,7 @@ SchoolManagementSystem/
 - `GET /system/notification/ccToMe` - 查詢抄送給我的通知
 - `GET /system/notification/mySend` - 查詢我發送的通知
 - `GET /system/notification/{id}` - 獲取通知詳情
-- `POST /system/notification` - 發布通知
+- `POST /system/notification` - 發佈通知
 - `PUT /system/notification` - 修改通知
 - `DELETE /system/notification/{ids}` - 刪除通知
 - `PUT /system/notification/withdraw/{id}` - 撤回通知
@@ -332,7 +332,7 @@ mvn test
 
 1. 確保數據庫字符集為 utf8mb4 以支持 emoji
 2. 文件上傳大小限制為 10MB
-3. 通知狀態：0-草稿，1-已發布，2-已撤回
+3. 通知狀態：0-草稿，1-已發佈，2-已撤回
 4. 前端組件採用模塊化設計，便於維護和擴展
 5. 所有前端文本使用繁體中文
 6. 推薦使用現代瀏覽器 (Chrome 90+, Firefox 88+, Safari 14+)

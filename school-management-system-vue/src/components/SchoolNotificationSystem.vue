@@ -127,7 +127,7 @@
       <!-- 內容區域 -->
       <div class="content-wrapper">
         <transition name="fade" mode="out-in">
-          <!-- 發布通知 -->
+          <!-- 發佈通知 -->
           <PublishNotification 
             v-if="activeMenu === '1-1'"
             @publish-success="handlePublishSuccess" 
@@ -207,7 +207,7 @@ export default {
       isMobile: false,
       expandedSections: this.getInitialExpandedSections(),
       menuItems: [
-        { index: '1-1', title: '發布通知', icon: 'Edit' },
+        { index: '1-1', title: '發佈通知', icon: 'Edit' },
         { index: '1-2', title: '抄送我的', icon: 'Message'},
         { index: '1-3', title: '我發送的', icon: 'Promotion' }
       ]
@@ -301,7 +301,7 @@ export default {
         this.isMobileMenuOpen = false
       }
       if (index === '1-1') {
-        // 發布通知，无需加载数据
+        // 發佈通知，无需加载数据
       } else if (index === '1-2') {
         this.loadCcToMeNotifications()
       } else if (index === '1-3') {
