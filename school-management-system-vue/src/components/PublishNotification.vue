@@ -3,17 +3,11 @@
     <!-- 步驟指示器 -->
     <div class="steps-wrapper">
       <div class="simple-steps">
-        <div 
-          :class="['step-item', { active: currentStep === 0 }]"
-          @click="currentStep = 0"
-        >
+        <div :class="['step-item', { active: currentStep === 0 }]">
           <span class="step-title">基本信息</span>
         </div>
         <div class="step-line"></div>
-        <div 
-          :class="['step-item', { active: currentStep === 1 }]"
-          @click="currentStep = 1"
-        >
+        <div :class="['step-item', { active: currentStep === 1 }]">
           <span class="step-title">發送設置</span>
         </div>
       </div>
@@ -228,7 +222,7 @@ export default {
 }
 
 .step-item {
-  cursor: pointer;
+  cursor: default;
   transition: all 0.3s ease;
 }
 

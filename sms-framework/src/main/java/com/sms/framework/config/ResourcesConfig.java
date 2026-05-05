@@ -1,5 +1,6 @@
 package com.sms.framework.config;
 
+import com.sms.framework.interceptor.ApiSignatureInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +28,9 @@ public class ResourcesConfig implements WebMvcConfigurer
     @Autowired
     private RepeatSubmitInterceptor repeatSubmitInterceptor;
 
+    @Autowired
+    private ApiSignatureInterceptor apiSignatureInterceptor;
+
     /**
      * 默认首页的设置，当输入域名是可以自动跳转到默认指定的网页
      */
@@ -53,5 +57,22 @@ public class ResourcesConfig implements WebMvcConfigurer
     public void addInterceptors(InterceptorRegistry registry)
     {
         registry.addInterceptor(repeatSubmitInterceptor).addPathPatterns("/**");
+        
+        // 签名校验拦截器配置
+        registry.addInterceptor(apiSignatureInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns(
+                        "/login",
+                        "/captchaImage",
+                        "/profile/**",
+                        "/favicon.ico",
+                        "/swagger-ui.html",
+                        "/swagger-resources/**",
+                        "/webjars/**",
+                        "/*/api-docs",
+                        "/swagger-ui/**",
+                        "/tool/swagger",
+                        "/tool/swagger/**"
+                );
     }
 }

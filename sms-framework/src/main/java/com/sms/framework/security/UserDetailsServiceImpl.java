@@ -1,13 +1,13 @@
 package com.sms.framework.security;
 
 import com.sms.common.core.domain.entity.SysUser;
-import com.sms.common.utils.StringUtils;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import com.sms.system.entity.SysToken;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,12 +21,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // 这里应该调用实际的用户服务来获取用户信息
-        // 暂时返回一个模拟用户
+        // 本系統僅支援 Token SSO 登入，不提供傳統帳號密碼登入
+        throw new UsernameNotFoundException("不支援帳號密碼登入方式");
+    }
+
+    public UserDetails loadUserBySysToken(SysToken sysToken) {
         SysUser user = new SysUser();
-        user.setUserId(1L);
-        user.setLoginName(username);
-        user.setPassword("$2a$10$8K1p/a0dhrxiowP.dnkgNORTWgdEDHn5L2/xjpEWuC.QQv4rKO9jO"); // 123456加密后的密码
+        user.setUserId(sysToken.getUserId());
+        // Use parentUserId as loginName if available, otherwise use userId
+        user.setLoginName(sysToken.getParentUserId() != null ? sysToken.getParentUserId() : String.valueOf(sysToken.getUserId()));
+        user.setPassword(""); // token login does not require password validation
         
         return createLoginUser(user);
     }

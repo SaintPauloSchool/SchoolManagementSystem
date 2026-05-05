@@ -1,5 +1,7 @@
 package com.sms.framework.security;
 
+import com.sms.system.entity.SysToken;
+import com.sms.system.mapper.SysTokenMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +24,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
 
+    @Autowired
+    private SysTokenMapper sysTokenMapper;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
@@ -30,15 +35,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = getToken(request);
         
         if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // 这里应该验证JWT token的有效性
-            // 暂时使用固定的用户名进行演示
-            LoginUser loginUser = (LoginUser) userDetailsService.loadUserByUsername("admin");
+            // 从数据库查询 token 信息
+            SysToken sysToken = sysTokenMapper.selectByToken(token);
             
-            if (loginUser != null) {
-                UsernamePasswordAuthenticationToken authenticationToken = 
-                    new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            // 验证 token 是否存在并且未过期
+            if (sysToken != null && !sysToken.isExpired()) {
+                // 加载用户信息
+                LoginUser loginUser = (LoginUser) userDetailsService.loadUserBySysToken(sysToken);
+                
+                if (loginUser != null) {
+                    UsernamePasswordAuthenticationToken authenticationToken = 
+                        new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());
+                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                }
             }
         }
         

@@ -1,12 +1,26 @@
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { API_BASE_PATH, withAppBase } from './deployment'
+import settings from '../config/settings'
 
 // Create an axios instance aligned with the separated frontend/backend deployment.
 const service = axios.create({
   baseURL: API_BASE_PATH,
   timeout: 15000
 })
+
+import MD5 from 'crypto-js/md5' // 导入 MD5 用于计算签名
+
+// 生成唯一标识符(UUID的简易实现)
+const generateNonce = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID().replace(/-/g, '');
+  }
+  return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 service.interceptors.request.use(
   config => {
@@ -21,6 +35,16 @@ service.interceptors.request.use(
         _t: new Date().getTime()
       }
     }
+
+    // API 安全校驗拦截器
+    const timestamp = Date.now().toString();
+    const nonce = generateNonce();
+    const appSecret = settings.appSecret;
+    const signature = MD5(appSecret + timestamp + nonce).toString();
+
+    config.headers['x-timestamp'] = timestamp;
+    config.headers['x-nonces'] = nonce;
+    config.headers['x-signature'] = signature;
 
     return config
   },
@@ -52,18 +76,17 @@ service.interceptors.response.use(
       })
 
       if (res.code === 401) {
-        ElMessageBox.confirm(
-          '登录状态已过期，是否重新登录？',
-          '系统提示',
+        ElMessageBox.alert(
+          '登錄狀態已過期或失效，請關閉此視窗，並重新從「學生手冊」系統點擊進入。',
+          '系統提示',
           {
-            confirmButtonText: '重新登录',
-            cancelButtonText: '取消',
+            confirmButtonText: '確定',
             type: 'warning'
           }
         ).then(() => {
           localStorage.removeItem('token')
           sessionStorage.removeItem('token')
-          window.location.href = withAppBase()
+          window.location.href = window.location.pathname
         })
       }
 

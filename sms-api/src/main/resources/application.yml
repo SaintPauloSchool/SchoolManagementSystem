@@ -12,6 +12,10 @@ sms:
   profile: C:/uploadPath
   # 獲取 ip地址開關
   addressEnabled: false
+  # app交互秘钥
+  appSecret: kKhPdvEBDjck1RK7
+  # app交互时间误差范围(毫秒)
+  apiTimeRange: 300000
 
 # 開發環境配置
 server:

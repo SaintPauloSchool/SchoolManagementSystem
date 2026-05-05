@@ -331,18 +331,20 @@ CREATE TABLE wecom_school_department_member (
 -- ----------------------------
 -- token表
 -- ----------------------------
+DROP TABLE IF EXISTS sys_token;
 CREATE TABLE `sys_token` (
-     `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-     `user_id` bigint NOT NULL COMMENT '用户ID',
-     `parent_user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-     `token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Token值',
-     `expire_time` datetime NOT NULL COMMENT '过期时间',
-     `create_time` datetime NOT NULL COMMENT '创建时间',
-     `update_time` datetime NOT NULL COMMENT '更新时间',
-     PRIMARY KEY (`id`),
-     UNIQUE KEY `token_value` (`token`),
-     KEY `idx_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=934 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Token表'
+                             `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                             `user_id` bigint NOT NULL COMMENT '用户ID',
+                             `parent_user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+                             `user_type` tinyint(1) DEFAULT NULL COMMENT '用户类型 (1: parent, 0: student)',
+                             `token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Token值',
+                             `expire_time` datetime NOT NULL COMMENT '过期时间',
+                             `create_time` datetime NOT NULL COMMENT '创建时间',
+                             `update_time` datetime NOT NULL COMMENT '更新时间',
+                             PRIMARY KEY (`id`),
+                             UNIQUE KEY `token_value` (`token`),
+                             KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=934 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Token表';
 -- ----------------------------
 -- 系統學校部門表
 -- ----------------------------
