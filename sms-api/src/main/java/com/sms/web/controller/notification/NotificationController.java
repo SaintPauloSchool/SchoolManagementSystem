@@ -75,14 +75,14 @@ public class NotificationController extends BaseController {
     //@PreAuthorize("@ss.hasPermi('system:notification:ccToList')")
     @GetMapping("/ccToMe")
     public TableDataInfo ccToMe(Notification notification) {
-        // 獲取當前登錄用戶信息
-        Long userId = 1L;
+        // 獲取當前登錄用戶信息 -》 ootd：這裡是有問題的。還沒做抄送的功能
+        Long userId = getUserId();
         String userType = getUserType();
-        
+
         // 設置 userId 和 userType 到通知對象中
         notification.setUserId(userId);
         notification.setUserType(userType);
-        
+
         startPage();
         List<Notification> list = notificationService.selectCcToMeList(notification);
         return getDataTable(list);
@@ -94,11 +94,10 @@ public class NotificationController extends BaseController {
     //@PreAuthorize("@ss.hasPermi('system:notification:mySend')")
     @GetMapping("/mySend")
     public TableDataInfo mySend(Notification notification) {
-        Long senderId = 1L;
-        
+        // 獲取當前登錄用戶的 senderId
         // 設置 senderId 到通知對象中
-        notification.setSenderId(senderId);
-        
+        notification.setSenderId(getUserId());
+
         startPage();
         List<Notification> list = notificationService.selectMySendList(notification);
         return getDataTable(list);
@@ -134,11 +133,11 @@ public class NotificationController extends BaseController {
     @PostMapping
     @Transactional(rollbackFor = Exception.class)
     public AjaxResult add(@RequestBody Notification notification) {
-        // 設置發送人信息（使用假數據）
-        notification.setSenderId(1L);
-        notification.setSenderName("測試用戶");
+        // 設置發送人信息（從 Security Context 取得真實登錄用戶）
+        notification.setSenderId(getUserId());
+        notification.setSenderName(getUsername());
         notification.setCreateTime(new Date());
-        
+
         // 1. 保存通知基本信息
         if (notificationService.save(notification)) {
             // 獲取生成的通知 ID

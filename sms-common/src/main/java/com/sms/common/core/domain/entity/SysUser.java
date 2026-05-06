@@ -45,6 +45,9 @@ public class SysUser extends BaseEntity
     
     /** 用戶類型 */
     private String userType;
+
+    /** 企業微信原始 userId */
+    private String openUserId;
     
     /** 用戶郵箱 */
     @Excel(name = "用戶郵箱")
@@ -193,6 +196,16 @@ public class SysUser extends BaseEntity
     public void setUserType(String userType)
     {
         this.userType = userType;
+    }
+
+    public String getOpenUserId()
+    {
+        return openUserId;
+    }
+
+    public void setOpenUserId(String openUserId)
+    {
+        this.openUserId = openUserId;
     }
 
     @Email(message = "郵箱格式不正確")

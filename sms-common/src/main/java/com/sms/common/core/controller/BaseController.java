@@ -215,7 +215,12 @@ public class BaseController
      */
     public Long getUserId()
     {
-        return getSysUser().getUserId();
+        SysUser user = getSysUser();
+        if (user == null)
+        {
+            throw new IllegalStateException("未登錄或用戶信息不存在，請檢查 Token 是否有效");
+        }
+        return user.getUserId();
     }
 
     /**
@@ -223,7 +228,12 @@ public class BaseController
      */
     public String getLoginName()
     {
-        return getSysUser().getLoginName();
+        SysUser user = getSysUser();
+        if (user == null)
+        {
+            throw new IllegalStateException("未登錄或用戶信息不存在，請檢查 Token 是否有效");
+        }
+        return user.getLoginName();
     }
 
     /**
@@ -231,7 +241,12 @@ public class BaseController
      */
     public String getUsername()
     {
-        return getSysUser().getUserName();
+        SysUser user = getSysUser();
+        if (user == null)
+        {
+            throw new IllegalStateException("未登錄或用戶信息不存在，請檢查 Token 是否有效");
+        }
+        return user.getUserName();
     }
 
     /**
@@ -239,6 +254,24 @@ public class BaseController
      */
     public String getUserType()
     {
-        return getSysUser().getUserType();
+        SysUser user = getSysUser();
+        if (user == null)
+        {
+            throw new IllegalStateException("未登錄或用戶信息不存在，請檢查 Token 是否有效");
+        }
+        return user.getUserType();
+    }
+
+    /**
+     * 獲取企業微信原始 userId 字串
+     */
+    public String getOpenUserId()
+    {
+        SysUser user = getSysUser();
+        if (user == null)
+        {
+            throw new IllegalStateException("未登錄或用戶信息不存在，請檢查 Token 是否有效");
+        }
+        return user.getOpenUserId();
     }
 }

@@ -76,12 +76,12 @@ public class LoginUser implements UserDetails {
     @JsonIgnore
     @Override
     public String getPassword() {
-        return user.getPassword();
+        return user != null ? user.getPassword() : null;
     }
 
     @Override
     public String getUsername() {
-        return user.getLoginName();
+        return user != null ? user.getLoginName() : null;
     }
 
     /**

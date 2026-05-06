@@ -36,4 +36,12 @@
         ORDER BY department_id ASC, name ASC
     </select>
 
+    <!-- 根据企業微信 userid 字串查詢完整成員對象 -->
+    <select id="selectByUserid" resultMap="WecomSchoolDepartmentMemberResult">
+        SELECT id, userid, name, department_id, open_userid, create_time, update_time
+        FROM wecom_school_department_member
+        WHERE userid = #{userid}
+        LIMIT 1
+    </select>
+
 </mapper>

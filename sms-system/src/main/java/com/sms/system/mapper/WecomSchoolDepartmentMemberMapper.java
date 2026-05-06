@@ -26,4 +26,12 @@ public interface WecomSchoolDepartmentMemberMapper {
      * @return 成员集合
      */
     List<WecomSchoolDepartmentMember> selectMembersByIds(@Param("ids") List<Long> ids);
+
+    /**
+     * 根据企業微信 userid 字串查詢完整成員對象
+     *
+     * @param userid 企業微信 userid（如 "ZhangSan001"）
+     * @return 成員對象，若不存在則返回 null
+     */
+    WecomSchoolDepartmentMember selectByUserid(@Param("userid") String userid);
 }

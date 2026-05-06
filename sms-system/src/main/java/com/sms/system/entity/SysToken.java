@@ -10,14 +10,14 @@ public class SysToken {
     /** 主鍵 ID */
     private Long id;
 
-    /** 用戶 ID（對應管理後台的 sys_user.user_id） */
-    private Long userId;
-
-    /** 家長用戶 ID（企業微信 userId，可為空） */
-    private String parentUserId;
+    /** 用戶 ID */
+    private String userId;
 
     /** Token 值 */
     private String token;
+
+    /** 用戶類型 (0: 學生, 1: 家長, 2: 員工) */
+    private Integer userType;
 
     /** 過期時間 */
     private Date expireTime;
@@ -28,17 +28,14 @@ public class SysToken {
     /** 更新時間 */
     private Date updateTime;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
-
-    public String getParentUserId() { return parentUserId; }
-    public void setParentUserId(String parentUserId) { this.parentUserId = parentUserId; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
 
     public String getToken() { return token; }
     public void setToken(String token) { this.token = token; }
+
+    public Integer getUserType() { return userType; }
+    public void setUserType(Integer userType) { this.userType = userType; }
 
     public Date getExpireTime() { return expireTime; }
     public void setExpireTime(Date expireTime) { this.expireTime = expireTime; }
