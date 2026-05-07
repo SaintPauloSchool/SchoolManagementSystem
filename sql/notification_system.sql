@@ -297,7 +297,20 @@ INSERT INTO class_section VALUES
 (73,'SC1_A_家長','F4A'),(74,'SC1_B_家長','F4B'),(75,'SC1_C_家長','F4C'),(76,'SC1_D_家長','F4D'),(77,'SC1_E_家長','F4E'),(78,'SC1_F_家長','F4F'),
 (79,'SC2_A_家長','F5A'),(80,'SC2_B_家長','F5B'),(81,'SC2_C_家長','F5C'),(82,'SC2_D_家長','F5D'),(83,'SC2_E_家長','F5E'),(84,'SC2_F_家長','F5F'),
 (85,'SC3_A_家長','F6A'),(86,'SC3_B_家長','F6B'),(87,'SC3_C_家長','F6C'),(88,'SC3_D_家長','F6D'),(89,'SC3_E_家長','F6E'),(90,'SC3_F_家長','F6F');
-
+-- ----------------------------
+-- 部门管理员表
+-- ----------------------------
+DROP TABLE IF EXISTS sys_department_admin;
+CREATE TABLE sys_department_admin (
+      id                  BIGINT          NOT NULL AUTO_INCREMENT    COMMENT '主键ID',
+      department_id       BIGINT          NOT NULL                   COMMENT '部门ID',
+      userid              VARCHAR(64)     NOT NULL                   COMMENT '部门管理员的userid',
+      type                INT             DEFAULT NULL               COMMENT '部门管理员的类型：1-校区负责人, 2-年级负责人, 3-班主任, 4-任课老师, 5-学段负责人',
+      subject             VARCHAR(100)    DEFAULT NULL               COMMENT '教师或班主任的科目',
+      create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP  COMMENT '创建时间',
+      update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+      PRIMARY KEY (id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='部门管理员表';
 -- ----------------------------
 -- 微信學校部門表
 -- ----------------------------

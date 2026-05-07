@@ -1,6 +1,5 @@
 package com.sms.web.controller;
 
-import com.sms.common.annotation.Anonymous;
 import com.sms.common.core.controller.BaseController;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.system.entity.SysDepartment;
@@ -24,20 +23,20 @@ public class DepartmentController extends BaseController {
     /**
      * 獲取班級樹形結構
      */
-    @Anonymous
     @GetMapping("/tree")
     public AjaxResult tree() {
-        List<SysDepartment> tree = departmentService.getClassTree();
+        String openUserId = getOpenUserId();
+        List<SysDepartment> tree = departmentService.getClassTreeByAdmin(openUserId);
         return AjaxResult.success(tree);
     }
 
     /**
      * 獲取班級樹形結構（帶家長學生關係，用於學生/家長選擇器）
      */
-    @Anonymous
     @GetMapping("/treeWithParents")
     public AjaxResult treeWithParents() {
-        List<SysDepartment> tree = departmentService.getClassTreeWithParents();
+        String openUserId = getOpenUserId();
+        List<SysDepartment> tree = departmentService.getClassTreeWithParentsByAdmin(openUserId);
         return AjaxResult.success(tree);
     }
 

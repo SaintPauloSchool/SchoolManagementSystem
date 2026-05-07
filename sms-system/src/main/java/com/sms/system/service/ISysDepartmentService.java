@@ -11,18 +11,21 @@ import java.util.List;
 public interface ISysDepartmentService {
 
     /**
-     * 获取班级树形结构（使用 Stream 流构建）
-     * 层级顺序：type 5(学校) → type 4(校区) → type 3(学段) → type 2(年级) → type 1(班级)
+     * 根据管理员权限获取班级树形结构（仅返回该用户有权管理的部门）
+     * 通过 sys_department_admin 查询用户管理的部门 ID，再过滤完整树
      *
-     * @return 学校层级的树形结构
+     * @param openUserId 企业微信 userid（当前登录用户）
+     * @return 过滤后的学校层级树形结构
      */
-    List<SysDepartment> getClassTree();
+    List<SysDepartment> getClassTreeByAdmin(String openUserId);
 
     /**
-     * 获取班级树形结构（带家长学生关系，用于学生/家长选择器）
-     * 在 getClassTree 的基础上为 type=1 的班级加载家长学生关系数据
+     * 根据管理员权限获取班级树形结构（带家长学生关系）
+     * 在 getClassTreeByAdmin 的基础上为 type=1 的班级加载家长学生关系数据
      *
-     * @return 带家长学生关系的树形结构
+     * @param openUserId 企业微信 userid（当前登录用户）
+     * @return 过滤后的带家长学生关系的树形结构
      */
-    List<SysDepartment> getClassTreeWithParents();
+    List<SysDepartment> getClassTreeWithParentsByAdmin(String openUserId);
 }
+

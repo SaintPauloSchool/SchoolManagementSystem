@@ -1,8 +1,10 @@
 package com.sms.system.service.impl;
 
 import com.sms.system.entity.SysDepartment;
+import com.sms.system.entity.SysDepartmentAdmin;
 import com.sms.system.entity.SysDepartmentParentBinding;
 import com.sms.system.entity.SysParentStudentRelation;
+import com.sms.system.mapper.SysDepartmentAdminMapper;
 import com.sms.system.mapper.SysDepartmentMapper;
 import com.sms.system.mapper.SysDepartmentParentBindingMapper;
 import com.sms.system.mapper.SysParentStudentRelationMapper;
@@ -36,14 +38,61 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     @Autowired
     private SysParentStudentRelationMapper parentStudentRelationMapper;
 
+    @Autowired
+    private SysDepartmentAdminMapper departmentAdminMapper;
+
     /**
-     * 获取班级树形结构（使用 Stream 流构建）
-     * 层级顺序：type 5(学校) → type 4(校区) → type 3(学段) → type 2(年级) → type 1(班级)
+     * 根据管理员权限获取班级树形结构
+     * 逻辑：查询 sys_department_admin 获取该用户管理的部门 ID 集合，
+     * 然后对完整树做剪枝，只保留有权限部门及其子孙节点。
      *
-     * @return 学校层级的树形结构
+     * @param openUserId 企业微信 userid
+     * @return 过滤后的树形结构
      */
     @Override
-    public List<SysDepartment> getClassTree() {
+    public List<SysDepartment> getClassTreeByAdmin(String openUserId) {
+        // 1. 获取用户管理的部门 ID 集合
+        Set<Long> adminDeptIds = getAdminDepartmentIds(openUserId);
+
+        // 如果没有任何权限记录，返回空
+        if (adminDeptIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 2. 获取完整树
+        List<SysDepartment> fullTree = getClassTree();
+
+        // 3. 剪枝：只保留有权限的子树
+        return filterTree(fullTree, adminDeptIds);
+    }
+
+    /**
+     * 根据管理员权限获取班级树形结构（带家长学生关系）
+     *
+     * @param openUserId 企业微信 userid
+     * @return 过滤后的带家长学生关系的树形结构
+     */
+    @Override
+    public List<SysDepartment> getClassTreeWithParentsByAdmin(String openUserId) {
+        // 1. 获取用户管理的部门 ID 集合
+        Set<Long> adminDeptIds = getAdminDepartmentIds(openUserId);
+
+        if (adminDeptIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 2. 获取完整树（含家长学生关系）
+        List<SysDepartment> fullTree = getClassTreeWithParents();
+
+        // 3. 剪枝
+        return filterTree(fullTree, adminDeptIds);
+    }
+
+    /**
+     * 获取班级树形结构（私有辅助方法，供 ByAdmin 方法内部使用）
+     * 层级顺序：type 5(学校) → type 4(校区) → type 3(学段) → type 2(年级) → type 1(班级)
+     */
+    private List<SysDepartment> getClassTree() {
         // 1. 查询所有部门数据
         List<SysDepartment> allDepartments = departmentMapper.selectAll();
 
@@ -77,22 +126,96 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     }
 
     /**
-     * 获取班级树形结构（带家长学生关系，用于学生/家长选择器）
-     * 在 getClassTree 的基础上为 type=1 的班级加载家长学生关系数据
-     *
-     * @return 带家长学生关系的树形结构
+     * 获取班级树形结构（带家长学生关系，私有辅助方法，供 ByAdmin 方法内部使用）
      */
-    @Override
-    public List<SysDepartment> getClassTreeWithParents() {
+    private List<SysDepartment> getClassTreeWithParents() {
         // 1. 获取基础树形结构
         List<SysDepartment> tree = getClassTree();
         
         // 2. 为 type=1 的班级添加家长学生关系数据
-        if (tree != null && !tree.isEmpty()) {
+        if (!tree.isEmpty()) {
             loadParentStudentRelations(tree);
         }
         
         return tree;
+    }
+
+    /**
+     * 查询该用户在 sys_department_admin 中管理的所有部门 ID
+     *
+     * @param openUserId 企业微信 userid
+     * @return 部门 ID 集合（空集合表示无权限记录）
+     */
+    private Set<Long> getAdminDepartmentIds(String openUserId) {
+        if (openUserId == null || openUserId.isEmpty()) {
+            return Collections.emptySet();
+        }
+        List<SysDepartmentAdmin> adminRecords = departmentAdminMapper.selectByUserid(openUserId);
+        if (adminRecords == null || adminRecords.isEmpty()) {
+            return Collections.emptySet();
+        }
+        Set<Long> ids = new HashSet<>();
+        for (SysDepartmentAdmin record : adminRecords) {
+            if (record.getDepartmentId() != null) {
+                ids.add(record.getDepartmentId());
+            }
+        }
+        return ids;
+    }
+
+    /**
+     * 递归剪枝：保留与权限部门相关的节点
+     * 规则：
+     *  - 如果当前节点本身在权限集合中 → 保留该节点及其所有子节点
+     *  - 否则，递归过滤子节点，如果子节点中有保留的节点则当前节点也保留
+     *
+     * @param nodes      待过滤的节点列表
+     * @param adminIds   有权限的部门 ID 集合
+     * @return 过滤后的节点列表
+     */
+    private List<SysDepartment> filterTree(List<SysDepartment> nodes, Set<Long> adminIds) {
+        if (nodes == null || nodes.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<SysDepartment> result = new ArrayList<>();
+        for (SysDepartment node : nodes) {
+            if (node == null) continue;
+
+            if (adminIds.contains(node.getId())) {
+                // 当前节点有权限，直接保留（子节点全部保留，无需继续过滤）
+                result.add(node);
+            } else {
+                // 递归过滤子节点
+                List<SysDepartment> filteredChildren = filterTree(node.getChildren(), adminIds);
+                if (!filteredChildren.isEmpty()) {
+                    // 有子节点保留，则当前节点也保留（作为路径节点），并替换子节点列表
+                    SysDepartment copy = shallowCopy(node);
+                    copy.setChildren(filteredChildren);
+                    result.add(copy);
+                }
+                // 否则该节点及其子树均无权限，丢弃
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 浅拷贝部门节点（不包含子节点，用于构建剪枝后的路径节点）
+     */
+    private SysDepartment shallowCopy(SysDepartment src) {
+        SysDepartment copy = new SysDepartment();
+        copy.setId(src.getId());
+        copy.setParentId(src.getParentId());
+        copy.setName(src.getName());
+        copy.setType(src.getType());
+        copy.setRegisterYear(src.getRegisterYear());
+        copy.setStandardGrade(src.getStandardGrade());
+        copy.setOrderNum(src.getOrderNum());
+        copy.setIsGraduated(src.getIsGraduated());
+        copy.setOpenGroupChat(src.getOpenGroupChat());
+        copy.setGroupChatId(src.getGroupChatId());
+        copy.setIsLeaf(src.getIsLeaf());
+        return copy;
     }
 
     /**
@@ -287,8 +410,6 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
             }
         }
     }
-
-
 
     /**
      * 将家长学生关系转换为部门节点
