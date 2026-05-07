@@ -38,6 +38,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    // 關閉 sourcemap，防止原始碼洩漏
+    sourcemap: false,
     rollupOptions: {
       output: {
         chunkFileNames: 'js/[name]-[hash].js',
@@ -45,6 +47,10 @@ export default defineConfig({
         assetFileNames: '[ext]/[name]-[hash].[ext]'
       }
     }
+  },
+  esbuild: {
+    // 生產環境下移除 console.log 和 debugger
+    drop: ['console', 'debugger']
   },
   optimizeDeps: {
     include: ['element-plus']
