@@ -135,6 +135,7 @@
       <NotificationDetail 
         v-if="selectedNotification"
         :notification="selectedNotification"
+        :detail-type="type"
       />
     </el-dialog>
   </div>

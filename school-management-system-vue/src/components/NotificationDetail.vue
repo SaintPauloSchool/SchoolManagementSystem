@@ -313,7 +313,7 @@
     </div>
 
     <!-- 操作按鈕 -->
-    <div class="section-card action-card">
+    <div v-if="detailType !== 'ccToMe'" class="section-card action-card">
       <div class="section-header">
         <div class="section-icon action-icon">
           <el-icon :size="16"><Operation /></el-icon>
@@ -392,6 +392,10 @@ export default {
     notification: {
       type: Object,
       required: true
+    },
+    detailType: {
+      type: String,
+      default: ''
     }
   },
   data() {
