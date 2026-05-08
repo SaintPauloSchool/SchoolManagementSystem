@@ -35,5 +35,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="createTime != null">#{createTime},</if>
          </trim>
     </insert>
+
+    <!-- 查询所有抄送记录 -->
+    <select id="selectAll" resultMap="NotificationCcResult">
+        select cc_id, notification_id, cc_type, cc_data, create_time 
+        from notification_cc
+    </select>
     
 </mapper>

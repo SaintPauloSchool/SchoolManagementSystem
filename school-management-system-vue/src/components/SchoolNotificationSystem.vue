@@ -315,13 +315,14 @@ export default {
     },
 
     async loadCcToMeNotifications(params = {}) {
-      /*try {
+      try {
         const response = await request({
           url: '/system/notification/ccToMe',
           method: 'get',
           params: {
             pageNum: params.pageNum || this.ccPagination.currentPage,
-            pageSize: params.pageSize || this.ccPagination.pageSize
+            pageSize: params.pageSize || this.ccPagination.pageSize,
+            publishDate: params.publishDate || ''
           }
         })
         
@@ -332,7 +333,7 @@ export default {
       } catch (error) {
         console.error('加载失败:', error)
         this.$message.error('数据加载失败')
-      }*/
+      }
     },
 
     async loadMySendNotifications(params = {}) {
@@ -357,10 +358,10 @@ export default {
       }
     },
 
-    handleCcPageChange({ pageNum, pageSize }) {
+    handleCcPageChange({ pageNum, pageSize, publishDate }) {
       this.ccPagination.currentPage = pageNum
       this.ccPagination.pageSize = pageSize
-      this.loadCcToMeNotifications({ pageNum, pageSize })
+      this.loadCcToMeNotifications({ pageNum, pageSize, publishDate })
     },
 
     handleMySendPageChange({ pageNum, pageSize, publishDate }) {

@@ -49,18 +49,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     
     <!-- 根據用戶 ID 查詢抄送給我的通知列表 -->
     <select id="selectCcToMeList" resultMap="NotificationResult">
-        select n.notification_id, n.title, n.content, n.sender_id, n.sender_name, n.jump_url, 
-               n.attachment_urls, n.status, n.reply_deadline, n.reminder_time, n.create_time, n.update_time 
-        from notification n
-        inner join notification_cc nc on n.notification_id = nc.notification_id
+        select notification_id, title, content, sender_id, sender_name, jump_url, 
+               attachment_urls, status, reply_deadline, reminder_time, create_time, update_time 
+        from notification 
         <where>
-            nc.cc_type = #{userType} 
-              and nc.cc_ids like concat('%', #{userId}, '%')
+            notification_id IN
+            <foreach collection="notificationIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
             <if test="publishDate != null and publishDate != ''">
-                AND DATE(n.create_time) = #{publishDate}
+                AND DATE(create_time) = #{publishDate}
             </if>
         </where>
-        order by n.create_time desc
+        order by create_time desc
     </select>
     
     <!-- 根據用戶 ID 查詢我發送的通知列表 -->

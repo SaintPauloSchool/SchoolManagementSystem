@@ -24,4 +24,11 @@ public interface NotificationCcMapper {
      * @return 结果
      */
     int insert(NotificationCc cc);
+
+    /**
+     * 查询所有抄送记录
+     *
+     * @return 抄送对象集合
+     */
+    List<NotificationCc> selectAll();
 }

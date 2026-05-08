@@ -202,4 +202,95 @@ public class NotificationCcServiceImpl implements INotificationCcService {
         
         return userIds;
     }
+
+    /**
+     * 根据用户 ID 和部门 ID 查询抄送给该用户的所有通知 ID 列表
+     *
+     * @param userId 用户 ID（用于 cc_type=1）
+     * @param departmentId 部门 ID（用于 cc_type=2）
+     * @return 通知 ID 集合
+     */
+    @Override
+    public Set<Long> selectNotificationIdsByUserId(Long userId, Long departmentId) {
+        Set<Long> notificationIds = new HashSet<>();
+        
+        // 查询所有抄送记录
+        List<NotificationCc> allCcList = notificationCcMapper.selectAll();
+        
+        if (allCcList == null || allCcList.isEmpty()) {
+            return notificationIds;
+        }
+        
+        // 遍历所有抄送记录，判断是否包含当前用户或部门
+        for (NotificationCc cc : allCcList) {
+            boolean isMatched = false;
+            
+            if ("1".equals(cc.getCcType())) {
+                // cc_type = 1: 教职员工，检查 cc_ids 中是否包含用户 ID
+                isMatched = checkUserIdInCcData(cc.getCcData(), userId);
+            } else if ("2".equals(cc.getCcType()) && departmentId != null) {
+                // cc_type = 2: 学校通讯录，检查 cc_ids 中是否包含部门 ID
+                isMatched = checkDepartmentIdInCcData(cc.getCcData(), departmentId);
+            }
+            
+            if (isMatched) {
+                notificationIds.add(cc.getNotificationId());
+            }
+        }
+        
+        return notificationIds;
+    }
+
+    /**
+     * 检查 cc_data 中是否包含指定的用户 ID
+     */
+    private boolean checkUserIdInCcData(String ccData, Long userId) {
+        return checkIdInCcData(ccData, userId);
+    }
+
+    /**
+     * 检查 cc_data 中是否包含指定的部门 ID
+     */
+    private boolean checkDepartmentIdInCcData(String ccData, Long departmentId) {
+        return checkIdInCcData(ccData, departmentId);
+    }
+
+    /**
+     * 检查 cc_data 中是否包含指定的 ID（通用方法）
+     *
+     * @param ccData 抄送数据 JSON 字符串
+     * @param targetId 目标 ID（用户 ID 或部门 ID）
+     * @return 是否包含
+     */
+    private boolean checkIdInCcData(String ccData, Long targetId) {
+        if (ccData == null || ccData.trim().isEmpty() || targetId == null) {
+            return false;
+        }
+        
+        try {
+            JSONArray ccDataArray = JSONObject.parseArray(ccData);
+            if (ccDataArray == null || ccDataArray.isEmpty()) {
+                return false;
+            }
+            
+            for (int i = 0; i < ccDataArray.size(); i++) {
+                JSONObject ccItem = ccDataArray.getJSONObject(i);
+                if (ccItem == null) {
+                    continue;
+                }
+                
+                JSONArray ccIds = ccItem.getJSONArray("cc_ids");
+                if (ccIds != null && !ccIds.isEmpty()) {
+                    List<Long> ids = ccIds.toJavaList(Long.class);
+                    if (ids.contains(targetId)) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("解析抄送数据失败: {}", e.getMessage(), e);
+        }
+        
+        return false;
+    }
 }

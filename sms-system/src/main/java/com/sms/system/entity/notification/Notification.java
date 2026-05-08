@@ -9,6 +9,7 @@ import com.sms.common.core.domain.BaseEntity;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 通知实体类
@@ -83,6 +84,14 @@ public class Notification extends BaseEntity {
     /** 用户类型（非数据库字段，用于抄送列表） */
     @TableField(exist = false)
     private String userType;
+
+    /** 企业微信userid（非数据库字段，用于抄送列表查询部门ID） */
+    @TableField(exist = false)
+    private String openUserId;
+
+    /** 通知ID列表（非数据库字段，用于抄送列表查询） */
+    @TableField(exist = false)
+    private Set<Long> notificationIds;
 
     // Getters and Setters
     public Long getNotificationId() {
@@ -211,5 +220,21 @@ public class Notification extends BaseEntity {
 
     public void setUserType(String userType) {
         this.userType = userType;
+    }
+
+    public String getOpenUserId() {
+        return openUserId;
+    }
+
+    public void setOpenUserId(String openUserId) {
+        this.openUserId = openUserId;
+    }
+
+    public Set<Long> getNotificationIds() {
+        return notificationIds;
+    }
+
+    public void setNotificationIds(Set<Long> notificationIds) {
+        this.notificationIds = notificationIds;
     }
 }

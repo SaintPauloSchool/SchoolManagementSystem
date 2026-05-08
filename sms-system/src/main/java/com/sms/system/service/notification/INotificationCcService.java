@@ -33,4 +33,13 @@ public interface INotificationCcService {
      * @return userid 集合
      */
     Set<String> resolveCcUserIds(List<NotificationCc> ccs);
+
+    /**
+     * 根据用户 ID 和部门 ID 查询抄送给该用户的所有通知 ID 列表
+     *
+     * @param userId 用户 ID（用于 cc_type=1）
+     * @param departmentId 部门 ID（用于 cc_type=2）
+     * @return 通知 ID 集合
+     */
+    Set<Long> selectNotificationIdsByUserId(Long userId, Long departmentId);
 }

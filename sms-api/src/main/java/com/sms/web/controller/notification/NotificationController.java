@@ -75,15 +75,10 @@ public class NotificationController extends BaseController {
     //@PreAuthorize("@ss.hasPermi('system:notification:ccToList')")
     @GetMapping("/ccToMe")
     public TableDataInfo ccToMe(Notification notification) {
-        // 獲取當前登錄用戶信息 -》 ootd：這裡是有問題的。還沒做抄送的功能
-        Long userId = getUserId();
-        String userType = getUserType();
-
-        // 設置 userId 和 userType 到通知對象中
-        notification.setUserId(userId);
-        notification.setUserType(userType);
-
-        startPage();
+        // 設置當前登錄用戶信息
+        notification.setUserId(getUserId());
+        notification.setOpenUserId(getOpenUserId());
+        // 查詢列表
         List<Notification> list = notificationService.selectCcToMeList(notification);
         return getDataTable(list);
     }
