@@ -580,54 +580,72 @@ public class NotificationPublishHandler {
         List<NotificationUserReadRecord> readRecords = new ArrayList<>(capacity);
         Date now = new Date();
         
-        // 建立 parentUserId -> 任何一個對應的 studentUserId 的映射
+        // 建立 parentUserId -> 所有對應的 studentUserId 列表的映射（一個家長可能綁定多個學生）
         int initialCapacity = bindings == null ? 16 : (int) (bindings.size() / 0.75f) + 1;
-        Map<String, String> parentToStudentMap = new HashMap<>(initialCapacity);
+        Map<String, List<String>> parentToStudentsMap = new HashMap<>(initialCapacity);
         if (bindings != null) {
             for (SysDepartmentParentBinding binding : bindings) {
                 if (binding.getParentUserId() != null && binding.getStudentUserId() != null) {
-                    parentToStudentMap.put(binding.getParentUserId(), binding.getStudentUserId());
+                    parentToStudentsMap.computeIfAbsent(binding.getParentUserId(), k -> new ArrayList<>())
+                                       .add(binding.getStudentUserId());
                 }
             }
         }
         
         // 為每個家長創建閱讀記錄（user_type = 2）
+        // 關鍵修復：如果一個家長綁定了多個學生，需要為每個學生創建獨立的閱讀記錄
         if (parentUserIds != null) {
             for (String userId : parentUserIds) {
-                NotificationUserReadRecord record = new NotificationUserReadRecord();
-                record.setSendRecordId(sendRecordId);
-                record.setUserId(userId);
-                record.setUserType("2"); // 2-家長
-                record.setIsRead("0"); // 0-未讀
-                record.setReplyStatus("0"); // 0-未回覆
-                // 根據發送結果設置 send_status（1-成功，0-失敗）
-                record.setSendStatus(successUserIds.contains(userId) ? "1" : "0");
-                // 設置關聯的 studentUserId
-                record.setStudentUserId(parentToStudentMap.get(userId));
-                record.setCreateTime(now);
-                readRecords.add(record);
+                List<String> studentIds = parentToStudentsMap.get(userId);
+                boolean sendSuccess = successUserIds.contains(userId);
+                
+                // 如果該家長有綁定的學生，為每個學生創建一條記錄
+                if (studentIds != null && !studentIds.isEmpty()) {
+                    for (String studentUserId : studentIds) {
+                        readRecords.add(createReadRecord(sendRecordId, userId, "2", studentUserId, sendSuccess, now));
+                    }
+                } else {
+                    // 如果沒有綁定關係，也創建一條記錄（studentUserId 為 null）
+                    readRecords.add(createReadRecord(sendRecordId, userId, "2", null, sendSuccess, now));
+                }
             }
         }
 
         // 為每個學生創建閱讀記錄（user_type = 1）
         if (studentUserIds != null) {
             for (String userId : studentUserIds) {
-                NotificationUserReadRecord record = new NotificationUserReadRecord();
-                record.setSendRecordId(sendRecordId);
-                record.setUserId(userId);
-                record.setUserType("1"); // 1-學生
-                record.setIsRead("0"); // 0-未讀
-                record.setReplyStatus("0"); // 0-未回覆
-                // 根據發送結果設置 send_status（1-成功，0-失敗）
-                record.setSendStatus(successUserIds.contains(userId) ? "1" : "0");
+                boolean sendSuccess = successUserIds.contains(userId);
                 // 學生本身的 studentUserId 就是自己
-                record.setStudentUserId(userId);
-                record.setCreateTime(now);
-                readRecords.add(record);
+                readRecords.add(createReadRecord(sendRecordId, userId, "1", userId, sendSuccess, now));
             }
         }
 
         return readRecords;
+    }
+
+    /**
+     * 創建單條閱讀記錄
+     *
+     * @param sendRecordId   發送記錄 ID
+     * @param userId         用戶 ID
+     * @param userType       用戶類型（1-學生，2-家長）
+     * @param studentUserId  關聯的學生 ID
+     * @param sendSuccess    是否發送成功
+     * @param createTime     創建時間
+     * @return 閱讀記錄
+     */
+    private NotificationUserReadRecord createReadRecord(Long sendRecordId, String userId, String userType,
+                                                         String studentUserId, boolean sendSuccess, Date createTime) {
+        NotificationUserReadRecord record = new NotificationUserReadRecord();
+        record.setSendRecordId(sendRecordId);
+        record.setUserId(userId);
+        record.setUserType(userType);
+        record.setIsRead("0"); // 0-未讀
+        record.setReplyStatus("0"); // 0-未回覆
+        record.setSendStatus(sendSuccess ? "1" : "0"); // 1-成功，0-失敗
+        record.setStudentUserId(studentUserId);
+        record.setCreateTime(createTime);
+        return record;
     }
 
     /**
