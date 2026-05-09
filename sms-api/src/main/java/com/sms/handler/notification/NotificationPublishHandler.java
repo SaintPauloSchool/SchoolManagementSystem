@@ -5,9 +5,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.sms.framework.wechat.WechatWorkHttpClient;
 import com.sms.system.entity.notification.*;
 import com.sms.system.entity.vo.ResolvedReceiversVO;
+import com.sms.system.entity.vo.ParentStudentMessageInfo;
 import com.sms.system.service.notification.*;
 import com.sms.system.entity.SysDepartmentParentBinding;
 import com.sms.system.entity.vo.UnrepliedStudentVO;
+import com.sms.system.service.INotificationMessageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-
+import java.util.stream.Collectors;
 /**
  * 通告發佈處理器
  * 負責將通告消息推送給指定的接收者（如通過企業微信發送家校通知）
@@ -58,6 +60,9 @@ public class NotificationPublishHandler {
     @Autowired
     private INotificationResendFailRecordService notificationResendFailRecordService;
 
+    @Autowired
+    private INotificationMessageService notificationMessageService;
+
     /**
      * 將通告發佈到微信（家校通信/外部聯繫人消息）
      *
@@ -80,14 +85,17 @@ public class NotificationPublishHandler {
             throw new IllegalStateException("未解析出有效的微信接收者");
         }
 
-        // 2. 分批發送通知，並獲取發送結果
-        SendResult sendResult = sendInBatches(notification, parentUserIds, studentUserIds, partyIds);
+        // 2. 使用 Service 批量構建消息信息（包含班級名和學生名）
+        List<ParentStudentMessageInfo> messageInfos = notificationMessageService.buildMessageInfos(bindings);
 
-        // 3. 創建發送記錄（包含成功/失敗統計）
+        // 3. 分批發送通知，並獲取發送結果
+        SendResult sendResult = sendInBatchesWithPersonalization(notification, parentUserIds, studentUserIds, partyIds, messageInfos);
+
+        // 4. 創建發送記錄（包含成功/失敗統計）
         NotificationSendRecord sendRecord = createSendRecord(notification, studentUserIds, sendResult, bindings);
         notificationSendRecordService.save(sendRecord);
 
-        // 4. 創建用戶閱讀記錄（帶入每個用戶的發送成功狀態）
+        // 5. 創建用戶閱讀記錄（帶入每個用戶的發送成功狀態）
         List<NotificationUserReadRecord> readRecords = createUserReadRecords(
                 sendRecord.getSendRecordId(), parentUserIds, studentUserIds, sendResult.getSuccessUserIds(), bindings);
         notificationUserReadRecordService.batchSave(readRecords);
@@ -160,6 +168,18 @@ public class NotificationPublishHandler {
      * @return 格式化後的文本內容
      */
     private String buildContent(Notification notification) {
+        return buildContent(notification, null, null);
+    }
+
+    /**
+     * 構建個性化消息文本內容（帶班級名和學生名）
+     *
+     * @param notification 通告實體
+     * @param className 班級名稱
+     * @param studentName 學生姓名
+     * @return 格式化後的文本內容
+     */
+    private String buildContent(Notification notification, String className, String studentName) {
         // 標題
         String title = notification.getTitle() == null ? "" : notification.getTitle().trim();
         // 設置跳轉地址
@@ -173,7 +193,15 @@ public class NotificationPublishHandler {
         // 格式化發佈時間
         String publishTime = formatPublishTime(notification.getCreateTime());
         
-        return "📢 您有一條新的通告\n"
+        // 構建開頭文字：如果有班級和學生信息，則顯示個性化消息
+        String header;
+        if (className != null && !className.isEmpty() && studentName != null && !studentName.isEmpty()) {
+            header = "📢 您有一條 " + className + "-" + studentName + " 新的通告";
+        } else {
+            header = "📢 您有一條新的通告";
+        }
+        
+        return header + "\n"
             + "──────────────\n"
             + "📌 標題：\n" + title + "\n\n"
             + "🕒 發佈時間：\n" + publishTime + "\n"
@@ -850,22 +878,7 @@ public class NotificationPublishHandler {
             }
             
             // 构建企业微信消息payload
-            JSONObject payload = new JSONObject();
-            payload.put("recv_scope", 0);
-            payload.put("to_parent_userid", toJsonArray(currentBatch));
-            payload.put("to_student_userid", new JSONArray());
-            payload.put("to_party", new JSONArray());
-            payload.put("toall", 0);
-            payload.put("msgtype", "text");
-            payload.put("agentid", agentId);
-            
-            JSONObject text = new JSONObject();
-            text.put("content", content);
-            payload.put("text", text);
-            
-            payload.put("enable_id_trans", 0);
-            payload.put("enable_duplicate_check", 0);
-            payload.put("duplicate_check_interval", 1800);
+            JSONObject payload = buildParentOnlyPayload(currentBatch, content);
             
             try {
                 JSONObject result = wechatWorkHttpClient.sendSchoolNotification(payload);
@@ -1095,5 +1108,113 @@ public class NotificationPublishHandler {
         }
         updateRecord.setUpdateTime(new Date());
         return updateRecord;
+    }
+
+    /**
+     * 帶個性化消息的分批發送通知
+     *
+     * @param notification   通知實體
+     * @param parentUserIds  家長用戶 ID 列表
+     * @param studentUserIds 學生用戶 ID 列表
+     * @param partyIds       部門 ID 列表
+     * @param messageInfos   家長-學生消息信息列表
+     * @return 發送結果（成功數、失敗數）
+     */
+    private SendResult sendInBatchesWithPersonalization(Notification notification, List<String> parentUserIds,
+                                                          List<String> studentUserIds, List<String> partyIds,
+                                                          List<ParentStudentMessageInfo> messageInfos) {
+        // 如果沒有個性化消息，使用原有的發送邏輯
+        if (messageInfos == null || messageInfos.isEmpty()) {
+            return sendInBatches(notification, parentUserIds, studentUserIds, partyIds);
+        }
+
+        // 按家長用戶 ID 分組消息
+        Map<String, List<ParentStudentMessageInfo>> parentToMessagesMap = messageInfos.stream()
+                .collect(Collectors.groupingBy(ParentStudentMessageInfo::getParentUserId));
+
+        int successCount = 0;
+        int failCount = 0;
+        Set<String> successUserIds = new HashSet<>();
+        Map<String, String> failedUserReasons = new HashMap<>();
+
+        // 為每個家長發送對應學生的消息
+        for (Map.Entry<String, List<ParentStudentMessageInfo>> entry : parentToMessagesMap.entrySet()) {
+            String parentUserId = entry.getKey();
+            List<ParentStudentMessageInfo> parentMessages = entry.getValue();
+
+            // 為該家長的每個學生發送單獨的消息
+            for (ParentStudentMessageInfo msgInfo : parentMessages) {
+                try {
+                    // 構建個性化消息內容
+                    String content = buildContent(notification, msgInfo.getClassName(), msgInfo.getStudentName());
+
+                    // 構建發送 payload（只發送給當前家長）
+                    JSONObject payload = buildPersonalizedPayload(parentUserId, content);
+
+                    // 發送消息
+                    JSONObject result = wechatWorkHttpClient.sendSchoolNotification(payload);
+                    Integer errcode = result.getInteger("errcode");
+
+                    if (errcode != null && errcode == 0) {
+                        successCount++;
+                        successUserIds.add(parentUserId);
+                        log.debug("成功發送通知給家長 {}，學生 {}", parentUserId, msgInfo.getStudentUserId());
+                    } else {
+                        failCount++;
+                        String reason = "接口返回错误: " + errcode;
+                        failedUserReasons.put(parentUserId, reason);
+                        log.error("發送通知給家長 {} 失敗: code={}, msg={}", parentUserId, errcode, result.getString("errmsg"));
+                    }
+                } catch (Exception e) {
+                    failCount++;
+                    failedUserReasons.put(parentUserId, "发送异常: " + e.getMessage());
+                    log.error("發送通知給家長 {} 異常", parentUserId, e);
+                }
+            }
+        }
+
+        log.info("通知 {} 已全部發送完成，成功: {}, 失敗: {}",
+                notification.getNotificationId(), successCount, failCount);
+
+        return new SendResult(successCount, failCount, successUserIds, failedUserReasons);
+    }
+
+    /**
+     * 構建個性化消息的發送 payload（單個家長）
+     *
+     * @param parentUserId 家長用戶 ID
+     * @param content      消息內容
+     * @return 企業微信發送 payload
+     */
+    private JSONObject buildPersonalizedPayload(String parentUserId, String content) {
+        return buildParentOnlyPayload(Collections.singletonList(parentUserId), content);
+    }
+
+    /**
+     * 構建只發送給家長的 payload（支持批量）
+     *
+     * @param parentUserIds 家長用戶 ID 列表
+     * @param content       消息內容
+     * @return 企業微信發送 payload
+     */
+    private JSONObject buildParentOnlyPayload(List<String> parentUserIds, String content) {
+        JSONObject payload = new JSONObject();
+        payload.put("recv_scope", 0);
+        payload.put("to_parent_userid", toJsonArray(parentUserIds));
+        payload.put("to_student_userid", new JSONArray());
+        payload.put("to_party", new JSONArray());
+        payload.put("toall", 0);
+        payload.put("msgtype", "text");
+        payload.put("agentid", agentId);
+
+        JSONObject text = new JSONObject();
+        text.put("content", content);
+        payload.put("text", text);
+
+        payload.put("enable_id_trans", 0);
+        payload.put("enable_duplicate_check", 0);
+        payload.put("duplicate_check_interval", 1800);
+
+        return payload;
     }
 }

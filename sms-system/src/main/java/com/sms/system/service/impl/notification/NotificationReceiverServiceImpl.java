@@ -198,15 +198,45 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
 
         List<SysParentStudentRelation> relations = parentStudentRelationMapper.selectByIds(ids);
         if (relations != null) {
+            // 先收集所有學生用戶 ID
+            List<String> studentUserIds = relations.stream()
+                    .map(SysParentStudentRelation::getStudentUserId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            // 通過學生用戶 ID 從 sys_department_parent_binding 表查詢對應的綁定關係（包含 department_id）
+            Map<String, SysDepartmentParentBinding> studentToBindingMap = new HashMap<>();
+            if (!studentUserIds.isEmpty()) {
+                List<SysDepartmentParentBinding> existingBindings = departmentParentBindingMapper.selectByStudentUserIds(studentUserIds);
+                if (existingBindings != null) {
+                    for (SysDepartmentParentBinding binding : existingBindings) {
+                        if (binding.getStudentUserId() != null) {
+                            studentToBindingMap.put(binding.getStudentUserId(), binding);
+                        }
+                    }
+                }
+            }
+
             for (SysParentStudentRelation relation : relations) {
                 if (relation.getParentUserId() != null && !relation.getParentUserId().trim().isEmpty()) {
                     parentUserIds.add(relation.getParentUserId());
                     
-                    // 提取精確的綁定關係，避免後續重複查庫導致包含未選擇的學生
-                    SysDepartmentParentBinding binding = new SysDepartmentParentBinding();
-                    binding.setParentUserId(relation.getParentUserId());
-                    binding.setStudentUserId(relation.getStudentUserId());
-                    bindings.add(binding);
+                    // 提取精確的綁定關係，優先使用 sys_department_parent_binding 表中的數據
+                    String studentUserId = relation.getStudentUserId();
+                    SysDepartmentParentBinding existingBinding = studentToBindingMap.get(studentUserId);
+                    
+                    if (existingBinding != null) {
+                        // 如果 sys_department_parent_binding 表中有記錄，直接使用（包含 department_id）
+                        bindings.add(existingBinding);
+                    } else {
+                        // 如果沒有，則創建一個新的 binding（departmentId 為 null）
+                        SysDepartmentParentBinding binding = new SysDepartmentParentBinding();
+                        binding.setParentUserId(relation.getParentUserId());
+                        binding.setStudentUserId(studentUserId);
+                        binding.setDepartmentId(null);
+                        bindings.add(binding);
+                    }
                 }
             }
         }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sms.system.mapper.ClassSectionMapper">
+
+    <resultMap type="com.sms.system.entity.ClassSection" id="ClassSectionResult">
+        <result property="id" column="id"/>
+        <result property="classSectionDsedj" column="class_section_dsedj"/>
+        <result property="classSectionSp" column="class_section_sp"/>
+    </resultMap>
+
+    <select id="selectByDsedjName" resultMap="ClassSectionResult">
+        select id, class_section_dsedj, class_section_sp
+        from class_section
+        where class_section_dsedj = #{classSectionDsedj}
+        limit 1
+    </select>
+
+</mapper>
