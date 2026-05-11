@@ -16,6 +16,9 @@ sms:
   appSecret: kKhPdvEBDjck1RK7
   # app交互时间误差范围(毫秒)
   apiTimeRange: 300000
+  # 加密盐值，用于敏感ID加密
+  encryption:
+    salt: 5nQtaatpcOs9iKsM
 
 # 開發環境配置
 server:

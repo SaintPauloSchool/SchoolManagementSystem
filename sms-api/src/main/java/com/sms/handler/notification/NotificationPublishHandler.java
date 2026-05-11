@@ -2,6 +2,7 @@ package com.sms.handler.notification;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.sms.common.utils.security.Md5Utils;
 import com.sms.framework.wechat.WechatWorkHttpClient;
 import com.sms.system.entity.notification.*;
 import com.sms.system.entity.vo.ResolvedReceiversVO;
@@ -35,6 +36,9 @@ public class NotificationPublishHandler {
 
     @Value("${wechat.work.agentId:#{null}}")
     private Integer agentId;
+
+    @Value("${sms.encryption.salt}")
+    private String encryptionSalt;
 
     @Autowired
     private INotificationReceiverService notificationReceiverService;
@@ -168,7 +172,7 @@ public class NotificationPublishHandler {
      * @return 格式化後的文本內容
      */
     private String buildContent(Notification notification) {
-        return buildContent(notification, null, null);
+        return buildContent(notification, null, null, null);
     }
 
     /**
@@ -177,9 +181,10 @@ public class NotificationPublishHandler {
      * @param notification 通告實體
      * @param className 班級名稱
      * @param studentName 學生姓名
+     * @param studentUserId 學生用戶 ID（用於構建加密的跳轉鏈接）
      * @return 格式化後的文本內容
      */
-    private String buildContent(Notification notification, String className, String studentName) {
+    private String buildContent(Notification notification, String className, String studentName, String studentUserId) {
         // 標題
         String title = notification.getTitle() == null ? "" : notification.getTitle().trim();
         // 設置跳轉地址
@@ -187,7 +192,15 @@ public class NotificationPublishHandler {
         
         // 如果通告沒有自定義的跳轉鏈接，則使用默認的詳情頁鏈接
         if (noticeUrl == null || noticeUrl.trim().isEmpty()) {
-            noticeUrl = noticeBaseUrl + notification.getNotificationId();
+            // 如果有學生用戶 ID，則將其加密後附加到 URL 中
+            if (studentUserId != null && !studentUserId.trim().isEmpty()) {
+                // 加密學生用戶 ID
+                String encryptedStudentId = Md5Utils.encryptSensitiveId(studentUserId, encryptionSalt);
+                // 組成跳轉鏈接
+                noticeUrl = noticeBaseUrl + notification.getNotificationId() + "?sid=" + encryptedStudentId;
+            } else {
+                noticeUrl = noticeBaseUrl + notification.getNotificationId();
+            }
         }
         
         // 格式化發佈時間
@@ -1146,7 +1159,7 @@ public class NotificationPublishHandler {
             for (ParentStudentMessageInfo msgInfo : parentMessages) {
                 try {
                     // 構建個性化消息內容
-                    String content = buildContent(notification, msgInfo.getClassName(), msgInfo.getStudentName());
+                    String content = buildContent(notification, msgInfo.getClassName(), msgInfo.getStudentName(), msgInfo.getStudentUserId());
 
                     // 構建發送 payload（只發送給當前家長）
                     JSONObject payload = buildPersonalizedPayload(parentUserId, content);
