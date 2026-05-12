@@ -18,9 +18,12 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
@@ -28,6 +31,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * 通知导出 Service 业务层处理
@@ -60,6 +65,9 @@ public class NotificationExportServiceImpl implements INotificationExportService
 
     @Autowired
     private SysDepartmentMapper departmentMapper;
+
+    @Value("${sp.profile:}")
+    private String spProfile;
 
     @Override
     public void exportNotificationAnswers(Long notificationId, HttpServletResponse response) {
@@ -100,23 +108,142 @@ public class NotificationExportServiceImpl implements INotificationExportService
             // 9. 创建详情Sheet
             createDetailSheet(workbook, notification, sendRecord, questions, allAnswers, readRecords);
 
-            // 10. 导出Excel
-            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            // 10. 导出Excel和附件为Zip
+            response.setContentType("application/zip");
             response.setCharacterEncoding("utf-8");
             String fileName = URLEncoder.encode(notification.getTitle() + "_回复统计", "UTF-8");
-            response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
+            response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".zip");
 
-            try (OutputStream out = response.getOutputStream()) {
-                workbook.write(out);
-                out.flush();
+            try (OutputStream out = response.getOutputStream();
+                 ZipOutputStream zos = new ZipOutputStream(out)) {
+                
+                // 写入Excel文件
+                ZipEntry excelEntry = new ZipEntry(notification.getTitle() + "_回复统计.xlsx");
+                zos.putNextEntry(excelEntry);
+                workbook.write(zos);
+                zos.closeEntry();
+
+                // 收集附件
+                Set<String> addedFileNames = new HashSet<>(); // 防止同名文件覆盖
+                for (NotificationAnswer answer : allAnswers) {
+                    if (answer.getAnswerData() != null) {
+                        try {
+                            JSONArray answerArray = JSON.parseArray(answer.getAnswerData());
+                            for (int i = 0; i < answerArray.size(); i++) {
+                                JSONObject answerObj = answerArray.getJSONObject(i);
+                                // 检查是否有 attachmentUrls
+                                if (answerObj.containsKey("attachmentUrls") && answerObj.getString("attachmentUrls") != null) {
+                                    String attachmentUrlsStr = answerObj.getString("attachmentUrls");
+                                    if (!attachmentUrlsStr.isEmpty()) {
+                                        // 有些可能是字符串，尝试解析为JSONArray
+                                        JSONArray attachments = null;
+                                        try {
+                                            attachments = JSON.parseArray(attachmentUrlsStr);
+                                        } catch (Exception e) {
+                                            log.warn("解析 attachmentUrls 失败，可能不是 JSON 数组格式: {}", attachmentUrlsStr);
+                                        }
+                                        
+                                        if (attachments != null) {
+                                            // 遍历附件
+                                            for (int j = 0; j < attachments.size(); j++) {
+                                                // 获取附件信息
+                                                JSONObject attachment = attachments.getJSONObject(j);
+                                                String url = attachment.getString("url");
+                                                String name = attachment.getString("name");
+
+                                                // 处理附件
+                                                if (url != null && url.startsWith("/profile")) {
+                                                    String basePath = (spProfile != null && !spProfile.trim().isEmpty()) 
+                                                            ? spProfile 
+                                                            : com.sms.common.config.OverallSituationConfig.getProfile();
+                                                    String localPath = url.replace("/profile", basePath);
+                                                    File file = new File(localPath);
+                                                    if (file.exists() && file.isFile()) {
+                                                        // 处理同名文件
+                                                        String safeName = getString(name, file, url);
+
+                                                        String finalName = getString(safeName, addedFileNames);
+                                                        addedFileNames.add(finalName);
+    
+                                                        ZipEntry fileEntry = new ZipEntry("附件/" + finalName);
+                                                        zos.putNextEntry(fileEntry);
+                                                        try (FileInputStream fis = new FileInputStream(file)) {
+                                                            byte[] buffer = new byte[1024];
+                                                            int length;
+                                                            while ((length = fis.read(buffer)) >= 0) {
+                                                                zos.write(buffer, 0, length);
+                                                            }
+                                                        }
+                                                        zos.closeEntry();
+                                                    } else {
+                                                        log.warn("找不到附件文件: {}", localPath);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            log.error("解析或打包附件时出错", e);
+                        }
+                    }
+                }
+                zos.flush();
             }
 
             workbook.close();
-            log.info("导出通知回复答案成功，notificationId: {}", notificationId);
+            log.info("导出通知回复答案成功（含附件），notificationId: {}", notificationId);
 
         } catch (Exception e) {
             log.error("导出通知回复答案失败，notificationId: {}", notificationId, e);
         }
+    }
+
+    /**
+     * 处理文件名，确保不重复
+     * @param name 文件名
+     * @param file 文件对象
+     * @param url 文件的URL
+     * @return 处理后的文件名
+     */
+    private static String getString(String name, File file, String url) {
+        String safeName = name;
+        if (safeName == null || safeName.isEmpty()) {
+            safeName = file.getName();
+        } else {
+            // 确保带扩展名
+            String ext = "";
+            int dotIndex = url.lastIndexOf(".");
+            if (dotIndex > 0) {
+                ext = url.substring(dotIndex);
+            }
+            if (!ext.isEmpty() && !safeName.toLowerCase().endsWith(ext.toLowerCase())) {
+                safeName += ext;
+            }
+        }
+        return safeName;
+    }
+
+    /**
+     * 处理文件名，确保不重复
+     * @param safeName
+     * @param addedFileNames
+     * @return
+     */
+    private static String getString(String safeName, Set<String> addedFileNames) {
+        int suffix = 1;
+        String finalName = safeName;
+        while (addedFileNames.contains(finalName)) {
+            int dotIndex = safeName.lastIndexOf(".");
+            if (dotIndex > 0) {
+                finalName = safeName.substring(0, dotIndex) + "(" + suffix + ")" + safeName.substring(dotIndex);
+            } else {
+                finalName = safeName + "(" + suffix + ")";
+            }
+            suffix++;
+        }
+        return finalName;
     }
 
     /**

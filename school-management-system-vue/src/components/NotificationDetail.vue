@@ -841,7 +841,7 @@ export default {
 
     handleExportReplies() {
       // 確認對話框
-      this.$confirm('確定要導出該通知的回覆答案嗎？將生成包含統計和詳情的 Excel 文件。', '導出確認', {
+      this.$confirm('確定要導出該通知的回覆答案嗎？將生成包含統計Excel和上傳附件的壓縮包。', '導出確認', {
         confirmButtonText: '確定導出',
         cancelButtonText: '取消',
         type: 'info'
@@ -849,7 +849,7 @@ export default {
         // 顯示加載提示
         const loading = this.$loading({
           lock: true,
-          text: '正在生成 Excel 文件...',
+          text: '正在生成壓縮包文件...',
           spinner: 'el-icon-loading',
           background: 'rgba(0, 0, 0, 0.7)'
         })
@@ -863,14 +863,14 @@ export default {
         .then(response => {
           // 創建下載鏈接
           const blob = new Blob([response], { 
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            type: 'application/zip' 
           })
           const url = window.URL.createObjectURL(blob)
           const link = document.createElement('a')
           link.href = url
           
           // 設置文件名
-          const filename = `通知回覆統計_${this.notification.title || this.notification.notificationId}.xlsx`
+          const filename = `通知回覆統計_${this.notification.title || this.notification.notificationId}.zip`
           link.download = filename
           
           document.body.appendChild(link)

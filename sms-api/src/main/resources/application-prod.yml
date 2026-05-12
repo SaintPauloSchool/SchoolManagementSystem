@@ -1,3 +1,7 @@
+# 伺服器文件上傳配置
+sms:
+  profile: /usr/local/student-handbook/upload
+
 # 生產環境配置
 spring:
   config:
