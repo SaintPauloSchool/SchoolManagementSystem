@@ -1,6 +1,7 @@
 # 開發環境配置
 sms:
-  profile: C:/uploadPath
+  profile: /usr/local/upload
+  #profile: C:/uploadPath
 
 spring:
   config:
