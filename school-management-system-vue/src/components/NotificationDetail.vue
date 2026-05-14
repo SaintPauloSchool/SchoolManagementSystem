@@ -70,16 +70,14 @@
         <span class="section-count">{{ attachmentUrls.length }}</span>
       </div>
       <div class="chip-list">
-        <a
+        <div
           v-for="(item, index) in attachmentUrls"
           :key="index"
-          :href="getAttachmentUrl(item)"
-          target="_blank"
-          class="chip attachment-chip attachment-link"
+          class="chip attachment-chip"
         >
           <el-icon :size="14"><Document /></el-icon>
           <span>{{ getAttachmentName(item, index) }}</span>
-        </a>
+        </div>
       </div>
     </div>
 
@@ -1135,17 +1133,6 @@ export default {
   background: #eff6ff;
   color: #1e40af;
   border: 1px solid #bfdbfe;
-}
-
-.attachment-link {
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.attachment-chip:hover {
-  background: #dbeafe;
-  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.1);
 }
 
 .receiver-chip {
