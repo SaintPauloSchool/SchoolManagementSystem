@@ -1,4 +1,7 @@
 # 開發環境配置
+sms:
+  profile: C:/uploadPath
+
 spring:
   config:
     activate:

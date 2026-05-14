@@ -8,8 +8,8 @@ sms:
   copyrightYear: 2025
   # 實例演示開關
   demoEnabled: true
-  # 文件路徑 示例（Windows 配置 D:/uploadPath，Linux 配置 /home/uploadPath）
-  profile: C:/uploadPath
+  # 文件路徑 （默認）
+  profile: /usr/local/upload
   # 獲取 ip地址開關
   addressEnabled: false
   # app交互秘钥

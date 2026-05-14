@@ -171,7 +171,19 @@ public class FileUploadUtils
     {
         int dirLastIndex = OverallSituationConfig.getProfile().length() + 1;
         String currentDir = StringUtils.substring(uploadDir, dirLastIndex);
-        return Constants.RESOURCE_PREFIX + "/" + currentDir + "/" + fileName;
+        // 修復：當 uploadDir 就是 profile 路徑本身時，currentDir 為空，
+        // 直接拼接會產生 /profile//year/ 的雙斜線，需安全處理
+        String path;
+        if (StringUtils.isEmpty(currentDir))
+        {
+            path = Constants.RESOURCE_PREFIX + "/" + fileName;
+        }
+        else
+        {
+            path = Constants.RESOURCE_PREFIX + "/" + currentDir + "/" + fileName;
+        }
+        // 保險起見：清除任何連續雙斜線（協議頭 // 除外）
+        return path.replaceAll("(?<!:)//+", "/");
     }
 
     /**

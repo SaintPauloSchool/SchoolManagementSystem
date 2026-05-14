@@ -54,6 +54,7 @@
         <div class="upload-section">
           <el-upload
             class="upload-demo"
+            list-type="text"
             :action="uploadUrl"
             :headers="uploadHeaders"
             :file-list="fileList"
@@ -150,10 +151,12 @@
 </template>
 
 <script>
-import { Upload, Edit, Delete, ArrowRight } from '@element-plus/icons-vue'
+import {ArrowRight, Delete, Edit, Upload} from '@element-plus/icons-vue'
 import FormQuestionDialog from './FormQuestionDialog.vue'
-import { ElMessage } from 'element-plus'
-import { API_BASE_PATH, normalizeProfileUrl } from '../utils/deployment'
+import {ElMessage} from 'element-plus'
+import {API_BASE_PATH, normalizeProfileUrl} from '@/utils/deployment'
+import MD5 from 'crypto-js/md5'
+import settings from '@/config/settings'
 
 export default {
   name: 'BasicInfoForm',
@@ -188,10 +191,8 @@ export default {
     }
   },
   created() {
-    // 初始化上傳頭
-    this.uploadHeaders = {
-      'Authorization': 'Bearer ' + localStorage.getItem('token')
-    }
+    // 初始化上傳驗簽 headers
+    this.refreshUploadHeaders()
   },
   watch: {
     formData: {
@@ -224,19 +225,23 @@ export default {
                // 舊資料：字串陣列
                return {
                  name: decodeURIComponent(item.substring(item.lastIndexOf('/') + 1)) || `附件${index + 1}`,
-                 url: normalizeProfileUrl(item)
+                 url: normalizeProfileUrl(item),
+                 _originalUrl: item // 保存原始URL
                }
             } else {
                // 新資料：物件陣列 { name: '...', url: '...' }
+               const originalUrl = item._originalUrl || item.url
                return {
                  name: item.name || `附件${index + 1}`,
-                 url: normalizeProfileUrl(item.url)
+                 url: normalizeProfileUrl(originalUrl),
+                 _originalUrl: originalUrl // 保存原始URL
               }
             }
           })
+          // 更新 localFormData 中的 attachmentUrls，确保使用统一格式
           this.localFormData.attachmentUrls = this.fileList.map(file => ({
             name: file.name,
-            url: file.url
+            url: file._originalUrl
           }))
         } catch (e) {
           console.error('初始化文件列表失敗:', e)
@@ -244,6 +249,25 @@ export default {
         }
       } else {
         this.fileList = []
+      }
+    },
+
+    // 生成驗簽 headers，與 request.js 的攔截器邏輯一致
+    // 簽名算法：MD5(appSecret + timestamp + nonce)
+    // 每次調用都生成新的 timestamp + nonce，確保 nonce 不重複
+    refreshUploadHeaders() {
+      const timestamp = Date.now().toString()
+      const nonce = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID().replace(/-/g, '')
+        : 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, c => {
+            const r = Math.random() * 16 | 0
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+          })
+      const signature = MD5(settings.appSecret + timestamp + nonce).toString()
+      this.uploadHeaders = {
+        'x-timestamp': timestamp,
+        'x-nonces': nonce,
+        'x-signature': signature
       }
     },
 
@@ -264,29 +288,39 @@ export default {
         ElMessage.error('上傳文件大小不能超過 10MB!')
         return false
       }
+      // 每次上傳前重新生成驗簽（防止 nonce 重複被後端攔截器拒絕）
+      this.refreshUploadHeaders()
       return true
     },
 
-    handleUploadSuccess(response, file) {
-      if (response.code === 0) {
-        const url = normalizeProfileUrl(response.data.url)
-        const uploadedFile = this.fileList.find(f => f.uid === file.uid)
-        if (uploadedFile) {
-          uploadedFile.url = url
-          // 保留原始文件名，不要覆盖
-          if (!uploadedFile.name || uploadedFile.name.startsWith('附件')) {
-            uploadedFile.name = file.name
-          }
-        } else {
-          this.fileList.push({
-            name: file.name,
-            url: url,
-            uid: file.uid
-          })
-        }
+    handleUploadSuccess(response, file, fileList) {
+      if (response.code === 200) {
+        // 保存到数据库的URL
+        const originalUrl = response.data.url
         
-        const attachments = this.fileList.filter(f => f.url).map(f => ({ name: f.name, url: f.url }))
-        this.localFormData.attachmentUrls = attachments
+        // 前端显示用的URL（带 /sms-api 前缀）
+        const displayUrl = normalizeProfileUrl(originalUrl)
+        
+        // 更新 fileList 中的对应文件
+        // 替换整个数组以触发响应式更新
+        this.fileList = this.fileList.map(f => {
+          if (f.uid === file.uid) {
+            return {
+              ...f,
+              url: displayUrl,
+              status: 'success',
+              name: f.name.startsWith('附件') ? file.name : f.name,
+              _originalUrl: originalUrl // 保存原始URL用于存储
+            }
+          }
+          return f
+        })
+
+        // 更新附件URL列表
+        this.localFormData.attachmentUrls = this.fileList.filter(f => f._originalUrl).map(f => ({
+          name: f.name,
+          url: f._originalUrl
+        }))
         
         ElMessage.success('上傳成功')
       } else {
@@ -323,14 +357,21 @@ export default {
     },
 
     handleUploadRemove(file) {
-      const index = this.localFormData.attachmentUrls.findIndex(item => 
-        normalizeProfileUrl(typeof item === 'string' ? item : item.url) === file.url
-      )
+      // 使用 _originalUrl 进行匹配，确保正确删除
+      const index = this.localFormData.attachmentUrls.findIndex(item => {
+        const itemUrl = typeof item === 'string' ? item : (item._originalUrl || item.url)
+        const fileOriginalUrl = file._originalUrl || file.url
+        return itemUrl === fileOriginalUrl
+      })
       if (index > -1) {
         this.localFormData.attachmentUrls.splice(index, 1)
       }
       
-      const fileIndex = this.fileList.findIndex(item => item.url === file.url)
+      const fileIndex = this.fileList.findIndex(item => {
+        const itemOriginalUrl = item._originalUrl || item.url
+        const fileOriginalUrl = file._originalUrl || file.url
+        return itemOriginalUrl === fileOriginalUrl
+      })
       if (fileIndex > -1) {
         this.fileList.splice(fileIndex, 1)
       }

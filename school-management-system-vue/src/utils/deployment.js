@@ -7,15 +7,21 @@ export function normalizeProfileUrl(url) {
     return url
   }
 
-  if (url.startsWith(PROFILE_BASE_PATH)) {
-    return url
+  let result = url
+
+  if (result.startsWith(PROFILE_BASE_PATH)) {
+    // 已經有 /sms-api/profile 前綴，直接進入清理
+  } else if (result.startsWith('/profile/') || result.startsWith('/profile//')) {
+    // 以 /profile/ 或 /profile// 開頭（舊格式或舊的雙斜線數據）
+    result = result.replace(/^\/profile\/+/, `${PROFILE_BASE_PATH}/`)
+  } else {
+    return result
   }
 
-  if (url.startsWith('/profile/')) {
-    return url.replace(/^\/profile\//, `${PROFILE_BASE_PATH}/`)
-  }
+  // 清除路徑中任何殘留的連續雙斜線（協議頭 // 除外）
+  result = result.replace(/([^:])\/\/+/g, '$1/')
 
-  return url
+  return result
 }
 
 export function withAppBase(path = '') {

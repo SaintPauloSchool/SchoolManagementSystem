@@ -80,6 +80,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
             .antMatchers("/html/**", "/css/**", "/docs/**", "/fonts/**", "/img/**", "/ajax/**", "/js/**", "/sp/**").permitAll()
             .antMatchers("/captcha/captchaImage**").permitAll()
             .antMatchers("/login", "/register").permitAll()
+            // 文件上傳不需要 JWT token，但仍受 ApiSignatureInterceptor 驗簽保護
+            .antMatchers("/common/upload").permitAll()
             // 其他请求都需要认证
             .anyRequest().authenticated();
 
