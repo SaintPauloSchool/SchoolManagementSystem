@@ -63,7 +63,7 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
   profiles:
     # 默認使用開發環境配置（不啟用 logback）
-    active: test
+    active: prod
   # 文件上傳
   servlet:
     multipart:
