@@ -10,14 +10,9 @@ import com.sms.system.entity.notification.Notification;
 import com.sms.system.entity.notification.NotificationReceiver;
 import com.sms.system.entity.notification.NotificationCc;
 import com.sms.system.entity.notification.NotificationQuestion;
-import com.sms.system.entity.vo.NotificationDetailVO;
-import com.sms.system.service.notification.INotificationService;
-import com.sms.system.service.notification.INotificationReceiverService;
-import com.sms.system.service.notification.INotificationCcService;
-import com.sms.system.service.notification.INotificationQuestionService;
-import com.sms.system.service.notification.INotificationSendRecordService;
-import com.sms.system.service.notification.INotificationUserReadRecordService;
-import com.sms.system.service.notification.INotificationExportService;
+import com.sms.system.entity.vo.*;
+import com.sms.system.service.ISysAdminService;
+import com.sms.system.service.notification.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -57,6 +52,12 @@ public class NotificationController extends BaseController {
 
     @Autowired
     private INotificationExportService notificationExportService;
+
+    @Autowired
+    private IFailedNotificationService failedNotificationService;
+
+    @Autowired
+    private ISysAdminService sysAdminService;
 
     /**
      * 查詢通知列表
@@ -233,5 +234,74 @@ public class NotificationController extends BaseController {
     @GetMapping("/exportAnswers/{notificationId}")
     public void exportAnswers(@PathVariable Long notificationId, HttpServletResponse response) {
         notificationExportService.exportNotificationAnswers(notificationId, response);
+    }
+
+    /**
+     * 查询失败通知列表（需要管理员权限）
+     */
+    @GetMapping("/failedList")
+    public TableDataInfo failedList() {
+        // 验证管理员权限
+        String userId = getOpenUserId();
+        if (!sysAdminService.isAdmin(userId)) {
+            return getDataTable(new ArrayList<>());
+        }
+
+        startPage();
+        List<FailedNotificationVO> list = failedNotificationService.selectFailedNotificationList();
+        return getDataTable(list);
+    }
+
+    /**
+     * 查询失败通知详情（需要管理员权限）
+     */
+    @GetMapping("/failedDetail/{sendRecordId}")
+    public AjaxResult failedDetail(@PathVariable Long sendRecordId) {
+        // 验证管理员权限
+        String userId = getOpenUserId();
+        if (!sysAdminService.isAdmin(userId)) {
+            return AjaxResult.error("无权限访问");
+        }
+
+        FailedNotificationDetailVO detail = failedNotificationService.selectFailedNotificationDetail(sendRecordId);
+        if (detail == null) {
+            return AjaxResult.error("未找到相关数据");
+        }
+
+        return AjaxResult.success(detail);
+    }
+
+    /**
+     * 分页查询发送失败的用户阅读记录（需要管理员权限）
+     */
+    @GetMapping("/failedReadRecords/{sendRecordId}")
+    public TableDataInfo failedReadRecords(@PathVariable Long sendRecordId) {
+        // 验证管理员权限
+        String userId = getOpenUserId();
+        if (!sysAdminService.isAdmin(userId)) {
+            return getDataTable(new ArrayList<>());
+        }
+
+        startPage();
+        List<UserReadRecordVO> list =
+            failedNotificationService.selectFailedReadRecordsPage(sendRecordId);
+        return getDataTable(list);
+    }
+
+    /**
+     * 分页查询重发失败记录（需要管理员权限）
+     */
+    @GetMapping("/resendFailRecords/{sendRecordId}")
+    public TableDataInfo resendFailRecords(@PathVariable Long sendRecordId) {
+        // 验证管理员权限
+        String userId = getOpenUserId();
+        if (!sysAdminService.isAdmin(userId)) {
+            return getDataTable(new ArrayList<>());
+        }
+
+        startPage();
+        List<ResendFailRecordVO> list =
+            failedNotificationService.selectResendFailRecordsPage(sendRecordId);
+        return getDataTable(list);
     }
 }
