@@ -83,8 +83,13 @@
           </div>
           
           <ul v-show="!isCollapsed && expandedSections.system" class="nav-list nav-sublist">
-            <li class="nav-item-placeholder">
-              <span class="placeholder-text">功能開發中...</span>
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-1' }"
+              @click="handleMenuSelect('3-1')"
+            >
+              <el-icon class="nav-icon"><Warning /></el-icon>
+              <span class="nav-text">查詢失敗通知</span>
             </li>
           </ul>
         </div>
@@ -162,6 +167,11 @@
           <HomeSchoolContacts
             v-else-if="activeMenu === '2-2'"
           />
+          
+          <!-- 查詢失敗通知 -->
+          <FailedNotificationList
+            v-else-if="activeMenu === '3-1'"
+          />
         </transition>
       </div>
     </main>
@@ -172,11 +182,12 @@
 </template>
 
 <script>
-import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding } from '@element-plus/icons-vue'
+import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
 import SchoolDepartment from './SchoolDepartment.vue'
 import HomeSchoolContacts from './HomeSchoolContacts.vue'
+import FailedNotificationList from './FailedNotificationList.vue'
 import request from '@/utils/request'
 
 export default {
@@ -185,7 +196,8 @@ export default {
     NotificationList,
     PublishNotification,
     SchoolDepartment,
-    HomeSchoolContacts
+    HomeSchoolContacts,
+    FailedNotificationList
   },
   data() {
     return {
@@ -311,6 +323,8 @@ export default {
         // 老師通訊錄，无需加载数据
       } else if (index === '2-2') {
         // 家校通訊錄，无需加载数据
+      } else if (index === '3-1') {
+        // 查詢失敗通知，无需加载数据
       }
     },
 

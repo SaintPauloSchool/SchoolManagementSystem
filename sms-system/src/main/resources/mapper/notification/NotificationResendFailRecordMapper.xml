@@ -59,6 +59,34 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where notification_id = #{notificationId}
     </select>
 
+    <!-- 根据发送记录ID查询重发失败记录 -->
+    <select id="selectBySendRecordId" resultMap="ResendFailRecordResult">
+        select id, notification_id, send_record_id, user_id, user_type, student_user_id,
+               fail_reason_1, fail_message_1, fail_reason_2, fail_message_2, fail_reason_3, fail_message_3, fail_count, status, create_time, update_time
+        from notification_resend_fail_record
+        where send_record_id = #{sendRecordId}
+    </select>
+
+    <!-- 直接返回 VO，用于分页查询 -->
+    <select id="selectBySendRecordIdVO" resultType="com.sms.system.entity.vo.ResendFailRecordVO">
+        select id,
+               user_id as userId,
+               user_type as userType,
+               student_user_id as studentUserId,
+               fail_count as failCount,
+               status,
+               fail_reason_1 as failReason1,
+               fail_message_1 as failMessage1,
+               fail_reason_2 as failReason2,
+               fail_message_2 as failMessage2,
+               fail_reason_3 as failReason3,
+               fail_message_3 as failMessage3,
+               create_time as createTime,
+               update_time as updateTime
+        from notification_resend_fail_record
+        where send_record_id = #{sendRecordId}
+    </select>
+
     <!-- 根据通知ID和用户ID查询单条记录 -->
     <select id="selectByNotificationIdAndUserId" resultMap="ResendFailRecordResult">
         select id, notification_id, send_record_id, user_id, user_type, student_user_id,

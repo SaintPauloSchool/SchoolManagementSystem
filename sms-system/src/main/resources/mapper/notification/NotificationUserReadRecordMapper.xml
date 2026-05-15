@@ -34,6 +34,30 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where send_record_id = #{sendRecordId}
     </select>
 
+    <select id="selectFailedBySendRecordId" resultMap="NotificationUserReadRecordResult">
+        select read_id, send_record_id, user_id, user_type, is_read,
+               read_time, reply_status, reply_time, send_status, student_user_id, create_time
+        from notification_user_read_record
+        where send_record_id = #{sendRecordId}
+          and send_status = '0'
+    </select>
+
+    <!-- 直接返回 VO，用于分页查询 -->
+    <select id="selectFailedBySendRecordIdVO" resultType="com.sms.system.entity.vo.UserReadRecordVO">
+        select read_id as readId,
+               user_id as userId,
+               user_type as userType,
+               is_read as isRead,
+               read_time as readTime,
+               reply_status as replyStatus,
+               send_status as sendStatus,
+               student_user_id as studentUserId,
+               create_time as createTime
+        from notification_user_read_record
+        where send_record_id = #{sendRecordId}
+          and send_status = '0'
+    </select>
+
     <update id="updateById" parameterType="NotificationUserReadRecord">
         update notification_user_read_record
         <set>
