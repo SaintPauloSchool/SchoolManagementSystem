@@ -1,6 +1,7 @@
 package com.sms.system.mapper.notification;
 
 import com.sms.system.entity.notification.NotificationResendFailRecord;
+import com.sms.system.entity.vo.ResendFailRecordVO;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -24,6 +25,16 @@ public interface NotificationResendFailRecordMapper {
      * 根据通知ID查询所有重发失败记录
      */
     List<NotificationResendFailRecord> selectByNotificationId(@Param("notificationId") Long notificationId);
+
+    /**
+     * 根据发送记录ID查询重发失败记录
+     */
+    List<NotificationResendFailRecord> selectBySendRecordId(@Param("sendRecordId") Long sendRecordId);
+
+    /**
+     * 根据发送记录ID查询重发失败记录VO列表（直接返回VO，用于分页）
+     */
+    List<ResendFailRecordVO> selectBySendRecordIdVO(@Param("sendRecordId") Long sendRecordId);
 
     /**
      * 根据通知ID和用户ID查询单条记录（用于判断是否已存在）

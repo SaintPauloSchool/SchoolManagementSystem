@@ -1,6 +1,7 @@
 package com.sms.system.mapper.notification;
 
 import com.sms.system.entity.notification.NotificationSendRecord;
+import com.sms.system.entity.vo.FailedNotificationVO;
 
 import java.util.List;
 
@@ -26,6 +27,14 @@ public interface NotificationSendRecordMapper {
     NotificationSendRecord selectByNotificationId(Long notificationId);
 
     /**
+     * 根据发送记录ID查询
+     *
+     * @param sendRecordId 发送记录ID
+     * @return 发送记录
+     */
+    NotificationSendRecord selectById(Long sendRecordId);
+
+    /**
      * 更新发送记录
      *
      * @param sendRecord 发送记录
@@ -39,5 +48,12 @@ public interface NotificationSendRecordMapper {
      * @return 列表
      */
     List<NotificationSendRecord> selectAllFailedRecords();
+
+    /**
+     * 查询所有发送失败的记录（关联通知表，返回VO）
+     *
+     * @return 失败通知VO列表
+     */
+    List<FailedNotificationVO> selectAllFailedRecordsWithVO();
 
 }
