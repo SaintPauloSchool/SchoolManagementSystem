@@ -34,6 +34,12 @@ public class NotificationPublishHandler {
     @Value("${wechat.work.noticeBaseUrl:http://10.32.96.55:8080/notice/}")
     private String noticeBaseUrl;
 
+    /**
+     * 抄送通知的查看基礎 URL。如果抄送通知本身沒有跳轉鏈接，將使用此基礎 URL 拼接通告 ID。
+     */
+    @Value("${wechat.work.ccNoticeBaseUrl:http://10.32.96.55:8080/cc-notice/}")
+    private String ccNoticeBaseUrl;
+
     @Value("${wechat.work.agentId:#{null}}")
     private Integer agentId;
 
@@ -479,10 +485,11 @@ public class NotificationPublishHandler {
         }
         // 設置描述
         textcard.put("description", description);
-        // 跳轉鏈接
+        // 跳轉鏈接 - 抄送通知跳轉到抄送列表詳情頁
         String noticeUrl = notification.getJumpUrl();
         if (noticeUrl == null || noticeUrl.trim().isEmpty()) {
-            noticeUrl = noticeBaseUrl + notification.getNotificationId();
+            // 使用抄送通知專用的基礎 URL，並傳遞通知ID作為參數
+            noticeUrl = ccNoticeBaseUrl + notification.getNotificationId();
         }
         textcard.put("url", noticeUrl);
         
