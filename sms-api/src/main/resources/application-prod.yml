@@ -44,3 +44,16 @@ spring:
 # 生產環境啟用 logback
 logging:
   config: classpath:logback-prod.xml
+
+wechat:
+  work:
+    corpId: ww04fad852e91fd490
+    agentId: 1000033
+    secret: I31-B5clKayPf4vNl2bibhL1ia8x4cwIc884xK888Fc
+    noticeBaseUrl: http://tals-wcapp.esp.edu.mo/notice/
+    ccNoticeBaseUrl: http://tals-wcapp.esp.edu.mo/school-management-system/
+    # 企業微信 API 接口地址
+    api:
+      accessTokenUrl: https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={corpId}&corpsecret={corpSecret}
+      sendMessageUrl: https://qyapi.weixin.qq.com/cgi-bin/externalcontact/message/send?access_token={accessToken}
+      sendAppMessageUrl: https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={accessToken}
