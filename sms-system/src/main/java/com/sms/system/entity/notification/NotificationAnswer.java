@@ -36,6 +36,10 @@ public class NotificationAnswer implements Serializable {
     @TableField("user_type")
     private String userType;
 
+    /** 学生用户ID */
+    @TableField("student_user_id")
+    private String studentUserId;
+
     /** 答案数据（JSON格式） */
     @TableField("answer_data")
     private String answerData;
@@ -83,6 +87,14 @@ public class NotificationAnswer implements Serializable {
 
     public void setUserType(String userType) {
         this.userType = userType;
+    }
+
+    public String getStudentUserId() {
+        return studentUserId;
+    }
+
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
     }
 
     public String getAnswerData() {
