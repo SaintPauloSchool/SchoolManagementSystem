@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 通知用户阅读记录实体类（从表）
@@ -40,7 +40,7 @@ public class NotificationUserReadRecord implements Serializable {
     /** 阅读时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("read_time")
-    private Date readTime;
+    private LocalDateTime readTime;
 
     /** 回复状态（0未回复 1已回复） */
     @TableField("reply_status")
@@ -49,7 +49,7 @@ public class NotificationUserReadRecord implements Serializable {
     /** 回复时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("reply_time")
-    private Date replyTime;
+    private LocalDateTime replyTime;
 
     /** 发送状态（0发送失败 1发送成功） */
     @TableField("send_status")
@@ -62,7 +62,7 @@ public class NotificationUserReadRecord implements Serializable {
     /** 创建时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("create_time")
-    private Date createTime;
+    private LocalDateTime createTime;
 
     // Getters and Setters
     public Long getReadId() {
@@ -105,11 +105,11 @@ public class NotificationUserReadRecord implements Serializable {
         this.isRead = isRead;
     }
 
-    public Date getReadTime() {
+    public LocalDateTime getReadTime() {
         return readTime;
     }
 
-    public void setReadTime(Date readTime) {
+    public void setReadTime(LocalDateTime readTime) {
         this.readTime = readTime;
     }
 
@@ -121,11 +121,11 @@ public class NotificationUserReadRecord implements Serializable {
         this.replyStatus = replyStatus;
     }
 
-    public Date getReplyTime() {
+    public LocalDateTime getReplyTime() {
         return replyTime;
     }
 
-    public void setReplyTime(Date replyTime) {
+    public void setReplyTime(LocalDateTime replyTime) {
         this.replyTime = replyTime;
     }
 
@@ -137,11 +137,11 @@ public class NotificationUserReadRecord implements Serializable {
         this.sendStatus = sendStatus;
     }
 
-    public Date getCreateTime() {
+    public LocalDateTime getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(Date createTime) {
+    public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
     }
 

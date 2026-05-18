@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -37,7 +37,7 @@ public class NotificationReminderTask {
             // 查询所有状态为已发布的通知且提示回复时间为今天的通知
             Notification queryParam = new Notification();
             queryParam.setStatus("1"); // 1-已发布
-            queryParam.setReminderTime(new Date());
+            queryParam.setReminderTime(LocalDateTime.now());
             
             // 直接通过数据库查询符合条件的通知
             List<Notification> notificationList = notificationService.selectNotificationList(queryParam);

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -132,7 +133,7 @@ public class NotificationController extends BaseController {
         // 設置發送人信息（從 Security Context 取得真實登錄用戶）
         notification.setSenderId(getUserId());
         notification.setSenderName(getUsername());
-        notification.setCreateTime(new Date());
+        notification.setCreateTime(LocalDateTime.now());
 
         // 1. 保存通知基本信息
         if (notificationService.save(notification)) {
@@ -143,7 +144,7 @@ public class NotificationController extends BaseController {
             if (notification.getReceivers() != null && !notification.getReceivers().isEmpty()) {
                 for (NotificationReceiver receiver : notification.getReceivers()) {
                     receiver.setNotificationId(notificationId);
-                    receiver.setCreateTime(new Date());
+                    receiver.setCreateTime(LocalDateTime.now());
                     notificationReceiverService.save(receiver);
                 }
             }
@@ -152,7 +153,7 @@ public class NotificationController extends BaseController {
             if (notification.getCcs() != null && !notification.getCcs().isEmpty()) {
                 for (NotificationCc cc : notification.getCcs()) {
                     cc.setNotificationId(notificationId);
-                    cc.setCreateTime(new Date());
+                    cc.setCreateTime(LocalDateTime.now());
                     notificationCcService.save(cc);
                 }
             }
@@ -163,7 +164,7 @@ public class NotificationController extends BaseController {
                 for (NotificationQuestion question : notification.getQuestions()) {
                     question.setNotificationId(notificationId);
                     question.setSortOrder(sortOrder++);
-                    question.setCreateTime(new Date());
+                    question.setCreateTime(LocalDateTime.now());
                     notificationQuestionService.save(question);
                 }
             }

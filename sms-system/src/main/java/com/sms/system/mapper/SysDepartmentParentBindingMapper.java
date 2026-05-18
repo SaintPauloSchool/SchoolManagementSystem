@@ -27,4 +27,15 @@ public interface SysDepartmentParentBindingMapper {
      */
     List<SysDepartmentParentBinding> selectByStudentUserIds(@Param("studentUserIds") List<String> studentUserIds);
 
+    /**
+     * 根据家长用户ID和学生用户ID批量查询部门绑定关系
+     *
+     * @param parentUserIds 家长用户 ID 列表
+     * @param studentUserIds 学生用户 ID 列表
+     * @return 部门绑定关系集合
+     */
+    List<SysDepartmentParentBinding> selectByParentAndStudentUserIds(
+            @Param("parentUserIds") List<String> parentUserIds,
+            @Param("studentUserIds") List<String> studentUserIds);
+
 }

@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sms.common.core.domain.BaseEntity;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 发送通知记录实体类（主表）
@@ -36,7 +36,7 @@ public class NotificationSendRecord extends BaseEntity {
     /** 发送时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("send_time")
-    private Date sendTime;
+    private LocalDateTime sendTime;
 
     /** 发送状态（0待发送 1发送中 2发送成功 3发送失败 4部分成功） */
     @TableField("send_status")
@@ -87,11 +87,11 @@ public class NotificationSendRecord extends BaseEntity {
         this.senderName = senderName;
     }
 
-    public Date getSendTime() {
+    public LocalDateTime getSendTime() {
         return sendTime;
     }
 
-    public void setSendTime(Date sendTime) {
+    public void setSendTime(LocalDateTime sendTime) {
         this.sendTime = sendTime;
     }
 

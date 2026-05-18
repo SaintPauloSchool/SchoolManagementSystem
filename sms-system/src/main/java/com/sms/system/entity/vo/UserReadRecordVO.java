@@ -2,7 +2,7 @@ package com.sms.system.entity.vo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 用户阅读记录VO
@@ -22,7 +22,7 @@ public class UserReadRecordVO {
 
     /** 阅读时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date readTime;
+    private LocalDateTime readTime;
 
     /** 回复状态（0未回复 1已回复） */
     private String replyStatus;
@@ -35,7 +35,7 @@ public class UserReadRecordVO {
 
     /** 创建时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date createTime;
+    private LocalDateTime createTime;
 
     // Getters and Setters
     public Long getReadId() {
@@ -70,11 +70,11 @@ public class UserReadRecordVO {
         this.isRead = isRead;
     }
 
-    public Date getReadTime() {
+    public LocalDateTime getReadTime() {
         return readTime;
     }
 
-    public void setReadTime(Date readTime) {
+    public void setReadTime(LocalDateTime readTime) {
         this.readTime = readTime;
     }
 
@@ -102,11 +102,11 @@ public class UserReadRecordVO {
         this.studentUserId = studentUserId;
     }
 
-    public Date getCreateTime() {
+    public LocalDateTime getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(Date createTime) {
+    public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
     }
 }
