@@ -565,9 +565,13 @@ public class NotificationExportServiceImpl implements INotificationExportService
             }
         }
 
-        // 按用户分组答案
-        Map<String, List<NotificationAnswer>> answersByUser = allAnswers.stream()
-                .collect(Collectors.groupingBy(NotificationAnswer::getUserId));
+        // 按用户+学生组合键分组答案（防止同一家长为多个孩子回答时数据混乱）
+        Map<String, List<NotificationAnswer>> answersByUser = new HashMap<>();
+        for (NotificationAnswer answer : allAnswers) {
+            // 需要关联查询 student_user_id
+            String key = answer.getUserId() + "_" + (answer.getStudentUserId() != null ? answer.getStudentUserId() : "");
+            answersByUser.computeIfAbsent(key, k -> new ArrayList<>()).add(answer);
+        }
 
         // 记录数据开始行
         int dataStartRow = rowNum;
@@ -603,7 +607,9 @@ public class NotificationExportServiceImpl implements INotificationExportService
             dataRow.createCell(colNum++).setCellValue(formatDate(record.getReplyTime()));
 
             // 问题答案
-            List<NotificationAnswer> userAnswers = answersByUser.getOrDefault(record.getUserId(), new ArrayList<>());
+            // 使用组合键 "parentUserId_studentUserId" 获取该家长-学生对的答案
+            String answerKey = record.getUserId() + "_" + (record.getStudentUserId() != null ? record.getStudentUserId() : "");
+            List<NotificationAnswer> userAnswers = answersByUser.getOrDefault(answerKey, new ArrayList<>());
             
             // 对于每个问题项，从用户答案中查找匹配的选项
             for (QuestionItemVO item : allQuestionItems) {
