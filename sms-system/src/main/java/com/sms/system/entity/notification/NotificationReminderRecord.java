@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 通知提醒记录实体类（用于收集提示家长回复的记录）
@@ -39,7 +39,7 @@ public class NotificationReminderRecord implements Serializable {
     /** 提醒发送时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("remind_send_time")
-    private Date remindSendTime;
+    private LocalDateTime remindSendTime;
 
     /** 提醒发送状态（0待发送 1发送成功 2发送失败） */
     @TableField("remind_send_status")
@@ -48,7 +48,7 @@ public class NotificationReminderRecord implements Serializable {
     /** 创建时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("create_time")
-    private Date createTime;
+    private LocalDateTime createTime;
 
     // Getters and Setters
     public Long getReminderId() {
@@ -91,11 +91,11 @@ public class NotificationReminderRecord implements Serializable {
         this.parentUserIds = parentUserIds;
     }
 
-    public Date getRemindSendTime() {
+    public LocalDateTime getRemindSendTime() {
         return remindSendTime;
     }
 
-    public void setRemindSendTime(Date remindSendTime) {
+    public void setRemindSendTime(LocalDateTime remindSendTime) {
         this.remindSendTime = remindSendTime;
     }
 
@@ -107,11 +107,11 @@ public class NotificationReminderRecord implements Serializable {
         this.remindSendStatus = remindSendStatus;
     }
 
-    public Date getCreateTime() {
+    public LocalDateTime getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(Date createTime) {
+    public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
     }
 

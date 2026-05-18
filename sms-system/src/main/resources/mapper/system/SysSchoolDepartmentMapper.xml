@@ -62,8 +62,8 @@
             <if test="orderNum != null">#{orderNum},</if>
             <if test="departmentLeader != null and departmentLeader != ''">#{departmentLeader},</if>
             <if test="type != null">#{type},</if>
-            now(),
-            now()
+            #{createTime},
+            #{updateTime}
         )
     </insert>
 
@@ -77,7 +77,7 @@
             <if test="orderNum != null">order_num = #{orderNum},</if>
             <if test="departmentLeader != null and departmentLeader != ''">department_leader = #{departmentLeader},</if>
             <if test="type != null">type = #{type},</if>
-            update_time = now(),
+            update_time = #{updateTime}
         </set>
         WHERE id = #{id}
     </update>

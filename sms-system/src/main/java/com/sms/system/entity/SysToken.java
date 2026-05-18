@@ -1,6 +1,6 @@
 package com.sms.system.entity;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * sys_token 表實體類
@@ -20,13 +20,13 @@ public class SysToken {
     private Integer userType;
 
     /** 過期時間 */
-    private Date expireTime;
+    private LocalDateTime expireTime;
 
     /** 創建時間 */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /** 更新時間 */
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
@@ -37,19 +37,19 @@ public class SysToken {
     public Integer getUserType() { return userType; }
     public void setUserType(Integer userType) { this.userType = userType; }
 
-    public Date getExpireTime() { return expireTime; }
-    public void setExpireTime(Date expireTime) { this.expireTime = expireTime; }
+    public LocalDateTime getExpireTime() { return expireTime; }
+    public void setExpireTime(LocalDateTime expireTime) { this.expireTime = expireTime; }
 
-    public Date getCreateTime() { return createTime; }
-    public void setCreateTime(Date createTime) { this.createTime = createTime; }
+    public LocalDateTime getCreateTime() { return createTime; }
+    public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
 
-    public Date getUpdateTime() { return updateTime; }
-    public void setUpdateTime(Date updateTime) { this.updateTime = updateTime; }
+    public LocalDateTime getUpdateTime() { return updateTime; }
+    public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
 
     /**
-     * 判斷 Token 是否已過期
+     * 判断 Token 是否已过期
      */
     public boolean isExpired() {
-        return expireTime != null && new Date().after(expireTime);
+        return expireTime != null && LocalDateTime.now().isAfter(expireTime);
     }
 }

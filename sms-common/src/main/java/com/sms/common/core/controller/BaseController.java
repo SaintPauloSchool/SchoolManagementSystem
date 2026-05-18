@@ -1,6 +1,8 @@
 package com.sms.common.core.controller;
 
 import java.beans.PropertyEditorSupport;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -46,6 +48,40 @@ public class BaseController
             public void setAsText(String text)
             {
                 setValue(DateUtils.parseDate(text));
+            }
+        });
+        
+        // LocalDateTime 类型转换
+        binder.registerCustomEditor(LocalDateTime.class, new PropertyEditorSupport()
+        {
+            @Override
+            public void setAsText(String text)
+            {
+                if (StringUtils.isEmpty(text))
+                {
+                    setValue(null);
+                }
+                else
+                {
+                    try
+                    {
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                        setValue(LocalDateTime.parse(text, formatter));
+                    }
+                    catch (Exception e)
+                    {
+                        // 尝试其他格式
+                        try
+                        {
+                            setValue(LocalDateTime.parse(text + " 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.warn("日期格式转换失败: {}", text);
+                            setValue(null);
+                        }
+                    }
+                }
             }
         });
     }

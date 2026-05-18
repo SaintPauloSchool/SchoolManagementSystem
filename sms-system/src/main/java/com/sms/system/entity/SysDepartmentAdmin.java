@@ -1,7 +1,7 @@
 package com.sms.system.entity;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 部门管理员对象 sys_department_admin
@@ -25,10 +25,10 @@ public class SysDepartmentAdmin implements Serializable {
     private String subject;
 
     /** 创建时间 */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /** 更新时间 */
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -45,9 +45,9 @@ public class SysDepartmentAdmin implements Serializable {
     public String getSubject() { return subject; }
     public void setSubject(String subject) { this.subject = subject; }
 
-    public Date getCreateTime() { return createTime; }
-    public void setCreateTime(Date createTime) { this.createTime = createTime; }
+    public LocalDateTime getCreateTime() { return createTime; }
+    public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
 
-    public Date getUpdateTime() { return updateTime; }
-    public void setUpdateTime(Date updateTime) { this.updateTime = updateTime; }
+    public LocalDateTime getUpdateTime() { return updateTime; }
+    public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
 }
