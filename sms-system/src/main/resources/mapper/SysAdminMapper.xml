@@ -44,7 +44,7 @@
             <if test="adminName != null and adminName != ''">admin_name = #{adminName},</if>
             <if test="status != null and status != ''">status = #{status},</if>
             <if test="remark != null">remark = #{remark},</if>
-            update_time = NOW()
+            update_time = #{updateTime}
         </set>
         WHERE id = #{id}
     </update>

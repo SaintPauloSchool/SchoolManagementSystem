@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableField;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 通知问题实体类
@@ -69,7 +69,7 @@ public class NotificationQuestion implements Serializable {
 
     /** 创建时间 */
     @TableField("create_time")
-    private Date createTime;
+    private LocalDateTime createTime;
 
     // Getters and Setters
     public Long getQuestionId() {
@@ -136,11 +136,11 @@ public class NotificationQuestion implements Serializable {
         this.sortOrder = sortOrder;
     }
 
-    public Date getCreateTime() {
+    public LocalDateTime getCreateTime() {
         return createTime;
     }
     
-    public void setCreateTime(Date createTime) {
+    public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
     }
     

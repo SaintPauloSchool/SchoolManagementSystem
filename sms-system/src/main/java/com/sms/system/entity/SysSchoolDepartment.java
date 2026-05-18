@@ -4,7 +4,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -36,10 +36,10 @@ public class SysSchoolDepartment implements Serializable {
     private Integer type;
 
     /** 创建时间 */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /** 更新时间 */
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /** 子部门列表（树形结构用） */
     private List<SysSchoolDepartment> children;
@@ -103,19 +103,19 @@ public class SysSchoolDepartment implements Serializable {
         this.type = type;
     }
 
-    public Date getCreateTime() {
+    public LocalDateTime getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(Date createTime) {
+    public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
     }
 
-    public Date getUpdateTime() {
+    public LocalDateTime getUpdateTime() {
         return updateTime;
     }
 
-    public void setUpdateTime(Date updateTime) {
+    public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
     }
 

@@ -4,7 +4,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * wecom学校部门成员对象 wecom_school_department_member
@@ -29,10 +29,10 @@ public class WecomSchoolDepartmentMember implements Serializable {
     private String openUserid;
 
     /** 创建时间 */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /** 更新时间 */
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     public Long getId() {
         return id;
@@ -74,19 +74,19 @@ public class WecomSchoolDepartmentMember implements Serializable {
         this.openUserid = openUserid;
     }
 
-    public Date getCreateTime() {
+    public LocalDateTime getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(Date createTime) {
+    public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
     }
 
-    public Date getUpdateTime() {
+    public LocalDateTime getUpdateTime() {
         return updateTime;
     }
 
-    public void setUpdateTime(Date updateTime) {
+    public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
     }
 

@@ -6,7 +6,7 @@ import com.sms.system.service.notification.INotificationResendFailRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,7 +31,7 @@ public class NotificationResendFailRecordServiceImpl implements INotificationRes
             // 新增记录
             record.setFailCount(1);
             record.setStatus("0");
-            record.setCreateTime(new Date());
+            record.setCreateTime(LocalDateTime.now());
             
             // 将传递过来的 failReason1 和 failMessage1 赋给第1次
             record.setFailReason1(record.getFailReason1());
@@ -62,7 +62,7 @@ public class NotificationResendFailRecordServiceImpl implements INotificationRes
         NotificationResendFailRecord updateObj = new NotificationResendFailRecord();
         updateObj.setId(existingRecord.getId());
         updateObj.setFailCount(newFailCount);
-        updateObj.setUpdateTime(new Date());
+        updateObj.setUpdateTime(LocalDateTime.now());
 
         // 根据次数赋值不同的原因字段
         if (newFailCount == 2) {

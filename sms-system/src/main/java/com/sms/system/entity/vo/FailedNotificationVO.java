@@ -2,7 +2,7 @@ package com.sms.system.entity.vo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 失败通知列表VO（用于展示发送失败的通知）
@@ -19,7 +19,7 @@ public class FailedNotificationVO {
 
     /** 发送时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date sendTime;
+    private LocalDateTime sendTime;
 
     /** 发送状态（0待发送 1发送中 2发送成功 3发送失败 4部分成功） */
     private String sendStatus;
@@ -61,11 +61,11 @@ public class FailedNotificationVO {
         this.sendRecordId = sendRecordId;
     }
 
-    public Date getSendTime() {
+    public LocalDateTime getSendTime() {
         return sendTime;
     }
 
-    public void setSendTime(Date sendTime) {
+    public void setSendTime(LocalDateTime sendTime) {
         this.sendTime = sendTime;
     }
 

@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sms.common.core.domain.BaseEntity;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -54,12 +54,12 @@ public class Notification extends BaseEntity {
     /** 回复截止时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField("reply_deadline")
-    private Date replyDeadline;
+    private LocalDateTime replyDeadline;
 
     /** 提示回覆時間（只到日期） */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     @TableField("reminder_time")
-    private Date reminderTime;
+    private LocalDateTime reminderTime;
     
     /** 接收对象列表（非数据库字段） */
     @TableField(exist = false)
@@ -158,19 +158,19 @@ public class Notification extends BaseEntity {
         this.status = status;
     }
 
-    public Date getReplyDeadline() {
+    public LocalDateTime getReplyDeadline() {
         return replyDeadline;
     }
 
-    public void setReplyDeadline(Date replyDeadline) {
+    public void setReplyDeadline(LocalDateTime replyDeadline) {
         this.replyDeadline = replyDeadline;
     }
 
-    public Date getReminderTime() {
+    public LocalDateTime getReminderTime() {
         return reminderTime;
     }
 
-    public void setReminderTime(Date reminderTime) {
+    public void setReminderTime(LocalDateTime reminderTime) {
         this.reminderTime = reminderTime;
     }
     

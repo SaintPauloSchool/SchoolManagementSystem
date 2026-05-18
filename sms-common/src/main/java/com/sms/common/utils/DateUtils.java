@@ -170,20 +170,52 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
     }
 
     /**
-     * 增加 LocalDateTime ==> Date
-     */
-    public static Date toDate(LocalDateTime temporalAccessor)
-    {
-        ZonedDateTime zdt = temporalAccessor.atZone(ZoneId.systemDefault());
-        return Date.from(zdt.toInstant());
-    }
-
-    /**
      * 增加 LocalDate ==> Date
      */
     public static Date toDate(LocalDate temporalAccessor)
     {
         LocalDateTime localDateTime = LocalDateTime.of(temporalAccessor, LocalTime.of(0, 0, 0));
+        ZonedDateTime zdt = localDateTime.atZone(ZoneId.systemDefault());
+        return Date.from(zdt.toInstant());
+    }
+
+    /**
+     * 获取当前 LocalDateTime
+     * 
+     * @return LocalDateTime 当前日期时间
+     */
+    public static LocalDateTime getNowLocalDateTime()
+    {
+        return LocalDateTime.now();
+    }
+
+    /**
+     * Date 转 LocalDateTime
+     * 
+     * @param date Date 对象
+     * @return LocalDateTime
+     */
+    public static LocalDateTime toLocalDateTime(Date date)
+    {
+        if (date == null)
+        {
+            return null;
+        }
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+    }
+
+    /**
+     * LocalDateTime 转 Date
+     * 
+     * @param localDateTime LocalDateTime 对象
+     * @return Date
+     */
+    public static Date toDate(LocalDateTime localDateTime)
+    {
+        if (localDateTime == null)
+        {
+            return null;
+        }
         ZonedDateTime zdt = localDateTime.atZone(ZoneId.systemDefault());
         return Date.from(zdt.toInstant());
     }

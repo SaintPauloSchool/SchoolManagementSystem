@@ -35,4 +35,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </select>
 
+    <!-- 根据家长用户ID和学生用户ID批量查询家长学生关系 -->
+    <select id="selectByParentAndStudentUserIds" resultMap="SysParentStudentRelationResult">
+        SELECT id, parent_user_id, student_user_id, student_name, relation_desc, mobile, external_userid, create_time, update_time
+        FROM sys_parent_student_relation
+        WHERE parent_user_id IN
+        <foreach collection="parentUserIds" item="parentUserId" open="(" separator="," close=")">
+            #{parentUserId}
+        </foreach>
+        AND student_user_id IN
+        <foreach collection="studentUserIds" item="studentUserId" open="(" separator="," close=")">
+            #{studentUserId}
+        </foreach>
+    </select>
+
 </mapper>

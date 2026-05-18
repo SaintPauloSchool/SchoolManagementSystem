@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 /**
@@ -392,13 +393,13 @@ public class NotificationPublishHandler {
      * @param createTime 創建時間
      * @return 格式化後的時間字符串 (yyyy-MM-dd HH:mm:ss)
      */
-    private String formatPublishTime(Date createTime) {
+    private String formatPublishTime(LocalDateTime createTime) {
         if (createTime == null) {
             return "未知";
         }
         
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return sdf.format(createTime);
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return createTime.format(formatter);
     }
     
     /**
@@ -524,7 +525,7 @@ public class NotificationPublishHandler {
         sendRecord.setNotificationId(notification.getNotificationId());
         sendRecord.setSenderId(notification.getSenderId());
         sendRecord.setSenderName(notification.getSenderName());
-        sendRecord.setSendTime(new Date());
+        sendRecord.setSendTime(LocalDateTime.now());
         
         // --- 重構統計邏輯，以 student_user_id 爲維度統計 ---
         
@@ -604,7 +605,7 @@ public class NotificationPublishHandler {
             sendRecord.setSendStatus("4"); // 4-部分成功
         }
         
-        sendRecord.setCreateTime(new Date());
+        sendRecord.setCreateTime(LocalDateTime.now());
         
         return sendRecord;
     }
@@ -626,16 +627,25 @@ public class NotificationPublishHandler {
         // 用戶閱讀記錄列表，預分配容量避免陣列擴容
         int capacity = (parentUserIds != null ? parentUserIds.size() : 0) + (studentUserIds != null ? studentUserIds.size() : 0);
         List<NotificationUserReadRecord> readRecords = new ArrayList<>(capacity);
-        Date now = new Date();
+        LocalDateTime now = LocalDateTime.now();
         
         // 建立 parentUserId -> 所有對應的 studentUserId 列表的映射（一個家長可能綁定多個學生）
         int initialCapacity = bindings == null ? 16 : (int) (bindings.size() / 0.75f) + 1;
         Map<String, List<String>> parentToStudentsMap = new HashMap<>(initialCapacity);
+        Set<String> parentStudentKeys = new HashSet<>(); // 用於去重
         if (bindings != null) {
             for (SysDepartmentParentBinding binding : bindings) {
                 if (binding.getParentUserId() != null && binding.getStudentUserId() != null) {
-                    parentToStudentsMap.computeIfAbsent(binding.getParentUserId(), k -> new ArrayList<>())
-                                       .add(binding.getStudentUserId());
+                    // 去重：如果已經存在相同的 parentUserId + studentUserId 組合，則跳過
+                    String key = binding.getParentUserId() + "_" + binding.getStudentUserId();
+                    if (!parentStudentKeys.contains(key)) {
+                        parentToStudentsMap.computeIfAbsent(binding.getParentUserId(), k -> new ArrayList<>())
+                                           .add(binding.getStudentUserId());
+                        parentStudentKeys.add(key);
+                    } else {
+                        log.debug("createUserReadRecords: 跳過重複的綁定關係: parentUserId={}, studentUserId={}",
+                                binding.getParentUserId(), binding.getStudentUserId());
+                    }
                 }
             }
         }
@@ -683,7 +693,7 @@ public class NotificationPublishHandler {
      * @return 閱讀記錄
      */
     private NotificationUserReadRecord createReadRecord(Long sendRecordId, String userId, String userType,
-                                                         String studentUserId, boolean sendSuccess, Date createTime) {
+                                                         String studentUserId, boolean sendSuccess, LocalDateTime createTime) {
         NotificationUserReadRecord record = new NotificationUserReadRecord();
         record.setSendRecordId(sendRecordId);
         record.setUserId(userId);
@@ -713,8 +723,8 @@ public class NotificationPublishHandler {
         
         // 2. 检查是否超过回复截止时间
         if (notification.getReplyDeadline() != null) {
-            Date now = new Date();
-            if (now.after(notification.getReplyDeadline())) {
+            LocalDateTime now = LocalDateTime.now();
+            if (now.isAfter(notification.getReplyDeadline())) {
                 result.put("success", false);
                 result.put("message", "已超过回复截止时间，无法提示家长回复");
                 result.put("remindCount", 0);
@@ -761,7 +771,7 @@ public class NotificationPublishHandler {
         int successCount = 0;
         int failCount = 0;
         List<NotificationReminderRecord> reminderRecords = new ArrayList<>();
-        Date now = new Date();
+        LocalDateTime now = LocalDateTime.now();
         
         // 构建提醒消息内容（只需要构建一次）
         String remindContent = buildRemindContent(notification);
@@ -1126,7 +1136,7 @@ public class NotificationPublishHandler {
         } else {
             updateRecord.setSendStatus("4"); // 部分成功
         }
-        updateRecord.setUpdateTime(new Date());
+        updateRecord.setUpdateTime(LocalDateTime.now());
         return updateRecord;
     }
 
@@ -1157,7 +1167,7 @@ public class NotificationPublishHandler {
         Set<String> successUserIds = new HashSet<>();
         Map<String, String> failedUserReasons = new HashMap<>();
 
-        // 為每個家長發送對應學生的消息
+        // 為每個家長的每個學生發送獨立的消息
         for (Map.Entry<String, List<ParentStudentMessageInfo>> entry : parentToMessagesMap.entrySet()) {
             String parentUserId = entry.getKey();
             List<ParentStudentMessageInfo> parentMessages = entry.getValue();

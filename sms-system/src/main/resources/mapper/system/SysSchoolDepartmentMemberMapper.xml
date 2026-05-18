@@ -59,8 +59,8 @@
                 #{member.departmentId},
                 #{member.openUserid},
                 #{member.type},
-                now(),
-                now()
+                #{member.createTime},
+                #{member.updateTime}
             )
         </foreach>
     </insert>

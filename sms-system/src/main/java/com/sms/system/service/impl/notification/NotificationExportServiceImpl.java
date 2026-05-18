@@ -26,7 +26,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -513,39 +514,52 @@ public class NotificationExportServiceImpl implements INotificationExportService
         // 移动到下一行
         rowNum += 2;
 
-        // 查询所有家长学生关系
-        List<String> allUserIds = readRecords.stream()
+        // 查询所有家长学生关系（使用家长ID和学生ID组合查询）
+        List<String> allParentUserIds = readRecords.stream()
                 .map(NotificationUserReadRecord::getUserId)
                 .distinct()
                 .collect(Collectors.toList());
+        
+        List<String> allStudentUserIds = readRecords.stream()
+                .map(NotificationUserReadRecord::getStudentUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
 
+        // 使用组合键 "parentUserId_studentUserId" 存储关系
         Map<String, SysParentStudentRelation> relationMap = new HashMap<>();
-        if (!allUserIds.isEmpty()) {
-            List<SysParentStudentRelation> relations = parentStudentRelationMapper.selectByParentUserIds(allUserIds);
-            relationMap = relations.stream()
-                    .collect(Collectors.toMap(SysParentStudentRelation::getParentUserId, r -> r, (r1, r2) -> r1));
+        if (!allParentUserIds.isEmpty() && !allStudentUserIds.isEmpty()) {
+            List<SysParentStudentRelation> relations = parentStudentRelationMapper.selectByParentAndStudentUserIds(
+                    allParentUserIds, allStudentUserIds);
+            for (SysParentStudentRelation relation : relations) {
+                String key = relation.getParentUserId() + "_" + relation.getStudentUserId();
+                relationMap.put(key, relation);
+            }
         }
 
-        // 查询部门绑定关系
+        // 查询部门绑定关系（使用家长ID和学生ID组合查询）
         Map<String, String> departmentMap = new HashMap<>();
-        if (!allUserIds.isEmpty()) {
+        if (!allParentUserIds.isEmpty() && !allStudentUserIds.isEmpty()) {
             // 查询所有班级部门
             List<SysDepartment> allDepartments = departmentMapper.selectAll();
             Map<Long, String> deptIdNameMap = allDepartments.stream()
                     .collect(Collectors.toMap(SysDepartment::getId, SysDepartment::getName, (d1, d2) -> d1));
 
-            // 根据班级ID查询家长绑定关系
+            // 根据班级ID查询家长绑定关系（使用家长ID和学生ID组合）
             List<Long> deptIds = allDepartments.stream()
                     .filter(d -> d.getType() != null && d.getType() == 1) // type=1是班级
                     .map(SysDepartment::getId)
                     .collect(Collectors.toList());
 
             if (!deptIds.isEmpty()) {
-                List<SysDepartmentParentBinding> bindings = departmentParentBindingMapper.selectByDepartmentIds(deptIds);
+                List<SysDepartmentParentBinding> bindings = departmentParentBindingMapper.selectByParentAndStudentUserIds(
+                        allParentUserIds, allStudentUserIds);
                 for (SysDepartmentParentBinding binding : bindings) {
                     String deptName = deptIdNameMap.get(binding.getDepartmentId());
                     if (deptName != null) {
-                        departmentMap.put(binding.getParentUserId(), deptName);
+                        // 使用组合键存储
+                        String key = binding.getParentUserId() + "_" + binding.getStudentUserId();
+                        departmentMap.put(key, deptName);
                     }
                 }
             }
@@ -564,7 +578,9 @@ public class NotificationExportServiceImpl implements INotificationExportService
             colNum = 0;
 
             // 姓名：student_name - relation_desc
-            SysParentStudentRelation relation = relationMap.get(record.getUserId());
+            // 使用组合键 "parentUserId_studentUserId" 查询
+            String relationKey = record.getUserId() + "_" + record.getStudentUserId();
+            SysParentStudentRelation relation = relationMap.get(relationKey);
             String name = "";
             if (relation != null) {
                 name = (relation.getStudentName() != null ? relation.getStudentName() : "") + "-" +
@@ -572,8 +588,8 @@ public class NotificationExportServiceImpl implements INotificationExportService
             }
             dataRow.createCell(colNum++).setCellValue(name);
 
-            // 班级
-            String className = departmentMap.getOrDefault(record.getUserId(), "");
+            // 班级（使用组合键查询）
+            String className = departmentMap.getOrDefault(relationKey, "");
             dataRow.createCell(colNum++).setCellValue(className);
 
             // 发送状态（1=发送成功，0=发送失败）
@@ -968,12 +984,12 @@ public class NotificationExportServiceImpl implements INotificationExportService
     /**
      * 格式化日期
      */
-    private String formatDate(Date date) {
-        if (date == null) {
+    private String formatDate(LocalDateTime dateTime) {
+        if (dateTime == null) {
             return "";
         }
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return sdf.format(date);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return dateTime.format(formatter);
     }
 
 }
