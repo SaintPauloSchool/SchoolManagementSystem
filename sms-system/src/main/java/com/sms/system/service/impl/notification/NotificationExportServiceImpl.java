@@ -117,7 +117,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
 
             try (OutputStream out = response.getOutputStream();
                  ZipOutputStream zos = new ZipOutputStream(out)) {
-                
+
                 // 写入Excel文件
                 ZipEntry excelEntry = new ZipEntry(notification.getTitle() + "_回复统计.xlsx");
                 zos.putNextEntry(excelEntry);
@@ -143,7 +143,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
                                         } catch (Exception e) {
                                             log.warn("解析 attachmentUrls 失败，可能不是 JSON 数组格式: {}", attachmentUrlsStr);
                                         }
-                                        
+
                                         if (attachments != null) {
                                             // 遍历附件
                                             for (int j = 0; j < attachments.size(); j++) {
@@ -154,8 +154,8 @@ public class NotificationExportServiceImpl implements INotificationExportService
 
                                                 // 处理附件
                                                 if (url != null && url.startsWith("/profile")) {
-                                                    String basePath = (spProfile != null && !spProfile.trim().isEmpty()) 
-                                                            ? spProfile 
+                                                    String basePath = (spProfile != null && !spProfile.trim().isEmpty())
+                                                            ? spProfile
                                                             : com.sms.common.config.OverallSituationConfig.getProfile();
                                                     String localPath = url.replace("/profile", basePath);
                                                     File file = new File(localPath);
@@ -165,7 +165,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
 
                                                         String finalName = getString(safeName, addedFileNames);
                                                         addedFileNames.add(finalName);
-    
+
                                                         ZipEntry fileEntry = new ZipEntry("附件/" + finalName);
                                                         zos.putNextEntry(fileEntry);
                                                         try (FileInputStream fis = new FileInputStream(file)) {
@@ -267,21 +267,21 @@ public class NotificationExportServiceImpl implements INotificationExportService
         Row headerInfoRow = sheet.createRow(rowNum);
         headerInfoRow.setHeightInPoints(100); // 设置较高的行高以容纳4行内容
         Cell headerInfoCell = headerInfoRow.createCell(0);
-        
+
         // 构建多行文本
         String infoBuilder = notification.getTitle() + "\n" +
                 "发送时间：" + formatDate(notification.getCreateTime()) + "\n" +
                 "接收人数：" + totalCount + "\n" +
                 "已处理人数：" + processedCount;
-        
+
         headerInfoCell.setCellValue(infoBuilder);
         headerInfoCell.setCellStyle(titleStyle);
-        
+
         // 合并 A1:C4 (行0-3, 列0-2)
         sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 3, 0, 2));
         // 为合并区域添加边框
         setRegionBorder(sheet, 0, 3, 0, 2, titleStyle);
-        
+
         // 跳过已合并的行
         rowNum = 4;
         // 表头行
@@ -304,7 +304,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 if ("3".equals(item.getType())) {
                     continue;
                 }
-                
+
                 // 统计每个选项的选择人数
                 Map<String, Long> optionCountMap = countOptionSelections(allAnswers, item.getId());
                 int optionCount = item.getOptions().size();
@@ -360,7 +360,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
         sheet.setColumnWidth(0, 8000);
         sheet.setColumnWidth(1, 8000);
         sheet.setColumnWidth(2, 3000);
-        
+
         // 为所有数据行设置边框（包括合并单元格）
         int startDataRow = 5; // 从第6行开始（索引5）
         int endDataRow = rowNum - 1;
@@ -414,34 +414,34 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 .map(NotificationAnswer::getUserId)
                 .distinct()
                 .count();
-        
+
         // 构建多行文本
         String infoBuilder = notification.getTitle() + "\n" +
                 "发送时间：" + formatDate(notification.getCreateTime()) + "\n" +
                 "接收人数：" + totalCount + "\n" +
                 "已处理人数：" + processedCount;
-        
+
         headerInfoCell.setCellValue(infoBuilder);
         headerInfoCell.setCellStyle(titleStyle);
-        
-        // 计算需要合并的列数（固定5列 + 所有问题的选项数）
-        int totalOptionCols = 5; // 姓名、班级、发送状态、阅读时间、确认时间
+
+        // 计算需要合并的列数（固定6列 + 所有问题的选项数）
+        int totalOptionCols = 6; // 班级、姓名、关系、发送状态、阅读时间、确认时间
         for (QuestionItemVO item : allQuestionItems) {
             totalOptionCols += item.getOptions().size();
         }
-        
+
         // 合并 A1:第N列1-2行 (行0-1, 列0到totalOptionCols-1)
         sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 1, 0, totalOptionCols - 1));
         setRegionBorder(sheet, 0, 1, 0, totalOptionCols - 1, titleStyle);
-        
+
         // 跳过已合并的行
         rowNum = 2;
 
         // 第3行：表头（固定列合并2行 + 问题标题合并单元格 + 选项）
         Row headerRow = sheet.createRow(rowNum);
         headerRow.setHeightInPoints(35); // 增加行高以容纳多行文本
-        List<String> fixedHeaders = Arrays.asList("姓名", "班级", "发送状态", "阅读时间", "确认时间");
-        
+        List<String> fixedHeaders = Arrays.asList("班级", "姓名", "关系", "发送状态", "阅读时间", "确认时间");
+
         // 创建固定列表头（合并2行：表头行和选项行）
         for (String header : fixedHeaders) {
             Cell cell = headerRow.createCell(colNum);
@@ -455,17 +455,17 @@ public class NotificationExportServiceImpl implements INotificationExportService
             int optionCount = item.getOptions().size();
             int firstCol = colNum;
             int lastCol = colNum + optionCount - 1;
-            
+
             // 问题标题（合并单元格）
             Cell titleCell = headerRow.createCell(firstCol);
             titleCell.setCellValue(item.getTitle());
             titleCell.setCellStyle(headerStyle);
-            
+
             // 合并问题标题单元格
             if (lastCol > firstCol) {
                 sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(rowNum, rowNum, firstCol, lastCol));
             }
-            
+
             // 为合并区域的标题列所有列设置样式
             for (int c = firstCol; c <= lastCol; c++) {
                 Cell cell = headerRow.getCell(c);
@@ -474,15 +474,15 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 }
                 cell.setCellStyle(headerStyle);
             }
-            
+
             colNum = lastCol + 1;
         }
 
         // 第4行：问题选项作为第二行表头（固定列已合并，不再创建）
         Row optionHeaderRow = sheet.createRow(rowNum + 1);
         optionHeaderRow.setHeightInPoints(35);
-        
-        colNum = 5;
+
+        colNum = 6;
         for (QuestionItemVO item : allQuestionItems) {
             for (String option : item.getOptions()) {
                 Cell cell = optionHeaderRow.createCell(colNum++);
@@ -490,27 +490,27 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 cell.setCellStyle(headerStyle);
             }
         }
-        
+
         // 合并固定列的2行（rowNum 到 rowNum+1）并设置边框
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 6; i++) {
             sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(rowNum, rowNum + 1, i, i));
             setRegionBorder(sheet, rowNum, rowNum + 1, i, i, headerStyle);
         }
-        
+
         // 为问题标题合并区域设置边框
-        int borderColNum = 5;
+        int borderColNum = 6;
         for (QuestionItemVO item : allQuestionItems) {
             int optionCount = item.getOptions().size();
             int firstCol = borderColNum;
             int lastCol = borderColNum + optionCount - 1;
-            
+
             if (lastCol > firstCol) {
                 setRegionBorder(sheet, rowNum, rowNum, firstCol, lastCol, headerStyle);
             }
-            
+
             borderColNum = lastCol + 1;
         }
-        
+
         // 移动到下一行
         rowNum += 2;
 
@@ -519,7 +519,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 .map(NotificationUserReadRecord::getUserId)
                 .distinct()
                 .collect(Collectors.toList());
-        
+
         List<String> allStudentUserIds = readRecords.stream()
                 .map(NotificationUserReadRecord::getStudentUserId)
                 .filter(Objects::nonNull)
@@ -581,20 +581,25 @@ public class NotificationExportServiceImpl implements INotificationExportService
             Row dataRow = sheet.createRow(rowNum++);
             colNum = 0;
 
-            // 姓名：student_name - relation_desc
             // 使用组合键 "parentUserId_studentUserId" 查询
             String relationKey = record.getUserId() + "_" + record.getStudentUserId();
             SysParentStudentRelation relation = relationMap.get(relationKey);
-            String name = "";
+            String studentName = "";
+            String relationDesc = "";
             if (relation != null) {
-                name = (relation.getStudentName() != null ? relation.getStudentName() : "") + "-" +
-                        (relation.getRelationDesc() != null ? relation.getRelationDesc() : "");
+                studentName = relation.getStudentName() != null ? relation.getStudentName() : "";
+                relationDesc = relation.getRelationDesc() != null ? relation.getRelationDesc() : "";
             }
-            dataRow.createCell(colNum++).setCellValue(name);
 
             // 班级（使用组合键查询）
             String className = departmentMap.getOrDefault(relationKey, "");
             dataRow.createCell(colNum++).setCellValue(className);
+
+            // 姓名
+            dataRow.createCell(colNum++).setCellValue(studentName);
+
+            // 关系
+            dataRow.createCell(colNum++).setCellValue(relationDesc);
 
             // 发送状态（1=发送成功，0=发送失败）
             String sendStatusText = getString(record);
@@ -610,11 +615,11 @@ public class NotificationExportServiceImpl implements INotificationExportService
             // 使用组合键 "parentUserId_studentUserId" 获取该家长-学生对的答案
             String answerKey = record.getUserId() + "_" + (record.getStudentUserId() != null ? record.getStudentUserId() : "");
             List<NotificationAnswer> userAnswers = answersByUser.getOrDefault(answerKey, new ArrayList<>());
-            
+
             // 对于每个问题项，从用户答案中查找匹配的选项
             for (QuestionItemVO item : allQuestionItems) {
                 List<String> selectedOptions = new ArrayList<>();
-                
+
                 // 遍历用户的所有答案，查找匹配的nodeId
                 for (NotificationAnswer answer : userAnswers) {
                     if (answer.getAnswerData() != null) {
@@ -623,7 +628,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
                             for (int i = 0; i < answerArray.size(); i++) {
                                 JSONObject answerObj = answerArray.getJSONObject(i);
                                 String nodeId = answerObj.getString("nodeId");
-                                
+
                                 // 匹配 nodeId
                                 if (String.valueOf(item.getId()).equals(nodeId)) {
                                     String answerContent = answerObj.getString("answerContent");
@@ -642,7 +647,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 // 标记选中的选项或填写的答案
                 for (String option : item.getOptions()) {
                     Cell cell = dataRow.createCell(colNum++);
-                    
+
                     // 判断是否为填空题（type="3"）
                     if ("3".equals(item.getType())) {
                         // 填空题：解析新的答案格式并显示对应的值
@@ -662,29 +667,30 @@ public class NotificationExportServiceImpl implements INotificationExportService
         }
 
         // 设置列宽（增加宽度）
-        sheet.setColumnWidth(0, 5000);  // 姓名
-        sheet.setColumnWidth(1, 5000);  // 班级
-        sheet.setColumnWidth(2, 3500);  // 发送状态
-        sheet.setColumnWidth(3, 5000);  // 阅读时间
-        sheet.setColumnWidth(4, 5000);  // 确认时间
-        
+        sheet.setColumnWidth(0, 5000);  // 班级
+        sheet.setColumnWidth(1, 5000);  // 姓名
+        sheet.setColumnWidth(2, 3500);  // 关系
+        sheet.setColumnWidth(3, 3500);  // 发送状态
+        sheet.setColumnWidth(4, 5000);  // 阅读时间
+        sheet.setColumnWidth(5, 5000);  // 确认时间
+
         // 问题列的宽度
-        int colIndex = 5;
+        int colIndex = 6;
         for (QuestionItemVO item : allQuestionItems) {
             for (int i = 0; i < item.getOptions().size(); i++) {
                 sheet.setColumnWidth(colIndex++, 5000);
             }
         }
-        
+
         // 为所有数据行设置边框
         for (int r = dataStartRow; r < rowNum; r++) {
             Row dataRow = sheet.getRow(r);
             if (dataRow != null) {
-                int totalCols = 5; // 固定5列
+                int totalCols = 6; // 固定6列
                 for (QuestionItemVO item : allQuestionItems) {
                     totalCols += item.getOptions().size();
                 }
-                
+
                 for (int c = 0; c < totalCols; c++) {
                     Cell cell = dataRow.getCell(c);
                     if (cell != null) {
@@ -733,7 +739,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
                     for (int i = 0; i < questionsArray.size(); i++) {
                         JSONObject q = questionsArray.getJSONObject(i);
                         String type = q.getString("type");
-                        
+
                         QuestionItemVO item = new QuestionItemVO();
                         item.setId(q.getLong("id"));
                         item.setTitle(q.getString("title"));
@@ -824,7 +830,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
                     for (int i = 0; i < answerArray.size(); i++) {
                         JSONObject answerObj = answerArray.getJSONObject(i);
                         String nodeId = answerObj.getString("nodeId");
-                        
+
                         // 匹配 nodeId
                         if (targetNodeId.equals(nodeId)) {
                             String answerContent = answerObj.getString("answerContent");
@@ -853,7 +859,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
      */
     private String parseFillBlankAnswer(List<NotificationAnswer> userAnswers, Long questionId) {
         String targetNodeId = String.valueOf(questionId);
-        
+
         for (NotificationAnswer answer : userAnswers) {
             if (answer.getAnswerData() != null) {
                 try {
@@ -861,26 +867,26 @@ public class NotificationExportServiceImpl implements INotificationExportService
                     for (int i = 0; i < answerArray.size(); i++) {
                         JSONObject answerObj = answerArray.getJSONObject(i);
                         String nodeId = answerObj.getString("nodeId");
-                        
+
                         // 匹配 nodeId
                         if (targetNodeId.equals(nodeId)) {
                             String answerContent = answerObj.getString("answerContent");
                             if (answerContent != null && !answerContent.isEmpty()) {
                                 // 解析新的答案格式：[{"blankId":"fillblank-xxx","value":"12"},...]
                                 JSONArray fillBlanksArray = JSON.parseArray(answerContent);
-                                
+
                                 StringBuilder result = new StringBuilder();
                                 int index = 1;
                                 for (int j = 0; j < fillBlanksArray.size(); j++) {
                                     JSONObject fillBlank = fillBlanksArray.getJSONObject(j);
                                     String value = fillBlank.getString("value");
-                                    
+
                                     if (j > 0) {
                                         result.append("，");
                                     }
                                     result.append("答").append(index++).append("：").append(value != null ? value : "");
                                 }
-                                
+
                                 return result.toString();
                             }
                         }
@@ -890,7 +896,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 }
             }
         }
-        
+
         return "";
     }
 
@@ -919,7 +925,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
     private void setRegionBorder(Sheet sheet, int firstRow, int lastRow, int firstCol, int lastCol, CellStyle style) {
         org.apache.poi.ss.util.CellRangeAddress region = new org.apache.poi.ss.util.CellRangeAddress(
                 firstRow, lastRow, firstCol, lastCol);
-        
+
         // 创建带边框的样式
         CellStyle borderStyle = sheet.getWorkbook().createCellStyle();
         borderStyle.cloneStyleFrom(style);
@@ -927,7 +933,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
         borderStyle.setBorderBottom(BorderStyle.THIN);
         borderStyle.setBorderLeft(BorderStyle.THIN);
         borderStyle.setBorderRight(BorderStyle.THIN);
-        
+
         // 为合并区域内的所有单元格设置样式
         for (int rowNum = firstRow; rowNum <= lastRow; rowNum++) {
             Row row = sheet.getRow(rowNum);
@@ -942,7 +948,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 cell.setCellStyle(borderStyle);
             }
         }
-        
+
         // 使用 RegionUtil 设置合并区域的边框（确保外边框完整）
         // 注意：RegionUtil 必须在设置完单元格样式后调用，否则可能会被覆盖
         org.apache.poi.ss.util.RegionUtil.setBorderTop(BorderStyle.THIN, region, sheet);
