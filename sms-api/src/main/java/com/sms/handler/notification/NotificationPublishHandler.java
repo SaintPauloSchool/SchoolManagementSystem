@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 /**
@@ -28,6 +29,20 @@ import java.util.stream.Collectors;
 public class NotificationPublishHandler {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationPublishHandler.class);
+
+    // 每批最多發送的家長/學生數量
+    private static final int PARENT_STUDENT_BATCH_SIZE = 1000;
+    // 每批最多發送的部門數量
+    private static final int PARTY_BATCH_SIZE = 100;
+    // 防重複發送校驗時間（秒）
+    private static final int DUPLICATE_CHECK_INTERVAL = 1800;
+    // 發送狀態常量
+    private static final String SEND_STATUS_SUCCESS = "2";
+    private static final String SEND_STATUS_FAIL    = "3";
+    private static final String SEND_STATUS_PARTIAL = "4";
+    // 線程安全的日期格式化器
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     /**
      * 默認的通告查看基礎 URL。如果通告本身沒有跳轉鏈接，將使用此基礎 URL 拼接通告 ID。
@@ -85,10 +100,10 @@ public class NotificationPublishHandler {
         // 1. 解析接收者，提取家長、學生、部門的 ID 列表以及精確的綁定關係
         ResolvedReceiversVO resolvedReceivers = notificationReceiverService.resolveReceivers(receivers);
 
-        List<String> parentUserIds = resolvedReceivers.getParentUserIds() == null ? Collections.emptyList() : resolvedReceivers.getParentUserIds();
-        List<String> studentUserIds = resolvedReceivers.getStudentUserIds() == null ? Collections.emptyList() : resolvedReceivers.getStudentUserIds();
-        List<String> partyIds = resolvedReceivers.getPartyIds() == null ? Collections.emptyList() : resolvedReceivers.getPartyIds();
-        List<SysDepartmentParentBinding> bindings = resolvedReceivers.getBindings() == null ? Collections.emptyList() : resolvedReceivers.getBindings();
+        List<String> parentUserIds  = nullSafe(resolvedReceivers.getParentUserIds());
+        List<String> studentUserIds  = nullSafe(resolvedReceivers.getStudentUserIds());
+        List<String> partyIds        = nullSafe(resolvedReceivers.getPartyIds());
+        List<SysDepartmentParentBinding> bindings = nullSafe(resolvedReceivers.getBindings());
 
         // 如果沒有任何接收者，則拋出異常避免無效調用
         if (parentUserIds.isEmpty() && studentUserIds.isEmpty() && partyIds.isEmpty()) {
@@ -167,7 +182,7 @@ public class NotificationPublishHandler {
         // 其他發送配置
         payload.put("enable_id_trans", 0);
         payload.put("enable_duplicate_check", 0);
-        payload.put("duplicate_check_interval", 1800); // 防重覆發送校驗時間，默認1800秒
+        payload.put("duplicate_check_interval", DUPLICATE_CHECK_INTERVAL);
         
         return payload;
     }
@@ -242,16 +257,11 @@ public class NotificationPublishHandler {
      */
     private SendResult sendInBatches(Notification notification, List<String> parentUserIds, 
                                List<String> studentUserIds, List<String> partyIds) {
-        int parentBatchSize = 1000;
-        int studentBatchSize = 1000;
-        int partyBatchSize = 100;
-
         // 計算需要的批次數量
-        int parentBatches = (int) Math.ceil((double) parentUserIds.size() / parentBatchSize);
-        int studentBatches = (int) Math.ceil((double) studentUserIds.size() / studentBatchSize);
-        int partyBatches = (int) Math.ceil((double) partyIds.size() / partyBatchSize);
-        
-        int totalBatches = Math.max(Math.max(parentBatches, studentBatches), partyBatches);
+        int parentBatches  = calcBatchCount(parentUserIds.size(), PARENT_STUDENT_BATCH_SIZE);
+        int studentBatches = calcBatchCount(studentUserIds.size(), PARENT_STUDENT_BATCH_SIZE);
+        int partyBatches   = calcBatchCount(partyIds.size(), PARTY_BATCH_SIZE);
+        int totalBatches   = Math.max(Math.max(parentBatches, studentBatches), partyBatches);
         
         log.info("通知 {} 需要分 {} 批發送（家長 {} 批，學生 {} 批，部門 {} 批）",
                 notification.getNotificationId(), totalBatches, parentBatches, studentBatches, partyBatches);
@@ -266,9 +276,9 @@ public class NotificationPublishHandler {
         // 分批發送
         for (int i = 0; i < totalBatches; i++) {
             // 截取當前批次的數據
-            List<String> currentParentIds = extractBatch(parentUserIds, i, parentBatchSize);
-            List<String> currentStudentIds = extractBatch(studentUserIds, i, studentBatchSize);
-            List<String> currentPartyIds = extractBatch(partyIds, i, partyBatchSize);
+            List<String> currentParentIds  = extractBatch(parentUserIds, i, PARENT_STUDENT_BATCH_SIZE);
+            List<String> currentStudentIds = extractBatch(studentUserIds, i, PARENT_STUDENT_BATCH_SIZE);
+            List<String> currentPartyIds   = extractBatch(partyIds, i, PARTY_BATCH_SIZE);
         
             // 如果當前批次沒有任何接收者，跳過
             if (currentParentIds.isEmpty() && currentStudentIds.isEmpty() && currentPartyIds.isEmpty()) {
@@ -394,12 +404,21 @@ public class NotificationPublishHandler {
      * @return 格式化後的時間字符串 (yyyy-MM-dd HH:mm:ss)
      */
     private String formatPublishTime(LocalDateTime createTime) {
-        if (createTime == null) {
-            return "未知";
-        }
-        
-        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return createTime.format(formatter);
+        return createTime != null ? createTime.format(DATE_FORMATTER) : "未知";
+    }
+
+    /**
+     * 計算批次數量
+     */
+    private int calcBatchCount(int total, int batchSize) {
+        return (int) Math.ceil((double) total / batchSize);
+    }
+
+    /**
+     * Null 安全的 List 轉換
+     */
+    private <T> List<T> nullSafe(List<T> list) {
+        return list != null ? list : Collections.emptyList();
     }
     
     /**
@@ -409,18 +428,13 @@ public class NotificationPublishHandler {
      * @param userIds      接收者 userid 列表
      */
     private void sendCcInBatches(Notification notification, List<String> userIds) {
-        int batchSize = 1000; // 每批最多 1000 個用戶
-        
-        // 計算需要的批次數量
-        int totalBatches = (int) Math.ceil((double) userIds.size() / batchSize);
+        int totalBatches = calcBatchCount(userIds.size(), PARENT_STUDENT_BATCH_SIZE);
         
         log.info("通知 {} 的抄送消息需要分 {} 批發送，共 {} 個接收者",
                 notification.getNotificationId(), totalBatches, userIds.size());
         
-        // 分批發送
         for (int i = 0; i < totalBatches; i++) {
-            // 截取當前批次的數據
-            List<String> currentUserIds = extractBatch(userIds, i, batchSize);
+            List<String> currentUserIds = extractBatch(userIds, i, PARENT_STUDENT_BATCH_SIZE);
             
             // 如果當前批次沒有任何接收者，跳過
             if (currentUserIds.isEmpty()) {
@@ -502,7 +516,7 @@ public class NotificationPublishHandler {
         // 其他發送配置
         payload.put("enable_id_trans", 0);
         payload.put("enable_duplicate_check", 0);
-        payload.put("duplicate_check_interval", 1800); // 防重覆發送校驗時間，默認1800秒
+        payload.put("duplicate_check_interval", DUPLICATE_CHECK_INTERVAL);
         
         return payload;
     }
@@ -598,11 +612,11 @@ public class NotificationPublishHandler {
         
         // 設置發送狀態：全部成功=2，全部失敗=3，部分成功=4
         if (failCount == 0 && totalCount > 0) {
-            sendRecord.setSendStatus("2"); // 2-發送成功
+            sendRecord.setSendStatus(SEND_STATUS_SUCCESS);
         } else if (successCount == 0 && totalCount > 0) {
-            sendRecord.setSendStatus("3"); // 3-發送失敗
+            sendRecord.setSendStatus(SEND_STATUS_FAIL);
         } else {
-            sendRecord.setSendStatus("4"); // 4-部分成功
+            sendRecord.setSendStatus(SEND_STATUS_PARTIAL);
         }
         
         sendRecord.setCreateTime(LocalDateTime.now());
@@ -792,16 +806,10 @@ public class NotificationPublishHandler {
                 // 分批发送提醒消息
                 boolean sendSuccess = sendRemindInBatches(parentUserIdList, remindContent);
                 
-                // 创建提醒记录
-                NotificationReminderRecord reminderRecord = new NotificationReminderRecord();
-                reminderRecord.setNotificationId(notificationId);
-                reminderRecord.setSendRecordId(sendRecord.getSendRecordId());
-                reminderRecord.setStudentUserId(studentUserId);
-                reminderRecord.setParentUserIds(parentUserIdsStr);
-                reminderRecord.setRemindSendTime(now);
-                reminderRecord.setRemindSendStatus(sendSuccess ? "1" : "2");
-                reminderRecord.setCreateTime(now);
-                reminderRecords.add(reminderRecord);
+                // 建立提醒記錄
+                reminderRecords.add(buildReminderRecord(
+                        notificationId, sendRecord.getSendRecordId(),
+                        studentUserId, parentUserIdsStr, now, sendSuccess ? "1" : "2"));
                 
                 if (sendSuccess) {
                     successCount++;
@@ -812,16 +820,10 @@ public class NotificationPublishHandler {
                 log.error("发送提醒通知失败，学生ID: {}", studentUserId, e);
                 failCount++;
                 
-                // 即使失败也创建记录
-                NotificationReminderRecord reminderRecord = new NotificationReminderRecord();
-                reminderRecord.setNotificationId(notificationId);
-                reminderRecord.setSendRecordId(sendRecord.getSendRecordId());
-                reminderRecord.setStudentUserId(studentUserId);
-                reminderRecord.setParentUserIds(parentUserIdsStr);
-                reminderRecord.setRemindSendTime(now);
-                reminderRecord.setRemindSendStatus("2");
-                reminderRecord.setCreateTime(now);
-                reminderRecords.add(reminderRecord);
+                // 即使失敗也建立記錄
+                reminderRecords.add(buildReminderRecord(
+                        notificationId, sendRecord.getSendRecordId(),
+                        studentUserId, parentUserIdsStr, now, "2"));
             }
         }
         
@@ -869,12 +871,9 @@ public class NotificationPublishHandler {
             noticeUrl = noticeBaseUrl + notification.getNotificationId();
         }
         
-        // 格式化回复截止时间
-        String replyDeadline = "";
-        if (notification.getReplyDeadline() != null) {
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            replyDeadline = sdf.format(notification.getReplyDeadline());
-        }
+        // 格式化回覆截止時間
+        String replyDeadline = notification.getReplyDeadline() != null
+                ? notification.getReplyDeadline().format(DATE_FORMATTER) : "";
         
         return "🔔 溫馨提示\n" +
                "───────────────\n" +
@@ -897,11 +896,10 @@ public class NotificationPublishHandler {
             return false;
         }
         
-        int batchSize = 1000;
-        int totalBatches = (int) Math.ceil((double) parentUserIds.size() / batchSize);
+        int totalBatches = calcBatchCount(parentUserIds.size(), PARENT_STUDENT_BATCH_SIZE);
         
         for (int i = 0; i < totalBatches; i++) {
-            List<String> currentBatch = extractBatch(parentUserIds, i, batchSize);
+            List<String> currentBatch = extractBatch(parentUserIds, i, PARENT_STUDENT_BATCH_SIZE);
             
             if (currentBatch.isEmpty()) {
                 continue;
@@ -992,46 +990,20 @@ public class NotificationPublishHandler {
         // 保存所有失败用户的失败原因
         Map<String, String> allFailedUserReasons = new HashMap<>();
 
-        // 重新发送家长消息
+        // 重新發送家長消息
         if (!failedParentIds.isEmpty()) {
-            // 按批次发送家长消息
             SendResult parentResult = sendInBatches(notification, failedParentIds, Collections.emptyList(), Collections.emptyList());
-            // 更新每条阅读记录的 send_status
-            for (NotificationUserReadRecord record : failedRecords) {
-                if ("2".equals(record.getUserType())) {
-                    // 更新每条阅读记录的 send_status
-                    String newStatus = parentResult.getSuccessUserIds().contains(record.getUserId()) ? "1" : "0";
-                    notificationUserReadRecordService.updateSendStatus(record.getReadId(), newStatus);
-                }
-            }
-            // 保存成功用户
+            updateReadRecords(failedRecords, "2", parentResult.getSuccessUserIds());
             overallSuccessUserIds.addAll(parentResult.getSuccessUserIds());
-            // 如果存在失败原因，保存
-            if (parentResult.getFailedUserReasons() != null) {
-                // 保存失败原因
-                allFailedUserReasons.putAll(parentResult.getFailedUserReasons());
-            }
+            if (parentResult.getFailedUserReasons() != null) allFailedUserReasons.putAll(parentResult.getFailedUserReasons());
         }
 
-        // 重新发送学生消息
+        // 重新發送學生消息
         if (!failedStudentIds.isEmpty()) {
-            // 按批次发送学生消息
             SendResult studentResult = sendInBatches(notification, Collections.emptyList(), failedStudentIds, Collections.emptyList());
-            // 更新每条阅读记录的 send_status
-            for (NotificationUserReadRecord record : failedRecords) {
-                if ("1".equals(record.getUserType())) {
-                    // 更新每条阅读记录的 send_status
-                    String newStatus = studentResult.getSuccessUserIds().contains(record.getUserId()) ? "1" : "0";
-                    notificationUserReadRecordService.updateSendStatus(record.getReadId(), newStatus);
-                }
-            }
-            // 保存成功用户
+            updateReadRecords(failedRecords, "1", studentResult.getSuccessUserIds());
             overallSuccessUserIds.addAll(studentResult.getSuccessUserIds());
-            // 如果存在失败原因，保存
-            if (studentResult.getFailedUserReasons() != null) {
-                // 保存失败原因
-                allFailedUserReasons.putAll(studentResult.getFailedUserReasons());
-            }
+            if (studentResult.getFailedUserReasons() != null) allFailedUserReasons.putAll(studentResult.getFailedUserReasons());
         }
 
         // 如果是自动重发， 记录自动重发的失败信息
@@ -1047,8 +1019,7 @@ public class NotificationPublishHandler {
                     failRecord.setUserId(record.getUserId());
                     failRecord.setUserType(record.getUserType());
                     failRecord.setStudentUserId(record.getStudentUserId());
-                    String reason = allFailedUserReasons.get(record.getUserId());
-                    if (reason == null) reason = "未知原因";
+                    String reason = allFailedUserReasons.getOrDefault(record.getUserId(), "未知原因");
                     failRecord.setFailReason1("自动重发失败");
                     failRecord.setFailMessage1(reason);
                     // 保存或者更新
@@ -1130,11 +1101,11 @@ public class NotificationPublishHandler {
         updateRecord.setSuccessCount(newSuccessCount);
         updateRecord.setFailCount(newFailCount);
         if (newFailCount == 0) {
-            updateRecord.setSendStatus("2"); // 全部成功
+            updateRecord.setSendStatus(SEND_STATUS_SUCCESS);
         } else if (newSuccessCount == 0) {
-            updateRecord.setSendStatus("3"); // 全部失败
+            updateRecord.setSendStatus(SEND_STATUS_FAIL);
         } else {
-            updateRecord.setSendStatus("4"); // 部分成功
+            updateRecord.setSendStatus(SEND_STATUS_PARTIAL);
         }
         updateRecord.setUpdateTime(LocalDateTime.now());
         return updateRecord;
@@ -1243,8 +1214,38 @@ public class NotificationPublishHandler {
 
         payload.put("enable_id_trans", 0);
         payload.put("enable_duplicate_check", 0);
-        payload.put("duplicate_check_interval", 1800);
+        payload.put("duplicate_check_interval", DUPLICATE_CHECK_INTERVAL);
 
         return payload;
+    }
+
+    /**
+     * 構建提醒記錄（統一工廠方法，避免重複代碼）
+     */
+    private NotificationReminderRecord buildReminderRecord(Long notificationId, Long sendRecordId,
+                                                           String studentUserId, String parentUserIdsStr,
+                                                           LocalDateTime now, String status) {
+        NotificationReminderRecord record = new NotificationReminderRecord();
+        record.setNotificationId(notificationId);
+        record.setSendRecordId(sendRecordId);
+        record.setStudentUserId(studentUserId);
+        record.setParentUserIds(parentUserIdsStr);
+        record.setRemindSendTime(now);
+        record.setRemindSendStatus(status);
+        record.setCreateTime(now);
+        return record;
+    }
+
+    /**
+     * 批量更新閱讀記錄的發送狀態
+     */
+    private void updateReadRecords(List<NotificationUserReadRecord> records,
+                                   String userType, Set<String> successUserIds) {
+        for (NotificationUserReadRecord record : records) {
+            if (userType.equals(record.getUserType())) {
+                String newStatus = successUserIds.contains(record.getUserId()) ? "1" : "0";
+                notificationUserReadRecordService.updateSendStatus(record.getReadId(), newStatus);
+            }
+        }
     }
 }
