@@ -27,10 +27,10 @@ public class CalendarEventController extends BaseController {
     private ISysAdminService sysAdminService;
 
     /**
-     * 校驗是否為管理員
+     * 校驗是否「非」管理員
      */
-    private boolean checkAdmin() {
-        return sysAdminService.isAdmin(getOpenUserId());
+    private boolean isNotAdmin() {
+        return sysAdminService.isNotAdmin(getOpenUserId());
     }
 
     /**
@@ -38,7 +38,7 @@ public class CalendarEventController extends BaseController {
      */
     @GetMapping("/list")
     public TableDataInfo list(CalendarEvent calendarEvent) {
-        if (!checkAdmin()) {
+        if (isNotAdmin()) {
             return getDataTable(new ArrayList<>());
         }
         startPage();
@@ -51,7 +51,7 @@ public class CalendarEventController extends BaseController {
      */
     @GetMapping(value = "/{eventId}")
     public AjaxResult getInfo(@PathVariable("eventId") Long eventId) {
-        if (!checkAdmin()) {
+        if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
         return AjaxResult.success(calendarEventService.selectCalendarEventByEventId(eventId));
@@ -60,10 +60,10 @@ public class CalendarEventController extends BaseController {
     /**
      * 新增行事曆事件
      */
-    @Log(title = "行事曆事件", businessType = BusinessType.INSERT)
+    @Log(title = "新增行事曆事件", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody CalendarEvent calendarEvent) {
-        if (!checkAdmin()) {
+        if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
         calendarEvent.setCreateBy(getUsername());
@@ -76,7 +76,7 @@ public class CalendarEventController extends BaseController {
     @Log(title = "行事曆事件-批量新增", businessType = BusinessType.INSERT)
     @PostMapping("/batch")
     public AjaxResult addBatch(@RequestBody List<CalendarEvent> calendarEvents) {
-        if (!checkAdmin()) {
+        if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
         String username = getUsername();
@@ -87,10 +87,10 @@ public class CalendarEventController extends BaseController {
     /**
      * 修改行事曆事件
      */
-    @Log(title = "行事曆事件", businessType = BusinessType.UPDATE)
+    @Log(title = "修改行事曆事件", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody CalendarEvent calendarEvent) {
-        if (!checkAdmin()) {
+        if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
         calendarEvent.setUpdateBy(getUsername());
@@ -100,10 +100,10 @@ public class CalendarEventController extends BaseController {
     /**
      * 刪除行事曆事件
      */
-    @Log(title = "行事曆事件", businessType = BusinessType.DELETE)
+    @Log(title = "刪除行事曆事件", businessType = BusinessType.DELETE)
     @DeleteMapping("/{eventIds}")
     public AjaxResult remove(@PathVariable Long[] eventIds) {
-        if (!checkAdmin()) {
+        if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
         return toAjax(calendarEventService.deleteCalendarEventByEventIds(eventIds));
@@ -112,10 +112,10 @@ public class CalendarEventController extends BaseController {
     /**
      * 導入行事曆事件
      */
-    @Log(title = "行事曆事件", businessType = BusinessType.IMPORT)
+    @Log(title = "導入行事曆事件", businessType = BusinessType.IMPORT)
     @PostMapping("/importData")
     public AjaxResult importData(MultipartFile file) throws Exception {
-        if (!checkAdmin()) {
+        if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
         String message = calendarEventService.importCalendarEvent(file, getUsername());

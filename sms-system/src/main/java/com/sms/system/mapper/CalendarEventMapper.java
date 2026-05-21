@@ -1,6 +1,7 @@
 package com.sms.system.mapper;
 
 import com.sms.system.entity.CalendarEvent;
+import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
@@ -35,7 +36,7 @@ public interface CalendarEventMapper {
     /**
      * 批量刪除行事曆事件
      */
-    int deleteCalendarEventByEventIds(Long[] eventIds);
+    int deleteCalendarEventByEventIds(@Param("eventIds") Long[] eventIds);
     
     /**
      * 批量插入行事曆事件

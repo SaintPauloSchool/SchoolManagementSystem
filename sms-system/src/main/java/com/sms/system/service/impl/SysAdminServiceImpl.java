@@ -27,14 +27,14 @@ public class SysAdminServiceImpl implements ISysAdminService {
     }
 
     /**
-     * 验证用户是否为管理员
+     * 验证用户是否「非」管理员
      *
      * @param userId 用户ID
-     * @return true-是管理员 false-不是管理员
+     * @return true-不是管理员 false-是管理员
      */
     @Override
-    public boolean isAdmin(String userId) {
+    public boolean isNotAdmin(String userId) {
         SysAdmin admin = sysAdminMapper.selectByUserId(userId);
-        return admin != null && "0".equals(admin.getStatus());
+        return admin == null || !"0".equals(admin.getStatus());
     }
 }
