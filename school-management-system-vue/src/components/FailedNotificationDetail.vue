@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-dialog
     v-model="dialogVisible"
     title="失敗通知詳情"
@@ -183,6 +183,7 @@
 </template>
 
 <script>
+import { ElNotification } from 'element-plus'
 import { InfoFilled, User, Warning } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
@@ -257,11 +258,11 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.detail = response.data || {}
         } else {
-          this.$message.error(response.msg || '加载失败')
+          ElNotification({ title: "操作失敗", message: response.msg || '加载失败', type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('加载详情错误:', error)
-        this.$message.error('数据加载失败')
+        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
       } finally {
         this.loading = false
       }
@@ -283,11 +284,11 @@ export default {
           this.failedReadRecords = response.rows || []
           this.failedReadTotal = response.total || 0
         } else {
-          this.$message.error(response.msg || '加载失败')
+          ElNotification({ title: "操作失敗", message: response.msg || '加载失败', type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('加载失败用户列表错误:', error)
-        this.$message.error('数据加载失败')
+        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
       } finally {
         this.failedReadLoading = false
       }
@@ -309,11 +310,11 @@ export default {
           this.resendFailRecords = response.rows || []
           this.resendFailTotal = response.total || 0
         } else {
-          this.$message.error(response.msg || '加载失败')
+          ElNotification({ title: "操作失敗", message: response.msg || '加载失败', type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('加载重发失败记录错误:', error)
-        this.$message.error('数据加载失败')
+        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
       } finally {
         this.resendFailLoading = false
       }

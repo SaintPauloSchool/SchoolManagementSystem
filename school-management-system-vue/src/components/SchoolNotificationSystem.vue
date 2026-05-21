@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="notification-system">
     <!-- 側邊欄 -->
     <aside class="sidebar" :class="{ 'collapsed': isCollapsed, 'mobile-visible': isMobileMenuOpen }">
@@ -91,6 +91,14 @@
               <el-icon class="nav-icon"><Warning /></el-icon>
               <span class="nav-text">查詢失敗通知</span>
             </li>
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-2' }"
+              @click="handleMenuSelect('3-2')"
+            >
+              <el-icon class="nav-icon"><Calendar /></el-icon>
+              <span class="nav-text">行事曆管理</span>
+            </li>
           </ul>
         </div>
         
@@ -172,6 +180,11 @@
           <FailedNotificationList
             v-else-if="activeMenu === '3-1'"
           />
+          
+          <!-- 行事曆管理 -->
+          <CalendarEventList
+            v-else-if="activeMenu === '3-2'"
+          />
         </transition>
       </div>
     </main>
@@ -182,12 +195,14 @@
 </template>
 
 <script>
-import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning } from '@element-plus/icons-vue'
+import { ElNotification } from 'element-plus'
+import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning, Calendar } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
 import SchoolDepartment from './SchoolDepartment.vue'
 import HomeSchoolContacts from './HomeSchoolContacts.vue'
 import FailedNotificationList from './FailedNotificationList.vue'
+import CalendarEventList from './CalendarEventList.vue'
 import request from '@/utils/request'
 
 export default {
@@ -197,7 +212,8 @@ export default {
     PublishNotification,
     SchoolDepartment,
     HomeSchoolContacts,
-    FailedNotificationList
+    FailedNotificationList,
+    CalendarEventList
   },
   data() {
     return {
@@ -325,6 +341,8 @@ export default {
         // 家校通訊錄，无需加载数据
       } else if (index === '3-1') {
         // 查詢失敗通知，无需加载数据
+      } else if (index === '3-2') {
+        // 行事曆管理，无需加载数据
       }
     },
 
@@ -346,7 +364,7 @@ export default {
         }
       } catch (error) {
         console.error('加载失败:', error)
-        this.$message.error('数据加载失败')
+        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
       }
     },
 
@@ -368,7 +386,7 @@ export default {
         }
       } catch (error) {
         console.error('加载失败:', error)
-        this.$message.error('数据加载失败')
+        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
       }
     },
 

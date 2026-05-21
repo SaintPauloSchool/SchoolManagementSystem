@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="basic-info-form">
     <el-form
       ref="formRef"
@@ -153,7 +153,7 @@
 <script>
 import {ArrowRight, Delete, Edit, Upload} from '@element-plus/icons-vue'
 import FormQuestionDialog from './FormQuestionDialog.vue'
-import {ElMessage} from 'element-plus'
+import { ElNotification } from 'element-plus'
 import {API_BASE_PATH, normalizeProfileUrl} from '@/utils/deployment'
 import MD5 from 'crypto-js/md5'
 import settings from '@/config/settings'
@@ -277,7 +277,7 @@ export default {
           Object.assign(this.formData, this.localFormData)
           this.$emit('next')
         } else {
-          ElMessage.warning('請完善基本信息')
+          ElNotification({ title: '請完善資訊', message: '請先完善基本信息再進行下一步', type: 'warning', duration: 3000 })
         }
       })
     },
@@ -285,7 +285,7 @@ export default {
     beforeUpload(file) {
       const isLt10M = file.size / 1024 / 1024 < 10
       if (!isLt10M) {
-        ElMessage.error('上傳文件大小不能超過 10MB!')
+        ElNotification({ title: '檔案過大', message: '上傳檔案大小不能超過 10MB！', type: 'error', duration: 4000 })
         return false
       }
       // 每次上傳前重新生成驗簽（防止 nonce 重複被後端攔截器拒絕）
@@ -322,9 +322,9 @@ export default {
           url: f._originalUrl
         }))
         
-        ElMessage.success('上傳成功')
+        ElNotification({ title: '上傳成功', message: '附件已成功上傳', type: 'success', duration: 3000 })
       } else {
-        ElMessage.error(response.msg || '上傳失敗')
+        ElNotification({ title: '上傳失敗', message: response.msg || '上傳失敗', type: 'error', duration: 4000 })
         const index = this.fileList.findIndex(f => f.uid === file.uid)
         if (index > -1) {
           this.fileList.splice(index, 1)
@@ -334,7 +334,7 @@ export default {
 
     handleUploadError(error, file) {
       console.error('上傳失敗:', error)
-      ElMessage.error('上傳失敗，請重試')
+      ElNotification({ title: '上傳失敗', message: '上傳失敗，請重試', type: 'error', duration: 4000 })
       const index = this.fileList.findIndex(f => f.uid === file.uid)
       if (index > -1) {
         this.fileList.splice(index, 1)
@@ -342,7 +342,7 @@ export default {
     },
 
     handleExceed(files, fileList) {
-      ElMessage.warning(`最多只能上傳 5 個附件！您選擇了 ${files.length} 個文件，加上現有共 ${files.length + fileList.length} 個。`)
+      ElNotification({ title: '附件數量限制', message: `最多只能上傳 5 個附件！您選擇了 ${files.length} 個檔案，加上現有共 ${files.length + fileList.length} 個。`, type: 'warning', duration: 4000 })
     },
 
     handleChange(file, fileList) {
@@ -411,7 +411,7 @@ export default {
             questions: saveData.questions || [] // 保存所有子問題
           }
           this.$set(this.localFormData.questions, index, formQuestion)
-          ElMessage.success('更新表單問題成功')
+          ElNotification({ title: '更新成功', message: '表單問題已成功更新', type: 'success', duration: 3000 })
         }
       } else {
         // 新增模式：創建新問題
@@ -425,7 +425,7 @@ export default {
           questions: saveData.questions || [] // 保存所有子問題
         }
         this.localFormData.questions.push(newQuestion)
-        ElMessage.success('添加表單問題成功')
+        ElNotification({ title: '添加成功', message: '表單問題已成功添加', type: 'success', duration: 3000 })
       }
       
       // 直接同步到父組件，使用深拷貝避免引用問題
@@ -445,7 +445,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.localFormData.questions.splice(index, 1)
-        ElMessage.success('刪除成功')
+        ElNotification({ title: '刪除成功', message: '問題已成功刪除', type: 'success', duration: 3000 })
       }).catch(() => {})
     },
 

@@ -849,7 +849,7 @@ import {
   Delete, Plus, Upload, Connection,
   ArrowUp, ArrowDown, InfoFilled, CircleClose
 } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElNotification } from 'element-plus'
 
 export default {
   name: 'FormQuestionDialog',
@@ -1130,12 +1130,12 @@ export default {
     // 新增邏輯規則（一次性生成所有選項的規則）
     addLogicRule() {
       if (!this.selectedQuestion) {
-        ElMessage.warning('請先選擇題目')
+        ElNotification({ title: '請選擇題目', message: '請先選擇題目再設置跳轉規則', type: 'warning', duration: 3000 })
         return
       }
       
       if (!this.hasOptionType(this.selectedQuestion.type)) {
-        ElMessage.warning('該題型不需要設置跳轉規則')
+        ElNotification({ title: '題型不支持', message: '該題型不需要設置跳轉規則', type: 'warning', duration: 3000 })
         return
       }
       
@@ -1145,7 +1145,7 @@ export default {
       
       // 如果已經有規則，則不允許重複新增
       if (this.selectedQuestion.logicRuleList.length > 0) {
-        ElMessage.warning('已經設置了跳轉規則')
+        ElNotification({ title: '跳轉規則已存在', message: '已經設置了跳轉規則，請先刪除再新增', type: 'warning', duration: 3000 })
         return
       }
       
@@ -1160,10 +1160,7 @@ export default {
         this.selectedQuestion.logicRuleList.push(newRule)
       }
       
-      ElMessage.success({
-        message: `已為 ${optionsCount} 個選項生成跳轉規則`,
-        offset: 100
-      })
+      ElNotification({ title: '規則已生成', message: `已為 ${optionsCount} 個選項生成跳轉規則`, type: 'success', duration: 3000 })
     },
 
     // 刪除所有邏輯規則
@@ -1174,10 +1171,7 @@ export default {
       
       this.selectedQuestion.logicRuleList = []
       
-      ElMessage.success({
-        message: '已刪除所有跳轉規則',
-        offset: 100
-      })
+      ElNotification({ title: '規則已刪除', message: '已刪除所有跳轉規則', type: 'success', duration: 3000 })
     },
 
     // 切換視圖模式（編輯/邏輯）
@@ -1261,10 +1255,7 @@ export default {
         })
       }
       
-      ElMessage.success({
-        message: mode === 'edit' ? '已切換至編輯模式' : '已切換至邏輯模式',
-        offset: 100
-      })
+      ElNotification({ title: '模式已切換', message: mode === 'edit' ? '已切換至編輯模式' : '已切換至邏輯模式', type: 'success', duration: 2000 })
     },
 
     initForm() {
@@ -1366,10 +1357,7 @@ export default {
       this.questionList.push(question)
       this.selectedQuestionId = question.id
       
-      ElMessage.success({
-        message: '已添加題目',
-        offset: 100
-      })
+      ElNotification({ title: '題目已添加', message: '新題目已成功添加', type: 'success', duration: 2000 })
     },
 
     getDefaultOptions(type) {
@@ -1410,10 +1398,7 @@ export default {
       // 確保最小值不大於最大值
       if (numValue > maxOptions) {
         this.selectedQuestion.minOptions = maxOptions
-        ElMessage.warning({
-          message: '最小選項數不能大於最大選項數，已自動調整為最大值',
-          offset: 100
-        })
+        ElNotification({ title: '選項數量調整', message: '最小選項數不能大於最大選項數，已自動調整為最大值', type: 'warning', duration: 3000 })
       } else {
         this.selectedQuestion.minOptions = numValue
       }
@@ -1438,10 +1423,7 @@ export default {
       // 確保最大值不小於最小值
       if (numValue < minOptions) {
         this.selectedQuestion.maxOptions = minOptions
-        ElMessage.warning({
-          message: '最大選項數不能小於最小選項數，已自動調整為最小值',
-          offset: 100
-        })
+        ElNotification({ title: '選項數量調整', message: '最大選項數不能小於最小選項數，已自動調整為最小值', type: 'warning', duration: 3000 })
       } else {
         this.selectedQuestion.maxOptions = numValue
       }
@@ -1564,10 +1546,7 @@ export default {
       if (this.selectedQuestionId === deletedId) {
         this.selectedQuestionId = null
       }
-      ElMessage.success({
-        message: '刪除成功',
-        offset: 100
-      })
+      ElNotification({ title: '操作成功', message: '題目已成功刪除', type: 'success', duration: 2000 })
     },
 
     addOption() {
@@ -1583,10 +1562,7 @@ export default {
             jumpTarget: 'next'
           }
           this.selectedQuestion.logicRuleList.push(newRule)
-          ElMessage.success({
-            message: '已為新選項添加跳轉規則',
-            offset: 100
-          })
+          ElNotification({ title: '規則已同步', message: '已為新選項添加跳轉規則', type: 'success', duration: 2000 })
         }
       }
     },
@@ -1741,10 +1717,7 @@ export default {
         }
       })
       
-      ElMessage.success({
-        message: '已新增填空',
-        offset: 100
-      })
+      ElNotification({ title: '已新增填空', message: '填空項已成功新增', type: 'success', duration: 2000 })
     },
 
     onContentInput() {
@@ -1825,7 +1798,7 @@ export default {
         if (question.correctAnswers && question.correctAnswers.length > index) {
           question.correctAnswers.splice(index, 1)
         }
-        ElMessage.success('已刪除填空')
+        ElNotification({ title: '已刪除填空', message: '填空項已成功刪除', type: 'success', duration: 2000 })
       }
     },
 
@@ -1875,7 +1848,7 @@ export default {
 
     handleSave() {
       if (this.questionList.length === 0) {
-        ElMessage.warning('請至少添加一道題目')
+        ElNotification({ title: '請先新增題目', message: '請至少添加一道題目再保存', type: 'warning', duration: 3000 })
         return
       }
     
@@ -1916,10 +1889,7 @@ export default {
       for (let i = 0; i < this.questionList.length; i++) {
         const q = this.questionList[i]
         if (!q.title?.trim()) {
-          ElMessage.warning({
-            message: `第 ${i + 1} 題的題目內容不能為空`,
-            offset: 100
-          })
+          ElNotification({ title: '題目內容為空', message: `第 ${i + 1} 題的題目內容不能為空`, type: 'warning', duration: 3000 })
           this.selectedQuestionId = q.id
           return
         }
@@ -1927,10 +1897,7 @@ export default {
         if (this.hasOptionType(q.type)) {
           const validOptions = q.options.filter(opt => opt.trim())
           if (validOptions.length < 2) {
-            ElMessage.warning({
-              message: `第 ${i + 1} 題至少需要 2 個選項`,
-              offset: 100
-            })
+            ElNotification({ title: '選項不足', message: `第 ${i + 1} 題至少需要 2 個選項`, type: 'warning', duration: 3000 })
             this.selectedQuestionId = q.id
             return
           }
@@ -1938,28 +1905,19 @@ export default {
           // 驗證多選題的選項數量限制
           if (q.type === '2') {
             if (!q.minOptions || q.minOptions < 1) {
-              ElMessage.warning({
-                message: `第 ${i + 1} 題的最小選項數必須大於 0`,
-                offset: 100
-              })
+              ElNotification({ title: '最小選項數錯誤', message: `第 ${i + 1} 題的最小選項數必須大於 0`, type: 'warning', duration: 3000 })
               this.selectedQuestionId = q.id
               return
             }
             
             if (!q.maxOptions) {
-              ElMessage.warning({
-                message: `第 ${i + 1} 題請選擇最大選項數`,
-                offset: 100
-              })
+              ElNotification({ title: '請選擇最大選項數', message: `第 ${i + 1} 題請選擇最大選項數`, type: 'warning', duration: 3000 })
               this.selectedQuestionId = q.id
               return
             }
             
             if (q.minOptions > q.maxOptions) {
-              ElMessage.warning({
-                message: `第 ${i + 1} 題的最小選項數不能大於最大選項數`,
-                offset: 100
-              })
+              ElNotification({ title: '選項數量衝突', message: `第 ${i + 1} 題的最小選項數不能大於最大選項數`, type: 'warning', duration: 3000 })
               this.selectedQuestionId = q.id
               return
             }
@@ -1968,10 +1926,7 @@ export default {
             
         if (q.type === '3') {
           if (!q.content || !q.content.trim()) {
-            ElMessage.warning({
-              message: `第 ${i + 1} 題的題目內容不能為空`,
-              offset: 100
-            })
+            ElNotification({ title: '內容為空', message: `第 ${i + 1} 題的題目內容不能為空`, type: 'warning', duration: 3000 })
             this.selectedQuestionId = q.id
             return
           }
@@ -1987,10 +1942,7 @@ export default {
           questionnaire: this.questionnaireData,
           questions: this.questionList
         })
-        ElMessage.success({
-          message: '保存成功',
-          offset: 100
-        })
+        ElNotification({ title: '保存成功', message: '表單問題已成功保存', type: 'success', duration: 3000 })
       })
     },
   }
@@ -2006,7 +1958,7 @@ export default {
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
-  z-index: 2000; /* 降低 z-index，讓 ElMessage 能正常顯示 */
+  z-index: 2000; /* 降低 z-index，讓 ElNotification 能正常顯示 */
   display: flex;
   align-items: center;
   justify-content: center;

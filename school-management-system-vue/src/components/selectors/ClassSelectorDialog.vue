@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-dialog
     v-model="dialogVisible"
     title="選擇班級"
@@ -143,6 +143,7 @@
 </template>
 
 <script>
+import { ElNotification } from 'element-plus'
 import { 
   Loading, DocumentDelete, School, OfficeBuilding, 
   Reading, Notebook, User, Checked, CloseBold, Menu 
@@ -226,11 +227,11 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.departmentTree = response.data || []
         } else {
-          this.$message.error('加載WeCom班級數據失敗')
+          ElNotification({ title: "操作失敗", message: '加載WeCom班級數據失敗', type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('加載WeCom班級數據失敗:', error)
-        this.$message.error('加載WeCom班級數據失敗')
+        ElNotification({ title: "操作失敗", message: '加載WeCom班級數據失敗', type: "error", duration: 4000 })
       } finally {
         this.loading = false
         this.$nextTick(() => {
@@ -252,11 +253,11 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.customTree = response.data || []
         } else {
-          this.$message.error('加載自定義班級數據失敗')
+          ElNotification({ title: "操作失敗", message: '加載自定義班級數據失敗', type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('加載自定義班級數據失敗:', error)
-        // this.$message.error('加載自定義班級數據失敗')
+        // ElNotification({ title: "操作失敗", message: '加載自定義班級數據失敗', type: "error", duration: 4000 })
       } finally {
         this.customLoading = false
         this.$nextTick(() => {
@@ -379,7 +380,7 @@ export default {
         }
         
         if (ancestorInSelected) {
-           this.$message.warning('已选中上级组织，无法单独取消子项');
+           ElNotification({ title: "提示", message: '已选中上级组织，无法单独取消子项', type: "warning", duration: 3000 });
            sourceTree.setCheckedKeys(this.selectedClassIds);
            return;
         }
