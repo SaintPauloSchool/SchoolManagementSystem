@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="calendar-event-list">
     <el-card class="box-card" shadow="never">
       <template #header>
@@ -116,31 +116,78 @@
     </el-dialog>
 
     <!-- 导入对话框 -->
-    <el-dialog title="導入 Excel" v-model="uploadVisible" width="400px" append-to-body>
-      <el-upload
-        class="upload-demo"
-        drag
-        action=""
-        :http-request="customUpload"
-        :limit="1"
-        accept=".xlsx, .xls"
-      >
-        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-        <div class="el-upload__text">
-          將檔案拖曳至此處，或 <em>點擊上傳</em>
-        </div>
-        <template #tip>
-          <div class="el-upload__tip">
-            請上傳 Excel 檔案。欄位順序：日期, 標題, 學部(全校/幼稚園/小學/中學), 備註
+    <el-dialog title="導入 Excel" v-model="uploadVisible" width="650px" append-to-body>
+      <div class="upload-dialog-content">
+        <div class="upload-instruction">
+          <div class="instruction-title">
+            <el-icon><info-filled /></el-icon> Excel 製作範例 (請完全照此格式)：
           </div>
-        </template>
-      </el-upload>
+          
+          <div class="excel-preview">
+            <table class="excel-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>A列</th>
+                  <th>B列</th>
+                  <th>C列</th>
+                  <th>D列</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="excel-header-row">
+                  <td class="row-num">1</td>
+                  <td>日期 (必填)</td>
+                  <td>標題 (必填)</td>
+                  <td>學部 (選填)</td>
+                  <td>備註 (選填)</td>
+                </tr>
+                <tr>
+                  <td class="row-num">2</td>
+                  <td class="excel-cell-date">2026-05-25</td>
+                  <td>學校運動會</td>
+                  <td>全校</td>
+                  <td>請準時出席</td>
+                </tr>
+                <tr>
+                  <td class="row-num">3</td>
+                  <td class="excel-cell-date">2026-05-26</td>
+                  <td>期中考</td>
+                  <td>中學</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <ul class="instruction-list">
+            <li><strong>第一行 (Row 1)：</strong> 必須是表頭（系統會自動跳過不讀取）。</li>
+            <li><strong>C列 (學部)：</strong> 若留空預設為「全校」。可填寫：全校 / 幼稚園 / 小學 / 中學。</li>
+            <li><strong>日期格式：</strong> 請使用 <code>YYYY-MM-DD</code> 格式。</li>
+          </ul>
+        </div>
+
+        <el-upload
+          ref="uploadRef"
+          class="upload-demo"
+          drag
+          action=""
+          :http-request="customUpload"
+          :limit="1"
+          accept=".xlsx, .xls"
+        >
+          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+          <div class="el-upload__text">
+            將檔案拖曳至此處，或 <em>點擊上傳</em>
+          </div>
+        </el-upload>
+      </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { Calendar, Upload, Plus, Search, Refresh, UploadFilled, Edit, Delete } from '@element-plus/icons-vue'
+import { Calendar, Upload, Plus, Search, Refresh, UploadFilled, Edit, Delete, InfoFilled } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { ElMessageBox, ElNotification } from 'element-plus'
 
@@ -315,6 +362,11 @@ export default {
     },
     openUploadDialog() {
       this.uploadVisible = true
+      this.$nextTick(() => {
+        if (this.$refs.uploadRef) {
+          this.$refs.uploadRef.clearFiles()
+        }
+      })
     },
     async customUpload(options) {
       const formData = new FormData()
@@ -331,9 +383,13 @@ export default {
           this.uploadVisible = false
           this.loadEvents()
         } else {
+          // 導入失敗，清除殘留檔案，讓使用者可以重新選取正確的 Excel
+          this.$nextTick(() => { if (this.$refs.uploadRef) this.$refs.uploadRef.clearFiles() })
           ElNotification({ title: '導入失敗', message: res.msg || '導入失敗', type: 'error', duration: 5000, dangerouslyUseHTMLString: true })
         }
       } catch (err) {
+        // 請求異常，同樣清除殘留檔案
+        this.$nextTick(() => { if (this.$refs.uploadRef) this.$refs.uploadRef.clearFiles() })
         ElNotification({ title: '導入錯誤', message: '導入發生錯誤，請稍後再試', type: 'error', duration: 4000 })
       }
     },
@@ -435,5 +491,85 @@ export default {
 .target-type-3 {
   background-color: #fef9c3;
   color: #854d0e;
+}
+
+/* 導入對話框排版 */
+.upload-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.upload-demo {
+  text-align: center;
+}
+
+/* 導入說明樣式 */
+.upload-instruction {
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+.instruction-title {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+/* Excel 預覽表格樣式 */
+.excel-preview {
+  margin: 10px 0;
+  overflow-x: auto;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px #cbd5e1;
+}
+.excel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-family: Arial, sans-serif;
+  text-align: left;
+  background-color: white;
+}
+.excel-table th, .excel-table td {
+  border: 1px solid #cbd5e1;
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+.excel-table thead th {
+  background-color: #f1f5f9;
+  color: #475569;
+  text-align: center;
+  font-weight: bold;
+}
+.excel-table .row-num {
+  background-color: #f1f5f9;
+  color: #475569;
+  text-align: center;
+  font-weight: bold;
+  width: 30px;
+}
+.excel-header-row td {
+  background-color: #e2e8f0;
+  font-weight: 600;
+  color: #1e293b;
+}
+.excel-cell-date {
+  color: #059669;
+  font-family: monospace;
+  font-size: 14px;
+}
+.instruction-list {
+  margin: 10px 0 0 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.6;
+}
+.instruction-list strong {
+  color: #1e293b;
 }
 </style>
