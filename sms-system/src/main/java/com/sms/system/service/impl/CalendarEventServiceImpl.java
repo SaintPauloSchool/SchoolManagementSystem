@@ -1,6 +1,7 @@
 package com.sms.system.service.impl;
 
 import com.sms.system.entity.CalendarEvent;
+import com.sms.system.entity.vo.CalendarEventVO;
 import com.sms.system.mapper.CalendarEventMapper;
 import com.sms.system.service.ICalendarEventService;
 import org.apache.poi.ss.usermodel.*;
@@ -27,8 +28,8 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
     }
 
     @Override
-    public List<CalendarEvent> selectCalendarEventList(CalendarEvent calendarEvent) {
-        return calendarEventMapper.selectCalendarEventList(calendarEvent);
+    public List<CalendarEvent> selectCalendarEventList(CalendarEventVO eventVO) {
+        return calendarEventMapper.selectCalendarEventList(eventVO);
     }
 
     @Override

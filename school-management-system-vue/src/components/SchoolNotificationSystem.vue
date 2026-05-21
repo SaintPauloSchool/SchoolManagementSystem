@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="notification-system">
     <!-- 側邊欄 -->
     <aside class="sidebar" :class="{ 'collapsed': isCollapsed, 'mobile-visible': isMobileMenuOpen }">
@@ -71,8 +71,8 @@
           </ul>
         </div>
         
-        <!-- 占位大類 1 -->
-        <div class="nav-section">
+        <!-- 系統管理（僅管理員可見） -->
+        <div class="nav-section" v-if="isAdmin">
           <div class="nav-section-title" @click="toggleSection('system')">
             <el-icon><Setting /></el-icon>
             <span v-show="!isCollapsed">系統管理</span>
@@ -233,6 +233,7 @@ export default {
       isCollapsed: false,
       isMobileMenuOpen: false,
       isMobile: false,
+      isAdmin: false,
       expandedSections: this.getInitialExpandedSections(),
       menuItems: [
         { index: '1-1', title: '發佈通知', icon: 'Edit' },
@@ -246,6 +247,7 @@ export default {
     window.addEventListener('resize', this.handleResize)
     // 根据当前激活的菜单加载对应数据
     this.loadInitialData()
+    this.checkAdminStatus()
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize)
@@ -293,6 +295,20 @@ export default {
         this.loadMySendNotifications()
       }
       // 其他菜单无需加载数据
+    },
+    async checkAdminStatus() {
+      try {
+        const res = await request({ url: '/system/admin/checkCurrentUser', method: 'get' })
+        if (res.code === 200 || res.code === 0) {
+          this.isAdmin = res.data === true
+          // 若非管理員但目前在系統管理頁，則跳回首頁
+          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2')) {
+            this.handleMenuSelect('1-1')
+          }
+        }
+      } catch (e) {
+        console.error('管理員身份查詢失敗:', e)
+      }
     },
     
     checkScreenSize() {
@@ -564,6 +580,7 @@ export default {
   flex: 1;
   padding: 16px 12px;
   overflow-y: auto;
+  overflow-x: hidden;
   background: transparent;
   display: flex;
   flex-direction: column;
@@ -571,22 +588,13 @@ export default {
 }
 
 .sidebar-nav::-webkit-scrollbar {
-  width: 6px;
+  width: 0px;
+  display: none;
 }
 
-.sidebar-nav::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
-  transition: background 0.25s ease;
-}
-
-.sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.sidebar-nav::-webkit-scrollbar-track {
-  background: transparent;
-  margin: 4px 0;
+.sidebar-nav {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 .nav-section {

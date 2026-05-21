@@ -20,7 +20,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select event_id, event_date, title, target_type, create_by, create_time, update_by, update_time, remark from calendar_event
     </sql>
 
-    <select id="selectCalendarEventList" parameterType="com.sms.system.entity.CalendarEvent" resultMap="CalendarEventResult">
+    <select id="selectCalendarEventList" parameterType="com.sms.system.entity.vo.CalendarEventVO" resultMap="CalendarEventResult">
         <include refid="selectCalendarEventVo"/>
         <where>  
             <if test="eventDate != null "> and event_date = #{eventDate}</if>

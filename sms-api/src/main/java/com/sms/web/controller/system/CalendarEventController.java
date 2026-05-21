@@ -6,13 +6,13 @@ import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.core.page.TableDataInfo;
 import com.sms.common.enums.BusinessType;
 import com.sms.system.entity.CalendarEvent;
+import com.sms.system.entity.vo.CalendarEventVO;
 import com.sms.system.service.ICalendarEventService;
 import com.sms.system.service.ISysAdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,12 +37,12 @@ public class CalendarEventController extends BaseController {
      * 查詢行事曆列表
      */
     @GetMapping("/list")
-    public TableDataInfo list(CalendarEvent calendarEvent) {
+    public TableDataInfo list(CalendarEventVO eventVO) {
         if (isNotAdmin()) {
             return getDataTable(new ArrayList<>());
         }
         startPage();
-        List<CalendarEvent> list = calendarEventService.selectCalendarEventList(calendarEvent);
+        List<CalendarEvent> list = calendarEventService.selectCalendarEventList(eventVO);
         return getDataTable(list);
     }
 

@@ -1,6 +1,7 @@
 package com.sms.system.service;
 
 import com.sms.system.entity.CalendarEvent;
+import com.sms.system.entity.vo.CalendarEventVO;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
@@ -16,7 +17,7 @@ public interface ICalendarEventService {
     /**
      * 查詢行事曆列表
      */
-    List<CalendarEvent> selectCalendarEventList(CalendarEvent calendarEvent);
+    List<CalendarEvent> selectCalendarEventList(CalendarEventVO eventVO);
 
     /**
      * 新增行事曆事件
