@@ -27,5 +27,25 @@ public interface ISysDepartmentService {
      * @return 过滤后的带家长学生关系的树形结构
      */
     List<SysDepartment> getClassTreeWithParentsByAdmin(String openUserId);
+
+    /**
+     * 批量保存部门信息
+     *
+     * @param departments 部门列表
+     */
+    void batchSaveDepartments(List<SysDepartment> departments);
+
+    /**
+     * 获取班级部门 ID
+     *
+     * @return 班级部门 ID 列表
+     */
+    List<Long> getClassDepartmentId();
+
+    /**
+     * 同步企業微信家校通訊錄部門與管理員數據
+     * @param departmentJson 微信接口返回的部門 JSON 數據
+     */
+    void syncSchoolDepartmentData(com.alibaba.fastjson.JSONObject departmentJson);
 }
 

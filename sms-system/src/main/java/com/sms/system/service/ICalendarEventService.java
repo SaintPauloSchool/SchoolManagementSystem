@@ -40,11 +40,6 @@ public interface ICalendarEventService {
     int deleteCalendarEventByEventIds(Long[] eventIds);
 
     /**
-     * 刪除行事曆事件
-     */
-    int deleteCalendarEventByEventId(Long eventId);
-
-    /**
      * 導入行事曆事件
      */
     String importCalendarEvent(MultipartFile file, String operName) throws Exception;

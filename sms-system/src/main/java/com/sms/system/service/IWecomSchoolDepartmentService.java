@@ -25,4 +25,17 @@ public interface IWecomSchoolDepartmentService {
      * @return 仅部门的树形结构
      */
     List<WecomSchoolDepartment> getWecomSchoolDepartmentTree();
+
+    /**
+     * 同步企業微信部門資料
+     * @param result 微信接口返回的部門數據
+     */
+    void syncWecomSchoolDepartments(com.alibaba.fastjson.JSONObject result);
+
+    /**
+     * 同步企業微信部門成員資料
+     * @param departmentId 部門 ID
+     * @param memberResult 微信接口返回的成員數據
+     */
+    void syncWecomSchoolDepartmentMembers(Long departmentId, com.alibaba.fastjson.JSONObject memberResult);
 }

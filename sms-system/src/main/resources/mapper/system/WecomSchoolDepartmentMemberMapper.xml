@@ -44,4 +44,21 @@
         LIMIT 1
     </select>
 
+    <insert id="batchInsertSchoolDepartmentMembers" parameterType="java.util.List">
+        INSERT INTO wecom_school_department_member(userid, name, department_id, open_userid, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userid}, #{item.name}, #{item.departmentId}, #{item.openUserid}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        name = VALUES(name),
+        department_id = VALUES(department_id),
+        open_userid = VALUES(open_userid),
+        update_time = VALUES(update_time)
+    </insert>
+
+    <delete id="deleteMembersByDepartmentId" parameterType="Long">
+        DELETE FROM wecom_school_department_member WHERE department_id = #{departmentId}
+    </delete>
+
 </mapper>

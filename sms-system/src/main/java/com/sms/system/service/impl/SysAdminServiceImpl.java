@@ -16,17 +16,6 @@ public class SysAdminServiceImpl implements ISysAdminService {
     private SysAdminMapper sysAdminMapper;
 
     /**
-     * 根据用户ID查询管理员信息
-     *
-     * @param userId 用户ID
-     * @return 管理员信息
-     */
-    @Override
-    public SysAdmin selectByUserId(String userId) {
-        return sysAdminMapper.selectByUserId(userId);
-    }
-
-    /**
      * 验证用户是否「非」管理员
      *
      * @param userId 用户ID

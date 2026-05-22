@@ -30,11 +30,6 @@ public interface CalendarEventMapper {
     int updateCalendarEvent(CalendarEvent calendarEvent);
 
     /**
-     * 刪除行事曆事件
-     */
-    int deleteCalendarEventByEventId(Long eventId);
-
-    /**
      * 批量刪除行事曆事件
      */
     int deleteCalendarEventByEventIds(@Param("eventIds") Long[] eventIds);

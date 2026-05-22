@@ -217,14 +217,6 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
     }
 
     /**
-     * 根据 ID 查询部门
-     */
-    @Override
-    public SysSchoolDepartment selectSysSchoolDepartmentById(Long id) {
-        return schoolDepartmentMapper.selectById(id);
-    }
-
-    /**
      * 递归收集需要删除的部门 ID
      */
     private  void collectDepartmentIdsToDelete(Long parentId, List<SysSchoolDepartment> allDepartments,

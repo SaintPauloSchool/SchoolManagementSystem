@@ -1,13 +1,19 @@
 package com.sms.system.service.impl;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.sms.system.entity.WecomSchoolDepartment;
 import com.sms.system.entity.WecomSchoolDepartmentMember;
 import com.sms.system.mapper.WecomSchoolDepartmentMapper;
 import com.sms.system.mapper.WecomSchoolDepartmentMemberMapper;
 import com.sms.system.service.IWecomSchoolDepartmentService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,6 +23,8 @@ import java.util.stream.Collectors;
  */
 @Service
 public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentService {
+
+    private static final Logger logger = LoggerFactory.getLogger(WecomSchoolDepartmentServiceImpl.class);
 
     @Autowired
     private WecomSchoolDepartmentMapper schoolDepartmentMapper;
@@ -255,6 +263,84 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
             
             // 繼續遞歸查找孫部門
             collectAllDescendantDepartmentIds(child.getId(), allDepartments, allDepartmentIds);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void syncWecomSchoolDepartments(JSONObject result) {
+        if (result == null || result.getInteger("errcode") == null || result.getInteger("errcode") != 0) {
+            logger.error("獲取部門列表失敗：{}", result != null ? result.getString("errmsg") : "返回結果為空");
+            return;
+        }
+
+        JSONArray departmentArray = result.getJSONArray("department");
+        if (departmentArray != null && !departmentArray.isEmpty()) {
+            List<WecomSchoolDepartment> existingDepts = schoolDepartmentMapper.selectAll();
+            Set<Long> existingIds = existingDepts.stream().map(WecomSchoolDepartment::getId).collect(Collectors.toSet());
+            
+            List<WecomSchoolDepartment> toInsert = new ArrayList<>();
+            List<WecomSchoolDepartment> toUpdate = new ArrayList<>();
+            
+            for (int i = 0; i < departmentArray.size(); i++) {
+                JSONObject deptObj = departmentArray.getJSONObject(i);
+                WecomSchoolDepartment dept = new WecomSchoolDepartment();
+                dept.setId(deptObj.getLong("id"));
+                dept.setParentId(deptObj.getInteger("parentid"));
+                dept.setName(deptObj.getString("name"));
+                dept.setNameEn(deptObj.getString("name_en"));
+                dept.setOrderNum(deptObj.getInteger("order"));
+                JSONArray leaders = deptObj.getJSONArray("department_leader");
+                if (leaders != null && !leaders.isEmpty()) {
+                    dept.setDepartmentLeader(leaders.toJSONString());
+                }
+                dept.setUpdateTime(LocalDateTime.now());
+                
+                existingIds.remove(dept.getId());
+                if (existingDepts.stream().anyMatch(d -> d.getId().equals(dept.getId()))) {
+                    toUpdate.add(dept);
+                } else {
+                    dept.setCreateTime(LocalDateTime.now());
+                    toInsert.add(dept);
+                }
+            }
+
+            if (!toInsert.isEmpty()) schoolDepartmentMapper.batchInsertSchoolDepartments(toInsert);
+            for (WecomSchoolDepartment dept : toUpdate) schoolDepartmentMapper.updateSchoolDepartment(dept);
+            for (Long id : existingIds) schoolDepartmentMapper.deleteSchoolDepartmentById(id);
+
+            logger.info("成功同步企業微信部門數據");
+        } else {
+            logger.warn("未獲取到企業微信部門數據");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void syncWecomSchoolDepartmentMembers(Long departmentId, JSONObject memberResult) {
+        if (memberResult == null || memberResult.getInteger("errcode") == null || memberResult.getInteger("errcode") != 0) {
+            logger.error("獲取部門 {} 成员失败: {}", departmentId, memberResult != null ? memberResult.getString("errmsg") : "返回結果為空");
+            return;
+        }
+
+        JSONArray userArray = memberResult.getJSONArray("userlist");
+        schoolDepartmentMemberMapper.deleteMembersByDepartmentId(departmentId);
+
+        if (userArray != null && !userArray.isEmpty()) {
+            List<WecomSchoolDepartmentMember> members = new ArrayList<>();
+            for (int j = 0; j < userArray.size(); j++) {
+                JSONObject userObj = userArray.getJSONObject(j);
+                WecomSchoolDepartmentMember member = new WecomSchoolDepartmentMember();
+                member.setUserid(userObj.getString("userid"));
+                member.setName(userObj.getString("name"));
+                member.setDepartmentId(departmentId);
+                member.setOpenUserid(userObj.getString("open_userid"));
+                member.setCreateTime(LocalDateTime.now());
+                member.setUpdateTime(LocalDateTime.now());
+                members.add(member);
+            }
+            schoolDepartmentMemberMapper.batchInsertSchoolDepartmentMembers(members);
+            logger.info("成功同步部門 {} 的 {} 個成員", departmentId, members.size());
         }
     }
 }

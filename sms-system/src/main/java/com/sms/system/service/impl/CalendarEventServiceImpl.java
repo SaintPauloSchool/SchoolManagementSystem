@@ -58,11 +58,6 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
     }
 
     @Override
-    public int deleteCalendarEventByEventId(Long eventId) {
-        return calendarEventMapper.deleteCalendarEventByEventId(eventId);
-    }
-
-    @Override
     @Transactional(rollbackFor = Exception.class)
     public String importCalendarEvent(MultipartFile file, String operName) throws Exception {
         int successNum = 0;

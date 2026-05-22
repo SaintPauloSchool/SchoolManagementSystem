@@ -80,10 +80,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where event_id = #{eventId}
     </update>
 
-    <delete id="deleteCalendarEventByEventId" parameterType="Long">
-        delete from calendar_event where event_id = #{eventId}
-    </delete>
-
     <delete id="deleteCalendarEventByEventIds" parameterType="Long">
         delete from calendar_event where event_id in 
         <foreach item="eventId" collection="eventIds" open="(" separator="," close=")">
