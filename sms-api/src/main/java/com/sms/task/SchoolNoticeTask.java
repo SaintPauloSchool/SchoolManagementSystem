@@ -1,6 +1,7 @@
 package com.sms.task;
 
 import com.sms.handler.notification.NotificationPublishHandler;
+import com.sms.handler.TaskLogHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,23 +22,21 @@ public class SchoolNoticeTask {
     @Autowired
     private NotificationPublishHandler notificationPublishHandler;
 
+    @Autowired
+    private TaskLogHelper taskLogHelper;
+
     private static final AtomicBoolean isExecuting = new AtomicBoolean(false);
 
     /**
      * 每周一到周五下午 6 點執行（北京時間）
      */
-    //@Scheduled(cron = "0 0 18 ? * MON-FRI", zone = "Asia/Shanghai")
-    public void sendSchoolNotice() {
-        if (!isExecuting.compareAndSet(false, true)) {
-            log.info("學校通知發送任務已在執行中，跳過本次執行");
-            return;
-        }
-        try {
-            notificationPublishHandler.sendDailySchoolNotice();
-        } catch (Exception e) {
-            log.error("定時發送學校通知失敗", e);
-        } finally {
-            isExecuting.set(false);
-        }
+    @Scheduled(cron = "0 0 18 ? * MON-FRI")
+    public void executeTask() {
+        taskLogHelper.executeAndLog(
+                "每日學校通知發送",
+                "notificationPublishHandler",
+                "sendDailySchoolNotice",
+                () -> notificationPublishHandler.sendDailySchoolNotice()
+        );
     }
 }

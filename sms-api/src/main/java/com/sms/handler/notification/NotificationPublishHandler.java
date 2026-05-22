@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.common.utils.security.Md5Utils;
 import com.sms.framework.wechat.WechatWorkHttpClient;
+import com.sms.system.entity.task.TaskResult;
 import com.sms.system.entity.notification.*;
 import com.sms.system.entity.vo.ResolvedReceiversVO;
 import com.sms.system.entity.vo.ParentStudentMessageInfo;
@@ -1261,13 +1262,13 @@ public class NotificationPublishHandler {
      * 每日學校通知發送主方法
      * 由 SchoolNoticeTask 調用（每周一至周五下午 6 點）
      */
-    public void sendDailySchoolNotice() {
+    public TaskResult sendDailySchoolNotice() {
         log.info("開始執行學校通知發送任務");
         // 獲取所有家長用戶 ID
         List<String> allParentUserIds = departmentParentBindingService.getAllParentUserIds();
         if (allParentUserIds == null || allParentUserIds.isEmpty()) {
             log.warn("沒有家長用戶 ID，跳過發送");
-            return;
+            return TaskResult.success(0, 0, "無家長需發送");
         }
         log.info("獲取到家長用戶 ID 總數量: {}", allParentUserIds.size());
 
@@ -1276,6 +1277,7 @@ public class NotificationPublishHandler {
 
         int successCount = 0;
         int failCount = 0;
+        StringBuilder errorMsg = new StringBuilder();
 
         for (int i = 0; i < allParentUserIds.size(); i += PARENT_STUDENT_BATCH_SIZE) {
             int endIndex = Math.min(i + PARENT_STUDENT_BATCH_SIZE, allParentUserIds.size());
@@ -1297,18 +1299,26 @@ public class NotificationPublishHandler {
             } else {
                 failCount++;
                 String errmsg = result != null ? result.getString("errmsg") : "null";
+                if (errorMsg.length() < 1000) {
+                    errorMsg.append("批次 ").append(batchNumber).append(" 失敗: ").append(errmsg).append("; ");
+                }
                 log.error("第 {}/{} 批發送失敗: errmsg={}", batchNumber, totalBatches, errmsg);
             }
         }
+        
+        if (failCount > 0) {
+            return new TaskResult(successCount, failCount, "學校通知發送部分失敗: " + errorMsg.toString());
+        }
 
         log.info("學校通知發送完成 - 總批次: {}, 成功: {}, 失敗: {}", totalBatches, successCount, failCount);
+        return TaskResult.success(successCount, 0, "全部發送成功");
     }
 
     /**
      * 批量提醒家長回復通知主方法
      * 由 NotificationReminderTask 調用（每天 9 點 30 分）
      */
-    public void remindAllPendingNotifications() {
+    public TaskResult remindAllPendingNotifications() {
         log.info("開始執行定時提示家長回復通知任務");
 
         Notification queryParam = new Notification();
@@ -1318,31 +1328,50 @@ public class NotificationPublishHandler {
 
         if (notificationList == null || notificationList.isEmpty()) {
             log.info("今日無需提醒回復的通知，任務結束");
-            return;
+            return TaskResult.success(0, 0, "無通知需提醒");
         }
 
         int remindCount = 0;
+        int failCount = 0;
+        StringBuilder errorMsg = new StringBuilder();
+        
         // 遍歷通知
         for (Notification notification : notificationList) {
             log.info("發現需要提示回復的通知: 標題={}, ID={}",
                     notification.getTitle(), notification.getNotificationId());
             try {
                 // 提醒家長
-                remindParentsToReply(notification);
-                remindCount++;
+                Map<String, Object> result = remindParentsToReply(notification);
+                if (result != null && Boolean.FALSE.equals(result.get("success"))) {
+                    failCount++;
+                    if (errorMsg.length() < 1000) {
+                        errorMsg.append("通知ID ").append(notification.getNotificationId()).append(" 失敗: ").append(result.get("message")).append("; ");
+                    }
+                } else {
+                    remindCount++;
+                }
             } catch (Exception e) {
+                failCount++;
+                if (errorMsg.length() < 1000) {
+                    errorMsg.append("通知ID ").append(notification.getNotificationId()).append(" 失敗: ").append(e.getMessage()).append("; ");
+                }
                 log.error("定時提示回復失敗: notificationId={}", notification.getNotificationId(), e);
             }
         }
+        
+        if (failCount > 0) {
+            return new TaskResult(remindCount, failCount, "定時提示家長回復通知部分失敗: " + errorMsg.toString());
+        }
 
         log.info("定時提示家長回復通知任務執行完成，共處理 {} 個通知", remindCount);
+        return TaskResult.success(remindCount, 0, "全部處理成功");
     }
 
     /**
      * 批量重發失敗通知主方法
      * 由 NotificationResendTask 調用（每天 9 點至 18 點每小時執行）
      */
-    public void resendAllFailedNotifications() {
+    public TaskResult resendAllFailedNotifications() {
         log.info("開始執行定時重新發送失敗通知任務");
 
         // 獲取所有發送失敗的通知記錄
@@ -1351,7 +1380,7 @@ public class NotificationPublishHandler {
 
         if (failedSendRecords == null || failedSendRecords.isEmpty()) {
             log.info("沒有發送失敗的通知記錄，任務結束");
-            return;
+            return TaskResult.success(0, 0, "無失敗通知需重發");
         }
 
         log.info("共有 {} 條發送失敗的通知記錄，開始逐一重發", failedSendRecords.size());
@@ -1365,15 +1394,26 @@ public class NotificationPublishHandler {
             try {
                 log.info("重發失敗通知: notificationId={}", notificationId);
                 // 重發失敗通知
-                resendFailedNotifications(notificationId, true);
-                successNotifications++;
+                Map<String, Object> result = resendFailedNotifications(notificationId, true);
+                // 如果返回結果包含失敗，或者是部分成功，則算作失敗
+                if (result != null && (Boolean.FALSE.equals(result.get("success")) || (Integer) result.getOrDefault("failCount", 0) > 0)) {
+                    failNotifications++;
+                    log.error("重發失敗通知異常: notificationId={}, {}", notificationId, result.get("message"));
+                } else {
+                    successNotifications++;
+                }
             } catch (Exception e) {
-                log.error("重發失敗通知異常: notificationId={}", notificationId, e);
                 failNotifications++;
+                log.error("重發失敗通知異常: notificationId={}", notificationId, e);
             }
+        }
+        
+        if (failNotifications > 0) {
+            return new TaskResult(successNotifications, failNotifications, "共 " + failNotifications + " 筆通知重發失敗");
         }
 
         log.info("定時重新發送失敗通知任務執行完成，成功處理 {} 個通知，失敗 {} 個通知",
                 successNotifications, failNotifications);
+        return TaskResult.success(successNotifications, 0, "全部處理成功");
     }
 }

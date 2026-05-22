@@ -99,6 +99,14 @@
               <el-icon class="nav-icon"><Calendar /></el-icon>
               <span class="nav-text">行事曆管理</span>
             </li>
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-3' }"
+              @click="handleMenuSelect('3-3')"
+            >
+              <el-icon class="nav-icon"><Document /></el-icon>
+              <span class="nav-text">定時任務日誌</span>
+            </li>
           </ul>
         </div>
         
@@ -185,6 +193,11 @@
           <CalendarEventList
             v-else-if="activeMenu === '3-2'"
           />
+          
+          <!-- 定時任務日誌 -->
+          <SysTaskLogList
+            v-else-if="activeMenu === '3-3'"
+          />
         </transition>
       </div>
     </main>
@@ -203,6 +216,7 @@ import SchoolDepartment from './SchoolDepartment.vue'
 import HomeSchoolContacts from './HomeSchoolContacts.vue'
 import FailedNotificationList from './FailedNotificationList.vue'
 import CalendarEventList from './CalendarEventList.vue'
+import SysTaskLogList from './SysTaskLogList.vue'
 import request from '@/utils/request'
 
 export default {
@@ -213,7 +227,8 @@ export default {
     SchoolDepartment,
     HomeSchoolContacts,
     FailedNotificationList,
-    CalendarEventList
+    CalendarEventList,
+    SysTaskLogList
   },
   data() {
     return {
@@ -302,7 +317,7 @@ export default {
         if (res.code === 200 || res.code === 0) {
           this.isAdmin = res.data === true
           // 若非管理員但目前在系統管理頁，則跳回首頁
-          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2')) {
+          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2' || this.activeMenu === '3-3')) {
             this.handleMenuSelect('1-1')
           }
         }
@@ -359,6 +374,8 @@ export default {
         // 查詢失敗通知，无需加载数据
       } else if (index === '3-2') {
         // 行事曆管理，无需加载数据
+      } else if (index === '3-3') {
+        // 定時任務日誌，无需加载数据
       }
     },
 

@@ -1,6 +1,7 @@
 package com.sms.task;
 
 import com.sms.handler.notification.NotificationPublishHandler;
+import com.sms.handler.TaskLogHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,19 +22,27 @@ public class NotificationResendTask {
     @Autowired
     private NotificationPublishHandler notificationPublishHandler;
 
+    @Autowired
+    private TaskLogHelper taskLogHelper;
+
     private static final AtomicBoolean isExecuting = new AtomicBoolean(false);
 
     /**
      * 每天 9 點到 18 點之間每小時自動重發失敗的通知
      */
-    //@Scheduled(cron = "0 0 9-18 * * ?")
-    public void resendFailedNotificationsTask() {
+    @Scheduled(cron = "0 0 9-18 * * ?")
+    public void executeTask() {
         if (!isExecuting.compareAndSet(false, true)) {
             log.info("定時重新發送失敗通知任務已在執行中，跳過本次執行");
             return;
         }
         try {
-            notificationPublishHandler.resendAllFailedNotifications();
+            taskLogHelper.executeAndLog(
+                "定時重新發送失敗通知",
+                "notificationPublishHandler",
+                "resendAllFailedNotifications",
+                () -> notificationPublishHandler.resendAllFailedNotifications()
+            );
         } catch (Exception e) {
             log.error("執行定時重新發送失敗通知任務異常", e);
         } finally {
