@@ -30,7 +30,7 @@ public class WecomSchoolDepartmentTask {
     /**
      * 每天凌晨 1 點執行（北京時間）
      */
-    @Scheduled(cron = "0 0 1 * * ?")
+    //@Scheduled(cron = "0 0 1 * * ?")
     public void executeTask() {
         if (!isExecuting.compareAndSet(false, true)) {
             log.info("企業微信部門同步任務已在執行中，跳過本次執行");

@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -120,5 +121,17 @@ public class CalendarEventController extends BaseController {
         }
         String message = calendarEventService.importCalendarEvent(file, getUsername());
         return AjaxResult.success(message);
+    }
+
+    /**
+     * 下載行事曆導入模版
+     */
+    @GetMapping("/importTemplate")
+    public void downloadTemplate(HttpServletResponse response) throws Exception {
+        if (isNotAdmin()) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        calendarEventService.downloadImportTemplate(response);
     }
 }

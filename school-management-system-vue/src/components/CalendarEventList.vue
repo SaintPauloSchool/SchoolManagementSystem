@@ -8,10 +8,10 @@
             行事曆管理
           </span>
           <div class="header-actions">
-            <el-button type="success" :icon="Upload" @click="openUploadDialog" size="small">
+            <el-button type="success" :icon="Upload" @click="openUploadDialog">
               導入 Excel
             </el-button>
-            <el-button type="primary" :icon="Plus" @click="handleAdd" size="small">
+            <el-button type="primary" :icon="Plus" @click="handleAdd">
               新增行事
             </el-button>
           </div>
@@ -116,13 +116,33 @@
     </el-dialog>
 
     <!-- 导入对话框 -->
-    <el-dialog title="導入 Excel" v-model="uploadVisible" width="650px" append-to-body>
+    <el-dialog title="導入 Excel" v-model="uploadVisible" width="650px" top="5vh" append-to-body>
       <div class="upload-dialog-content">
         <div class="upload-instruction">
           <div class="instruction-title">
-            <el-icon><info-filled /></el-icon> Excel 製作範例 (請完全照此格式)：
+            <span style="display:flex;align-items:center;gap:5px;">
+              <el-icon><info-filled /></el-icon> Excel 製作範例 (請完全照此格式)：
+            </span>
+            <el-button
+              type="primary"
+              :icon="Download"
+              :loading="templateDownloading"
+              @click="downloadTemplate"
+              style="margin-left:auto;"
+            >
+              下載模版
+            </el-button>
           </div>
           
+          <ul class="instruction-list">
+            <li><strong>第一行 (Row 1)：</strong> 說明行（系統自動跳過）。</li>
+            <li><strong>第二行 (Row 2)：</strong> 表頭行（系統自動跳過），<strong>數據從第三行開始填寫</strong>。</li>
+            <li><strong>第三行 (Row 3)：</strong> 數據行。</li>
+            <li><strong>C列 (學部)：</strong> 若留空預設為「全校」。可填寫：全校 / 幼稚園 / 小學 / 中學。</li>
+            <li><strong>日期格式：</strong> 請使用 <code>YYYY-MM-DD</code> 格式（文字格式，例如 2026-09-01）。</li>
+          </ul>
+
+          <div class="demo-label">【示範】</div>
           <div class="excel-preview">
             <table class="excel-table">
               <thead>
@@ -135,36 +155,27 @@
                 </tr>
               </thead>
               <tbody>
-                <tr class="excel-header-row">
+                <tr class="excel-tip-row">
                   <td class="row-num">1</td>
+                  <td colspan="4" class="excel-cell-tip">說明行（系統自動跳過）。</td>
+                </tr>
+                <tr class="excel-header-row">
+                  <td class="row-num">2</td>
                   <td>日期 (必填)</td>
                   <td>標題 (必填)</td>
                   <td>學部 (選填)</td>
                   <td>備註 (選填)</td>
                 </tr>
                 <tr>
-                  <td class="row-num">2</td>
+                  <td class="row-num">3</td>
                   <td class="excel-cell-date">2026-05-25</td>
                   <td>學校運動會</td>
                   <td>全校</td>
                   <td>請準時出席</td>
                 </tr>
-                <tr>
-                  <td class="row-num">3</td>
-                  <td class="excel-cell-date">2026-05-26</td>
-                  <td>期中考</td>
-                  <td>中學</td>
-                  <td></td>
-                </tr>
               </tbody>
             </table>
           </div>
-
-          <ul class="instruction-list">
-            <li><strong>第一行 (Row 1)：</strong> 必須是表頭（系統會自動跳過不讀取）。</li>
-            <li><strong>C列 (學部)：</strong> 若留空預設為「全校」。可填寫：全校 / 幼稚園 / 小學 / 中學。</li>
-            <li><strong>日期格式：</strong> 請使用 <code>YYYY-MM-DD</code> 格式。</li>
-          </ul>
         </div>
 
         <el-upload
@@ -187,18 +198,18 @@
 </template>
 
 <script>
-import { Calendar, Upload, Plus, Search, Refresh, UploadFilled, Edit, Delete, InfoFilled } from '@element-plus/icons-vue'
+import { Calendar, Upload, Plus, Search, Refresh, UploadFilled, Edit, Delete, InfoFilled, Download } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { ElMessageBox, ElNotification } from 'element-plus'
 
 export default {
   name: 'CalendarEventList',
   components: {
-    Calendar, Upload, Plus, Search, Refresh, UploadFilled, Edit, Delete
+    Calendar, Upload, Plus, Search, Refresh, UploadFilled, Edit, Delete, Download
   },
   data() {
     return {
-      Upload, Plus, Search, Refresh, Edit, Delete,
+      Upload, Plus, Search, Refresh, Edit, Delete, Download,
       loading: false,
       calendarEvents: [],
       total: 0,
@@ -221,7 +232,8 @@ export default {
         eventDateRange: [{ required: true, message: '請選擇行事日期範圍', trigger: 'change', type: 'array', min: 2 }],
         targetType: [{ required: true, message: '請選擇學部', trigger: 'change' }]
       },
-      uploadVisible: false
+      uploadVisible: false,
+      templateDownloading: false
     }
   },
   mounted() {
@@ -396,6 +408,33 @@ export default {
     getTargetTypeText(type) {
       const map = { 0: '全校', 1: '幼稚園', 2: '小學', 3: '中學' }
       return map[type] || '未知'
+    },
+    async downloadTemplate() {
+      this.templateDownloading = true
+      try {
+        const response = await request({
+          url: '/system/calendarEvent/importTemplate',
+          method: 'get',
+          responseType: 'blob'
+        })
+        // response 攔截器對 blob 類型直接返回 response.data（即 Blob）
+        const blob = new Blob([response], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = '行事曆導入模版.xlsx'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+      } catch (err) {
+        console.error('下載模版失敗:', err)
+        ElNotification({ title: '下載失敗', message: '模版下載失敗，請稍後再試', type: 'error', duration: 4000 })
+      } finally {
+        this.templateDownloading = false
+      }
     }
   }
 }
@@ -518,6 +557,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 5px;
+  justify-content: space-between;
 }
 /* Excel 預覽表格樣式 */
 .excel-preview {
@@ -562,12 +602,29 @@ export default {
   font-family: monospace;
   font-size: 14px;
 }
+.excel-tip-row td {
+  background-color: #dbeafe;
+  font-style: italic;
+  color: #1e3a8a;
+  font-size: 12px;
+}
+.excel-cell-tip {
+  text-align: left;
+  padding: 5px 10px !important;
+}
+.demo-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin: 10px 0 4px 2px;
+  letter-spacing: 0.5px;
+}
 .instruction-list {
-  margin: 10px 0 0 0;
+  margin: 6px 0 0 0;
   padding-left: 20px;
   font-size: 13px;
   color: #475569;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 .instruction-list strong {
   color: #1e293b;

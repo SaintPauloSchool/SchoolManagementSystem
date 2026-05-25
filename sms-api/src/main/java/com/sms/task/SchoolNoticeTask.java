@@ -30,7 +30,7 @@ public class SchoolNoticeTask {
     /**
      * 每周一到周五下午 6 點執行（北京時間）
      */
-    @Scheduled(cron = "0 0 18 ? * MON-FRI")
+    //@Scheduled(cron = "0 0 18 ? * MON-FRI")
     public void executeTask() {
         taskLogHelper.executeAndLog(
                 "每日學校通知發送",

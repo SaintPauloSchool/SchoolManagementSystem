@@ -3,6 +3,8 @@ package com.sms.system.service;
 import com.sms.system.entity.CalendarEvent;
 import com.sms.system.entity.vo.CalendarEventVO;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -43,4 +45,9 @@ public interface ICalendarEventService {
      * 導入行事曆事件
      */
     String importCalendarEvent(MultipartFile file, String operName) throws Exception;
+
+    /**
+     * 下載行事曆導入模版
+     */
+    void downloadImportTemplate(HttpServletResponse response) throws Exception;
 }

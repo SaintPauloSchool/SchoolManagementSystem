@@ -30,7 +30,7 @@ public class DepartmentSyncTask {
     /**
      * 每天凌晨 0 點執行
      */
-    @Scheduled(cron = "0 0 0 * * ?")
+    //@Scheduled(cron = "0 0 0 * * ?")
     public void executeTask() {
         if (!isExecuting.compareAndSet(false, true)) {
             log.info("部門數據同步任務已在執行中，跳過本次執行");

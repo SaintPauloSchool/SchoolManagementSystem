@@ -30,7 +30,7 @@ public class NotificationReminderTask {
     /**
      * 每天 9 點 30 分定時執行
      */
-    @Scheduled(cron = "0 30 9 * * ?")
+    //@Scheduled(cron = "0 30 9 * * ?")
     public void executeTask() {
         if (!isExecuting.compareAndSet(false, true)) {
             log.info("定時提示家長回復通知任務已在執行中，跳過本次執行");
