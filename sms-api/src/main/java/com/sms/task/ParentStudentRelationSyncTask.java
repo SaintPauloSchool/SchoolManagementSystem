@@ -30,7 +30,7 @@ public class ParentStudentRelationSyncTask {
     /**
      * 每天凌晨 0 點 30 分執行
      */
-    //@Scheduled(cron = "0 30 0 * * ?")
+    @Scheduled(cron = "0 30 0 * * ?")
     public void executeTask() {
         if (!isExecuting.compareAndSet(false, true)) {
             log.info("家長學生關係同步任務已在執行中，跳過本次執行");

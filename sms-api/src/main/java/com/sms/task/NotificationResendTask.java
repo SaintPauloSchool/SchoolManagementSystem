@@ -30,7 +30,7 @@ public class NotificationResendTask {
     /**
      * 每天 9 點到 18 點之間每小時自動重發失敗的通知
      */
-    //@Scheduled(cron = "0 0 9-18 * * ?")
+    @Scheduled(cron = "0 0 9-18 * * ?")
     public void executeTask() {
         if (!isExecuting.compareAndSet(false, true)) {
             log.info("定時重新發送失敗通知任務已在執行中，跳過本次執行");

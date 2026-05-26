@@ -5,6 +5,7 @@ import com.sms.handler.system.TaskMonitorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,7 +30,7 @@ public class FailedTaskNotifierTask {
     /**
      * 每天早上 9:00 執行
      */
-    //@Scheduled(cron = "0 0 9 * * ?")
+    @Scheduled(cron = "0 0 9 * * ?")
     public void executeTask() {
         if (!isExecuting.compareAndSet(false, true)) {
             log.info("檢查失敗任務通知已在執行中，跳過本次執行");
