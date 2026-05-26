@@ -22,4 +22,36 @@
         ORDER BY order_num desc
     </select>
 
+    <insert id="batchInsertSchoolDepartments" parameterType="java.util.List">
+        INSERT INTO wecom_school_department(id, parent_id, name, name_en, order_num, department_leader, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.parentId}, #{item.name}, #{item.nameEn}, #{item.orderNum}, #{item.departmentLeader}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        parent_id = VALUES(parent_id),
+        name = VALUES(name),
+        name_en = VALUES(name_en),
+        order_num = VALUES(order_num),
+        department_leader = VALUES(department_leader),
+        update_time = VALUES(update_time)
+    </insert>
+
+    <update id="updateSchoolDepartment" parameterType="com.sms.system.entity.WecomSchoolDepartment">
+        UPDATE wecom_school_department
+        <set>
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="nameEn != null">name_en = #{nameEn},</if>
+            <if test="orderNum != null">order_num = #{orderNum},</if>
+            <if test="departmentLeader != null">department_leader = #{departmentLeader},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteSchoolDepartmentById" parameterType="Long">
+        DELETE FROM wecom_school_department WHERE id = #{id}
+    </delete>
+
 </mapper>

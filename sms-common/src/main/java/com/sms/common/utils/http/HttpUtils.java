@@ -145,15 +145,7 @@ public class HttpUtils
         try
         {
             log.info("sendPost - {}", url);
-            URL realUrl = new URL(url);
-            URLConnection conn = realUrl.openConnection();
-            conn.setRequestProperty("accept", "*/*");
-            conn.setRequestProperty("connection", "Keep-Alive");
-            conn.setRequestProperty("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-            conn.setRequestProperty("Accept-Charset", "utf-8");
-            conn.setRequestProperty("Content-Type", contentType);
-            conn.setDoOutput(true);
-            conn.setDoInput(true);
+            URLConnection conn = getUrlConnection(url, contentType);
             out = new PrintWriter(conn.getOutputStream());
             out.print(param);
             out.flush();
@@ -202,6 +194,19 @@ public class HttpUtils
         return result.toString();
     }
 
+    private static URLConnection getUrlConnection(String url, String contentType) throws IOException {
+        URL realUrl = new URL(url);
+        URLConnection conn = realUrl.openConnection();
+        conn.setRequestProperty("accept", "*/*");
+        conn.setRequestProperty("connection", "Keep-Alive");
+        conn.setRequestProperty("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+        conn.setRequestProperty("Accept-Charset", "utf-8");
+        conn.setRequestProperty("Content-Type", contentType);
+        conn.setDoOutput(true);
+        conn.setDoInput(true);
+        return conn;
+    }
+
     public static String sendSSLPost(String url, String param)
     {
         return sendSSLPost(url, param, MediaType.APPLICATION_FORM_URLENCODED_VALUE);
@@ -234,7 +239,7 @@ public class HttpUtils
             String ret = "";
             while ((ret = br.readLine()) != null)
             {
-                if (ret != null && !"".equals(ret.trim()))
+                if (!ret.trim().isEmpty())
                 {
                     result.append(new String(ret.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8));
                 }

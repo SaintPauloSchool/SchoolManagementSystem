@@ -1,5 +1,7 @@
 package com.sms.system.service.impl;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.sms.system.entity.SysDepartment;
 import com.sms.system.entity.SysDepartmentAdmin;
 import com.sms.system.entity.SysDepartmentParentBinding;
@@ -8,16 +10,20 @@ import com.sms.system.mapper.SysDepartmentAdminMapper;
 import com.sms.system.mapper.SysDepartmentMapper;
 import com.sms.system.mapper.SysDepartmentParentBindingMapper;
 import com.sms.system.mapper.SysParentStudentRelationMapper;
+import com.sms.system.service.ISysDepartmentAdminService;
 import com.sms.system.service.ISysDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * 部门 Service 业务层处理
- *
+ * 
+ * @author sms
+ * @date 2023-08-16
  */
 @Service
 public class SysDepartmentServiceImpl implements ISysDepartmentService {
@@ -31,6 +37,9 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
 
     @Autowired
     private SysDepartmentMapper departmentMapper;
+
+    @Autowired
+    private ISysDepartmentAdminService departmentAdminService;
 
     @Autowired
     private SysDepartmentParentBindingMapper parentBindingMapper;
@@ -434,5 +443,82 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
         node.setMobile(relation.getMobile());
         node.setIsLeaf(true);
         return node;
+    }
+
+    @Override
+    public void batchSaveDepartments(List<SysDepartment> departments) {
+        if (departments != null && !departments.isEmpty()) {
+            departmentMapper.batchInsertDepartments(departments);
+        }
+    }
+
+    @Override
+    public List<Long> getClassDepartmentId() {
+        return departmentMapper.selectClassDepartmentId();
+    }
+
+    /**
+     * 同步學校部門數據
+     * @param departmentJson 微信接口返回的部門 JSON 數據
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void syncSchoolDepartmentData(JSONObject departmentJson) {
+
+        // 1. 获取部门数据
+        if (departmentJson != null && departmentJson.getInteger("errcode") != null && departmentJson.getInteger("errcode") == 0) {
+            JSONArray departmentsArray = departmentJson.getJSONArray("departments");
+            // 2. 批量保存部门数据
+            if (departmentsArray != null && !departmentsArray.isEmpty()) {
+                List<SysDepartment> departmentsToSave = new ArrayList<>();
+                // 遍历部门数据
+                for (int i = 0; i < departmentsArray.size(); i++) {
+                    JSONObject deptObj = departmentsArray.getJSONObject(i);
+
+                    SysDepartment department = new SysDepartment();
+                    department.setId(deptObj.getLong("id"));
+                    department.setParentId(deptObj.getInteger("parentid"));
+                    department.setName(deptObj.getString("name"));
+                    department.setType(deptObj.getInteger("type"));
+                    department.setRegisterYear(deptObj.getInteger("register_year"));
+                    department.setStandardGrade(deptObj.getInteger("standard_grade"));
+                    department.setOrderNum(deptObj.getInteger("order"));
+                    department.setIsGraduated(deptObj.getInteger("is_graduated") != null && deptObj.getInteger("is_graduated") == 1);
+                    department.setOpenGroupChat(deptObj.getInteger("open_group_chat") != null && deptObj.getInteger("open_group_chat") == 1);
+                    department.setGroupChatId(deptObj.getString("group_chat_id"));
+
+                    departmentsToSave.add(department);
+                }
+                // 批量保存部门数据
+                batchSaveDepartments(departmentsToSave);
+                // 3. 批量保存部门管理员数据
+                List<SysDepartmentAdmin> allAdmins = new ArrayList<>();
+                for (int i = 0; i < departmentsArray.size(); i++) {
+                    JSONObject deptObj = departmentsArray.getJSONObject(i);
+                    JSONArray adminsArray = deptObj.getJSONArray("department_admins");
+                    
+                    if (adminsArray != null && !adminsArray.isEmpty()) {
+                        Long departmentId = deptObj.getLong("id");
+                        
+                        for (int j = 0; j < adminsArray.size(); j++) {
+                            JSONObject adminObj = adminsArray.getJSONObject(j);
+                            
+                            SysDepartmentAdmin admin = new SysDepartmentAdmin();
+                            admin.setDepartmentId(departmentId);
+                            admin.setUserid(adminObj.getString("userid"));
+                            admin.setType(adminObj.getInteger("type"));
+                            admin.setSubject(adminObj.getString("subject"));
+                            
+                            allAdmins.add(admin);
+                        }
+                    }
+                }
+
+                // 批量保存部门管理员信息
+                if (!allAdmins.isEmpty()) {
+                    departmentAdminService.batchSaveDepartmentAdmins(allAdmins);
+                }
+            }
+        }
     }
 }

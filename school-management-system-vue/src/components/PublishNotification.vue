@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="publish-notification">
     <!-- 步驟指示器 -->
     <div class="steps-wrapper">
@@ -38,6 +38,7 @@
 </template>
 
 <script>
+import { ElNotification } from 'element-plus'
 import BasicInfoForm from './BasicInfoForm.vue'
 import SendSettingsForm from './SendSettingsForm.vue'
 import request from '@/utils/request'
@@ -150,7 +151,7 @@ export default {
         })
         
         if (response.code === 200 || response.code === 0) {
-          this.$message.success('已發佈')
+          ElNotification({ title: "操作成功", message: '已發佈', type: "success", duration: 3000 })
           this.$emit('publish-success')
           this.resetForm()
         } else {
@@ -158,7 +159,7 @@ export default {
         }
       } catch (error) {
         console.error('發佈失敗:', error)
-        this.$message.error(error.message || '發佈失敗，請稍後重試')
+        ElNotification({ title: "操作失敗", message: error.message || '發佈失敗，請稍後重試', type: "error", duration: 4000 })
       } finally {
         this.submitting = false
       }

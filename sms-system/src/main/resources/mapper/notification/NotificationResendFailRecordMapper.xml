@@ -69,22 +69,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <!-- 直接返回 VO，用于分页查询 -->
     <select id="selectBySendRecordIdVO" resultType="com.sms.system.entity.vo.ResendFailRecordVO">
-        select id,
-               user_id as userId,
-               user_type as userType,
-               student_user_id as studentUserId,
-               fail_count as failCount,
-               status,
-               fail_reason_1 as failReason1,
-               fail_message_1 as failMessage1,
-               fail_reason_2 as failReason2,
-               fail_message_2 as failMessage2,
-               fail_reason_3 as failReason3,
-               fail_message_3 as failMessage3,
-               create_time as createTime,
-               update_time as updateTime
-        from notification_resend_fail_record
-        where send_record_id = #{sendRecordId}
+        select r.id,
+               r.user_id as userId,
+               r.user_type as userType,
+               r.student_user_id as studentUserId,
+               ps.student_name as studentName,
+               ps.relation_desc as relation,
+               r.fail_count as failCount,
+               r.status,
+               r.fail_reason_1 as failReason1,
+               r.fail_message_1 as failMessage1,
+               r.fail_reason_2 as failReason2,
+               r.fail_message_2 as failMessage2,
+               r.fail_reason_3 as failReason3,
+               r.fail_message_3 as failMessage3,
+               r.create_time as createTime,
+               r.update_time as updateTime
+        from notification_resend_fail_record r
+        left join sys_parent_student_relation ps on r.user_id = ps.parent_user_id and r.student_user_id = ps.student_user_id
+        where r.send_record_id = #{sendRecordId}
     </select>
 
     <!-- 根据通知ID和用户ID查询单条记录 -->

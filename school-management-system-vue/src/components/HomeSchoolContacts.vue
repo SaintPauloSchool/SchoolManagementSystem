@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="school-department-container">
     <div class="layout-content">
       <!-- 左侧部门树 -->
@@ -251,6 +251,7 @@
 </template>
 
 <script>
+import { ElNotification } from 'element-plus'
 import { OfficeBuilding, Delete, More, School, User, InfoFilled, Loading, DocumentDelete, FolderAdd } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
@@ -375,10 +376,10 @@ export default {
             }
           })
         } else {
-          this.$message.error('加載失敗：' + (response.msg || '未知錯誤'))
+          ElNotification({ title: "操作失敗", message: '加載失敗：' + (response.msg || '未知錯誤'), type: "error", duration: 4000 })
         }
       } catch (error) {
-        this.$message.error('加載失敗：' + (error.message || '網絡錯誤'))
+        ElNotification({ title: "操作失敗", message: '加載失敗：' + (error.message || '網絡錯誤'), type: "error", duration: 4000 })
       }
     },
 
@@ -473,13 +474,13 @@ export default {
           }))
           this.memberCount = members.length
         } else {
-          this.$message.error('加載成員失敗：' + (response.msg || '未知錯誤'))
+          ElNotification({ title: "操作失敗", message: '加載成員失敗：' + (response.msg || '未知錯誤'), type: "error", duration: 4000 })
           this.currentMemberList = []
           this.memberCount = 0
         }
       } catch (error) {
         console.error('加载成员失败:', error)
-        this.$message.error('加載失敗：' + (error.message || '網絡錯誤'))
+        ElNotification({ title: "操作失敗", message: '加載失敗：' + (error.message || '網絡錯誤'), type: "error", duration: 4000 })
         this.currentMemberList = []
         this.memberCount = 0
       }
@@ -516,17 +517,17 @@ export default {
           })
           
           if (response.code === 200 || response.code === 0) {
-            this.$message.success('刪除成功')
+            ElNotification({ title: "操作成功", message: '刪除成功', type: "success", duration: 3000 })
             // 重新加载当前部门成员列表
             if (this.currentDepartment) {
               this.loadMemberList(this.currentDepartment)
             }
           } else {
-            this.$message.error('刪除失敗：' + (response.msg || '未知錯誤'))
+            ElNotification({ title: "操作失敗", message: '刪除失敗：' + (response.msg || '未知錯誤'), type: "error", duration: 4000 })
           }
         } catch (error) {
           if (error !== 'cancel') {
-            this.$message.error('刪除失敗：' + (error.message || '網絡錯誤'))
+            ElNotification({ title: "操作失敗", message: '刪除失敗：' + (error.message || '網絡錯誤'), type: "error", duration: 4000 })
           }
         }
       }).catch(() => {
@@ -540,7 +541,7 @@ export default {
 
     handleBatchDelete() {
       if (this.selectedMembers.length === 0) {
-        this.$message.warning('請選擇至少一個成員')
+        ElNotification({ title: "提示", message: '請選擇至少一個成員', type: "warning", duration: 3000 })
         return
       }
       
@@ -565,7 +566,7 @@ export default {
           const hasError = responses.some(r => r.code !== 200 && r.code !== 0)
           
           if (!hasError) {
-            this.$message.success(`成功刪除 ${this.selectedMembers.length} 位成員`)
+            ElNotification({ title: "操作成功", message: `成功刪除 ${this.selectedMembers.length} 位成員`, type: "success", duration: 3000 })
             // 清空选中项
             this.selectedMembers = []
             if (this.$refs.memberTable) {
@@ -576,11 +577,11 @@ export default {
               this.loadMemberList(this.currentDepartment)
             }
           } else {
-            this.$message.error('部分成員刪除失敗')
+            ElNotification({ title: "操作失敗", message: '部分成員刪除失敗', type: "error", duration: 4000 })
           }
         } catch (error) {
           if (error !== 'cancel') {
-            this.$message.error('刪除失敗：' + (error.message || '網絡錯誤'))
+            ElNotification({ title: "操作失敗", message: '刪除失敗：' + (error.message || '網絡錯誤'), type: "error", duration: 4000 })
           }
         }
       }).catch(() => {
@@ -613,7 +614,7 @@ export default {
             })
             
             if (response.code === 200 || response.code === 0) {
-              this.$message.success(this.departmentForm.id ? '更新成功' : '新增成功')
+              ElNotification({ title: "操作成功", message: this.departmentForm.id ? '更新成功' : '新增成功', type: "success", duration: 3000 })
               this.departmentDialogVisible = false
               
               if (!this.departmentForm.id) {
@@ -648,7 +649,7 @@ export default {
               }
             }
           } catch (error) {
-            this.$message.error('提交失敗')
+            ElNotification({ title: "操作失敗", message: '提交失敗', type: "error", duration: 4000 })
           }
         }
       })
@@ -696,7 +697,7 @@ export default {
       const targetDepartment = department || this.currentDepartment
       
       if (!targetDepartment) {
-        this.$message.warning('請先選擇部門')
+        ElNotification({ title: "提示", message: '請先選擇部門', type: "warning", duration: 3000 })
         return
       }
       
@@ -713,11 +714,11 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.wecomDepartmentTree = response.data || []
         } else {
-          this.$message.error('加載成員數據失敗')
+          ElNotification({ title: "操作失敗", message: '加載成員數據失敗', type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('加载成员数据失败:', error)
-        this.$message.error('加载成员数据失败')
+        ElNotification({ title: "操作失敗", message: '加载成员数据失败', type: "error", duration: 4000 })
       } finally {
         this.loading = false
       }
@@ -752,12 +753,12 @@ export default {
     
     async confirmAddMembers() {
       if (this.selectedWecomMembers.length === 0) {
-        this.$message.warning('請選擇至少一個成員')
+        ElNotification({ title: "提示", message: '請選擇至少一個成員', type: "warning", duration: 3000 })
         return
       }
       
       if (!this.currentDepartment || !this.currentDepartment.id) {
-        this.$message.error('部門信息異常，請重新選擇')
+        ElNotification({ title: "操作失敗", message: '部門信息異常，請重新選擇', type: "error", duration: 4000 })
         return
       }
       
@@ -779,15 +780,15 @@ export default {
         })
         
         if (response.code === 200 || response.code === 0) {
-          this.$message.success('添加成員成功')
+          ElNotification({ title: "操作成功", message: '添加成員成功', type: "success", duration: 3000 })
           this.memberSelectorDialogVisible = false
           this.loadMemberList(this.currentDepartment)
         } else {
-          this.$message.error('添加成員失敗：' + (response.msg || '未知錯誤'))
+          ElNotification({ title: "操作失敗", message: '添加成員失敗：' + (response.msg || '未知錯誤'), type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('添加成员失败:', error)
-        this.$message.error('添加成員失敗：' + (error.message || '網絡錯誤'))
+        ElNotification({ title: "操作失敗", message: '添加成員失敗：' + (error.message || '網絡錯誤'), type: "error", duration: 4000 })
       } finally {
         this.handleMemberSelectorClose()
       }
@@ -807,15 +808,15 @@ export default {
           })
               
           if (response.code === 200 || response.code === 0) {
-            this.$message.success('刪除成功')
+            ElNotification({ title: "操作成功", message: '刪除成功', type: "success", duration: 3000 })
             // 不要在這裡刪除 expandedKeys，讓 tree.store 自己管理
             this.loadDepartmentTree()
           } else {
-            this.$message.error('刪除失敗：' + (response.msg || '未知錯誤'))
+            ElNotification({ title: "操作失敗", message: '刪除失敗：' + (response.msg || '未知錯誤'), type: "error", duration: 4000 })
           }
         } catch (error) {
           if (error !== 'cancel') {
-            this.$message.error('刪除失敗：' + (error.message || '網絡錯誤'))
+            ElNotification({ title: "操作失敗", message: '刪除失敗：' + (error.message || '網絡錯誤'), type: "error", duration: 4000 })
           }
         }
       }).catch(() => {

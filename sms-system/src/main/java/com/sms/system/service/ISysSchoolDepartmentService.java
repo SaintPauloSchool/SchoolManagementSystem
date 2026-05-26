@@ -51,12 +51,4 @@ public interface ISysSchoolDepartmentService {
      */
     int updateSysSchoolDepartment(SysSchoolDepartment department);
 
-    /**
-     * 根据 ID 查询部门
-     *
-     * @param id 部门 ID
-     * @return 部门信息
-     */
-    SysSchoolDepartment selectSysSchoolDepartmentById(Long id);
-
 }

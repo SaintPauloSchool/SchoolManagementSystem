@@ -1,19 +1,18 @@
 package com.sms.task;
 
 import com.sms.handler.notification.NotificationPublishHandler;
-import com.sms.system.entity.notification.Notification;
-import com.sms.system.service.notification.INotificationService;
+import com.sms.handler.TaskLogHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 定时提示家长回复通知的任务
+ * 定時提示家長回復通知的任務
+ * 每天 9 點 30 分執行，所有業務邏輯由 NotificationPublishHandler.remindAllPendingNotifications() 處理
  */
 @Component
 public class NotificationReminderTask {
@@ -21,46 +20,33 @@ public class NotificationReminderTask {
     private static final Logger log = LoggerFactory.getLogger(NotificationReminderTask.class);
 
     @Autowired
-    private INotificationService notificationService;
-
-    @Autowired
     private NotificationPublishHandler notificationPublishHandler;
 
+    @Autowired
+    private TaskLogHelper taskLogHelper;
+
+    private static final AtomicBoolean isExecuting = new AtomicBoolean(false);
+
     /**
-     * 每天9点半定时查询当天需要提示回复的通知，并发送提醒
+     * 每天 9 點 30 分定時執行
      */
     //@Scheduled(cron = "0 30 9 * * ?")
-    public void remindParentsToReplyTask() {
-        log.info("开始执行定时提示家长回复通知的任务...");
-
+    public void executeTask() {
+        if (!isExecuting.compareAndSet(false, true)) {
+            log.info("定時提示家長回復通知任務已在執行中，跳過本次執行");
+            return;
+        }
         try {
-            // 查询所有状态为已发布的通知且提示回复时间为今天的通知
-            Notification queryParam = new Notification();
-            queryParam.setStatus("1"); // 1-已发布
-            queryParam.setReminderTime(LocalDateTime.now());
-            
-            // 直接通过数据库查询符合条件的通知
-            List<Notification> notificationList = notificationService.selectNotificationList(queryParam);
-            
-            int remindCount = 0;
-            // 判断通知列表是否为空
-            if (notificationList != null && !notificationList.isEmpty()) {
-                // 遍历通知列表，发送提醒
-                for (Notification notification : notificationList) {
-                    log.info("发现需要提示回复的通知: 标题={}, ID={}", notification.getTitle(), notification.getNotificationId());
-                    try {
-                        // 发送提醒
-                        notificationPublishHandler.remindParentsToReply(notification);
-                        remindCount++;
-                    } catch (Exception e) {
-                        log.error("定时提示回复失败: notificationId={}", notification.getNotificationId(), e);
-                    }
-                }
-            }
-            
-            log.info("定时提示家长回复通知的任务执行完成，共处理 {} 个通知", remindCount);
+            taskLogHelper.executeAndLog(
+                "定時提示家長回復通知",
+                "notificationPublishHandler",
+                "remindAllPendingNotifications",
+                () -> notificationPublishHandler.remindAllPendingNotifications()
+            );
         } catch (Exception e) {
-            log.error("执行定时提示家长回复通知任务异常", e);
+            log.error("執行定時提示家長回復通知任務異常", e);
+        } finally {
+            isExecuting.set(false);
         }
     }
 }

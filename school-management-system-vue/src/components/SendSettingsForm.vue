@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="send-settings-form">
     <el-form
       ref="formRef"
@@ -209,6 +209,7 @@
 </template>
 
 <script>
+import { ElNotification } from 'element-plus'
 import { ArrowDown, ArrowLeft, Promotion, User, Message, Setting } from '@element-plus/icons-vue'
 import ClassSelectorDialog from './selectors/ClassSelectorDialog.vue'
 import StudentSelectorDialog from './selectors/StudentSelectorDialog.vue'
@@ -349,7 +350,7 @@ export default {
                            this.selectedStudents.length > 0
         
         if (!hasReceivers) {
-          this.$message.warning('請至少選擇一個接收對象')
+          ElNotification({ title: "提示", message: '請至少選擇一個接收對象', type: "warning", duration: 3000 })
           reject()
           return
         }
@@ -358,7 +359,7 @@ export default {
           const deadline = dayjs(this.localFormData.replyDeadline)
           const now = dayjs()
           if (deadline.isBefore(now)) {
-            this.$message.warning('回覆截止時間不能早於當前時間')
+            ElNotification({ title: "提示", message: '回覆截止時間不能早於當前時間', type: "warning", duration: 3000 })
             reject()
             return
           }
@@ -371,7 +372,7 @@ export default {
           
           // 必须从明天开始（不能是今天或更早）
           if (reminderDate.isBefore(tomorrow)) {
-            this.$message.warning('提示回覆時間必須從明天開始')
+            ElNotification({ title: "提示", message: '提示回覆時間必須從明天開始', type: "warning", duration: 3000 })
             reject()
             return
           }
@@ -380,7 +381,7 @@ export default {
           if (this.localFormData.replyDeadline) {
             const deadline = dayjs(this.localFormData.replyDeadline).startOf('day')
             if (reminderDate.isAfter(deadline)) {
-              this.$message.warning('提示回覆時間不能晚於回覆截止時間')
+              ElNotification({ title: "提示", message: '提示回覆時間不能晚於回覆截止時間', type: "warning", duration: 3000 })
               reject()
               return
             }

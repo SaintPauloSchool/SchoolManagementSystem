@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="notification-detail">
     <!-- 顶部标题横幅 -->
     <div class="detail-hero">
@@ -337,6 +337,7 @@
 </template>
 
 <script>
+import { ElNotification } from 'element-plus'
 import {
   Document,
   Connection,
@@ -743,7 +744,7 @@ export default {
         const now = new Date()
         
         if (now > deadline) {
-          this.$message.warning('已超過回覆截止時間，無法提示家長回覆')
+          ElNotification({ title: "提示", message: '已超過回覆截止時間，無法提示家長回覆', type: "warning", duration: 3000 })
           return
         }
       }
@@ -778,20 +779,20 @@ export default {
             // 成功
             const result = response.data
             console.log('result对象:', result)
-            this.$message.success(result.message || '提醒通知发送成功')
+            ElNotification({ title: "操作成功", message: result.message || '提醒通知发送成功', type: "success", duration: 3000 })
             console.log('提醒结果:', result)
           } else if (response.code === 402) {
             // 全部失败
-            this.$message.error(response.msg || '微信发送失败')
+            ElNotification({ title: "操作失敗", message: response.msg || '微信发送失败', type: "error", duration: 4000 })
             console.error('微信发送失败:', response.msg)
           } else {
             // 其他错误
-            this.$message.error(response.msg || '提醒通知发送失败')
+            ElNotification({ title: "操作失敗", message: response.msg || '提醒通知发送失败', type: "error", duration: 4000 })
           }
         }).catch(error => {
           loading.close()
           console.error('=== 捕获的错误 ===', error)
-          this.$message.error('提醒通知发送失败: ' + (error.message || '未知错误'))
+          ElNotification({ title: "操作失敗", message: '提醒通知发送失败: ' + (error.message || '未知错误'), type: "error", duration: 4000 })
         })
       }).catch(() => {
         // 用户取消操作
@@ -820,17 +821,17 @@ export default {
 
           if (response.code === 200) {
             const result = response.data
-            this.$message.success(result.message || '重新發送成功')
+            ElNotification({ title: "操作成功", message: result.message || '重新發送成功', type: "success", duration: 3000 })
             console.log('重發結果:', result)
           } else if (response.code === 402) {
-            this.$message.error(response.msg || '重新發送失敗')
+            ElNotification({ title: "操作失敗", message: response.msg || '重新發送失敗', type: "error", duration: 4000 })
           } else {
-            this.$message.error(response.msg || '重新發送失敗')
+            ElNotification({ title: "操作失敗", message: response.msg || '重新發送失敗', type: "error", duration: 4000 })
           }
         }).catch(error => {
           loading.close()
           console.error('=== 重發失敗通知錯誤 ===', error)
-          this.$message.error('重新發送失敗: ' + (error.message || '未知錯誤'))
+          ElNotification({ title: "操作失敗", message: '重新發送失敗: ' + (error.message || '未知錯誤'), type: "error", duration: 4000 })
         })
       }).catch(() => {
         // 用戶取消操作
@@ -879,12 +880,12 @@ export default {
           window.URL.revokeObjectURL(url)
           
           loading.close()
-          this.$message.success('導出成功')
+          ElNotification({ title: "操作成功", message: '導出成功', type: "success", duration: 3000 })
         })
         .catch(error => {
           loading.close()
           console.error('導出失敗:', error)
-          this.$message.error('導出失敗: ' + (error.message || '未知錯誤'))
+          ElNotification({ title: "操作失敗", message: '導出失敗: ' + (error.message || '未知錯誤'), type: "error", duration: 4000 })
         })
       }).catch(() => {
         // 用戶取消操作

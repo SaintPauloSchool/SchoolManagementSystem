@@ -34,4 +34,14 @@ public interface WecomSchoolDepartmentMemberMapper {
      * @return 成員對象，若不存在則返回 null
      */
     WecomSchoolDepartmentMember selectByUserid(@Param("userid") String userid);
+
+    /**
+     * 批量新增部门成员
+     */
+    int batchInsertSchoolDepartmentMembers(@Param("list") List<WecomSchoolDepartmentMember> list);
+
+    /**
+     * 根据部门ID删除部门所有成员
+     */
+    int deleteMembersByDepartmentId(Long departmentId);
 }

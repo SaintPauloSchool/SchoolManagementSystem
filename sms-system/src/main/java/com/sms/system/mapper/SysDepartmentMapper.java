@@ -17,4 +17,16 @@ public interface SysDepartmentMapper {
      * @return 部门集合
      */
     List<SysDepartment> selectAll();
+
+    /**
+     * 批量保存部门信息
+     * @param departments 部门列表
+     */
+    void batchInsertDepartments(@Param("list") List<SysDepartment> departments);
+
+    /**
+     * 获取班级部门 ID
+     * @return 班级部门 ID 列表
+     */
+    List<Long> selectClassDepartmentId();
 }

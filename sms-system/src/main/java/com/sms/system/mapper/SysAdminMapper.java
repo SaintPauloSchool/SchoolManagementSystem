@@ -3,10 +3,18 @@ package com.sms.system.mapper;
 import com.sms.system.entity.SysAdmin;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * 系统管理员 Mapper 接口
  */
 public interface SysAdminMapper {
+    /**
+     * 获取所有状态正常的管理员用户ID列表
+     *
+     * @return 用户ID列表
+     */
+    List<String> selectAdminUserIds();
     /**
      * 根据用户ID查询管理员信息
      *

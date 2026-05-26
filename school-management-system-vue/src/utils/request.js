@@ -1,5 +1,5 @@
-import axios from 'axios'
-import { ElMessage, ElMessageBox } from 'element-plus'
+﻿import axios from 'axios'
+import { ElMessageBox, ElNotification } from 'element-plus'
 import { API_BASE_PATH, withAppBase } from './deployment'
 import settings from '../config/settings'
 
@@ -69,10 +69,11 @@ service.interceptors.response.use(
     }
 
     if (res.code !== 200 && res.code !== 0) {
-      ElMessage({
-        message: res.msg || res.message || '请求失败',
+      ElNotification({
+        title: '請求失敗',
+        message: res.msg || res.message || '請求失敗',
         type: 'error',
-        duration: 3000
+        duration: 4000
       })
 
       if (res.code === 401) {
@@ -135,10 +136,11 @@ service.interceptors.response.use(
       message = '网络连接失败'
     }
 
-    ElMessage({
+    ElNotification({
+      title: '網路錯誤',
       message,
       type: 'error',
-      duration: 3000
+      duration: 4000
     })
 
     return Promise.reject(error)

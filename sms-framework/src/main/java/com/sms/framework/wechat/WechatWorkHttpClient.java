@@ -40,6 +40,30 @@ public class WechatWorkHttpClient {
     private String sendAppMessageUrl;
 
     /**
+     * 獲取企業部門列表 API
+     */
+    @Value("${wechat.work.api.departmentListUrl:https://qyapi.weixin.qq.com/cgi-bin/department/list?access_token={accessToken}}")
+    private String departmentListUrl;
+
+    /**
+     * 獲取企業部門成員 API
+     */
+    @Value("${wechat.work.api.departmentMemberListUrl:https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token={accessToken}&department_id={departmentId}}")
+    private String departmentMemberListUrl;
+
+    /**
+     * 獲取家校通訊錄部門 API
+     */
+    @Value("${wechat.work.api.schoolDepartmentListUrl:https://qyapi.weixin.qq.com/cgi-bin/school/department/list?access_token={accessToken}}")
+    private String schoolDepartmentListUrl;
+
+    /**
+     * 獲取家校通訊錄家長列表 API
+     */
+    @Value("${wechat.work.api.schoolParentListUrl:https://qyapi.weixin.qq.com/cgi-bin/school/user/list_parent?access_token={accessToken}&department_id={departmentId}}")
+    private String schoolParentListUrl;
+
+    /**
      * 企業微信 CropId
      */
     @Value("${wechat.work.corpId:}")
@@ -200,6 +224,74 @@ public class WechatWorkHttpClient {
         validateBaseConfig();
         if (agentId == null) {
             throw new IllegalStateException("缺失agentId配置項");
+        }
+    }
+
+    /**
+     * 獲取企業部門列表
+     * @return 微信接口調用結果 (JSONObject)
+     */
+    public JSONObject getDepartmentList() {
+        try {
+            String accessToken = getAccessToken();
+            String url = departmentListUrl.replace("{accessToken}", accessToken);
+            String response = HttpUtils.sendGet(url);
+            return JSONObject.parseObject(response);
+        } catch (Exception e) {
+            log.error("獲取企業部門列表失敗", e);
+            throw new RuntimeException("獲取企業部門列表失敗: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 獲取企業部門成員列表
+     * @param departmentId 部門ID
+     * @return 微信接口調用結果 (JSONObject)
+     */
+    public JSONObject getDepartmentMembers(Long departmentId) {
+        try {
+            String accessToken = getAccessToken();
+            String url = departmentMemberListUrl.replace("{accessToken}", accessToken)
+                                                .replace("{departmentId}", String.valueOf(departmentId));
+            String response = HttpUtils.sendGet(url);
+            return JSONObject.parseObject(response);
+        } catch (Exception e) {
+            log.error("獲取企業部門成員失敗", e);
+            throw new RuntimeException("獲取企業部門成員失敗: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 獲取家校通訊錄部門列表
+     * @return 微信接口調用結果 (JSONObject)
+     */
+    public JSONObject getSchoolDepartmentList() {
+        try {
+            String accessToken = getAccessToken();
+            String url = schoolDepartmentListUrl.replace("{accessToken}", accessToken);
+            String response = HttpUtils.sendGet(url);
+            return JSONObject.parseObject(response);
+        } catch (Exception e) {
+            log.error("獲取家校通訊錄部門列表失敗", e);
+            throw new RuntimeException("獲取家校通訊錄部門列表失敗: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 獲取家校通訊錄家長列表
+     * @param departmentId 班級部門ID
+     * @return 微信接口調用結果 (JSONObject)
+     */
+    public JSONObject getSchoolParentList(Long departmentId) {
+        try {
+            String accessToken = getAccessToken();
+            String url = schoolParentListUrl.replace("{accessToken}", accessToken)
+                                            .replace("{departmentId}", String.valueOf(departmentId));
+            String response = HttpUtils.sendGet(url);
+            return JSONObject.parseObject(response);
+        } catch (Exception e) {
+            log.error("獲取家校通訊錄家長列表失敗", e);
+            throw new RuntimeException("獲取家校通訊錄家長列表失敗: " + e.getMessage(), e);
         }
     }
 }
