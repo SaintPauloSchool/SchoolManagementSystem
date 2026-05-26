@@ -17,4 +17,26 @@ public interface SysDepartmentAdminMapper {
      * @return 部门管理员记录列表
      */
     List<SysDepartmentAdmin> selectByUserid(@Param("userid") String userid);
+
+    /**
+     * 根据部门ID和userid查询
+     * @param departmentId 部门ID
+     * @param userid 用户ID
+     * @return 部门管理员记录
+     */
+    SysDepartmentAdmin selectByDepartmentIdAndUserid(@Param("departmentId") Long departmentId, @Param("userid") String userid);
+
+    /**
+     * 批量插入部门管理员
+     * @param admins 管理员列表
+     * @return 结果
+     */
+    int batchInsertDepartmentAdmins(@Param("admins") List<SysDepartmentAdmin> admins);
+
+    /**
+     * 根据部门ID和userid更新
+     * @param admin 管理员记录
+     * @return 结果
+     */
+    int updateByDepartmentIdAndUserid(SysDepartmentAdmin admin);
 }

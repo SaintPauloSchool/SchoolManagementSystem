@@ -21,4 +21,29 @@
         WHERE userid = #{userid}
     </select>
 
+    <select id="selectByDepartmentIdAndUserid" resultMap="SysDepartmentAdminResult">
+        SELECT id, department_id, userid, type, subject, create_time, update_time
+        FROM sys_department_admin
+        WHERE department_id = #{departmentId} AND userid = #{userid}
+        LIMIT 1
+    </select>
+
+    <insert id="batchInsertDepartmentAdmins">
+        INSERT INTO sys_department_admin (department_id, userid, type, subject, create_time, update_time)
+        VALUES
+        <foreach collection="admins" item="admin" separator=",">
+            (#{admin.departmentId}, #{admin.userid}, #{admin.type}, #{admin.subject}, #{admin.createTime}, #{admin.updateTime})
+        </foreach>
+    </insert>
+
+    <update id="updateByDepartmentIdAndUserid" parameterType="com.sms.system.entity.SysDepartmentAdmin">
+        UPDATE sys_department_admin
+        <set>
+            <if test="type != null">type = #{type},</if>
+            <if test="subject != null">subject = #{subject},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        WHERE department_id = #{departmentId} AND userid = #{userid}
+    </update>
+
 </mapper>

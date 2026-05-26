@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-dialog
     v-model="dialogVisible"
     title="選擇學生/家長"
@@ -152,6 +152,7 @@
 </template>
 
 <script>
+import { ElNotification } from 'element-plus'
 import { 
   Loading, DocumentDelete, School, OfficeBuilding, 
   Reading, Notebook, User, UserFilled, Checked, CloseBold, Menu, Folder 
@@ -259,7 +260,7 @@ export default {
           this.customTree = customResponse.data || []
         }
       } catch (error) {
-        this.$message.error('載入學生通訊錄失敗')
+        ElNotification({ title: "操作失敗", message: '載入學生通訊錄失敗', type: "error", duration: 4000 })
       } finally {
         this.loading = false
         this.customLoading = false

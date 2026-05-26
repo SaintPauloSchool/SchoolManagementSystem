@@ -62,6 +62,16 @@
             </template>
           </el-table-column>
           <el-table-column prop="studentUserId" label="關聯學生ID" width="150" show-overflow-tooltip />
+          <el-table-column prop="studentName" label="學生名字" width="120" align="center">
+            <template #default="scope">
+              {{ scope.row.studentName || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="relation" label="關係" width="100" align="center">
+            <template #default="scope">
+              {{ scope.row.relation || '-' }}
+            </template>
+          </el-table-column>
           <el-table-column label="是否已讀" width="100" align="center">
             <template #default="scope">
               <el-tag :type="scope.row.isRead === '1' ? 'success' : 'info'" size="small">
@@ -118,6 +128,16 @@
             </template>
           </el-table-column>
           <el-table-column prop="studentUserId" label="關聯學生ID" width="150" show-overflow-tooltip />
+          <el-table-column prop="studentName" label="學生名字" width="120" align="center">
+            <template #default="scope">
+              {{ scope.row.studentName || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="relation" label="關係" width="100" align="center">
+            <template #default="scope">
+              {{ scope.row.relation || '-' }}
+            </template>
+          </el-table-column>
           <el-table-column label="失敗次數" width="100" align="center">
             <template #default="scope">
               <el-tag type="danger" size="small">{{ scope.row.failCount }} 次</el-tag>
@@ -183,6 +203,7 @@
 </template>
 
 <script>
+import { ElNotification } from 'element-plus'
 import { InfoFilled, User, Warning } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
@@ -257,11 +278,11 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.detail = response.data || {}
         } else {
-          this.$message.error(response.msg || '加载失败')
+          ElNotification({ title: "操作失敗", message: response.msg || '加载失败', type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('加载详情错误:', error)
-        this.$message.error('数据加载失败')
+        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
       } finally {
         this.loading = false
       }
@@ -283,11 +304,11 @@ export default {
           this.failedReadRecords = response.rows || []
           this.failedReadTotal = response.total || 0
         } else {
-          this.$message.error(response.msg || '加载失败')
+          ElNotification({ title: "操作失敗", message: response.msg || '加载失败', type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('加载失败用户列表错误:', error)
-        this.$message.error('数据加载失败')
+        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
       } finally {
         this.failedReadLoading = false
       }
@@ -309,11 +330,11 @@ export default {
           this.resendFailRecords = response.rows || []
           this.resendFailTotal = response.total || 0
         } else {
-          this.$message.error(response.msg || '加载失败')
+          ElNotification({ title: "操作失敗", message: response.msg || '加载失败', type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('加载重发失败记录错误:', error)
-        this.$message.error('数据加载失败')
+        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
       } finally {
         this.resendFailLoading = false
       }

@@ -38,4 +38,12 @@ public interface SysParentStudentRelationMapper {
             @Param("parentUserIds") List<String> parentUserIds,
             @Param("studentUserIds") List<String> studentUserIds);
 
+    /**
+     * 新增家长学生关系
+     *
+     * @param sysParentStudentRelation 家长学生关系
+     * @return 结果
+     */
+    int insertIgnore(SysParentStudentRelation sysParentStudentRelation);
+
 }

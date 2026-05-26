@@ -20,6 +20,12 @@
         WHERE user_id = #{userId}
     </select>
 
+    <select id="selectAdminUserIds" resultType="java.lang.String">
+        SELECT user_id
+        FROM sys_admin
+        WHERE status = '0'
+    </select>
+
     <insert id="insert" parameterType="SysAdmin" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO sys_admin (
             user_id,

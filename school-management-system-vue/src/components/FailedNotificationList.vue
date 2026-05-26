@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="failed-notification-list">
     <el-card class="box-card" shadow="never">
       <template #header>
@@ -119,6 +119,7 @@
 </template>
 
 <script>
+import { ElNotification } from 'element-plus'
 import { Warning, Refresh, View } from '@element-plus/icons-vue'
 import FailedNotificationDetail from './FailedNotificationDetail.vue'
 import request from '@/utils/request'
@@ -161,11 +162,11 @@ export default {
           this.failedNotifications = response.rows || []
           this.total = response.total || 0
         } else {
-          this.$message.error(response.msg || '加载失败')
+          ElNotification({ title: "操作失敗", message: response.msg || '加载失败', type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('加载失败通知列表错误:', error)
-        this.$message.error('数据加载失败')
+        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
       } finally {
         this.loading = false
       }

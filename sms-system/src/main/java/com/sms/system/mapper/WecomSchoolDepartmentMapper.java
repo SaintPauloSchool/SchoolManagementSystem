@@ -1,6 +1,7 @@
 package com.sms.system.mapper;
 
 import com.sms.system.entity.WecomSchoolDepartment;
+import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
@@ -15,5 +16,20 @@ public interface WecomSchoolDepartmentMapper {
      * @return 学校部门集合
      */
     List<WecomSchoolDepartment> selectAll();
+
+    /**
+     * 批量新增学校部门
+     */
+    int batchInsertSchoolDepartments(@Param("list") List<WecomSchoolDepartment> list);
+
+    /**
+     * 更新学校部门
+     */
+    int updateSchoolDepartment(WecomSchoolDepartment department);
+
+    /**
+     * 根据ID删除学校部门
+     */
+    int deleteSchoolDepartmentById(Long id);
 
 }

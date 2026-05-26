@@ -244,7 +244,7 @@ public class NotificationController extends BaseController {
     public TableDataInfo failedList() {
         // 验证管理员权限
         String userId = getOpenUserId();
-        if (!sysAdminService.isAdmin(userId)) {
+        if (sysAdminService.isNotAdmin(userId)) {
             return getDataTable(new ArrayList<>());
         }
 
@@ -260,7 +260,7 @@ public class NotificationController extends BaseController {
     public AjaxResult failedDetail(@PathVariable Long sendRecordId) {
         // 验证管理员权限
         String userId = getOpenUserId();
-        if (!sysAdminService.isAdmin(userId)) {
+        if (sysAdminService.isNotAdmin(userId)) {
             return AjaxResult.error("无权限访问");
         }
 
@@ -279,7 +279,7 @@ public class NotificationController extends BaseController {
     public TableDataInfo failedReadRecords(@PathVariable Long sendRecordId) {
         // 验证管理员权限
         String userId = getOpenUserId();
-        if (!sysAdminService.isAdmin(userId)) {
+        if (sysAdminService.isNotAdmin(userId)) {
             return getDataTable(new ArrayList<>());
         }
 
@@ -296,7 +296,7 @@ public class NotificationController extends BaseController {
     public TableDataInfo resendFailRecords(@PathVariable Long sendRecordId) {
         // 验证管理员权限
         String userId = getOpenUserId();
-        if (!sysAdminService.isAdmin(userId)) {
+        if (sysAdminService.isNotAdmin(userId)) {
             return getDataTable(new ArrayList<>());
         }
 

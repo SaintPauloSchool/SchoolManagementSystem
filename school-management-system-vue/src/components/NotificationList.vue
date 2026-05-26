@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="notification-list">
     <!-- 列表头部 -->
     <div class="list-header">
@@ -142,6 +142,7 @@
 </template>
 
 <script>
+import { ElNotification } from 'element-plus'
 import { Search, Refresh, View, List } from '@element-plus/icons-vue'
 import NotificationDetail from './NotificationDetail.vue'
 import request from '@/utils/request'
@@ -279,7 +280,7 @@ export default {
         }
       } catch (error) {
         console.error('獲取詳情失敗:', error)
-        this.$message.error('獲取詳情失敗')
+        ElNotification({ title: "操作失敗", message: '獲取詳情失敗', type: "error", duration: 4000 })
       } finally {
         this.loading = false
       }

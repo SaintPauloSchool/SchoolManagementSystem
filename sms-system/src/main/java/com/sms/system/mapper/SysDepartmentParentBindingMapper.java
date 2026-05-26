@@ -38,4 +38,38 @@ public interface SysDepartmentParentBindingMapper {
             @Param("parentUserIds") List<String> parentUserIds,
             @Param("studentUserIds") List<String> studentUserIds);
 
+    /**
+     * 获取所有家长用户ID
+     * @return 家长用户ID列表
+     */
+    List<String> selectAllParentUserIds();
+
+    /**
+     * 根据部门ID查询
+     * @param departmentId 部门ID
+     * @return 部门绑定关系集合
+     */
+    List<SysDepartmentParentBinding> selectByDepartmentId(@Param("departmentId") Long departmentId);
+
+    /**
+     * 插入绑定关系
+     * @param binding 部门绑定关系
+     * @return 结果
+     */
+    int insertIgnore(SysDepartmentParentBinding binding);
+
+    /**
+     * 更新绑定关系
+     * @param binding 部门绑定关系
+     * @return 结果
+     */
+    int updateById(SysDepartmentParentBinding binding);
+
+    /**
+     * 根据ID删除
+     * @param id 绑定ID
+     * @return 结果
+     */
+    int deleteById(@Param("id") Long id);
+
 }

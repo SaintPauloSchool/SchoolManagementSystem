@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-dialog
     v-model="dialogVisible"
     title="選擇教職員工"
@@ -147,6 +147,7 @@
 </template>
 
 <script>
+import { ElNotification } from 'element-plus'
 import { 
   Loading, DocumentDelete, School, OfficeBuilding, 
   User, UserFilled, Checked, CloseBold, Menu, Folder 
@@ -251,11 +252,11 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.departmentTree = response.data || []
         } else {
-          this.$message.error('加載WeCom教職員工數據失敗')
+          ElNotification({ title: "操作失敗", message: '加載WeCom教職員工數據失敗', type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('加載WeCom教職員工數據失敗:', error)
-        this.$message.error('加載WeCom教職員工數據失敗')
+        ElNotification({ title: "操作失敗", message: '加載WeCom教職員工數據失敗', type: "error", duration: 4000 })
       } finally {
         this.loading = false
         this.$nextTick(() => {
@@ -277,7 +278,7 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.customTree = response.data || []
         } else {
-          this.$message.error('加載自定義教職員工數據失敗')
+          ElNotification({ title: "操作失敗", message: '加載自定義教職員工數據失敗', type: "error", duration: 4000 })
         }
       } catch (error) {
         console.error('加載自定義教職員工數據失敗:', error)
