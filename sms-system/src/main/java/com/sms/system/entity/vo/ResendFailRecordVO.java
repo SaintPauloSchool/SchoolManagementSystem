@@ -20,6 +20,12 @@ public class ResendFailRecordVO {
     /** 关联学生ID */
     private String studentUserId;
 
+    /** 學生名字 */
+    private String studentName;
+
+    /** 關係 */
+    private String relation;
+
     /** 累计失败次数 */
     private Integer failCount;
 
@@ -83,6 +89,22 @@ public class ResendFailRecordVO {
 
     public void setStudentUserId(String studentUserId) {
         this.studentUserId = studentUserId;
+    }
+
+    public String getStudentName() {
+        return studentName;
+    }
+
+    public void setStudentName(String studentName) {
+        this.studentName = studentName;
+    }
+
+    public String getRelation() {
+        return relation;
+    }
+
+    public void setRelation(String relation) {
+        this.relation = relation;
     }
 
     public Integer getFailCount() {

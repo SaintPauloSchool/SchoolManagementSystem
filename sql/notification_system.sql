@@ -44,7 +44,7 @@ CREATE TABLE notification (
     update_time         DATETIME                                   COMMENT '更新時間',
     remark              VARCHAR(500)    DEFAULT NULL               COMMENT '備註',
     PRIMARY KEY (notification_id)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知主表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT = '通知主表';
 
 -- ----------------------------
 -- 通知接收對象表
@@ -57,7 +57,7 @@ CREATE TABLE notification_receiver (
     receive_data        TEXT                                       COMMENT 'receive_ids 接收對象 ID 列表 (JSON 格式)， receive_names 接收對象名稱列表 (JSON 格式)， type = 1 是wecom的數據， type = 2 是自定義的數據',
     create_time         DATETIME                                   COMMENT '創建時間',
     PRIMARY KEY (receiver_id)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知接收對象表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT = '通知接收對象表';
 
 -- ----------------------------
 -- 通知抄送對象表
@@ -70,7 +70,7 @@ CREATE TABLE notification_cc (
     cc_data             TEXT            NOT NULL                   COMMENT '抄送數據 (JSON 格式)，格式：[{"cc_ids": [1,2], "type": 1, "cc_names": ["聖保祿學校-054"]}, {"cc_ids": [1,2], "type": 2, "cc_names": ["聖保祿學校"]}]，其中 type 1代表wecom的，type 2代表自定義的',
     create_time         DATETIME                                   COMMENT '創建時間',
     PRIMARY KEY (cc_id)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知抄送對象表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT = '通知抄送對象表';
 
 -- ----------------------------
 -- 問題表
@@ -93,7 +93,7 @@ CREATE TABLE notification_question (
     content             TEXT            DEFAULT NULL               COMMENT '題目內容，根據題型存儲不同格式數據：①邏輯表單(type=5)存儲JSON格式{"questionnaire":{"title":"問卷標題","description":"問卷描述"},"questions":[{"id":1,"type":"1/2/3/4","title":"子問題標題","description":"子問題描述","required":true/false,"options":["選項1","選項2"],"placeholder":"佔位符文本","defaultValue":"默認值","validation":[],"minLength":0,"maxLength":200,"randomOrder":false,"logicRuleList":[],"minOptions":1,"maxOptions":null,"uploadNote":"上傳說明","fillBlanks":[],"correctAnswers":[]}]}；②填空題(type=3)存儲帶佔位符的純文本如"這是{{fillblank-1}}一個{{fillblank-2}}填空題"；③其他題型可存儲富文本/HTML內容或題目描述',
     create_time         DATETIME                                   COMMENT '創建時間',
     PRIMARY KEY (question_id)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知問題表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT = '通知問題表';
 
 -- ----------------------------
 -- 發送通知記錄主表
@@ -119,7 +119,7 @@ CREATE TABLE notification_send_record (
       KEY idx_sender (sender_id),
       KEY idx_send_time (send_time),
       KEY idx_send_status (send_status)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '發送通知記錄表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT = '發送通知記錄表';
 
 -- ----------------------------
 -- 用戶通知閱讀狀態表
@@ -142,7 +142,7 @@ CREATE TABLE notification_user_read_record (
        KEY idx_user (user_id),
        KEY idx_read_status (is_read),
        KEY idx_reply_status (reply_status)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知用戶閱讀記錄表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT = '通知用戶閱讀記錄表';
 
 -- ----------------------------
 -- 通知提醒記錄表（用於收集提示家長回覆的記錄）
@@ -161,7 +161,7 @@ CREATE TABLE notification_reminder_record (
        KEY idx_notification (notification_id),
        KEY idx_send_record (send_record_id),
        KEY idx_student (student_user_id)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知提醒記錄表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT = '通知提醒記錄表';
 
 -- ----------------------------
 -- 回覆答案表
@@ -179,7 +179,7 @@ CREATE TABLE notification_answer (
                                      PRIMARY KEY (answer_id),
                                      KEY idx_notification_user (notification_id, user_id),
                                      KEY idx_question (question_id)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT = '通知回答表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT = '通知回答表';
 
 -- ----------------------------
 -- 初始化數據
@@ -228,16 +228,16 @@ DROP TABLE IF EXISTS sys_department;
 CREATE TABLE sys_department (
     id                  BIGINT          NOT NULL                        COMMENT '部門 id',
     parent_id           INT             DEFAULT '0'                     COMMENT '父親部門 id',
-    name                VARCHAR(255)    COLLATE utf8mb4_unicode_ci      NOT NULL COMMENT '部門名稱',
+    name                VARCHAR(255)    NOT NULL                        COMMENT '部門名稱',
     type                INT             DEFAULT '0'                     COMMENT '部門類型：1-班級，2-年級，3-學段，4-校區，5-學校',
     register_year       INT             DEFAULT NULL                    COMMENT '入學年份',
     standard_grade      INT             DEFAULT NULL                    COMMENT '標準年級',
     order_num           INT             DEFAULT '0'                     COMMENT '排序值',
     is_graduated        TINYINT(1)      DEFAULT '0'                     COMMENT '是否畢業：1-是，0-否',
     open_group_chat     TINYINT(1)      DEFAULT '0'                     COMMENT '是否開啟班級群：1-是，0-否',
-    group_chat_id       VARCHAR(255)    COLLATE utf8mb4_unicode_ci      DEFAULT NULL COMMENT '班級群 id',
+    group_chat_id       VARCHAR(255)    DEFAULT NULL                    COMMENT '班級群 id',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='部門表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='部門表';
 
 -- ----------------------------
 -- 家長學生關係表
@@ -255,7 +255,7 @@ CREATE TABLE sys_parent_student_relation (
     update_time         DATETIME        DEFAULT NULL               COMMENT '更新時間',
     PRIMARY KEY (id),
     UNIQUE KEY uk_parent_student (parent_user_id, student_user_id)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='家長學生關係表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT='家長學生關係表';
 
 -- ----------------------------
 -- 部門家長綁定表
@@ -269,7 +269,7 @@ CREATE TABLE sys_department_parent_binding (
     create_time         DATETIME        DEFAULT NULL               COMMENT '創建時間',
     update_time         DATETIME        DEFAULT NULL               COMMENT '更新時間',
     PRIMARY KEY (id)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='部門家長綁定表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT='部門家長綁定表';
 
 -- ----------------------------
 -- 課程班級表
@@ -280,7 +280,7 @@ CREATE TABLE class_section (
     class_section_dsedj VARCHAR(8)      NOT NULL,
     class_section_sp    VARCHAR(8)      NOT NULL,
     PRIMARY KEY (id)
-) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='課程班級';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='課程班級';
 
 INSERT INTO class_section VALUES
 (1,'I 1_A_家長','K1A'),(2,'I 1_B_家長','K1B'),(3,'I 1_C_家長','K1C'),(4,'I 1_D_家長','K1D'),(5,'I 1_E_家長','K1E'),(6,'I 1_F_家長','K1F'),
@@ -311,7 +311,7 @@ CREATE TABLE sys_department_admin (
       create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP  COMMENT '创建时间',
       update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
       PRIMARY KEY (id)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='部门管理员表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT='部门管理员表';
 -- ----------------------------
 -- 微信學校部門表
 -- ----------------------------
@@ -326,7 +326,7 @@ CREATE TABLE wecom_school_department (
     create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP       COMMENT '創建時間',
     update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='企業微信學校部門表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='企業微信學校部門表';
 
 -- ----------------------------
 -- 微信學校部門成員表
@@ -341,7 +341,7 @@ CREATE TABLE wecom_school_department_member (
     create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP  COMMENT '創建時間',
     update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='企業微信學校部門成員表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='企業微信學校部門成員表';
 -- ----------------------------
 -- token表
 -- ----------------------------
@@ -357,7 +357,7 @@ CREATE TABLE `sys_token` (
                              PRIMARY KEY (`id`),
                              UNIQUE KEY `token_value` (`token`),
                              KEY `idx_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=934 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Token表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Token表';
 -- ----------------------------
 -- 系統學校部門表
 -- ----------------------------
@@ -373,7 +373,7 @@ CREATE TABLE sys_school_department (
    create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP       COMMENT '創建時間',
    update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
    PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系統學校部門表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系統學校部門表';
 
 -- ----------------------------
 -- 系統學校部門成員表
@@ -390,7 +390,7 @@ CREATE TABLE sys_school_department_member (
   create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP  COMMENT '創建時間',
   update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
   PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系統學校部門成員表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系統學校部門成員表';
 -- ----------------------------
 -- 通知重发失败记录表
 -- 用于追踪每个用户的重发失败情况，失败次数达到 3 次则放弃重发
@@ -413,7 +413,7 @@ CREATE TABLE `notification_resend_fail_record` (
    `create_time`     datetime              DEFAULT NULL            COMMENT '首次失败时间',
    `update_time`     datetime              DEFAULT NULL            COMMENT '最近更新时间',
    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='通知重发失败记录表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='通知重发失败记录表';
 -- ----------------------------
 -- 系统管理员表（全局）
 -- ----------------------------
@@ -429,7 +429,7 @@ CREATE TABLE sys_admin (
                            PRIMARY KEY (id),
                            UNIQUE KEY uk_user_id (user_id),
                            KEY idx_status (status)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='系统管理员表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统管理员表';
 
 -- 插入示例管理员数据（需要根据实际user_id调整）
 -- INSERT INTO sys_admin VALUES(1, 'admin_user_id', '系统管理员', '0', NOW(), NOW(), '超级管理员');
@@ -449,7 +449,7 @@ CREATE TABLE IF NOT EXISTS `calendar_event` (
     `remark` varchar(500) DEFAULT NULL COMMENT '備註',
     PRIMARY KEY (`event_id`),
     KEY `idx_event_date` (`event_date`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='行事曆事件表';
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='行事曆事件表';
 -- ----------------------------
 -- 定時任務執行日誌表
 -- ----------------------------
@@ -460,6 +460,7 @@ CREATE TABLE `sys_task_log` (
                                 `bean_name` varchar(100) NOT NULL COMMENT 'Spring Bean 名稱 (例如: notificationPublishHandler)',
                                 `method_name` varchar(255) DEFAULT NULL COMMENT '方法名稱',
                                 `status` char(1) DEFAULT '0' COMMENT '執行狀態(0-成功, 1-失敗, 2-部分失敗)',
+                                `is_processed` char(1) DEFAULT '0' COMMENT '是否已處理(0-未處理, 1-已處理)',
                                 `fail_reason` text COMMENT '失敗原因',
                                 `success_count` int(11) DEFAULT 0 COMMENT '成功數量',
                                 `fail_count` int(11) DEFAULT 0 COMMENT '失敗數量',
@@ -468,4 +469,4 @@ CREATE TABLE `sys_task_log` (
                                 `create_time` datetime DEFAULT NULL COMMENT '創建時間',
                                 PRIMARY KEY (`log_id`),
                                 KEY `idx_execution_time` (`execution_time`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='定時任務執行日誌表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='定時任務執行日誌表';

@@ -77,4 +77,12 @@ public class SysTaskLogController extends BaseController {
             return AjaxResult.error("任務執行異常: " + e.getMessage());
         }
     }
+
+    /**
+     * 修改任務日誌狀態
+     */
+    @PutMapping
+    public AjaxResult edit(@RequestBody SysTaskLog sysTaskLog) {
+        return toAjax(sysTaskLogService.updateTaskLog(sysTaskLog));
+    }
 }

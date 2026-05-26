@@ -21,4 +21,19 @@ public interface ISysTaskLogService {
      * @return 任務日誌集合
      */
     List<SysTaskLog> selectTaskLogList(SysTaskLog sysTaskLog);
+
+    /**
+     * 修改任務日誌
+     *
+     * @param sysTaskLog 任務日誌
+     * @return 影響行數
+     */
+    int updateTaskLog(SysTaskLog sysTaskLog);
+
+    /**
+     * 統計失敗且未處理的任務數量
+     *
+     * @return 數量
+     */
+    int countFailedUnprocessedTasks();
 }

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <el-dialog
     v-model="dialogVisible"
     title="失敗通知詳情"
@@ -62,6 +62,16 @@
             </template>
           </el-table-column>
           <el-table-column prop="studentUserId" label="關聯學生ID" width="150" show-overflow-tooltip />
+          <el-table-column prop="studentName" label="學生名字" width="120" align="center">
+            <template #default="scope">
+              {{ scope.row.studentName || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="relation" label="關係" width="100" align="center">
+            <template #default="scope">
+              {{ scope.row.relation || '-' }}
+            </template>
+          </el-table-column>
           <el-table-column label="是否已讀" width="100" align="center">
             <template #default="scope">
               <el-tag :type="scope.row.isRead === '1' ? 'success' : 'info'" size="small">
@@ -118,6 +128,16 @@
             </template>
           </el-table-column>
           <el-table-column prop="studentUserId" label="關聯學生ID" width="150" show-overflow-tooltip />
+          <el-table-column prop="studentName" label="學生名字" width="120" align="center">
+            <template #default="scope">
+              {{ scope.row.studentName || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="relation" label="關係" width="100" align="center">
+            <template #default="scope">
+              {{ scope.row.relation || '-' }}
+            </template>
+          </el-table-column>
           <el-table-column label="失敗次數" width="100" align="center">
             <template #default="scope">
               <el-tag type="danger" size="small">{{ scope.row.failCount }} 次</el-tag>

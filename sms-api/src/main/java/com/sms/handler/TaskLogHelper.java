@@ -76,6 +76,13 @@ public class TaskLogHelper {
             taskLog.setBeanName(beanName);
             taskLog.setMethodName(methodName);
             taskLog.setStatus(status);
+            
+            if ("0".equals(status)) {
+                taskLog.setIsProcessed("1");
+            } else {
+                taskLog.setIsProcessed("0");
+            }
+            
             taskLog.setFailReason(failReason);
             taskLog.setSuccessCount(successCount);
             taskLog.setFailCount(failCount);

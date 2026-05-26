@@ -33,11 +33,32 @@ public class UserReadRecordVO {
     /** 关联的学生ID */
     private String studentUserId;
 
+    /** 學生名字 */
+    private String studentName;
+
+    /** 關係 */
+    private String relation;
+
     /** 创建时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
     // Getters and Setters
+    public String getStudentName() {
+        return studentName;
+    }
+
+    public void setStudentName(String studentName) {
+        this.studentName = studentName;
+    }
+
+    public String getRelation() {
+        return relation;
+    }
+
+    public void setRelation(String relation) {
+        this.relation = relation;
+    }
     public Long getReadId() {
         return readId;
     }

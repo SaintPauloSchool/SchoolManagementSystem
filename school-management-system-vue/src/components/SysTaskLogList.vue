@@ -72,13 +72,6 @@
         <el-table-column label="任務名稱" prop="taskName" min-width="180" show-overflow-tooltip />
         <el-table-column label="Bean名稱" prop="beanName" min-width="180" show-overflow-tooltip />
         <el-table-column label="方法名稱" prop="methodName" min-width="180" show-overflow-tooltip />
-        <el-table-column label="執行狀態" align="center" width="100">
-          <template #default="scope">
-            <el-tag :type="scope.row.status === '0' ? 'success' : (scope.row.status === '2' ? 'warning' : 'danger')">
-              {{ scope.row.status === '0' ? '成功' : (scope.row.status === '2' ? '部分失敗' : '失敗') }}
-            </el-tag>
-          </template>
-        </el-table-column>
         <el-table-column label="成功數量" prop="successCount" align="center" width="90">
           <template #default="scope">
             {{ scope.row.successCount != null ? scope.row.successCount : '-' }}
@@ -99,6 +92,23 @@
           <template #default="scope">
             <span v-if="scope.row.status === '1' || scope.row.status === '2'" class="error-text">{{ scope.row.failReason }}</span>
             <span v-else class="success-text">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="執行狀態" align="center" width="100">
+          <template #default="scope">
+            <el-tag :type="scope.row.status === '0' ? 'success' : (scope.row.status === '2' ? 'warning' : 'danger')">
+              {{ scope.row.status === '0' ? '成功' : (scope.row.status === '2' ? '部分失敗' : '失敗') }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="是否處理" align="center" width="100">
+          <template #default="scope">
+            <el-switch
+              v-model="scope.row.isProcessed"
+              active-value="1"
+              inactive-value="0"
+              @change="handleStatusChange(scope.row)"
+            ></el-switch>
           </template>
         </el-table-column>
     </el-table>
@@ -153,6 +163,7 @@ export default {
       selectedTask: '',
       // 定時任務選項
       taskOptions: [
+        { label: '檢查失敗任務通知', value: 'failedTaskNotifierTask|executeTask' },
         { label: '家校通訊錄部門數據同步', value: 'departmentSyncTask|executeTask' },
         { label: '定時提示家長回復通知', value: 'notificationReminderTask|executeTask' },
         { label: '定時重新發送失敗通知', value: 'notificationResendTask|executeTask' },
@@ -253,6 +264,31 @@ export default {
       }).catch(() => {
         // 取消
       });
+    },
+
+    /** 修改處理狀態 */
+    async handleStatusChange(row) {
+      let text = row.isProcessed === "1" ? "已處理" : "未處理";
+      try {
+        const response = await request({
+          url: '/system/taskLog',
+          method: 'put',
+          data: {
+            logId: row.logId,
+            isProcessed: row.isProcessed
+          }
+        });
+        if (response.code === 200 || response.code === 0) {
+          ElMessage.success("修改為" + text + "成功");
+        } else {
+          row.isProcessed = row.isProcessed === "0" ? "1" : "0";
+          ElMessage.error(response.msg || "修改失敗");
+        }
+      } catch (error) {
+        row.isProcessed = row.isProcessed === "0" ? "1" : "0";
+        console.error('修改狀態失敗', error);
+        ElMessage.error("修改失敗");
+      }
     }
   }
 }

@@ -41,4 +41,25 @@ public class SysTaskLogServiceImpl implements ISysTaskLogService {
     public List<SysTaskLog> selectTaskLogList(SysTaskLog sysTaskLog) {
         return sysTaskLogMapper.selectTaskLogList(sysTaskLog);
     }
+
+    /**
+     * 修改任務日誌
+     *
+     * @param sysTaskLog 任務日誌
+     * @return 影響行數
+     */
+    @Override
+    public int updateTaskLog(SysTaskLog sysTaskLog) {
+        return sysTaskLogMapper.updateTaskLog(sysTaskLog);
+    }
+
+    /**
+     * 統計失敗且未處理的任務數量
+     *
+     * @return 數量
+     */
+    @Override
+    public int countFailedUnprocessedTasks() {
+        return sysTaskLogMapper.countFailedUnprocessedTasks();
+    }
 }

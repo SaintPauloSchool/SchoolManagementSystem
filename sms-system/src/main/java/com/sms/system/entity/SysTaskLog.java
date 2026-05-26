@@ -26,6 +26,9 @@ public class SysTaskLog implements Serializable {
     /** 執行狀態(0-成功, 1-失敗, 2-部分失敗) */
     private String status;
 
+    /** 是否已處理(0-未處理, 1-已處理) */
+    private String isProcessed;
+
     /** 失敗原因 */
     private String failReason;
     
@@ -88,6 +91,14 @@ public class SysTaskLog implements Serializable {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getIsProcessed() {
+        return isProcessed;
+    }
+
+    public void setIsProcessed(String isProcessed) {
+        this.isProcessed = isProcessed;
     }
 
     public String getFailReason() {
