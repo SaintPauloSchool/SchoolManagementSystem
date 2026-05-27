@@ -50,7 +50,7 @@ wechat:
     corpId: ww04fad852e91fd490
     agentId: 1000033
     secret: I31-B5clKayPf4vNl2bibhL1ia8x4cwIc884xK888Fc
-    noticeBaseUrl: http://tals-wcapp.esp.edu.mo/notice/
+    noticeBaseUrl: http://tals-wcapp.esp.edu.mo/
     ccNoticeBaseUrl: http://tals-wcapp.esp.edu.mo/school-management-system/
     # 企業微信 API 接口地址
     api:
@@ -60,4 +60,4 @@ wechat:
       departmentListUrl: https://qyapi.weixin.qq.com/cgi-bin/department/list?access_token={accessToken}
       departmentMemberListUrl: https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token={accessToken}&department_id={departmentId}
       schoolDepartmentListUrl: https://qyapi.weixin.qq.com/cgi-bin/school/department/list?access_token={accessToken}
-      schoolParentListUrl: https://qyapi.weixin.qq.com/cgi-bin/school/user/list_parent?access_token={accessToken}&department_id={departmentId}
+      schoolParentListUrl: https://qyapi.weixin.qq.com/cgi-bin/school/user/list_parent?access_token={accessToken}&department_id={departmentId}
