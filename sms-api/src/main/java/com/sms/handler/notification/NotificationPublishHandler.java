@@ -58,6 +58,9 @@ public class NotificationPublishHandler {
     @Value("${wechat.work.ccNoticeBaseUrl:http://10.32.96.55:8080/cc-notice/}")
     private String ccNoticeBaseUrl;
 
+    @Value("${wechat.work.corpId:#{null}}")
+    private String corpId;
+
     @Value("${wechat.work.agentId:#{null}}")
     private Integer agentId;
 
@@ -502,8 +505,25 @@ public class NotificationPublishHandler {
         }
         // 設置描述
         textcard.put("description", description);
+        
         // 跳轉鏈接 - 抄送通知跳轉到抄送列表詳情頁
+        // 為了解決沒有 Token 報錯的問題，我們動態組裝 WeChat OAuth URL
+        String state = "campus_notice_" + notification.getNotificationId();
         String noticeUrl = ccNoticeBaseUrl + notification.getNotificationId();
+        
+        try {
+            // 如果 ccNoticeBaseUrl 只是單純的網址前綴，我們為其包裝 OAuth 認證
+            if (!ccNoticeBaseUrl.contains("open.weixin.qq.com") && corpId != null) {
+                String redirectUri = "https://mo-stu-sys.org-assistant.com/sp-api/wechat/oauth/callback"; // 固定的 callback
+                String agentIdParam = (agentId != null) ? agentId.toString() : "1000033"; 
+                String encodedRedirectUri = java.net.URLEncoder.encode(redirectUri, "UTF-8");
+                noticeUrl = String.format("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_base&agentid=%s&state=%s#wechat_redirect",
+                    corpId, encodedRedirectUri, agentIdParam, state);
+            }
+        } catch (Exception e) {
+            log.error("構建 WeChat OAuth URL 失敗", e);
+        }
+        
         textcard.put("url", noticeUrl);
         
         // 按鈕文字
