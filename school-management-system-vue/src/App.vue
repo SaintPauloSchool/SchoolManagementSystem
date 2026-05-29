@@ -3,9 +3,9 @@
     <SchoolNotificationSystem v-if="hasToken" />
     <div v-else class="error-container">
       <el-result
-        icon="error"
-        title="未經授權 / 登入已過期"
-        sub-title="系統未能獲取您的身份資訊，請從「學生手冊」系統重新點擊進入校園管理系統。"
+          icon="error"
+          title="未經授權 / 登入已過期"
+          sub-title="系統未能獲取您的身份資訊，請從「學生手冊」系統重新點擊進入校園管理系統。"
       >
       </el-result>
     </div>
@@ -30,7 +30,7 @@ export default {
     const pathParts = window.location.pathname.split('/').filter(Boolean);
     const lastPart = pathParts[pathParts.length - 1];
     let pendingNoticeId = null;
-    
+
     // 如果最後一部分是純數字，則認為是 notice ID
     if (lastPart && /^\d+$/.test(lastPart)) {
       pendingNoticeId = lastPart;
@@ -44,15 +44,15 @@ export default {
     // 檢查 URL 中是否有 token 參數 (SSO 跳轉過來的)
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
-    
+
     if (token) {
       // 存入 localStorage 供後續 API 請求使用
       localStorage.setItem('token', token);
-      
+
       // 使用 history.replaceState 移除 URL 中的 token 參數，保護安全
       const newUrl = window.location.pathname + window.location.hash;
       window.history.replaceState({}, document.title, newUrl);
-      
+
       this.hasToken = true;
     } else {
       // 檢查 localStorage 是否已經有 token
@@ -64,16 +64,16 @@ export default {
         const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
         if (isWeChat) {
           let redirectUrl = import.meta.env.MODE === 'production'
-                ? 'http://tals-wcapp.esp.edu.mo/student-handbook/login'
-                : 'http://10.32.96.55:8082/student-handbook/login';
-            const targetNoticeId = pendingNoticeId || sessionStorage.getItem('pendingNoticeId');
-            if (targetNoticeId) {
-                redirectUrl += '?redirect_to_campus=' + targetNoticeId;
-            }
-            window.location.replace(redirectUrl);
-            return;
+              ? 'http://tals-wcapp.esp.edu.mo/login'
+              : 'http://10.32.96.55:8082/login';
+          const targetNoticeId = pendingNoticeId || sessionStorage.getItem('pendingNoticeId');
+          if (targetNoticeId) {
+            redirectUrl += '?redirect_to_campus=' + targetNoticeId;
+          }
+          window.location.replace(redirectUrl);
+          return;
         }
-        
+
         this.hasToken = false;
       }
     }
