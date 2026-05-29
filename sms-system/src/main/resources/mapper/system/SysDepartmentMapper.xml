@@ -51,9 +51,8 @@
         FROM sys_department d1
         JOIN sys_department d2 ON d1.parent_id = d2.id
         JOIN sys_department d3 ON d2.parent_id = d3.id
-        WHERE d3.type = 3 AND d3.name = '2025' AND d3.parent_id = 2
-          AND d2.type = 2 AND d2.name in ('P1', 'P2', 'P3', 'P4', 'P5', 'P6')
-          AND d1.type = 1 AND d1.name like '%家長'
+        JOIN sys_department d4 ON d3.parent_id = d4.id
+        WHERE d1.type = 1
     </select>
 
 </mapper>
