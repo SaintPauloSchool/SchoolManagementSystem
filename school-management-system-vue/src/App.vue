@@ -48,6 +48,19 @@ export default {
         this.hasToken = false;
       }
     }
+
+    // 提取可能存在的 notice ID (例如 /school-management-system/123)
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const lastPart = pathParts[pathParts.length - 1];
+    
+    // 如果最後一部分是純數字，則認為是 notice ID
+    if (lastPart && /^\d+$/.test(lastPart)) {
+      sessionStorage.setItem('pendingNoticeId', lastPart);
+      // 清理 URL，移除結尾的 /123
+      const cleanPath = window.location.pathname.replace(new RegExp(`/${lastPart}/?$`), '/');
+      const newUrl = cleanPath + window.location.search + window.location.hash;
+      window.history.replaceState({}, document.title, newUrl);
+    }
   }
 }
 </script>
