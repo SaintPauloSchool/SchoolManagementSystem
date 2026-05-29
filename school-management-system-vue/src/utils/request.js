@@ -87,7 +87,9 @@ service.interceptors.response.use(
                         ? 'http://tals-wcapp.esp.edu.mo/login'
                         : 'http://10.32.96.55:8082/login';
                     if (pendingNoticeId) {
-                        redirectUrl += '?redirect_to_campus=' + pendingNoticeId;
+                        redirectUrl += '?redirect_to_campus=' + pendingNoticeId + '&t=' + Date.now();
+                    } else {
+                        redirectUrl += '?redirect_to_campus=root&t=' + Date.now();
                     }
                     window.location.replace(redirectUrl);
                     return Promise.reject(new Error('登錄已過期，正在重新授權'));
