@@ -5,7 +5,9 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.sms.common.core.domain.BaseEntity;
+import com.sms.common.json.LocalDateToDateTimeDeserializer;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -58,6 +60,7 @@ public class Notification extends BaseEntity {
 
     /** 提示回覆時間（只到日期） */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    @JsonDeserialize(using = LocalDateToDateTimeDeserializer.class)
     @TableField("reminder_time")
     private LocalDateTime reminderTime;
     
