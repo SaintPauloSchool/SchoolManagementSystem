@@ -85,8 +85,8 @@ service.interceptors.response.use(
         if (isWeChat) {
             const pendingNoticeId = sessionStorage.getItem('pendingNoticeId');
             const studentHandbookUrl = import.meta.env.MODE === 'production'
-                ? 'http://tals-wcapp.esp.edu.mo/student-handbook/login'
-                : 'http://10.32.96.55:8082/student-handbook/login';
+                ? 'http://tals-wcapp.esp.edu.mo/login'
+                : 'http://10.32.96.55:8082/login';
             
             let redirectUrl = studentHandbookUrl;
             if (pendingNoticeId) {

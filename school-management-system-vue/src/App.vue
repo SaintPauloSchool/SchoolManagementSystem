@@ -63,9 +63,11 @@ export default {
         // 沒有 Token，如果是微信環境，直接跳轉去 StudentHandbook 重新授權
         const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
         if (isWeChat) {
-          let redirectUrl = import.meta.env.MODE === 'production'
-                ? 'http://tals-wcapp.esp.edu.mo/student-handbook/login'
-                : 'http://10.32.96.55:8082/student-handbook/login';
+            const studentHandbookUrl = import.meta.env.MODE === 'production'
+                ? 'http://tals-wcapp.esp.edu.mo/login'
+                : 'http://10.32.96.55:8082/login';
+            
+            let redirectUrl = studentHandbookUrl;
             const targetNoticeId = pendingNoticeId || sessionStorage.getItem('pendingNoticeId');
             if (targetNoticeId) {
                 redirectUrl += '?redirect_to_campus=' + targetNoticeId;
