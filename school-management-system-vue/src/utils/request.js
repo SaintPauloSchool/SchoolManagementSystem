@@ -1,4 +1,4 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import { API_BASE_PATH, withAppBase } from './deployment'
 import settings from '../config/settings'
@@ -77,6 +77,25 @@ service.interceptors.response.use(
       })
 
       if (res.code === 401) {
+        localStorage.removeItem('token')
+        sessionStorage.removeItem('token')
+        
+        // 如果在微信環境中，嘗試自動靜默重新授權，避免彈窗中斷體驗
+        const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
+        if (isWeChat) {
+            const pendingNoticeId = sessionStorage.getItem('pendingNoticeId');
+            const studentHandbookUrl = import.meta.env.MODE === 'production'
+                ? 'http://tals-wcapp.esp.edu.mo/student-handbook/login'
+                : 'http://10.32.96.55:8082/student-handbook/login';
+            
+            let redirectUrl = studentHandbookUrl;
+            if (pendingNoticeId) {
+                redirectUrl += '?redirect_to_campus=' + pendingNoticeId;
+            }
+            window.location.replace(redirectUrl);
+            return Promise.reject(new Error('登錄已過期，正在重新授權'));
+        }
+
         ElMessageBox.alert(
           '登錄狀態已過期或失效，請關閉此視窗，並重新從「學生手冊」系統點擊進入。',
           '系統提示',
@@ -85,8 +104,6 @@ service.interceptors.response.use(
             type: 'warning'
           }
         ).then(() => {
-          localStorage.removeItem('token')
-          sessionStorage.removeItem('token')
           window.location.href = window.location.pathname
         })
       }
