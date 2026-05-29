@@ -48,9 +48,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <select id="selectAllParentUserIds" resultType="java.lang.String">
-        SELECT DISTINCT parent_user_id
-        FROM sys_department_parent_binding
-        WHERE parent_user_id IS NOT NULL AND parent_user_id != ''
+        SELECT DISTINCT b.parent_user_id
+        FROM sys_department_parent_binding b
+        JOIN sys_department d1 ON b.department_id = d1.id
+        JOIN sys_department d2 ON d1.parent_id = d2.id
+        JOIN sys_department d3 ON d2.parent_id = d3.id
+        WHERE d3.type = 3 AND d3.name = '2025' AND d3.parent_id = 2
+          AND d2.type = 2 AND d2.name IN ('P1', 'P2', 'P3', 'P4', 'P5', 'P6')
+          AND d1.type = 1 AND d1.name LIKE '%家長'
+          AND b.parent_user_id IS NOT NULL AND b.parent_user_id != ''
     </select>
 
     <select id="selectByDepartmentId" resultMap="SysDepartmentParentBindingResult">
