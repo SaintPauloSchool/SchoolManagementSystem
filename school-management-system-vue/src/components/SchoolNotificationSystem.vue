@@ -305,17 +305,18 @@ export default {
       if (pendingNoticeId) {
         sessionStorage.removeItem('pendingNoticeId');
         
-        // 切換到抄送我的
-        this.activeMenu = '1-2';
-        this.saveActiveMenu('1-2');
+        // 切換到抄送我的並加載背後列表數據
+        this.handleMenuSelect('1-2');
         this.expandedSections.homeSchool = true;
         this.saveExpandedSections();
         
         // 使用 nextTick 確保 NotificationList 元件已渲染
         this.$nextTick(() => {
-          if (this.$refs.ccList) {
-            this.$refs.ccList.viewNotification({ notificationId: pendingNoticeId });
-          }
+          setTimeout(() => {
+            if (this.$refs.ccList) {
+              this.$refs.ccList.viewNotification({ notificationId: pendingNoticeId });
+            }
+          }, 300); // 稍微延遲確保元件完全掛載
         });
       }
     },
