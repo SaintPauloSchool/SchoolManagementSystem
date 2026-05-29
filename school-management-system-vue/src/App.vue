@@ -26,6 +26,21 @@ export default {
     }
   },
   created() {
+    // 提取可能存在的 notice ID (例如 /school-management-system/123)
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const lastPart = pathParts[pathParts.length - 1];
+    let pendingNoticeId = null;
+    
+    // 如果最後一部分是純數字，則認為是 notice ID
+    if (lastPart && /^\d+$/.test(lastPart)) {
+      pendingNoticeId = lastPart;
+      sessionStorage.setItem('pendingNoticeId', lastPart);
+      // 清理 URL，移除結尾的 /123
+      const cleanPath = window.location.pathname.replace(new RegExp(`/${lastPart}/?$`), '/');
+      const newUrl = cleanPath + window.location.search + window.location.hash;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+
     // 檢查 URL 中是否有 token 參數 (SSO 跳轉過來的)
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
@@ -45,21 +60,22 @@ export default {
       if (localToken) {
         this.hasToken = true;
       } else {
+        // 沒有 Token，如果是微信環境，直接跳轉去 StudentHandbook 重新授權
+        const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
+        if (isWeChat) {
+          let redirectUrl = import.meta.env.MODE === 'production'
+                ? 'http://tals-wcapp.esp.edu.mo/student-handbook/login'
+                : 'http://10.32.96.55:8082/student-handbook/login';
+            const targetNoticeId = pendingNoticeId || sessionStorage.getItem('pendingNoticeId');
+            if (targetNoticeId) {
+                redirectUrl += '?redirect_to_campus=' + targetNoticeId;
+            }
+            window.location.replace(redirectUrl);
+            return;
+        }
+        
         this.hasToken = false;
       }
-    }
-
-    // 提取可能存在的 notice ID (例如 /school-management-system/123)
-    const pathParts = window.location.pathname.split('/').filter(Boolean);
-    const lastPart = pathParts[pathParts.length - 1];
-    
-    // 如果最後一部分是純數字，則認為是 notice ID
-    if (lastPart && /^\d+$/.test(lastPart)) {
-      sessionStorage.setItem('pendingNoticeId', lastPart);
-      // 清理 URL，移除結尾的 /123
-      const cleanPath = window.location.pathname.replace(new RegExp(`/${lastPart}/?$`), '/');
-      const newUrl = cleanPath + window.location.search + window.location.hash;
-      window.history.replaceState({}, document.title, newUrl);
     }
   }
 }
