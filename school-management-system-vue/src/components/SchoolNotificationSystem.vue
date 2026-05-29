@@ -162,6 +162,7 @@
             @refresh="loadCcToMeNotifications"
             @page-change="handleCcPageChange"
             type="ccToMe"
+            ref="ccList"
           />
           
           <!-- 我發送的 -->
@@ -263,6 +264,7 @@ export default {
     // 根据当前激活的菜单加载对应数据
     this.loadInitialData()
     this.checkAdminStatus()
+    this.checkPendingNotice()
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize)
@@ -295,6 +297,26 @@ export default {
         contact: false,
         system: false,
         report: false
+      }
+    },
+    
+    checkPendingNotice() {
+      const pendingNoticeId = sessionStorage.getItem('pendingNoticeId');
+      if (pendingNoticeId) {
+        sessionStorage.removeItem('pendingNoticeId');
+        
+        // 切換到抄送我的
+        this.activeMenu = '1-2';
+        this.saveActiveMenu('1-2');
+        this.expandedSections.homeSchool = true;
+        this.saveExpandedSections();
+        
+        // 使用 nextTick 確保 NotificationList 元件已渲染
+        this.$nextTick(() => {
+          if (this.$refs.ccList) {
+            this.$refs.ccList.viewNotification({ notificationId: pendingNoticeId });
+          }
+        });
       }
     },
     
