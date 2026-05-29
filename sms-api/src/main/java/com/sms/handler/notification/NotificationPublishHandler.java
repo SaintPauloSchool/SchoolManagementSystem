@@ -215,19 +215,16 @@ public class NotificationPublishHandler {
         // 標題
         String title = notification.getTitle() == null ? "" : notification.getTitle().trim();
         // 設置跳轉地址
-        String noticeUrl = notification.getJumpUrl();
+        String noticeUrl;
         
-        // 如果通告沒有自定義的跳轉鏈接，則使用默認的詳情頁鏈接
-        if (noticeUrl == null || noticeUrl.trim().isEmpty()) {
-            // 如果有學生用戶 ID，則將其加密後附加到 URL 中
-            if (studentUserId != null && !studentUserId.trim().isEmpty()) {
-                // 加密學生用戶 ID
-                String encryptedStudentId = Md5Utils.encryptSensitiveId(studentUserId, encryptionSalt);
-                // 組成跳轉鏈接
-                noticeUrl = noticeBaseUrl + notification.getNotificationId() + "?sid=" + encryptedStudentId;
-            } else {
-                noticeUrl = noticeBaseUrl + notification.getNotificationId();
-            }
+        // 如果有學生用戶 ID，則將其加密後附加到 URL 中
+        if (studentUserId != null && !studentUserId.trim().isEmpty()) {
+            // 加密學生用戶 ID
+            String encryptedStudentId = Md5Utils.encryptSensitiveId(studentUserId, encryptionSalt);
+            // 組成跳轉鏈接
+            noticeUrl = noticeBaseUrl + notification.getNotificationId() + "?sid=" + encryptedStudentId;
+        } else {
+            noticeUrl = noticeBaseUrl + notification.getNotificationId();
         }
         
         // 格式化發佈時間
@@ -506,11 +503,7 @@ public class NotificationPublishHandler {
         // 設置描述
         textcard.put("description", description);
         // 跳轉鏈接 - 抄送通知跳轉到抄送列表詳情頁
-        String noticeUrl = notification.getJumpUrl();
-        if (noticeUrl == null || noticeUrl.trim().isEmpty()) {
-            // 使用抄送通知專用的基礎 URL，並傳遞通知ID作為參數
-            noticeUrl = ccNoticeBaseUrl + notification.getNotificationId();
-        }
+        String noticeUrl = ccNoticeBaseUrl + notification.getNotificationId();
         textcard.put("url", noticeUrl);
         
         // 按鈕文字
@@ -869,12 +862,7 @@ public class NotificationPublishHandler {
         // 标题
         String title = notification.getTitle() == null ? "" : notification.getTitle().trim();
         // 跳转链接
-        String noticeUrl = notification.getJumpUrl();
-        
-        // 如果通告没有自定义的跳转链接，则使用默认的详情页链接
-        if (noticeUrl == null || noticeUrl.trim().isEmpty()) {
-            noticeUrl = noticeBaseUrl + notification.getNotificationId();
-        }
+        String noticeUrl = noticeBaseUrl + notification.getNotificationId();
         
         // 格式化回覆截止時間
         String replyDeadline = notification.getReplyDeadline() != null
