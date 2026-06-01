@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <el-dialog
     v-model="dialogVisible"
     title="選擇教職員工"
@@ -42,17 +42,12 @@
             :props="treeProps"
             :expand-on-click-node="false"
             :check-on-click-node="false"
+            show-checkbox
             node-key="id"
+            @check="handleTreeCheck"
           >
             <template #default="{ node, data }">
               <span class="tree-node">
-                <!-- 只在葉子節點顯示選中狀態 -->
-                <el-checkbox
-                  v-if="data.isLeaf"
-                  :model-value="selectedStaffIds.includes(data.id)"
-                  @click.stop="() => handleLeafNodeClick(data, 'staffTree')"
-                  class="node-checkbox"
-                />
                 <el-icon v-if="data.type === 20" class="node-icon department-icon"><OfficeBuilding /></el-icon>
                 <el-icon v-else-if="data.type === 10" class="node-icon position-icon"><UserFilled /></el-icon>
                 <el-icon v-else-if="data.isLeaf" class="node-icon staff-icon"><User /></el-icon>
@@ -79,16 +74,12 @@
             :props="treeProps"
             :expand-on-click-node="false"
             :check-on-click-node="false"
+            show-checkbox
             node-key="id"
+            @check="handleTreeCheck"
           >
             <template #default="{ node, data }">
               <span class="tree-node">
-                <el-checkbox
-                  v-if="data.isLeaf"
-                  :model-value="selectedStaffIds.includes(data.id)"
-                  @click.stop="() => handleLeafNodeClick(data, 'customStaffTree')"
-                  class="node-checkbox"
-                />
                 <el-icon v-if="data.isLeaf" class="node-icon staff-icon"><User /></el-icon>
                 <el-icon v-else class="node-icon folder-icon"><Folder /></el-icon>
                 <span class="node-label">{{ node.label }}</span>
@@ -387,31 +378,20 @@ export default {
       this.handleClose()
     },
 
-    handleLeafNodeClick(data, refName) {
-      if (!data || !data.id) return;
-      // 切换选中状态
-      const index = this.selectedStaffIds.indexOf(data.id);
-      if (index > -1) {
-        // 取消选中
-        this.selectedStaffIds = this.selectedStaffIds.filter(id => id !== data.id);
-        this.$nextTick(() => {
-          if (this.$refs[refName]) {
-            this.$refs[refName].setChecked(data, false);
-          }
-        });
-      } else {
-        // 选中
-        this.selectedStaffIds.push(data.id);
-        // 自动滚动到底部
-        this.$nextTick(() => {
-          if (this.$refs[refName]) {
-            this.$refs[refName].setChecked(data, true);
-          }
-          if (this.$refs.selectedContainer) {
-            this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
-          }
-        });
-      }
+    handleTreeCheck() {
+      const wecomCheckedNodes = this.$refs.staffTree ? this.$refs.staffTree.getCheckedNodes(true, false) : [];
+      const customCheckedNodes = this.$refs.customStaffTree ? this.$refs.customStaffTree.getCheckedNodes(true, false) : [];
+      
+      this.selectedStaffIds = [
+        ...wecomCheckedNodes.map(n => n.id),
+        ...customCheckedNodes.map(n => n.id)
+      ];
+      
+      this.$nextTick(() => {
+        if (this.$refs.selectedContainer) {
+          this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
+        }
+      });
     },
 
     removeSelectedStaff(staff) {
