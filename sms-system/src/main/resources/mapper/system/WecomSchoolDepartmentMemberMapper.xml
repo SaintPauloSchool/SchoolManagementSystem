@@ -45,10 +45,10 @@
     </select>
 
     <insert id="batchInsertSchoolDepartmentMembers" parameterType="java.util.List">
-        INSERT INTO wecom_school_department_member(userid, name, department_id, open_userid, create_time, update_time)
+        INSERT INTO wecom_school_department_member(id, userid, name, department_id, open_userid, create_time, update_time)
         VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.userid}, #{item.name}, #{item.departmentId}, #{item.openUserid}, #{item.createTime}, #{item.updateTime})
+            (#{item.id}, #{item.userid}, #{item.name}, #{item.departmentId}, #{item.openUserid}, #{item.createTime}, #{item.updateTime})
         </foreach>
         ON DUPLICATE KEY UPDATE
         name = VALUES(name),
@@ -57,8 +57,12 @@
         update_time = VALUES(update_time)
     </insert>
 
-    <delete id="deleteMembersByDepartmentId" parameterType="Long">
-        DELETE FROM wecom_school_department_member WHERE department_id = #{departmentId}
+    <delete id="deleteMembersByIds">
+        DELETE FROM wecom_school_department_member
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
     </delete>
 
 </mapper>

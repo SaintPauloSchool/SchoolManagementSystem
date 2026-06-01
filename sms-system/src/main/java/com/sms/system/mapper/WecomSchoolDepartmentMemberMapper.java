@@ -41,7 +41,10 @@ public interface WecomSchoolDepartmentMemberMapper {
     int batchInsertSchoolDepartmentMembers(@Param("list") List<WecomSchoolDepartmentMember> list);
 
     /**
-     * 根据部门ID删除部门所有成员
+     * 根据主键 ID 列表批量删除成员
+     *
+     * @param ids 成员 ID 列表
+     * @return 影响的行数
      */
-    int deleteMembersByDepartmentId(Long departmentId);
+    int deleteMembersByIds(@Param("ids") List<Long> ids);
 }

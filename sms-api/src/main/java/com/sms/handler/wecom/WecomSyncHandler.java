@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * 企業微信數據同步處理器
@@ -121,14 +123,14 @@ public class WecomSyncHandler {
         String firstMemberErrorReason = null;
         
         if (departmentResult != null && !isApiError(departmentResult)) {
-
             JSONArray departmentArray = departmentResult.getJSONArray("department");
             // 遍歷部門列表
             if (departmentArray != null && !departmentArray.isEmpty()) {
+                Map<Long, JSONObject> departmentMembersMap = new HashMap<>();
                 for (int i = 0; i < departmentArray.size(); i++) {
                     JSONObject deptObj = departmentArray.getJSONObject(i);
                     Long deptId = deptObj.getLong("id");
-                    // 獲取部門成員列表api
+                    // 獲取部門成員列表api (只呼叫微信 API，無資料庫交互)
                     JSONObject memberResult = wechatWorkHttpClient.getDepartmentMembers(deptId);
                     
                     if (isApiError(memberResult)) {
@@ -136,10 +138,14 @@ public class WecomSyncHandler {
                         if (firstMemberErrorReason == null) {
                             firstMemberErrorReason = memberResult.getString("errmsg");
                         }
+                    } else {
+                        departmentMembersMap.put(deptId, memberResult);
                     }
-                    
-                    // 同步部門成員
-                    wecomSchoolDepartmentService.syncWecomSchoolDepartmentMembers(deptId, memberResult);
+                }
+                
+                // 一次性大批次寫入與同步資料庫 (徹底杜絕迴圈內 SQL 查詢與寫入)
+                if (!departmentMembersMap.isEmpty()) {
+                    wecomSchoolDepartmentService.syncWecomSchoolDepartmentMembersBatch(departmentMembersMap);
                 }
             }
         }
