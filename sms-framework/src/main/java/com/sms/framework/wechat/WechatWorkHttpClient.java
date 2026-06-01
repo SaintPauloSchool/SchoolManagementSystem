@@ -102,37 +102,45 @@ public class WechatWorkHttpClient {
             return cache.getAccessToken();
         }
 
-        try {
-            // 構造請求 URL
-            String url = accessTokenUrl.replace("{corpId}", corpId)
-                .replace("{corpSecret}", secret);
-
-            log.info("請求微信獲取access token");
-            String response = HttpUtils.sendGet(url);
-            JSONObject jsonObject = JSONObject.parseObject(response);
-
-            if (jsonObject == null) {
-                throw new RuntimeException("取得access token失敗：回應為空");
+        // 雙重檢查鎖 (Double-Checked Locking)，避免併發時多個執行緒同時去微信請求 Token
+        synchronized (this) {
+            cache = tokenCache.get(corpId);
+            if (cache != null && !cache.isExpired()) {
+                return cache.getAccessToken();
             }
 
-            // errcode 為 0 表示請求成功
-            if (jsonObject.getInteger("errcode") == 0) {
-                String accessToken = jsonObject.getString("access_token");
-                Integer expiresIn = jsonObject.getInteger("expires_in");
-                
-                // token 有效期為 expiresIn 秒，我們減去 300 秒作為緩衝，避免在邊界點發生 Token 失效
-                long expireTimeMs = System.currentTimeMillis() + (expiresIn - 300L) * 1000L;
-                tokenCache.put(corpId, new TokenCache(accessToken, expireTimeMs));
-                
-                log.info("微信access token已刷新");
-                return accessToken;
-            }
+            try {
+                // 構造請求 URL
+                String url = accessTokenUrl.replace("{corpId}", corpId)
+                    .replace("{corpSecret}", secret);
 
-            log.error("取得微信access token失敗: {}", jsonObject.getString("errmsg"));
-            throw new RuntimeException("取得微信access token失敗: " + jsonObject.getString("errmsg"));
-        } catch (Exception e) {
-            log.error("取得微信access token失敗", e);
-            throw new RuntimeException("取得微信access token失敗: " + e.getMessage(), e);
+                log.info("請求微信獲取access token");
+                String response = HttpUtils.sendGet(url);
+                JSONObject jsonObject = JSONObject.parseObject(response);
+
+                if (jsonObject == null) {
+                    throw new RuntimeException("取得access token失敗：回應為空");
+                }
+
+                // errcode 為 0 表示請求成功
+                if (jsonObject.getInteger("errcode") == 0) {
+                    String accessToken = jsonObject.getString("access_token");
+                    Integer expiresIn = jsonObject.getInteger("expires_in");
+                    
+                    // token 有效期為 expiresIn 秒，我們減去 300 秒作為緩衝，避免在邊界點發生 Token 失效
+                    long expireTimeMs = System.currentTimeMillis() + (expiresIn - 300L) * 1000L;
+                    tokenCache.put(corpId, new TokenCache(accessToken, expireTimeMs));
+                    
+                    log.info("微信access token已刷新");
+                    return accessToken;
+                }
+
+                log.error("取得微信access token失敗: {}", jsonObject.getString("errmsg"));
+                throw new RuntimeException("取得微信access token失敗: " + jsonObject.getString("errmsg"));
+            } catch (Exception e) {
+                log.error("取得微信access token失敗", e);
+                throw new RuntimeException("取得微信access token失敗: " + e.getMessage(), e);
+            }
         }
     }
 
