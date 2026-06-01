@@ -52,6 +52,7 @@ wechat:
     secret: I31-B5clKayPf4vNl2bibhL1ia8x4cwIc884xK888Fc
     noticeBaseUrl: http://tals-wcapp.esp.edu.mo/notice/
     ccNoticeBaseUrl: http://tals-wcapp.esp.edu.mo/school-management-system/
+    handbookBaseUrl: http://tals-wcapp.esp.edu.mo/handbook
     # 企業微信 API 接口地址
     api:
       accessTokenUrl: https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={corpId}&corpsecret={corpSecret}
