@@ -317,30 +317,86 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void syncWecomSchoolDepartmentMembers(Long departmentId, JSONObject memberResult) {
-        if (memberResult == null || memberResult.getInteger("errcode") == null || memberResult.getInteger("errcode") != 0) {
-            logger.error("獲取部門 {} 成员失败: {}", departmentId, memberResult != null ? memberResult.getString("errmsg") : "返回結果為空");
+    public void syncWecomSchoolDepartmentMembersBatch(Map<Long, JSONObject> departmentMembersMap) {
+        if (departmentMembersMap == null || departmentMembersMap.isEmpty()) {
             return;
         }
 
-        JSONArray userArray = memberResult.getJSONArray("userlist");
-        schoolDepartmentMemberMapper.deleteMembersByDepartmentId(departmentId);
+        List<Long> departmentIds = new ArrayList<>(departmentMembersMap.keySet());
 
-        if (userArray != null && !userArray.isEmpty()) {
-            List<WecomSchoolDepartmentMember> members = new ArrayList<>();
-            for (int j = 0; j < userArray.size(); j++) {
-                JSONObject userObj = userArray.getJSONObject(j);
-                WecomSchoolDepartmentMember member = new WecomSchoolDepartmentMember();
-                member.setUserid(userObj.getString("userid"));
-                member.setName(userObj.getString("name"));
-                member.setDepartmentId(departmentId);
-                member.setOpenUserid(userObj.getString("open_userid"));
-                member.setCreateTime(LocalDateTime.now());
-                member.setUpdateTime(LocalDateTime.now());
-                members.add(member);
+        // 1. 一次性查詢所有部門在資料庫中的現有成員 (1 次 SELECT SQL)
+        List<WecomSchoolDepartmentMember> allDbMembers = schoolDepartmentMemberMapper.selectMembersByDepartmentIds(departmentIds);
+        if (allDbMembers == null) {
+            allDbMembers = new ArrayList<>();
+        }
+
+        // 按 departmentId 將現有成員分組
+        Map<Long, List<WecomSchoolDepartmentMember>> dbMembersByDept = allDbMembers.stream()
+                .collect(Collectors.groupingBy(WecomSchoolDepartmentMember::getDepartmentId));
+
+        List<WecomSchoolDepartmentMember> allToSave = new ArrayList<>();
+        List<Long> allIdsToDelete = new ArrayList<>();
+
+        // 2. 遍歷處理每個部門的成員數據 (記憶體比對，無資料庫交互)
+        for (Map.Entry<Long, JSONObject> entry : departmentMembersMap.entrySet()) {
+            Long departmentId = entry.getKey();
+            JSONObject memberResult = entry.getValue();
+
+            if (memberResult == null || memberResult.getInteger("errcode") == null || memberResult.getInteger("errcode") != 0) {
+                continue;
             }
-            schoolDepartmentMemberMapper.batchInsertSchoolDepartmentMembers(members);
-            logger.info("成功同步部門 {} 的 {} 個成員", departmentId, members.size());
+
+            JSONArray userArray = memberResult.getJSONArray("userlist");
+            List<WecomSchoolDepartmentMember> dbMembers = dbMembersByDept.getOrDefault(departmentId, Collections.emptyList());
+
+            // 將該部門資料庫成員按 userid 分組
+            Map<String, WecomSchoolDepartmentMember> dbMemberMap = dbMembers.stream()
+                    .collect(Collectors.toMap(WecomSchoolDepartmentMember::getUserid, m -> m, (a, b) -> a));
+
+            Set<String> incomingUserids = new HashSet<>();
+
+            if (userArray != null && !userArray.isEmpty()) {
+                for (int j = 0; j < userArray.size(); j++) {
+                    JSONObject userObj = userArray.getJSONObject(j);
+                    String userid = userObj.getString("userid");
+                    incomingUserids.add(userid);
+
+                    WecomSchoolDepartmentMember member = new WecomSchoolDepartmentMember();
+                    member.setUserid(userid);
+                    member.setName(userObj.getString("name"));
+                    member.setDepartmentId(departmentId);
+                    member.setOpenUserid(userObj.getString("open_userid"));
+                    member.setUpdateTime(LocalDateTime.now());
+
+                    if (dbMemberMap.containsKey(userid)) {
+                        WecomSchoolDepartmentMember existingMember = dbMemberMap.get(userid);
+                        member.setId(existingMember.getId());
+                        member.setCreateTime(existingMember.getCreateTime());
+                    } else {
+                        member.setCreateTime(LocalDateTime.now());
+                    }
+                    allToSave.add(member);
+                }
+            }
+
+            // 收集需要刪除的成員 ID
+            for (WecomSchoolDepartmentMember dbMember : dbMembers) {
+                if (!incomingUserids.contains(dbMember.getUserid())) {
+                    allIdsToDelete.add(dbMember.getId());
+                }
+            }
+        }
+
+        // 3. 一次性批次執行刪除 (1 次 DELETE SQL)
+        if (!allIdsToDelete.isEmpty()) {
+            schoolDepartmentMemberMapper.deleteMembersByIds(allIdsToDelete);
+            logger.info("批次同步成員：增量刪除 {} 個已不存在的部門成員", allIdsToDelete.size());
+        }
+
+        // 4. 一次性批次執行插入與更新 (1 次 INSERT SQL)
+        if (!allToSave.isEmpty()) {
+            schoolDepartmentMemberMapper.batchInsertSchoolDepartmentMembers(allToSave);
+            logger.info("批次同步成員：新增或更新 {} 個部門成員", allToSave.size());
         }
     }
 }
