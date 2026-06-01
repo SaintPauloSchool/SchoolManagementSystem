@@ -83,9 +83,7 @@ service.interceptors.response.use(
                 const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
                 if (isWeChat) {
                     const pendingNoticeId = sessionStorage.getItem('pendingNoticeId');
-                    let redirectUrl = import.meta.env.MODE === 'production'
-                        ? 'http://tals-wcapp.esp.edu.mo/login'
-                        : 'http://10.32.96.55:8082/login';
+                    let redirectUrl = import.meta.env.VITE_LOGIN_URL;
                     if (pendingNoticeId) {
                         redirectUrl += '?redirect_to_campus=' + pendingNoticeId + '&t=' + Date.now();
                     } else {
