@@ -22,7 +22,10 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  * 通告發佈處理器
  * 負責將通告消息推送給指定的接收者（如通過企業微信發送家校通知）
@@ -1146,51 +1149,62 @@ public class NotificationPublishHandler {
         Map<String, List<ParentStudentMessageInfo>> parentToMessagesMap = messageInfos.stream()
                 .collect(Collectors.groupingBy(ParentStudentMessageInfo::getParentUserId));
 
-        int successCount = 0;
-        int failCount = 0;
-        Set<String> successUserIds = new HashSet<>();
-        Map<String, String> failedUserReasons = new HashMap<>();
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failCount = new AtomicInteger(0);
+        Set<String> successUserIds = Collections.synchronizedSet(new HashSet<>());
+        Map<String, String> failedUserReasons = new ConcurrentHashMap<>();
 
-        // 為每個家長的每個學生發送獨立的消息
-        for (Map.Entry<String, List<ParentStudentMessageInfo>> entry : parentToMessagesMap.entrySet()) {
-            String parentUserId = entry.getKey();
-            List<ParentStudentMessageInfo> parentMessages = entry.getValue();
+        // 使用專屬的自定義 ForkJoinPool (20條線程) 進行平行發送
+        ForkJoinPool customThreadPool = new ForkJoinPool(20);
+        
+        try {
+            customThreadPool.submit(() -> {
+                // 為每個家長的每個學生發送獨立的消息 (使用平行處理加速)
+                parentToMessagesMap.entrySet().parallelStream().forEach(entry -> {
+                    String parentUserId = entry.getKey();
+                    List<ParentStudentMessageInfo> parentMessages = entry.getValue();
 
-            // 為該家長的每個學生發送單獨的消息
-            for (ParentStudentMessageInfo msgInfo : parentMessages) {
-                try {
-                    // 構建個性化消息內容
-                    String content = buildContent(notification, msgInfo.getClassName(), msgInfo.getStudentName(), msgInfo.getStudentUserId());
+                    // 為該家長的每個學生發送單獨的消息
+                    for (ParentStudentMessageInfo msgInfo : parentMessages) {
+                        try {
+                            // 構建個性化消息內容
+                            String content = buildContent(notification, msgInfo.getClassName(), msgInfo.getStudentName(), msgInfo.getStudentUserId());
 
-                    // 構建發送 payload（只發送給當前家長）
-                    JSONObject payload = buildPersonalizedPayload(parentUserId, content);
+                            // 構建發送 payload（只發送給當前家長）
+                            JSONObject payload = buildPersonalizedPayload(parentUserId, content);
 
-                    // 發送消息
-                    JSONObject result = wechatWorkHttpClient.sendSchoolNotification(payload);
-                    Integer errcode = result.getInteger("errcode");
+                            // 發送消息
+                            JSONObject result = wechatWorkHttpClient.sendSchoolNotification(payload);
+                            Integer errcode = result.getInteger("errcode");
 
-                    if (errcode != null && errcode == 0) {
-                        successCount++;
-                        successUserIds.add(parentUserId);
-                        log.debug("成功發送通知給家長 {}，學生 {}", parentUserId, msgInfo.getStudentUserId());
-                    } else {
-                        failCount++;
-                        String reason = "接口返回错误: " + errcode;
-                        failedUserReasons.put(parentUserId, reason);
-                        log.error("發送通知給家長 {} 失敗: code={}, msg={}", parentUserId, errcode, result.getString("errmsg"));
+                            if (errcode != null && errcode == 0) {
+                                successCount.incrementAndGet();
+                                successUserIds.add(parentUserId);
+                                log.debug("成功發送通知給家長 {}，學生 {}", parentUserId, msgInfo.getStudentUserId());
+                            } else {
+                                failCount.incrementAndGet();
+                                String reason = "接口返回错误: " + errcode;
+                                failedUserReasons.put(parentUserId, reason);
+                                log.error("發送通知給家長 {} 失敗: code={}, msg={}", parentUserId, errcode, result.getString("errmsg"));
+                            }
+                        } catch (Exception e) {
+                            failCount.incrementAndGet();
+                            failedUserReasons.put(parentUserId, "发送异常: " + e.getMessage());
+                            log.error("發送通知給家長 {} 異常", parentUserId, e);
+                        }
                     }
-                } catch (Exception e) {
-                    failCount++;
-                    failedUserReasons.put(parentUserId, "发送异常: " + e.getMessage());
-                    log.error("發送通知給家長 {} 異常", parentUserId, e);
-                }
-            }
+                });
+            }).get(); // 等待所有任務完成
+        } catch (Exception e) {
+            log.error("自定義執行緒池發送批量通知時發生異常", e);
+        } finally {
+            customThreadPool.shutdown();
         }
 
         log.info("通知 {} 已全部發送完成，成功: {}, 失敗: {}",
-                notification.getNotificationId(), successCount, failCount);
+                notification.getNotificationId(), successCount.get(), failCount.get());
 
-        return new SendResult(successCount, failCount, successUserIds, failedUserReasons);
+        return new SendResult(successCount.get(), failCount.get(), successUserIds, failedUserReasons);
     }
 
     /**

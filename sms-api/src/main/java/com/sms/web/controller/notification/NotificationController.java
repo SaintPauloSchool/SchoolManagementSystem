@@ -22,6 +22,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 通知 Controller
@@ -172,15 +174,20 @@ public class NotificationController extends BaseController {
 
             // 5. 如果狀態為發佈，則異步發送通知和抄送消息
             if ("1".equals(notification.getStatus())) {
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        // 發送通知給接收者
-                        notificationPublishHandler.publishToWechat(notification, notification.getReceivers());
-                        
-                        // 發送抄送消息
-                        notificationPublishHandler.sendCcNotifications(notification);
-                    } catch (Exception e) {
-                        logger.error("異步發送通知失敗: {}", e.getMessage(), e);
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                // 發送通知給接收者
+                                notificationPublishHandler.publishToWechat(notification, notification.getReceivers());
+                                
+                                // 發送抄送消息
+                                notificationPublishHandler.sendCcNotifications(notification);
+                            } catch (Exception e) {
+                                logger.error("異步發送通知失敗: {}", e.getMessage(), e);
+                            }
+                        });
                     }
                 });
             }
