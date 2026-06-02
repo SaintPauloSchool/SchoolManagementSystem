@@ -66,6 +66,7 @@ public class ResourcesConfig implements WebMvcConfigurer
                         "/captchaImage",
                         "/profile/**",
                         "/favicon.ico",
+                        "/common/download/**",
                         "/swagger-ui.html",
                         "/swagger-resources/**",
                         "/webjars/**",

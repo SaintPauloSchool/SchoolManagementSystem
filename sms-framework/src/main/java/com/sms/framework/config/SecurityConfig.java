@@ -82,6 +82,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
             .antMatchers("/login", "/register").permitAll()
             // 文件上傳不需要 JWT token，但仍受 ApiSignatureInterceptor 驗簽保護
             .antMatchers("/common/upload").permitAll()
+            // 文件下載不需要 JWT token，亦不受驗簽保護
+            .antMatchers("/common/download/**").permitAll()
             // 其他请求都需要认证
             .anyRequest().authenticated();
 

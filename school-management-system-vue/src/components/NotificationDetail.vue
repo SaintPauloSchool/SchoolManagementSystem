@@ -73,10 +73,12 @@
         <div
           v-for="(item, index) in attachmentUrls"
           :key="index"
-          class="chip attachment-chip"
+          class="chip attachment-chip clickable-chip"
+          @click="handleDownloadAttachment(item)"
         >
           <el-icon :size="14"><Document /></el-icon>
           <span>{{ getAttachmentName(item, index) }}</span>
+          <el-icon :size="14" class="download-icon"><Download /></el-icon>
         </div>
       </div>
     </div>
@@ -360,7 +362,7 @@ import {
   RefreshRight
 } from '@element-plus/icons-vue'
 import LogicQuestionItem from './LogicQuestionItem.vue'
-import { normalizeProfileUrl } from '../utils/deployment'
+import { normalizeProfileUrl, API_BASE_PATH } from '../utils/deployment'
 import request from '@/utils/request'
 
 export default {
@@ -892,6 +894,21 @@ export default {
       }).catch(() => {
         // 用戶取消操作
       })
+    },
+
+    handleDownloadAttachment(item) {
+      if (!item) return
+      const url = typeof item === 'object' ? item.url : item
+      const fileName = this.getAttachmentName(item, 0)
+      
+      const downloadUrl = `${window.location.origin}${API_BASE_PATH}/common/download/resource?resource=${encodeURIComponent(url)}`
+      
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     }
   }
 }
@@ -1136,6 +1153,29 @@ export default {
   background: #eff6ff;
   color: #1e40af;
   border: 1px solid #bfdbfe;
+}
+
+.clickable-chip {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.clickable-chip:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.clickable-chip .download-icon {
+  margin-left: auto;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.clickable-chip:hover .download-icon {
+  opacity: 1;
+  color: #2563eb;
 }
 
 .receiver-chip {
