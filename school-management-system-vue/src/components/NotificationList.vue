@@ -10,21 +10,21 @@
         </el-tag>
         <!-- 搜索框和发布时间筛选 -->
         <el-input
-          v-model="searchQuery"
-          placeholder="搜索通知標題或發送人..."
-          clearable
-          prefix-icon="Search"
-          class="search-input"
-          @keyup.enter="handleSearch"
+            v-model="searchQuery"
+            placeholder="搜索通知標題或發送人..."
+            clearable
+            prefix-icon="Search"
+            class="search-input"
+            @keyup.enter="handleSearch"
         />
         <el-date-picker
-          v-model="publishDate"
-          type="date"
-          placeholder="發佈時間"
-          clearable
-          value-format="YYYY-MM-DD"
-          class="date-picker"
-          @change="handleSearch"
+            v-model="publishDate"
+            type="date"
+            placeholder="發佈時間"
+            clearable
+            value-format="YYYY-MM-DD"
+            class="date-picker"
+            @change="handleSearch"
         />
       </div>
       <el-button plain @click="handleRefresh">
@@ -35,40 +35,40 @@
 
     <!-- 表格 -->
     <div class="table-container">
-      <el-table 
-        :data="displayData" 
-        style="width: 100%"
-        v-loading="loading"
-        stripe
-        empty-text="暫無數據"
-        :row-style="{ height: '56px' }"
-        :cell-style="{ padding: '14px 0' }"
+      <el-table
+          :data="displayData"
+          style="width: 100%"
+          v-loading="loading"
+          stripe
+          empty-text="暫無數據"
+          :row-style="{ height: '56px' }"
+          :cell-style="{ padding: '14px 0' }"
       >
         <el-table-column prop="title" label="通知標題" min-width="200" show-overflow-tooltip>
           <template #default="scope">
-            <el-link 
-              type="primary" 
-              @click="viewNotification(scope.row)" 
-              class="title-link"
-              :underline="false"
+            <el-link
+                type="primary"
+                @click="viewNotification(scope.row)"
+                class="title-link"
+                :underline="false"
             >
               {{ scope.row.title }}
             </el-link>
           </template>
         </el-table-column>
         <el-table-column prop="senderName" label="發送人" width="120" align="center" />
-        <el-table-column label="狀態" width="100" align="center">
+        <el-table-column label="狀態" width="100" align="center" class-name="hidden-xs-only">
           <template #default="scope">
-            <el-tag 
-              :type="getStatusTagType(scope.row.status)"
-              size="small"
-              effect="light"
+            <el-tag
+                :type="getStatusTagType(scope.row.status)"
+                size="small"
+                effect="light"
             >
               {{ getStatusText(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="replyDeadline" label="回覆截止" width="140" align="center">
+        <el-table-column prop="replyDeadline" label="回覆截止" width="140" align="center" class-name="hidden-xs-only">
           <template #default="scope">
             <div v-if="scope.row.replyDeadline" class="datetime-block is-deadline">
               <span class="date-part">{{ scope.row.replyDeadline.split(' ')[0] }}</span>
@@ -77,7 +77,7 @@
             <span v-else class="no-deadline">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="發佈時間" width="140" align="center">
+        <el-table-column prop="createTime" label="發佈時間" width="140" align="center" class-name="hidden-xs-only">
           <template #default="scope">
             <div v-if="scope.row.createTime" class="datetime-block">
               <span class="date-part">{{ scope.row.createTime.split(' ')[0] }}</span>
@@ -89,10 +89,10 @@
         <el-table-column label="操作" width="120" fixed="right" align="center">
           <template #default="scope">
             <div class="action-buttons">
-              <el-button 
-                size="small" 
-                type="primary"
-                @click="viewNotification(scope.row)"
+              <el-button
+                  size="small"
+                  type="primary"
+                  @click="viewNotification(scope.row)"
               >
                 <el-icon><View /></el-icon>
                 查看
@@ -106,36 +106,36 @@
     <!-- 分页 -->
     <div class="pagination-area">
       <el-pagination
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        :current-page="pagination.currentPage"
-        :page-sizes="[10, 20, 50]"
-        :page-size="pagination.pageSize"
-        layout="total, sizes, prev, pager, next"
-        :total="pagination.total"
-        background
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.currentPage"
+          :page-sizes="[10, 20, 50]"
+          :page-size="pagination.pageSize"
+          layout="total, sizes, prev, pager, next"
+          :total="pagination.total"
+          background
       />
     </div>
 
     <!-- 详情对话框 -->
     <el-dialog
-      v-model="detailDialogVisible"
-      title="通知詳情"
-      width="65%"
-      :before-close="handleDetailClose"
-      class="notification-detail-dialog"
-      top="1vh"
-      :modal="true"
-      :lock-scroll="true"
-      :close-on-click-modal="true"
-      :close-on-press-escape="true"
-      :show-close="true"
-      :append-to-body="true"
+        v-model="detailDialogVisible"
+        title="通知詳情"
+        width="65%"
+        :before-close="handleDetailClose"
+        class="notification-detail-dialog"
+        top="1vh"
+        :modal="true"
+        :lock-scroll="true"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        :show-close="true"
+        :append-to-body="true"
     >
-      <NotificationDetail 
-        v-if="selectedNotification"
-        :notification="selectedNotification"
-        :detail-type="type"
+      <NotificationDetail
+          v-if="selectedNotification"
+          :notification="selectedNotification"
+          :detail-type="type"
       />
     </el-dialog>
   </div>
@@ -191,16 +191,16 @@ export default {
     displayData() {
       // 直接使用后端返回的分页数据，不做前端切片
       let result = [...this.notifications]
-      
+
       // 搜索過濾（僅在前端過濾當前頁數據）
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase()
-        result = result.filter(n => 
-          n.title.toLowerCase().includes(query) ||
-          (n.senderName && n.senderName.toLowerCase().includes(query))
+        result = result.filter(n =>
+            n.title.toLowerCase().includes(query) ||
+            (n.senderName && n.senderName.toLowerCase().includes(query))
         )
       }
-      
+
       return result
     }
   },
@@ -261,7 +261,7 @@ export default {
           url: `/system/notification/${notification.notificationId}`,
           method: 'get'
         })
-        
+
         if (response.code === 200 || response.code === 0) {
           const vo = response.data
           // 將後端 NotificationDetailVO 重新組合為 NotificationDetail.vue 期望的扁平格式：
@@ -748,6 +748,16 @@ export default {
   .action-buttons {
     flex-direction: column;
     gap: 4px;
+  }
+
+  /* 隱藏指定表格列 */
+  .table-container :deep(.hidden-xs-only) {
+    display: none !important;
+  }
+
+  /* 將詳情 Dialog 寬度設為 92% */
+  .notification-detail-dialog :deep(.el-dialog) {
+    width: 92% !important;
   }
 }
 </style>
