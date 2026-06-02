@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="notification-detail">
     <!-- 顶部标题横幅 -->
     <div class="detail-hero">
@@ -479,9 +479,9 @@ export default {
       parsed.questions.forEach(sq => {
         if (sq.logicRuleList) {
           sq.logicRuleList.forEach(rule => {
-            if (rule.jumpTarget !== 'next' && rule.jumpTarget !== 'end') {
+            if (rule.jumpTarget && rule.jumpTarget !== 'next' && rule.jumpTarget !== 'end') {
               const tid = Number(rule.jumpTarget)
-              if (!isNaN(tid)) {
+              if (!isNaN(tid) && tid !== 0) {
                 jumpedTargetIds.add(tid)
               }
             }
@@ -544,10 +544,12 @@ export default {
     },
 
     formatJumpTarget(target, questionsArray) {
-      if (target === 'next') return '跳轉至下一題'
+      if (!target || target === 'next') return '跳轉至下一題'
       if (target === 'end') return '跳轉至結束作答'
       
       const targetId = Number(target)
+      if (isNaN(targetId) || targetId === 0) return '跳轉至下一題'
+      
       if (questionsArray && Array.isArray(questionsArray)) {
         const idx = questionsArray.findIndex(q => q.id === targetId)
         if (idx > -1) {

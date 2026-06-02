@@ -127,11 +127,11 @@ export default {
     },
 
     formatJumpTarget(target, currentIndexStr, optIndex) {
-      if (target === 'next') return '跳轉至下一題'
+      if (!target || target === 'next') return '跳轉至下一題'
       if (target === 'end') return '跳轉至結束作答'
       
       const targetId = Number(target)
-      if (isNaN(targetId)) return '跳轉失敗'
+      if (isNaN(targetId)) return '跳轉至下一題'
       
       return `跳轉至問題 ${currentIndexStr}.${optIndex + 1}`
     },
@@ -139,9 +139,9 @@ export default {
     hasValidJumpTarget(subQ, index) {
       const rule = this.getSubQuestionLogicForOption(subQ, index)
       if (!rule) return false
-      if (rule.jumpTarget === 'next' || rule.jumpTarget === 'end') return false
+      if (!rule.jumpTarget || rule.jumpTarget === 'next' || rule.jumpTarget === 'end') return false
       const targetId = Number(rule.jumpTarget)
-      if (isNaN(targetId)) return false
+      if (isNaN(targetId) || targetId === 0) return false
       //防止循環依賴無限遞迴
       if (this.visited && this.visited.has(targetId)) return false
       
@@ -151,6 +151,7 @@ export default {
 
     getJumpTargetQuestion(subQ, index) {
       const rule = this.getSubQuestionLogicForOption(subQ, index)
+      if (!rule || !rule.jumpTarget) return null
       const targetId = Number(rule.jumpTarget)
       return this.allQuestions.find(q => q.id === targetId)
     }

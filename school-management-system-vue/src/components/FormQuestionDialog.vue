@@ -118,11 +118,11 @@
                             v-else
                             type="danger" 
                             size="small"
-                            @click="removeAllLogicRules"
+                            @click="resetAllLogicRules"
                             class="remove-all-rules-btn"
                           >
-                            <el-icon><Delete /></el-icon>
-                            刪除所有規則
+                            <el-icon><Refresh /></el-icon>
+                            重置所有規則
                           </el-button>
                         </div>
                       </div>
@@ -158,7 +158,7 @@
                               <span class="rule-action-label">跳轉至</span>
                               <el-select 
                                 v-model="rule.jumpTarget" 
-                                placeholder="選擇跳轉目標"
+                                placeholder="➡️ 下一題"
                                 size="default"
                                 class="jump-select"
                                 clearable
@@ -293,7 +293,7 @@
                   </div>
                                 
                   <!-- 邏輯規則預覽（帶流程線） -->
-                  <div v-if="node.logicRuleList && node.logicRuleList.length > 0" class="preview-logic-flow-chart">
+                  <div v-if="hasCustomLogic(node)" class="preview-logic-flow-chart">
                     <div class="logic-flow-title">
                       <el-icon><Connection /></el-icon>
                       <span>邏輯分支</span>
@@ -442,7 +442,7 @@
                     </div>
                     
                     <!-- 邏輯模式下顯示邏輯規則流程圖 -->
-                    <div v-if="viewMode === 'preview' && question.logicRuleList && question.logicRuleList.length > 0" class="logic-flowchart">
+                    <div v-if="viewMode === 'preview' && hasCustomLogic(question)" class="logic-flowchart">
                       <div class="flowchart-title">
                         <el-icon><Connection /></el-icon>
                         <span>邏輯流程圖</span>
@@ -738,11 +738,11 @@
                           v-else
                           type="danger" 
                           size="small"
-                          @click="removeAllLogicRules"
+                          @click="resetAllLogicRules"
                           class="remove-all-rules-btn"
                         >
-                          <el-icon><Delete /></el-icon>
-                          刪除所有規則
+                          <el-icon><Refresh /></el-icon>
+                          重置所有規則
                         </el-button>
                       </div>
                     </div>
@@ -778,7 +778,7 @@
                             <span class="rule-action-label">跳轉至</span>
                             <el-select 
                               v-model="rule.jumpTarget" 
-                              placeholder="選擇跳轉目標"
+                              placeholder="➡️ 下一題"
                               size="default"
                               class="jump-select"
                               clearable
@@ -847,7 +847,7 @@
 import { 
   Edit, Close, Check, Menu, CircleCheck, Checked, 
   Delete, Plus, Upload, Connection,
-  ArrowUp, ArrowDown, InfoFilled, CircleClose
+  ArrowUp, ArrowDown, InfoFilled, CircleClose, Refresh
 } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
 
@@ -856,7 +856,7 @@ export default {
   components: {
     Edit, Close, Check, Menu, CircleCheck, Checked, 
     Delete, Plus, Upload, Connection,
-    ArrowUp, ArrowDown, InfoFilled, CircleClose
+    ArrowUp, ArrowDown, InfoFilled, CircleClose, Refresh
   },
   props: {
     visible: {
@@ -970,19 +970,30 @@ export default {
     selectedQuestion: {
       handler(newVal) {
         if (newVal && this.hasOptionType(newVal.type)) {
-          if (newVal.logicRuleList && newVal.logicRuleList.length > 0) {
-            const optionsCount = newVal.options.length
-            const currentRulesCount = newVal.logicRuleList.length
-            
-            if (currentRulesCount > optionsCount) {
-              for (let i = currentRulesCount - 1; i >= optionsCount; i--) {
-                newVal.logicRuleList.splice(i, 1)
-              }
-            }
-            newVal.logicRuleList.forEach((rule, index) => {
-              rule.optionIndex = index
-            })
+          if (!newVal.logicRuleList) {
+            newVal.logicRuleList = []
           }
+          
+          const optionsCount = newVal.options.length
+          const currentRulesCount = newVal.logicRuleList.length
+          
+          if (currentRulesCount > optionsCount) {
+            for (let i = currentRulesCount - 1; i >= optionsCount; i--) {
+              newVal.logicRuleList.splice(i, 1)
+            }
+          } else if (currentRulesCount < optionsCount) {
+            for (let i = currentRulesCount; i < optionsCount; i++) {
+              newVal.logicRuleList.push({
+                id: `rule-${Date.now()}-${i}`,
+                optionIndex: i,
+                jumpTarget: 'next'
+              })
+            }
+          }
+          
+          newVal.logicRuleList.forEach((rule, index) => {
+            rule.optionIndex = index
+          })
         }
       },
       deep: true
@@ -1040,6 +1051,14 @@ export default {
       return ['1', '2'].includes(type)
     },
 
+    // 判斷題目是否設置了自定義邏輯（非跳轉至下一題）
+    hasCustomLogic(question) {
+      if (!question || !question.logicRuleList || question.logicRuleList.length === 0) {
+        return false
+      }
+      return question.logicRuleList.some(rule => rule.jumpTarget && rule.jumpTarget !== 'next')
+    },
+
     // 獲取題型名稱
     getQuestionTypeName(type) {
       const typeMap = {
@@ -1078,10 +1097,7 @@ export default {
 
     // 獲取跳轉目標顯示名稱
     getJumpTargetName(target) {
-      if (!target) {
-        return '未設置'
-      }
-      if (target === 'next') {
+      if (!target || target === 'next') {
         return '下一題'
       }
       if (target === 'end') {
@@ -1097,10 +1113,7 @@ export default {
     },
     // 獲取規則預覽標籤顏色
     getRulePreviewTag(target) {
-      if (!target) {
-        return 'info'
-      }
-      if (target === 'next') {
+      if (!target || target === 'next') {
         return 'success'
       }
       if (target === 'end') {
@@ -1163,15 +1176,15 @@ export default {
       ElNotification({ title: '規則已生成', message: `已為 ${optionsCount} 個選項生成跳轉規則`, type: 'success', duration: 3000 })
     },
 
-    // 刪除所有邏輯規則
-    removeAllLogicRules() {
+    // 重置所有邏輯規則
+    resetAllLogicRules() {
       if (!this.selectedQuestion || !this.selectedQuestion.logicRuleList) {
         return
       }
       
       this.selectedQuestion.logicRuleList = []
       
-      ElNotification({ title: '規則已刪除', message: '已刪除所有跳轉規則', type: 'success', duration: 3000 })
+      ElNotification({ title: '規則已重置', message: '已將所有選項的跳轉規則重置為「下一題」', type: 'success', duration: 3000 })
     },
 
     // 切換視圖模式（編輯/邏輯）
@@ -1273,22 +1286,67 @@ export default {
         }
         
         if (this.question.questions && this.question.questions.length > 0) {
-          this.questionList = this.question.questions.map((q, index) => ({
-            ...q,
-            id: q.id || Date.now() + index,
-            description: q.description || '',
-            placeholder: q.placeholder || '',
-            defaultValue: q.defaultValue || '',
-            validation: q.validation || [],
-            randomOrder: q.randomOrder || false,
-            logicRuleList: q.logicRuleList || [],
-            minOptions: q.minOptions || 1,
-            maxOptions: q.maxOptions || null
-          }))
+          this.questionList = this.question.questions.map((q, index) => {
+            let rules = q.logicRuleList || []
+            if (this.hasOptionType(q.type)) {
+              if (rules.length === 0) {
+                rules = (q.options || []).map((opt, i) => ({
+                  id: `rule-${Date.now()}-${index}-${i}`,
+                  optionIndex: i,
+                  jumpTarget: 'next'
+                }))
+              } else {
+                const mappedRules = []
+                for (let i = 0; i < (q.options || []).length; i++) {
+                  const existingRule = rules.find(r => r.optionIndex === i)
+                  mappedRules.push(existingRule || {
+                    id: `rule-${Date.now()}-${index}-${i}`,
+                    optionIndex: i,
+                    jumpTarget: 'next'
+                  })
+                }
+                rules = mappedRules
+              }
+            }
+            return {
+              ...q,
+              id: q.id || Date.now() + index,
+              description: q.description || '',
+              placeholder: q.placeholder || '',
+              defaultValue: q.defaultValue || '',
+              validation: q.validation || [],
+              randomOrder: q.randomOrder || false,
+              logicRuleList: rules,
+              minOptions: q.minOptions || 1,
+              maxOptions: q.maxOptions || null
+            }
+          })
           
           const firstFillBlank = this.questionList.find(q => q.type === '3')
           this.selectedQuestionId = firstFillBlank ? firstFillBlank.id : this.questionList[0]?.id
         } else {
+          let rules = this.question.logicRuleList || []
+          if (this.hasOptionType(this.question.type || this.question.questionType)) {
+            const opts = this.question.options || []
+            if (rules.length === 0) {
+              rules = opts.map((opt, i) => ({
+                id: `rule-${Date.now()}-${i}`,
+                optionIndex: i,
+                jumpTarget: 'next'
+              }))
+            } else {
+              const mappedRules = []
+              for (let i = 0; i < opts.length; i++) {
+                const existingRule = rules.find(r => r.optionIndex === i)
+                mappedRules.push(existingRule || {
+                  id: `rule-${Date.now()}-${i}`,
+                  optionIndex: i,
+                  jumpTarget: 'next'
+                })
+              }
+              rules = mappedRules
+            }
+          }
           this.questionList = [{
             ...this.question,
             id: this.question.id || Date.now(),
@@ -1297,7 +1355,7 @@ export default {
             defaultValue: this.question.defaultValue || '',
             validation: this.question.validation || [],
             randomOrder: this.question.randomOrder || false,
-            logicRuleList: this.question.logicRuleList || [],
+            logicRuleList: rules,
             minOptions: this.question.minOptions || 1,
             maxOptions: this.question.maxOptions || null
           }]
@@ -1321,20 +1379,32 @@ export default {
     },
 
     addQuestion(type) {
+      const defaultOpts = this.getDefaultOptions(type)
+      const defaultRules = []
+      if (this.hasOptionType(type) && defaultOpts) {
+        for (let i = 0; i < defaultOpts.length; i++) {
+          defaultRules.push({
+            id: `rule-${Date.now()}-${i}`,
+            optionIndex: i,
+            jumpTarget: 'next'
+          })
+        }
+      }
+      
       const question = {
         id: this.nextId++,
         type: type,
         title: '',
         description: '',
         required: false,
-        options: this.getDefaultOptions(type),
+        options: defaultOpts,
         placeholder: '',
         defaultValue: '',
         validation: [],
         minLength: 0,
         maxLength: 200,
         randomOrder: false,
-        logicRuleList: [], // 邏輯規則列表（支援多條規則）
+        logicRuleList: defaultRules, // 邏輯規則列表（支援多條規則）
         minOptions: 1, // 最少可選選項數
         maxOptions: null, // 最多可選選項數（null 表示不限制）
         branchOptions: type === '5' ? [
