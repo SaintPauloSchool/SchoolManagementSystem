@@ -6,11 +6,11 @@
         <h2 class="hero-title">通知標題：{{ notification.title }}</h2>
         <div class="hero-meta">
           <el-tag
-            :type="getStatusType(notification.status)"
-            size="small"
-            effect="dark"
-            round
-            class="status-tag"
+              :type="getStatusType(notification.status)"
+              size="small"
+              effect="dark"
+              round
+              class="status-tag"
           >
             {{ getStatusText(notification.status) }}
           </el-tag>
@@ -47,7 +47,7 @@
         <h3 class="section-label">通知正文</h3>
       </div>
       <div class="content-body" v-html="notification.content"></div>
-      
+
       <!-- 外部連結區塊 -->
       <div v-if="notification.jumpUrl" class="content-jump-link">
         <div class="jump-link-header">
@@ -71,10 +71,10 @@
       </div>
       <div class="chip-list">
         <div
-          v-for="(item, index) in attachmentUrls"
-          :key="index"
-          class="chip attachment-chip clickable-chip"
-          @click="handleDownloadAttachment(item)"
+            v-for="(item, index) in attachmentUrls"
+            :key="index"
+            class="chip attachment-chip clickable-chip"
+            @click="handleDownloadAttachment(item)"
         >
           <el-icon :size="14"><Document /></el-icon>
           <span>{{ getAttachmentName(item, index) }}</span>
@@ -94,10 +94,10 @@
       </div>
       <div class="questions-grid">
         <div
-          v-for="question in notification.questions"
-          :key="question.questionId"
-          class="question-card"
-          :class="{ 'is-expanded': isQuestionExpanded(question.questionId) }"
+            v-for="question in notification.questions"
+            :key="question.questionId"
+            class="question-card"
+            :class="{ 'is-expanded': isQuestionExpanded(question.questionId) }"
         >
           <!-- 問題頭部（可點擊展開） -->
           <div class="question-header" @click="toggleQuestion(question.questionId)">
@@ -170,11 +170,11 @@
                     <!-- 子問題列表 -->
                     <div class="sub-questions-list">
                       <LogicQuestionItem
-                        v-for="(subQ, sIdx) in getRootQuestions(parseQuestionContent(question))"
-                        :key="subQ.id"
-                        :subQ="subQ"
-                        :allQuestions="parseQuestionContent(question).questions"
-                        :indexStr="String(sIdx + 1)"
+                          v-for="(subQ, sIdx) in getRootQuestions(parseQuestionContent(question))"
+                          :key="subQ.id"
+                          :subQ="subQ"
+                          :allQuestions="parseQuestionContent(question).questions"
+                          :indexStr="String(sIdx + 1)"
                       />
                     </div>
                   </div>
@@ -237,9 +237,9 @@
             </div>
             <div class="group-content">
               <div
-                v-for="(groupData, index) in getReceiverGroupedData(receiver)"
-                :key="index"
-                class="source-chip"
+                  v-for="(groupData, index) in getReceiverGroupedData(receiver)"
+                  :key="index"
+                  class="source-chip"
               >
                 <span class="source-label">{{ groupData.source }}</span>
                 <span class="source-names">{{ groupData.names.join(', ') }}</span>
@@ -267,9 +267,9 @@
             </div>
             <div class="group-content">
               <div
-                v-for="(ccData, index) in getCcGroupedData(cc)"
-                :key="index"
-                class="source-chip"
+                  v-for="(ccData, index) in getCcGroupedData(cc)"
+                  :key="index"
+                  class="source-chip"
               >
                 <span class="source-label">{{ ccData.source }}</span>
                 <span class="source-names">{{ ccData.names.join(', ') }}</span>
@@ -446,10 +446,10 @@ export default {
 
     getAttachmentName(item, index) {
       if (!item) return `附件 ${index + 1}`
-      
+
       let urlStr = ''
       let providedName = ''
-      
+
       if (typeof item === 'string') {
         urlStr = item
         providedName = ''
@@ -457,7 +457,7 @@ export default {
         urlStr = item.url || ''
         providedName = item.name || ''
       }
-      
+
       // 如果沒有名字，我們強制從 URL 提取
       if (!providedName || /^附件\s*\d+$/.test(providedName.trim())) {
         if (urlStr) {
@@ -467,7 +467,7 @@ export default {
           }
         }
       }
-      
+
       return providedName || `附件 ${index + 1}`
     },
 
@@ -511,7 +511,7 @@ export default {
           const title = parsed.questionnaire ? parsed.questionnaire.title : (parsed.title || '')
           const description = parsed.questionnaire ? parsed.questionnaire.description : (parsed.description || '')
           const questionsArray = parsed.questions || (parsed.questionnaire ? parsed.questionnaire.questions : []) || []
-          
+
           if (questionsArray.length > 0) {
             return {
               title: title,
@@ -548,10 +548,10 @@ export default {
     formatJumpTarget(target, questionsArray) {
       if (!target || target === 'next') return '跳轉至下一題'
       if (target === 'end') return '跳轉至結束作答'
-      
+
       const targetId = Number(target)
       if (isNaN(targetId) || targetId === 0) return '跳轉至下一題'
-      
+
       if (questionsArray && Array.isArray(questionsArray)) {
         const idx = questionsArray.findIndex(q => q.id === targetId)
         if (idx > -1) {
@@ -564,7 +564,7 @@ export default {
     formatOptionsLimit(min, max) {
       const hasMin = min !== undefined && min !== null && min !== ''
       const hasMax = max !== undefined && max !== null && max !== ''
-      
+
       if (hasMin && hasMax && min === max) return `${min}`
       if (hasMin && hasMax) return `${min} ~ ${max}`
       if (hasMin) return `至少 ${min}`
@@ -685,16 +685,16 @@ export default {
       if (!receiver.receiveData) {
         return [];
       }
-      
+
       try {
         const dataArr = JSON.parse(receiver.receiveData);
         const grouped = {};
-        
+
         dataArr.forEach(group => {
           if (group.receive_names && Array.isArray(group.receive_names) && group.type) {
             const type = group.type;
             const sourceText = type === 1 ? 'WeCom家校通訊錄：' : '自定義家校通訊錄：';
-            
+
             if (!grouped[type]) {
               grouped[type] = {
                 source: sourceText,
@@ -704,7 +704,7 @@ export default {
             grouped[type].names.push(...group.receive_names);
           }
         });
-        
+
         return Object.values(grouped);
       } catch (e) {
         return [{ source: '解析錯誤', names: [] }];
@@ -715,16 +715,16 @@ export default {
       if (!cc.ccData) {
         return [];
       }
-      
+
       try {
         const dataArr = JSON.parse(cc.ccData);
         const grouped = {};
-        
+
         dataArr.forEach(group => {
           if (group.cc_names && Array.isArray(group.cc_names) && group.type) {
             const type = group.type;
             const sourceText = type === 1 ? 'WeCom老師通訊錄：' : '自定義老師通訊錄：';
-            
+
             if (!grouped[type]) {
               grouped[type] = {
                 source: sourceText,
@@ -734,7 +734,7 @@ export default {
             grouped[type].names.push(...group.cc_names);
           }
         });
-        
+
         return Object.values(grouped);
       } catch (e) {
         return [{ source: '解析錯誤', names: [] }];
@@ -746,13 +746,13 @@ export default {
       if (this.notification.replyDeadline) {
         const deadline = new Date(this.notification.replyDeadline)
         const now = new Date()
-        
+
         if (now > deadline) {
           ElNotification({ title: "提示", message: '已超過回覆截止時間，無法提示家長回覆', type: "warning", duration: 3000 })
           return
         }
       }
-      
+
       // 确认对话框
       this.$confirm('系统将向未回复的学生家长重新发送提醒通知，是否继续？', '提示', {
         confirmButtonText: '确定',
@@ -766,18 +766,18 @@ export default {
           spinner: 'el-icon-loading',
           background: 'rgba(0, 0, 0, 0.7)'
         })
-        
+
         request({
           url: `/system/notification/remindParents/${this.notification.notificationId}`,
           method: 'post'
         }).then(response => {
           loading.close()
-          
+
           // 调试日志：查看实际接收到的响应
           console.log('=== 完整响应对象 ===', response)
           console.log('response.code:', response.code)
           console.log('response.data:', response.data)
-          
+
           // 根据响应码显示不同类型的消息
           if (response.code === 200) {
             // 成功
@@ -863,34 +863,34 @@ export default {
           method: 'GET',
           responseType: 'blob' // 重要：設置為 blob 類型以接收文件
         })
-        .then(response => {
-          // 創建下載鏈接
-          const blob = new Blob([response], { 
-            type: 'application/zip' 
-          })
-          const url = window.URL.createObjectURL(blob)
-          const link = document.createElement('a')
-          link.href = url
-          
-          // 設置文件名
-          const filename = `通知回覆統計_${this.notification.title || this.notification.notificationId}.zip`
-          link.download = filename
-          
-          document.body.appendChild(link)
-          link.click()
-          
-          // 清理
-          document.body.removeChild(link)
-          window.URL.revokeObjectURL(url)
-          
-          loading.close()
-          ElNotification({ title: "操作成功", message: '導出成功', type: "success", duration: 3000 })
-        })
-        .catch(error => {
-          loading.close()
-          console.error('導出失敗:', error)
-          ElNotification({ title: "操作失敗", message: '導出失敗: ' + (error.message || '未知錯誤'), type: "error", duration: 4000 })
-        })
+            .then(response => {
+              // 創建下載鏈接
+              const blob = new Blob([response], {
+                type: 'application/zip'
+              })
+              const url = window.URL.createObjectURL(blob)
+              const link = document.createElement('a')
+              link.href = url
+
+              // 設置文件名
+              const filename = `通知回覆統計_${this.notification.title || this.notification.notificationId}.zip`
+              link.download = filename
+
+              document.body.appendChild(link)
+              link.click()
+
+              // 清理
+              document.body.removeChild(link)
+              window.URL.revokeObjectURL(url)
+
+              loading.close()
+              ElNotification({ title: "操作成功", message: '導出成功', type: "success", duration: 3000 })
+            })
+            .catch(error => {
+              loading.close()
+              console.error('導出失敗:', error)
+              ElNotification({ title: "操作失敗", message: '導出失敗: ' + (error.message || '未知錯誤'), type: "error", duration: 4000 })
+            })
       }).catch(() => {
         // 用戶取消操作
       })
@@ -900,9 +900,9 @@ export default {
       if (!item) return
       const url = typeof item === 'object' ? item.url : item
       const fileName = this.getAttachmentName(item, 0)
-      
+
       const downloadUrl = `${window.location.origin}${API_BASE_PATH}/common/download/resource?resource=${encodeURIComponent(url)}`
-      
+
       const link = document.createElement('a')
       link.href = downloadUrl
       link.download = fileName
@@ -1851,5 +1851,45 @@ export default {
 
 .action-buttons .el-button .el-icon {
   flex-shrink: 0;
+}
+
+/* 手機自適應樣式（屏幕寬度 <= 768px 時生效，不影響電腦端） */
+@media (max-width: 768px) {
+  /* 調整卡片與橫幅內邊距 */
+  .section-card {
+    padding: 12px 16px !important;
+  }
+  .detail-hero {
+    padding: 16px 20px !important;
+  }
+  .hero-title {
+    font-size: 16px !important;
+  }
+
+  /* 統計網格改為雙列排版 */
+  .statistics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  /* 讓第 5 個統計卡片（回覆總數）在最後一行橫向拉滿 */
+  .statistics-grid .stat-item:last-child {
+    grid-column: span 2 !important;
+  }
+  .stat-item {
+    padding: 12px 8px !important;
+  }
+  .stat-value {
+    font-size: 22px !important;
+  }
+
+  /* 操作按鈕改為垂直排列並撐滿 */
+  .action-buttons {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  .action-buttons .el-button {
+    width: 100% !important;
+    margin-left: 0 !important; /* 覆蓋相鄰按鈕左邊距 */
+  }
 }
 </style>
