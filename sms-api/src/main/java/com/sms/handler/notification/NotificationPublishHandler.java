@@ -13,6 +13,7 @@ import com.sms.system.entity.SysDepartmentParentBinding;
 import com.sms.system.entity.vo.UnrepliedStudentVO;
 import com.sms.system.service.INotificationMessageService;
 import com.sms.system.service.ISysDepartmentParentBindingService;
+import com.sms.system.mapper.SysAdminMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +107,9 @@ public class NotificationPublishHandler {
     @Autowired
     private ISysDepartmentParentBindingService departmentParentBindingService;
 
+    @Autowired
+    private SysAdminMapper sysAdminMapper;
+
     // =========================================================================
     // 1. Core WeChat Publish Flow (發佈通告消息)
     // =========================================================================
@@ -160,8 +164,8 @@ public class NotificationPublishHandler {
      * @return 發送結果（成功數、失敗數）
      */
     private SendResult sendInBatchesWithPersonalization(Notification notification, List<String> parentUserIds,
-            List<String> studentUserIds, List<String> partyIds,
-            List<ParentStudentMessageInfo> messageInfos) {
+                                                        List<String> studentUserIds, List<String> partyIds,
+                                                        List<ParentStudentMessageInfo> messageInfos) {
         // 如果沒有個性化消息，使用原有的發送邏輯
         if (messageInfos == null || messageInfos.isEmpty()) {
             return sendInBatches(notification, parentUserIds, studentUserIds, partyIds);
@@ -243,7 +247,7 @@ public class NotificationPublishHandler {
      * @return 發送結果（成功數、失敗數）
      */
     private SendResult sendInBatches(Notification notification, List<String> parentUserIds,
-            List<String> studentUserIds, List<String> partyIds) {
+                                     List<String> studentUserIds, List<String> partyIds) {
         // 計算需要的批次數量
         int parentBatches = calcBatchCount(parentUserIds.size(), PARENT_STUDENT_BATCH_SIZE);
         int studentBatches = calcBatchCount(studentUserIds.size(), PARENT_STUDENT_BATCH_SIZE);
@@ -357,7 +361,7 @@ public class NotificationPublishHandler {
      * 構建發送給企業微信接口的 JSON 數據實體
      */
     private JSONObject buildWechatPayload(List<String> parentUserIds, List<String> studentUserIds,
-            List<String> partyIds, Notification notification) {
+                                          List<String> partyIds, Notification notification) {
         JSONObject payload = new JSONObject();
         // recv_scope: 0表示發送給指定的家長、學生或部門
         payload.put("recv_scope", 0);
@@ -490,9 +494,9 @@ public class NotificationPublishHandler {
      * @return 發送記錄
      */
     private NotificationSendRecord createSendRecord(Notification notification,
-            List<String> studentUserIds,
-            SendResult sendResult,
-            List<SysDepartmentParentBinding> bindings) {
+                                                    List<String> studentUserIds,
+                                                    SendResult sendResult,
+                                                    List<SysDepartmentParentBinding> bindings) {
         // 發送記錄
         NotificationSendRecord sendRecord = new NotificationSendRecord();
         sendRecord.setNotificationId(notification.getNotificationId());
@@ -594,9 +598,9 @@ public class NotificationPublishHandler {
      * @return 閱讀記錄列表
      */
     private List<NotificationUserReadRecord> createUserReadRecords(Long sendRecordId, List<String> parentUserIds,
-            List<String> studentUserIds,
-            Set<String> successUserIds,
-            List<SysDepartmentParentBinding> bindings) {
+                                                                   List<String> studentUserIds,
+                                                                   Set<String> successUserIds,
+                                                                   List<SysDepartmentParentBinding> bindings) {
         // 用戶閱讀記錄列表，預分配容量避免陣列擴容
         int capacity = (parentUserIds != null ? parentUserIds.size() : 0)
                 + (studentUserIds != null ? studentUserIds.size() : 0);
@@ -667,7 +671,7 @@ public class NotificationPublishHandler {
      * @return 閱讀記錄
      */
     private NotificationUserReadRecord createReadRecord(Long sendRecordId, String userId, String userType,
-            String studentUserId, boolean sendSuccess, LocalDateTime createTime) {
+                                                        String studentUserId, boolean sendSuccess, LocalDateTime createTime) {
         NotificationUserReadRecord record = new NotificationUserReadRecord();
         record.setSendRecordId(sendRecordId);
         record.setUserId(userId);
@@ -693,21 +697,25 @@ public class NotificationPublishHandler {
         // 1. 查詢該通知的抄送對象
         List<NotificationCc> ccs = notificationCcService.selectByNotificationId(notification.getNotificationId());
 
-        if (ccs == null || ccs.isEmpty()) {
-            log.info("通知 {} 沒有設置抄送對象", notification.getNotificationId());
-            return;
+        Set<String> allUserIds = new HashSet<>();
+        if (ccs != null && !ccs.isEmpty()) {
+            // 2. 使用 Service 解析所有抄送對象，獲取 userid 列表
+            allUserIds.addAll(notificationCcService.resolveCcUserIds(ccs));
         }
 
-        // 2. 使用 Service 解析所有抄送對象，獲取 userid 列表
-        Set<String> allUserIds = notificationCcService.resolveCcUserIds(ccs);
+        // 3. 獲取所有狀態正常的管理員用戶 ID 列表，也默認抄送一份給他們（企微推送）
+        List<String> adminUserIds = sysAdminMapper.selectAdminUserIds();
+        if (adminUserIds != null && !adminUserIds.isEmpty()) {
+            allUserIds.addAll(adminUserIds);
+        }
 
-        // 3. 如果沒有有效的 userid，直接返回
+        // 4. 如果沒有任何接收者，直接返回
         if (allUserIds.isEmpty()) {
-            log.warn("通知 {} 的抄送對象中沒有解析出有效的 userid", notification.getNotificationId());
+            log.info("通知 {} 沒有設置抄送對象且無管理員配置", notification.getNotificationId());
             return;
         }
 
-        // 4. 分批發送抄送消息
+        // 5. 分批發送抄送消息
         sendCcInBatches(notification, new ArrayList<>(allUserIds));
     }
 
@@ -800,7 +808,7 @@ public class NotificationPublishHandler {
             // 如果 ccNoticeBaseUrl 只是單純的網址前綴，我們為其包裝 OAuth 認證
             if (!ccNoticeBaseUrl.contains("open.weixin.qq.com") && corpId != null) {
                 String redirectUri = "https://mo-stu-sys.org-assistant.com/sp-api/wechat/oauth/callback"; // 固定的
-                                                                                                          // callback
+                // callback
                 String agentIdParam = (agentId != null) ? agentId.toString() : "1000033";
                 String encodedRedirectUri = java.net.URLEncoder.encode(redirectUri, "UTF-8");
                 noticeUrl = String.format(
@@ -1038,8 +1046,8 @@ public class NotificationPublishHandler {
      * 構建提醒記錄（統一工廠方法，避免重複代碼）
      */
     private NotificationReminderRecord buildReminderRecord(Long notificationId, Long sendRecordId,
-            String studentUserId, String parentUserIdsStr,
-            LocalDateTime now, String status) {
+                                                           String studentUserId, String parentUserIdsStr,
+                                                           LocalDateTime now, String status) {
         NotificationReminderRecord record = new NotificationReminderRecord();
         record.setNotificationId(notificationId);
         record.setSendRecordId(sendRecordId);
@@ -1221,7 +1229,7 @@ public class NotificationPublishHandler {
      * 批量更新閱讀記錄的發送狀態
      */
     private void updateReadRecords(List<NotificationUserReadRecord> records,
-            String userType, Set<String> successUserIds) {
+                                   String userType, Set<String> successUserIds) {
         for (NotificationUserReadRecord record : records) {
             if (userType.equals(record.getUserType())) {
                 String newStatus = successUserIds.contains(record.getUserId()) ? "1" : "0";
