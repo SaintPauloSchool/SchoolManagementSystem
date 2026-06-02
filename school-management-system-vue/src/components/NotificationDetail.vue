@@ -1891,5 +1891,16 @@ export default {
     width: 100% !important;
     margin-left: 0 !important; /* 覆蓋相鄰按鈕左邊距 */
   }
+
+  /* 接收對象 / 抄送對象 標籤自適應，防止名字在手機端垂直換行 */
+  .source-chip {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+    padding: 8px 12px !important;
+  }
+  .source-label {
+    min-width: unset !important;
+  }
 }
 </style>

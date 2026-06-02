@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="notification-list">
     <!-- 列表头部 -->
     <div class="list-header">
@@ -758,6 +758,11 @@ export default {
   /* 將詳情 Dialog 寬度設為 92% */
   .notification-detail-dialog :deep(.el-dialog) {
     width: 92% !important;
+  }
+
+  /* 縮小手機端彈窗內容區域內邊距 */
+  .notification-detail-dialog :deep(.el-dialog__body) {
+    padding: 12px 14px !important;
   }
 }
 </style>
