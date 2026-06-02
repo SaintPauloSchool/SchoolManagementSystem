@@ -9,9 +9,12 @@ import com.sms.system.service.notification.INotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.sms.system.entity.SysAdmin;
+import com.sms.system.mapper.SysAdminMapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.sms.common.utils.PageUtils.startPage;
 
@@ -30,6 +33,9 @@ public class NotificationServiceImpl implements INotificationService {
 
     @Autowired
     private WecomSchoolDepartmentMemberMapper wecomSchoolDepartmentMemberMapper;
+
+    @Autowired
+    private SysAdminMapper sysAdminMapper;
 
     /**
      * 查询通知列表
@@ -63,29 +69,48 @@ public class NotificationServiceImpl implements INotificationService {
     public List<Notification> selectCcToMeList(Notification notification) {
         Long userId = notification.getUserId();
         String openUserId = notification.getOpenUserId();
-        
-        // 查询用户的部门 ID
-        Long departmentId = null;
+
+        // 判斷當前登錄用戶是否為管理員
+        boolean isAdmin = false;
         if (openUserId != null && !openUserId.trim().isEmpty()) {
-            WecomSchoolDepartmentMember member = wecomSchoolDepartmentMemberMapper.selectByUserid(openUserId);
-            if (member != null) {
-                departmentId = member.getDepartmentId();
+            SysAdmin admin = sysAdminMapper.selectByUserId(openUserId);
+            if (admin != null && "0".equals(admin.getStatus())) {
+                isAdmin = true;
             }
         }
-        
-        // 通过 NotificationCcService 查询抄送给该用户的所有通知 ID
-        Set<Long> notificationIds = notificationCcService.selectNotificationIdsByUserId(userId, departmentId);
-        
-        // 如果没有抄送通知，返回空列表
+
+        Set<Long> notificationIds;
+        if (isAdmin) {
+            // 如果是管理員，則所有已發佈的通知都默認抄送給他
+            Notification query = new Notification();
+            query.setStatus("1"); // 已發佈
+            List<Notification> allPublished = notificationMapper.selectNotificationList(query);
+            notificationIds = allPublished.stream()
+                    .map(Notification::getNotificationId)
+                    .collect(Collectors.toSet());
+        } else {
+            // 查詢用戶的部門 ID
+            Long departmentId = null;
+            if (openUserId != null && !openUserId.trim().isEmpty()) {
+                WecomSchoolDepartmentMember member = wecomSchoolDepartmentMemberMapper.selectByUserid(openUserId);
+                if (member != null) {
+                    departmentId = member.getDepartmentId();
+                }
+            }
+            // 通過 NotificationCcService 查詢抄送給該用戶的所有通知 ID
+            notificationIds = notificationCcService.selectNotificationIdsByUserId(userId, departmentId);
+        }
+
+        // 如果沒有抄送通知，返回空列表
         if (notificationIds == null || notificationIds.isEmpty()) {
             return new ArrayList<>();
         }
-        
-        // 设置通知 ID 列表到通知对象中
+
+        // 設置通知 ID 列表到通知對象中
         notification.setNotificationIds(notificationIds);
 
         startPage();
-        // 查询通知详细信息
+        // 查詢通知詳細信息
         return notificationMapper.selectCcToMeList(notification);
     }
 
@@ -99,7 +124,7 @@ public class NotificationServiceImpl implements INotificationService {
     public List<Notification> selectMySendList(Notification notification) {
         return notificationMapper.selectMySendList(notification);
     }
-    
+
     /**
      * 保存通知
      *
