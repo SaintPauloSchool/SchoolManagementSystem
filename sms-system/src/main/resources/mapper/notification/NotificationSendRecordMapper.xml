@@ -82,12 +82,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </update>
 
     <select id="selectAllFailedRecords" resultMap="NotificationSendRecordResult">
-        select send_record_id, notification_id, sender_id, sender_name, send_time,
-               send_status, total_count, success_count, fail_count,
-               create_by, create_time, update_by, update_time
-        from notification_send_record
-        where send_status in ('3', '4')
-        order by send_time desc
+        select r.send_record_id, r.notification_id, r.sender_id, r.sender_name, r.send_time,
+               r.send_status, r.total_count, r.success_count, r.fail_count,
+               r.create_by, r.create_time, r.update_by, r.update_time
+        from notification_send_record r
+        inner join notification n on r.notification_id = n.notification_id
+        where r.send_status in ('3', '4') and n.status = '1'
+        order by r.send_time desc
     </select>
 
     <select id="selectAllFailedRecordsWithVO" resultType="com.sms.system.entity.vo.FailedNotificationVO">
@@ -102,8 +103,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             r.fail_count as failCount,
             r.sender_name as senderName
         from notification_send_record r
-        left join notification n on r.notification_id = n.notification_id
-        where r.send_status in ('3', '4')
+        inner join notification n on r.notification_id = n.notification_id
+        where r.send_status in ('3', '4') and n.status = '1'
         order by r.send_time desc
     </select>
 

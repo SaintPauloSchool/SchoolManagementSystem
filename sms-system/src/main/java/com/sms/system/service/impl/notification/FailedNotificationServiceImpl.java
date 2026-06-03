@@ -62,7 +62,7 @@ public class FailedNotificationServiceImpl implements IFailedNotificationService
 
         // 2. 查詢對應的通知信息
         Notification notification = notificationMapper.selectById(sendRecord.getNotificationId());
-        if (notification == null) {
+        if (notification == null || !"1".equals(notification.getStatus())) {
             return null;
         }
 

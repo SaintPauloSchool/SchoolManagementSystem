@@ -50,4 +50,14 @@ public interface NotificationMapper {
      */
     Notification selectById(Long notificationId);
 
+    /**
+     * 更新通知狀態
+     *
+     * @param notificationId 通知 ID
+     * @param status 狀態
+     * @return 影響行數
+     */
+    int updateStatus(@Param("notificationId") Long notificationId, @Param("status") String status);
+
 }
+

@@ -22,6 +22,12 @@ public class WechatWorkHttpClient {
     private static final Logger log = LoggerFactory.getLogger(WechatWorkHttpClient.class);
 
     /**
+     * 微信 OAuth 授權 URL
+     */
+    @Value("${wechat.work.api.oauthAuthorizeUrl:https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_base&agentid=%s&state=%s#wechat_redirect}")
+    private String oauthAuthorizeUrl;
+
+    /**
      * 獲取 Access Token 的 API 接口地址
      */
     @Value("${wechat.work.api.accessTokenUrl:https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={corpId}&corpsecret={corpSecret}}")
@@ -66,20 +72,26 @@ public class WechatWorkHttpClient {
     /**
      * 企業微信 CropId
      */
-    @Value("${wechat.work.corpId:}")
+    @Value("${wechat.work.corpId:ww04fad852e91fd490}")
     private String corpId;
 
     /**
      * 企業微信 AgentId（應用ID）
      */
-    @Value("${wechat.work.agentId:#{null}}")
+    @Value("${wechat.work.agentId:1000033}")
     private Integer agentId;
 
     /**
      * 企業微信 Secret
      */
-    @Value("${wechat.work.secret:}")
+    @Value("${wechat.work.secret:I31-B5clKayPf4vNl2bibhL1ia8x4cwIc884xK888Fc}")
     private String secret;
+
+    /**
+     * 微信 OAuth 回調的重定向 URI
+     */
+    @Value("${wechat.work.oauthRedirectUri:https://mo-stu-sys.org-assistant.com/sp-api/wechat/oauth/callback}")
+    private String oauthRedirectUri;
 
     /**
      * 緩存 Token，避免頻繁調用微信接口請求 Token，導致觸發頻率限制
@@ -300,6 +312,26 @@ public class WechatWorkHttpClient {
         } catch (Exception e) {
             log.error("獲取家校通訊錄家長列表失敗", e);
             throw new RuntimeException("獲取家校通訊錄家長列表失敗: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 構建 WeChat OAuth 授權 URL
+     *
+     * @param noticeUrl 原 URL
+     * @param state     授權攜帶的 state 參數
+     * @return 構建後的 OAuth 授權 URL
+     */
+    public String buildOauthUrl(String noticeUrl, String state) {
+        if (noticeUrl == null || noticeUrl.contains("open.weixin.qq.com") || corpId == null || corpId.trim().isEmpty()) {
+            return noticeUrl;
+        }
+        try {
+            String encodedRedirectUri = java.net.URLEncoder.encode(oauthRedirectUri, "UTF-8");
+            return String.format(oauthAuthorizeUrl, corpId, encodedRedirectUri, agentId, state);
+        } catch (Exception e) {
+            log.error("構建 WeChat OAuth URL 失敗", e);
+            return noticeUrl;
         }
     }
 }

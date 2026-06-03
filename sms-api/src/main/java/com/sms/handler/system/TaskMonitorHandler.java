@@ -32,7 +32,7 @@ public class TaskMonitorHandler {
     @Autowired
     private WechatWorkHttpClient wechatWorkHttpClient;
 
-    @Value("${wechat.work.agentId:#{null}}")
+    @Value("${wechat.work.agentId:1000033}")
     private Integer agentId;
 
     /**
