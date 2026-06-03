@@ -5,23 +5,23 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import com.sms.common.core.domain.BaseEntity;
 
 /**
- * 部门家长绑定表 sys_department_parent_binding
+ * 部門家長綁定表 sys_department_parent_binding
  * 
  */
 public class SysDepartmentParentBinding extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    /** 主键 ID */
+    /** 主鍵 ID */
     private Long id;
 
-    /** 部门 ID */
+    /** 部門 ID */
     private Long departmentId;
 
-    /** 家长用户 ID */
+    /** 家長用戶 ID */
     private String parentUserId;
 
-    /** 学生用户 ID */
+    /** 學生用戶 ID */
     private String studentUserId;
 
     public Long getId()

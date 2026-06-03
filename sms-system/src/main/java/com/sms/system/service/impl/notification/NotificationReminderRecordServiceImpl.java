@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 通知提醒记录 Service 业务层处理
+ * 通知提醒記錄 Service 業務層處理
  */
 @Service
 public class NotificationReminderRecordServiceImpl implements INotificationReminderRecordService {
@@ -18,10 +18,10 @@ public class NotificationReminderRecordServiceImpl implements INotificationRemin
     private NotificationReminderRecordMapper notificationReminderRecordMapper;
 
     /**
-     * 新增提醒记录
+     * 新增提醒記錄
      *
-     * @param reminderRecord 提醒记录
-     * @return 结果
+     * @param reminderRecord 提醒記錄
+     * @return 結果
      */
     @Override
     public int save(NotificationReminderRecord reminderRecord) {
@@ -29,10 +29,10 @@ public class NotificationReminderRecordServiceImpl implements INotificationRemin
     }
 
     /**
-     * 批量新增提醒记录
+     * 批量新增提醒記錄
      *
-     * @param list 提醒记录列表
-     * @return 结果
+     * @param list 提醒記錄列表
+     * @return 結果
      */
     @Override
     public int batchSave(List<NotificationReminderRecord> list) {
@@ -43,10 +43,10 @@ public class NotificationReminderRecordServiceImpl implements INotificationRemin
     }
 
     /**
-     * 根据通知ID查询提醒记录列表
+     * 根據通知ID查詢提醒記錄列表
      *
      * @param notificationId 通知ID
-     * @return 提醒记录列表
+     * @return 提醒記錄列表
      */
     @Override
     public List<NotificationReminderRecord> selectByNotificationId(Long notificationId) {

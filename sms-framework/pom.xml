@@ -29,13 +29,13 @@
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
-        <!-- ?¿é??°æ®åº“è??¥æ? -->
+        <!-- ?¿é??°æ“šåº«è??¥æ? -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>druid-spring-boot-starter</artifactId>
         </dependency>
 
-        <!-- éªŒè???-->
+        <!-- é©—è???-->
         <dependency>
             <groupId>pro.fessional</groupId>
             <artifactId>kaptcha</artifactId>
@@ -54,7 +54,7 @@
             <version>${spring-boot.version}</version>
         </dependency>
 
-        <!-- è§??å®¢æˆ·ç«¯æ?ä½œç³»ç»Ÿã€æ?è§ˆå™¨ç­?-->
+        <!-- è§??å®¢æˆ¶ç«¯æ?ä½œç³»çµ±ã€æ?è¦½å™¨ç­?-->
         <dependency>
             <groupId>eu.bitwalker</groupId>
             <artifactId>UserAgentUtils</artifactId>

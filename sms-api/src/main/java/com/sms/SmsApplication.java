@@ -9,7 +9,7 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * 启动程序
+ * 啓動程序
  *
  */
 @EnableScheduling

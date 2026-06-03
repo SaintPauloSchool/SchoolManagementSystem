@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="school-department-container">
     <div class="layout-content">
-      <!-- 左侧部门树 -->
+      <!-- 左側部門樹 -->
       <div class="left-sidebar">
         <div class="sidebar-header">
           <div class="sidebar-actions">
@@ -63,7 +63,7 @@
         </el-tree>
       </div>
 
-      <!-- 右侧成员列表 --> 
+      <!-- 右側成員列表 --> 
       <div class="main-content">
         <div class="content-header">
           <div class="header-info">
@@ -85,7 +85,7 @@
           </div>
         </div>
 
-        <!-- 成员表格 -->
+        <!-- 成員表格 -->
         <div class="table-wrapper">
           <el-table :data="currentMemberList" style="width: 100%" :max-height="'calc(100vh - 200px)'" ref="memberTable" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="55" />
@@ -109,7 +109,7 @@
       </div>
     </div>
 
-    <!-- 新增/编辑部门对话框 -->
+    <!-- 新增/編輯部門對話框 -->
     <el-dialog
       :title="dialogTitle"
       v-model="departmentDialogVisible"
@@ -118,10 +118,10 @@
       class="department-dialog"
     >
       <el-form ref="departmentForm" :model="departmentForm" label-width="110px" :rules="departmentRules">
-        <el-form-item label="上级部门" prop="parentId">
+        <el-form-item label="上級部門" prop="parentId">
           <el-select
             v-model="departmentForm.parentId"
-            placeholder="请选择上级部门（不选则为根部门）"
+            placeholder="請選擇上級部門（不選則爲根部門）"
             clearable
             style="width: 100%"
           >
@@ -135,11 +135,11 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="部门名称" prop="name">
-          <el-input v-model="departmentForm.name" placeholder="请输入部门名称" prefix-icon="OfficeBuilding" />
+        <el-form-item label="部門名稱" prop="name">
+          <el-input v-model="departmentForm.name" placeholder="請輸入部門名稱" prefix-icon="OfficeBuilding" />
         </el-form-item>
-        <el-form-item label="英文名称" prop="nameEn">
-          <el-input v-model="departmentForm.nameEn" placeholder="请输入部门英文名称" />
+        <el-form-item label="英文名稱" prop="nameEn">
+          <el-input v-model="departmentForm.nameEn" placeholder="請輸入部門英文名稱" />
         </el-form-item>
         <el-form-item label="排序" prop="orderNum">
           <el-input-number 
@@ -148,7 +148,7 @@
             :max="999" 
             controls-position="right"
             :step="1"
-            placeholder="请输入排序值"
+            placeholder="請輸入排序值"
             class="order-input"
           />
         </el-form-item>
@@ -161,7 +161,7 @@
       </template>
     </el-dialog>
 
-    <!-- 选择成员对话框 -->
+    <!-- 選擇成員對話框 -->
     <el-dialog
       :title="'選擇成員 - ' + (currentDepartment?.name || '')"
       v-model="memberSelectorDialogVisible"
@@ -383,7 +383,7 @@ export default {
       }
     },
 
-    // 将树形结构扁平化为列表，用于 el-select 显示
+    // 將樹形結構扁平化爲列表，用於 el-select 顯示
     flattenTreeSelectData(tree) {
       if (!Array.isArray(tree)) return []
       const result = []
@@ -399,7 +399,7 @@ export default {
       return result
     },
 
-    // 递归查找部门 (通过 id)
+    // 遞歸查找部門 (通過 id)
     findDepartment(tree, id) {
       for (const node of tree) {
         if (String(node.id) === String(id)) {
@@ -415,7 +415,7 @@ export default {
       return null
     },
 
-    // 查找部门 (通过 name 和 parentId)
+    // 查找部門 (通過 name 和 parentId)
     findDepartmentByNameAndParent(tree, name, parentId) {
       if (parentId) {
         const parentNode = this.findDepartment(tree, parentId)
@@ -432,7 +432,7 @@ export default {
       this.currentDepartment = data
       this.loadMemberList(data)
       
-      // 如果有子节点，自动展开，並記錄 key
+      // 如果有子節點，自動展開，並記錄 key
       if (data.children && data.children.length > 0) {
         this.$nextTick(() => {
           const node = this.$refs.departmentTree.getNode(data.id)
@@ -448,18 +448,18 @@ export default {
     },
 
     async loadMemberList(department) {
-      // 如果没有选中部门，清空列表
+      // 如果沒有選中部門，清空列表
       if (!department || !department.id) {
         this.currentMemberList = []
         this.memberCount = 0
         return
       }
       
-      // 收集当前部门及其所有子部门的 ID
+      // 收集當前部門及其所有子部門的 ID
       const departmentIds = this.collectDepartmentIds(department)
       
       try {
-        // 从 /system/schoolDepartment/members 接口获取成员列表
+        // 從 /system/schoolDepartment/members 接口獲取成員列表
         const response = await request({
           url: '/system/schoolDepartment/members',
           method: 'post',
@@ -479,7 +479,7 @@ export default {
           this.memberCount = 0
         }
       } catch (error) {
-        console.error('加载成员失败:', error)
+        console.error('加載成員失敗:', error)
         ElNotification({ title: "操作失敗", message: '加載失敗：' + (error.message || '網絡錯誤'), type: "error", duration: 4000 })
         this.currentMemberList = []
         this.memberCount = 0
@@ -518,7 +518,7 @@ export default {
           
           if (response.code === 200 || response.code === 0) {
             ElNotification({ title: "操作成功", message: '刪除成功', type: "success", duration: 3000 })
-            // 重新加载当前部门成员列表
+            // 重新加載當前部門成員列表
             if (this.currentDepartment) {
               this.loadMemberList(this.currentDepartment)
             }
@@ -531,7 +531,7 @@ export default {
           }
         }
       }).catch(() => {
-        // 用户取消删除
+        // 用戶取消刪除
       })
     },
 
@@ -552,7 +552,7 @@ export default {
         type: 'warning'
       }).then(async () => {
         try {
-          // 批量删除选中的成员
+          // 批量刪除選中的成員
           const deletePromises = this.selectedMembers.map(member => 
             request({
               url: `/system/schoolDepartment/member/${member.id}`,
@@ -562,17 +562,17 @@ export default {
           
           const responses = await Promise.all(deletePromises)
           
-          // 检查是否有失败的请求
+          // 檢查是否有失敗的請求
           const hasError = responses.some(r => r.code !== 200 && r.code !== 0)
           
           if (!hasError) {
             ElNotification({ title: "操作成功", message: `成功刪除 ${this.selectedMembers.length} 位成員`, type: "success", duration: 3000 })
-            // 清空选中项
+            // 清空選中項
             this.selectedMembers = []
             if (this.$refs.memberTable) {
               this.$refs.memberTable.clearSelection()
             }
-            // 重新加载当前部门成员列表
+            // 重新加載當前部門成員列表
             if (this.currentDepartment) {
               this.loadMemberList(this.currentDepartment)
             }
@@ -585,7 +585,7 @@ export default {
           }
         }
       }).catch(() => {
-        // 用户取消删除
+        // 用戶取消刪除
       })
     },
 
@@ -641,7 +641,7 @@ export default {
                   }).then(() => {
                     this.openMemberSelector(newDept)
                   }).catch(() => {
-                    // 用户取消
+                    // 用戶取消
                   })
                 }
               } else {
@@ -687,7 +687,7 @@ export default {
     handleAddSubDepartment(data) {
       this.dialogTitle = '新增子部門'
       this.resetDepartmentForm()
-      // 自动设置上级部门为当前部门
+      // 自動設置上級部門爲當前部門
       this.departmentForm.parentId = data.id
       this.treeSelectData = this.flattenTreeSelectData(this.departmentTree)
       this.departmentDialogVisible = true
@@ -717,8 +717,8 @@ export default {
           ElNotification({ title: "操作失敗", message: '加載成員數據失敗', type: "error", duration: 4000 })
         }
       } catch (error) {
-        console.error('加载成员数据失败:', error)
-        ElNotification({ title: "操作失敗", message: '加载成员数据失败', type: "error", duration: 4000 })
+        console.error('加載成員數據失敗:', error)
+        ElNotification({ title: "操作失敗", message: '加載成員數據失敗', type: "error", duration: 4000 })
       } finally {
         this.loading = false
       }
@@ -726,7 +726,7 @@ export default {
     
     handleWecomCheckChange(data, checked) {
       const checkedNodes = this.$refs.wecomTree.getCheckedNodes()
-      // 过滤出叶子节点（人员），并将 parentUserId 映射为 userid
+      // 過濾出葉子節點（人員），並將 parentUserId 映射爲 userid
       this.selectedWecomMembers = checkedNodes.filter(node => node.isLeaf === true).map(node => ({
         id: node.id,
         userid: node.parentUserId || '',
@@ -763,7 +763,7 @@ export default {
       }
       
       try {
-        console.log('选中的成员:', this.selectedWecomMembers)
+        console.log('選中的成員:', this.selectedWecomMembers)
         const membersToAdd = this.selectedWecomMembers.map(member => ({
           userid: member.userid,
           name: member.name,
@@ -771,7 +771,7 @@ export default {
           openUserid: member.openUserid || '',
           type: 2
         }))
-        console.log('准备提交的成员数据:', membersToAdd)
+        console.log('準備提交的成員數據:', membersToAdd)
         
         const response = await request({
           url: '/system/schoolDepartment/members/batch?type=2',
@@ -787,7 +787,7 @@ export default {
           ElNotification({ title: "操作失敗", message: '添加成員失敗：' + (response.msg || '未知錯誤'), type: "error", duration: 4000 })
         }
       } catch (error) {
-        console.error('添加成员失败:', error)
+        console.error('添加成員失敗:', error)
         ElNotification({ title: "操作失敗", message: '添加成員失敗：' + (error.message || '網絡錯誤'), type: "error", duration: 4000 })
       } finally {
         this.handleMemberSelectorClose()
@@ -820,7 +820,7 @@ export default {
           }
         }
       }).catch(() => {
-        // 用户取消删除
+        // 用戶取消刪除
       })
     }
   }
@@ -828,14 +828,14 @@ export default {
 </script>
 
 <style scoped>
-/* 与 SchoolDepartment.vue 完全相同的样式 */
+/* 與 SchoolDepartment.vue 完全相同的樣式 */
 .school-department-container {
   height: calc(100vh - 84px);
   padding: 16px;
   background: #f0f2f5;
 }
 
-/* 主体布局 */
+/* 主體布局 */
 .layout-content {
   display: flex;
   height: 100%;
@@ -843,7 +843,7 @@ export default {
   overflow: hidden;
 }
 
-/* 左侧边栏 */
+/* 左側邊欄 */
 .left-sidebar {
   width: 280px;
   background: #fff;
@@ -891,7 +891,7 @@ export default {
   border-radius: 3px;
 }
 
-/* 树节点内容样式 */
+/* 樹節點內容樣式 */
 :deep(.el-tree-node__content) {
   height: 40px;
   border-radius: 6px;
@@ -903,7 +903,7 @@ export default {
   background-color: #f5f5f5;
 }
 
-/* 选中节点样式 */
+/* 選中節點樣式 */
 :deep(.el-tree-node.is-current > .el-tree-node__content) {
   background-color: #e6f7ff;
 }
@@ -985,7 +985,7 @@ export default {
   background-color: #fef0f0;
 }
 
-/* 选中节点的文字和图标颜色 */
+/* 選中節點的文字和圖標顏色 */
 :deep(.el-tree-node.is-current > .el-tree-node__content) .custom-tree-node {
   color: #1890ff;
 }
@@ -994,7 +994,7 @@ export default {
   color: #1890ff;
 }
 
-/* 树节点展开箭头样式 */
+/* 樹節點展開箭頭樣式 */
 :deep(.el-tree-node__expand-icon) {
   font-size: 14px;
   color: #8c8c8c;
@@ -1013,12 +1013,12 @@ export default {
   transform: rotate(90deg);
 }
 
-/* 选中节点的展开箭头 */
+/* 選中節點的展開箭頭 */
 :deep(.el-tree-node.is-current > .el-tree-node__content .el-tree-node__expand-icon) {
   color: #1890ff;
 }
 
-/* 主内容区 */
+/* 主內容區 */
 .main-content {
   flex: 1;
   background: #fff;
@@ -1128,7 +1128,7 @@ export default {
   background: #fafafa;
 }
 
-/* 部门对话框样式 */
+/* 部門對話框樣式 */
 .department-dialog :deep(.el-dialog) {
   border-radius: 12px;
   overflow: hidden;
@@ -1217,7 +1217,7 @@ export default {
   background: #e6e6e6;
 }
 
-/* 排序输入框特殊样式 */
+/* 排序輸入框特殊樣式 */
 .department-dialog :deep(.order-input .el-input-number__decrease),
 .department-dialog :deep(.order-input .el-input-number__increase) {
   width: 28px;
@@ -1286,21 +1286,21 @@ export default {
   padding: 16px 24px 0;
 }
 
-/* 表单必填项标记 */
+/* 表單必填項標記 */
 .department-dialog :deep(.el-form-item.is-required:not(.is-no-asterisk)) > .el-form-item__label:before {
   content: '*';
   color: #ff4d4f;
   margin-right: 4px;
 }
 
-/* 对话框底部边框 */
+/* 對話框底部邊框 */
 .department-dialog :deep(.el-dialog__footer) {
   padding: 16px 24px;
   border-top: 1px solid #e8e8e8;
   background: #fafafa;
 }
 
-/* 删除按钮 - 红色实心圆形 */
+/* 刪除按鈕 - 紅色實心圓形 */
 .delete-circle-btn {
   width: 32px;
   height: 32px;
@@ -1319,7 +1319,7 @@ export default {
   vertical-align: middle;
 }
 
-/* 覆盖全局样式的伪元素 */
+/* 覆蓋全局樣式的僞元素 */
 .delete-circle-btn::before {
   display: none !important;
 }
@@ -1333,7 +1333,7 @@ export default {
   transform: translateY(0) !important;
 }
 
-/* 删除图标容器 */
+/* 刪除圖標容器 */
 .delete-circle-btn .el-icon {
   display: flex;
   align-items: center;
@@ -1342,7 +1342,7 @@ export default {
   height: 100%;
 }
 
-/* 删除图标 */
+/* 刪除圖標 */
 .delete-circle-btn .el-icon svg {
   color: #fff !important;
   width: 18px;
@@ -1350,7 +1350,7 @@ export default {
   font-size: 18px;
 }
 
-/* 成员选择器对话框样式 */
+/* 成員選擇器對話框樣式 */
 .member-selector-dialog :deep(.el-dialog) {
   border-radius: 12px;
   overflow: hidden;
@@ -1375,7 +1375,7 @@ export default {
   background: #fafafa;
 }
 
-/* 成员选择器样式 */
+/* 成員選擇器樣式 */
 .selector-wrapper {
   display: flex;
   gap: 16px;
@@ -1474,7 +1474,7 @@ export default {
   margin: 0;
 }
 
-/* 选择器底部按钮区域 - 与部门对话框统一 */
+/* 選擇器底部按鈕區域 - 與部門對話框統一 */
 .member-selector-dialog :deep(.dialog-footer) {
   display: flex;
   justify-content: flex-end;

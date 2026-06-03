@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 /**
- * 通知抄送对象 Service 业务层处理
+ * 通知抄送對象 Service 業務層處理
  *
  */
 @Service
@@ -43,10 +43,10 @@ public class NotificationCcServiceImpl implements INotificationCcService {
     private WecomSchoolDepartmentServiceImpl wecomSchoolDepartmentService;
 
     /**
-     * 根据通知 ID 查询抄送对象列表
+     * 根據通知 ID 查詢抄送對象列表
      *
      * @param notificationId 通知 ID
-     * @return 抄送对象集合
+     * @return 抄送對象集合
      */
     @Override
     public List<NotificationCc> selectByNotificationId(Long notificationId) {
@@ -54,10 +54,10 @@ public class NotificationCcServiceImpl implements INotificationCcService {
     }
     
     /**
-     * 新增抄送对象
+     * 新增抄送對象
      *
-     * @param cc 抄送对象
-     * @return 结果
+     * @param cc 抄送對象
+     * @return 結果
      */
     @Override
     public int save(NotificationCc cc) {
@@ -65,9 +65,9 @@ public class NotificationCcServiceImpl implements INotificationCcService {
     }
 
     /**
-     * 解析抄送数据，获取 userid 列表
+     * 解析抄送數據，獲取 userid 列表
      *
-     * @param ccs 抄送对象列表
+     * @param ccs 抄送對象列表
      * @return userid 集合
      */
     @Override
@@ -79,9 +79,9 @@ public class NotificationCcServiceImpl implements INotificationCcService {
             return allUserIds;
         }
 
-        // 遍历抄送对象列表
+        // 遍歷抄送對象列表
         for (NotificationCc cc : ccs) {
-            // 解析抄送数据
+            // 解析抄送數據
             Set<String> userIds = parseCcData(cc);
             // 將 userid 添加到 allUserIds 中
             allUserIds.addAll(userIds);
@@ -91,9 +91,9 @@ public class NotificationCcServiceImpl implements INotificationCcService {
     }
 
     /**
-     * 解析单个抄送对象的数据，获取 userid 列表
+     * 解析單個抄送對象的數據，獲取 userid 列表
      *
-     * @param cc 抄送对象
+     * @param cc 抄送對象
      * @return userid 集合
      */
     private Set<String> parseCcData(NotificationCc cc) {
@@ -204,32 +204,32 @@ public class NotificationCcServiceImpl implements INotificationCcService {
     }
 
     /**
-     * 根据用户 ID 和部门 ID 查询抄送给该用户的所有通知 ID 列表
+     * 根據用戶 ID 和部門 ID 查詢抄送給該用戶的所有通知 ID 列表
      *
-     * @param userId 用户 ID（用于 cc_type=1）
-     * @param departmentId 部门 ID（用于 cc_type=2）
+     * @param userId 用戶 ID（用於 cc_type=1）
+     * @param departmentId 部門 ID（用於 cc_type=2）
      * @return 通知 ID 集合
      */
     @Override
     public Set<Long> selectNotificationIdsByUserId(Long userId, Long departmentId) {
         Set<Long> notificationIds = new HashSet<>();
         
-        // 查询所有抄送记录
+        // 查詢所有抄送記錄
         List<NotificationCc> allCcList = notificationCcMapper.selectAll();
         
         if (allCcList == null || allCcList.isEmpty()) {
             return notificationIds;
         }
         
-        // 遍历所有抄送记录，判断是否包含当前用户或部门
+        // 遍歷所有抄送記錄，判斷是否包含當前用戶或部門
         for (NotificationCc cc : allCcList) {
             boolean isMatched = false;
             
             if ("1".equals(cc.getCcType())) {
-                // cc_type = 1: 教职员工，检查 cc_ids 中是否包含用户 ID
+                // cc_type = 1: 教職員工，檢查 cc_ids 中是否包含用戶 ID
                 isMatched = checkUserIdInCcData(cc.getCcData(), userId);
             } else if ("2".equals(cc.getCcType()) && departmentId != null) {
-                // cc_type = 2: 学校通讯录，检查 cc_ids 中是否包含部门 ID
+                // cc_type = 2: 學校通訊錄，檢查 cc_ids 中是否包含部門 ID
                 isMatched = checkDepartmentIdInCcData(cc.getCcData(), departmentId);
             }
             
@@ -242,24 +242,24 @@ public class NotificationCcServiceImpl implements INotificationCcService {
     }
 
     /**
-     * 检查 cc_data 中是否包含指定的用户 ID
+     * 檢查 cc_data 中是否包含指定的用戶 ID
      */
     private boolean checkUserIdInCcData(String ccData, Long userId) {
         return checkIdInCcData(ccData, userId);
     }
 
     /**
-     * 检查 cc_data 中是否包含指定的部门 ID
+     * 檢查 cc_data 中是否包含指定的部門 ID
      */
     private boolean checkDepartmentIdInCcData(String ccData, Long departmentId) {
         return checkIdInCcData(ccData, departmentId);
     }
 
     /**
-     * 检查 cc_data 中是否包含指定的 ID（通用方法）
+     * 檢查 cc_data 中是否包含指定的 ID（通用方法）
      *
-     * @param ccData 抄送数据 JSON 字符串
-     * @param targetId 目标 ID（用户 ID 或部门 ID）
+     * @param ccData 抄送數據 JSON 字符串
+     * @param targetId 目標 ID（用戶 ID 或部門 ID）
      * @return 是否包含
      */
     private boolean checkIdInCcData(String ccData, Long targetId) {
@@ -288,7 +288,7 @@ public class NotificationCcServiceImpl implements INotificationCcService {
                 }
             }
         } catch (Exception e) {
-            log.error("解析抄送数据失败: {}", e.getMessage(), e);
+            log.error("解析抄送數據失敗: {}", e.getMessage(), e);
         }
         
         return false;

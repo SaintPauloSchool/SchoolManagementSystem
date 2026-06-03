@@ -8,7 +8,7 @@
     top="10vh"
   >
     <div class="selector-wrapper">
-      <!-- 左侧树形结构 -->
+      <!-- 左側樹形結構 -->
       <div class="left-panel">
         <div class="panel-tabs">
           <el-tabs v-model="activeTab" class="custom-tabs">
@@ -89,7 +89,7 @@
         </div>
       </div>
 
-      <!-- 右侧已选区域 -->
+      <!-- 右側已選區域 -->
       <div class="right-panel">
         <div class="panel-title">
           <el-icon><Checked /></el-icon>
@@ -186,7 +186,7 @@ export default {
         children: 'children',
         label: 'name',
         isLeaf: (data) => {
-          // 使用 isLeaf 字段判断是否为叶子节点
+          // 使用 isLeaf 字段判斷是否爲葉子節點
           return data.isLeaf === true;
         }
       }
@@ -195,13 +195,13 @@ export default {
       const result = this.selectedStaffIds.map(id => {
         let staff = this.findStaffInTree(id, this.departmentTree)
         if (staff) {
-          // 查找所属部门：沿着树形结构向上查找最近的部门节点
+          // 查找所屬部門：沿着樹形結構向上查找最近的部門節點
           const department = this.findNearestDepartment(staff, this.departmentTree)
           return {
             id: staff.id,
             name: staff.name,
             position: staff.position,
-            department: department ? department.name : '未知部门',
+            department: department ? department.name : '未知部門',
             type: 1
           }
         }
@@ -212,7 +212,7 @@ export default {
             id: Math.abs(staff.id),
             name: staff.name,
             position: staff.position,
-            department: department ? department.name : '未知部门',
+            department: department ? department.name : '未知部門',
             type: 2
           }
         }
@@ -292,7 +292,7 @@ export default {
       }
       this.selectedStaffIds = mappedIds
       
-      // 直接设置勾选状态，不展开所有节点
+      // 直接設置勾選狀態，不展開所有節點
       this.$nextTick(() => {
         if (this.$refs.staffTree) this.$refs.staffTree.setCheckedKeys(mappedIds)
         if (this.$refs.customStaffTree) this.$refs.customStaffTree.setCheckedKeys(mappedIds)
@@ -300,13 +300,13 @@ export default {
     },
 
     updateSelectedStaffIds() {
-      // 不再从树中获取，直接使用 selectedStaffIds
-      // 这个方法保留是为了兼容性，但实际不再使用
+      // 不再從樹中獲取，直接使用 selectedStaffIds
+      // 這個方法保留是爲了兼容性，但實際不再使用
     },
   
     findStaffInTree(id, tree) {
       for (const node of tree) {
-        // isLeaf=true 的节点是教职员工节点
+        // isLeaf=true 的節點是教職員工節點
         if (node.isLeaf && node.id === id) {
           return node
         }
@@ -331,33 +331,33 @@ export default {
       return null
     },
 
-    // 沿着树形结构向上查找，找到最近的部门节点（非叶子节点）
+    // 沿着樹形結構向上查找，找到最近的部門節點（非葉子節點）
     findNearestDepartment(staffNode, tree) {
-      // 方法 1：先尝试用 parentId 查找
+      // 方法 1：先嘗試用 parentId 查找
       if (staffNode.parentId) {
         const deptByParentId = this.findDepartmentByParentId(staffNode.parentId, tree)
-        // 如果找到的是部门节点（非叶子），直接返回
+        // 如果找到的是部門節點（非葉子），直接返回
         if (deptByParentId && !deptByParentId.isLeaf) {
           return deptByParentId
         }
       }
       
-      // 方法 2：如果 parentId 指向的是叶子节点（员工），则在树中查找该员工所在的部门路径
+      // 方法 2：如果 parentId 指向的是葉子節點（員工），則在樹中查找該員工所在的部門路徑
       return this.findDepartmentByPath(staffNode.id, tree, null)
     },
 
-    // 递归查找节点所在的部门路径
+    // 遞歸查找節點所在的部門路徑
     findDepartmentByPath(staffId, tree, currentDept) {
       for (const node of tree) {
-        // 如果当前节点是部门（非叶子），更新 currentDept
+        // 如果當前節點是部門（非葉子），更新 currentDept
         const newCurrentDept = (!node.isLeaf) ? node : currentDept
         
-        // 找到目标员工节点
+        // 找到目標員工節點
         if (node.id === staffId) {
           return newCurrentDept
         }
         
-        // 递归在子节点中查找
+        // 遞歸在子節點中查找
         if (node.children) {
           const found = this.findDepartmentByPath(staffId, node.children, newCurrentDept)
           if (found) return found
@@ -399,7 +399,7 @@ export default {
       const index = this.selectedStaffIds.indexOf(internalId)
       if (index > -1) {
         this.selectedStaffIds.splice(index, 1)
-        // 更新两边树的勾选状态
+        // 更新兩邊樹的勾選狀態
         this.$nextTick(() => {
           if (this.$refs.staffTree) {
             this.$refs.staffTree.setCheckedKeys(this.selectedStaffIds)
@@ -458,7 +458,7 @@ export default {
   background: #ffffff;
 }
 
-/* 左侧面板 */
+/* 左側面板 */
 .left-panel {
   flex: 1.5;
   display: flex;
@@ -494,7 +494,7 @@ export default {
   gap: 6px;
 }
 
-/* 右侧面板 */
+/* 右側面板 */
 .right-panel {
   flex: 1;
   display: flex;
@@ -729,7 +729,7 @@ export default {
   border-color: #3a8ee6;
 }
 
-/* 树节点样式优化 */
+/* 樹節點樣式優化 */
 :deep(.el-tree) {
   background: transparent;
 }
@@ -771,7 +771,7 @@ export default {
   background: #409EFF;
 }
 
-/* 空状态优化 */
+/* 空狀態優化 */
 :deep(.el-empty__description) {
   color: #909399;
   font-size: 14px;

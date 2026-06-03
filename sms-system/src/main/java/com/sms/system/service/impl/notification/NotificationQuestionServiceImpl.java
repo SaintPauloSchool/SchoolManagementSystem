@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 通知问题 Service 业务层处理
+ * 通知問題 Service 業務層處理
  *
  */
 @Service
@@ -19,10 +19,10 @@ public class NotificationQuestionServiceImpl implements INotificationQuestionSer
     private NotificationQuestionMapper notificationQuestionMapper;
 
     /**
-     * 根据通知 ID 查询问题列表
+     * 根據通知 ID 查詢問題列表
      *
      * @param notificationId 通知 ID
-     * @return 问题集合
+     * @return 問題集合
      */
     @Override
     public List<NotificationQuestion> selectByNotificationId(Long notificationId) {
@@ -30,10 +30,10 @@ public class NotificationQuestionServiceImpl implements INotificationQuestionSer
     }
     
     /**
-     * 新增问题
+     * 新增問題
      *
-     * @param question 问题
-     * @return 结果
+     * @param question 問題
+     * @return 結果
      */
     @Override
     public int save(NotificationQuestion question) {

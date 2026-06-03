@@ -6,53 +6,53 @@ import com.sms.system.entity.vo.FailedNotificationVO;
 import java.util.List;
 
 /**
- * 通知发送记录 Mapper 接口
+ * 通知發送記錄 Mapper 接口
  *
  */
 public interface NotificationSendRecordMapper {
     /**
-     * 新增发送记录
+     * 新增發送記錄
      *
-     * @param sendRecord 发送记录
-     * @return 结果
+     * @param sendRecord 發送記錄
+     * @return 結果
      */
     int insert(NotificationSendRecord sendRecord);
 
     /**
-     * 根据通知ID查询发送记录
+     * 根據通知ID查詢發送記錄
      *
      * @param notificationId 通知ID
-     * @return 发送记录
+     * @return 發送記錄
      */
     NotificationSendRecord selectByNotificationId(Long notificationId);
 
     /**
-     * 根据发送记录ID查询
+     * 根據發送記錄ID查詢
      *
-     * @param sendRecordId 发送记录ID
-     * @return 发送记录
+     * @param sendRecordId 發送記錄ID
+     * @return 發送記錄
      */
     NotificationSendRecord selectById(Long sendRecordId);
 
     /**
-     * 更新发送记录
+     * 更新發送記錄
      *
-     * @param sendRecord 发送记录
-     * @return 结果
+     * @param sendRecord 發送記錄
+     * @return 結果
      */
     int updateById(NotificationSendRecord sendRecord);
 
     /**
-     * 查询所有发送失败的记录
+     * 查詢所有發送失敗的記錄
      *
      * @return 列表
      */
     List<NotificationSendRecord> selectAllFailedRecords();
 
     /**
-     * 查询所有发送失败的记录（关联通知表，返回VO）
+     * 查詢所有發送失敗的記錄（關聯通知表，返回VO）
      *
-     * @return 失败通知VO列表
+     * @return 失敗通知VO列表
      */
     List<FailedNotificationVO> selectAllFailedRecordsWithVO();
 

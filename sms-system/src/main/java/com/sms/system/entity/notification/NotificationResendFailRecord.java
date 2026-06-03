@@ -10,14 +10,14 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 通知重发失败记录实体类
- * 用于追踪每个用户的重发失败情况，失败次数达到 3 次则放弃重发
+ * 通知重發失敗記錄實體類
+ * 用於追蹤每個用戶的重發失敗情況，失敗次數達到 3 次則放棄重發
  */
 @TableName("notification_resend_fail_record")
 public class NotificationResendFailRecord implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 主键ID */
+    /** 主鍵ID */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
@@ -25,60 +25,60 @@ public class NotificationResendFailRecord implements Serializable {
     @TableField("notification_id")
     private Long notificationId;
 
-    /** 发送记录ID */
+    /** 發送記錄ID */
     @TableField("send_record_id")
     private Long sendRecordId;
 
-    /** 接收用户ID（家长或学生） */
+    /** 接收用戶ID（家長或學生） */
     @TableField("user_id")
     private String userId;
 
-    /** 用户类型（1学生 2家长） */
+    /** 用戶類型（1學生 2家長） */
     @TableField("user_type")
     private String userType;
 
-    /** 关联学生ID */
+    /** 關聯學生ID */
     @TableField("student_user_id")
     private String studentUserId;
 
-    /** 第1次失败原因 */
+    /** 第1次失敗原因 */
     @TableField("fail_reason_1")
     private String failReason1;
 
-    /** 第1次失败详细信息 */
+    /** 第1次失敗詳細信息 */
     @TableField("fail_message_1")
     private String failMessage1;
 
-    /** 第2次失败原因 */
+    /** 第2次失敗原因 */
     @TableField("fail_reason_2")
     private String failReason2;
 
-    /** 第2次失败详细信息 */
+    /** 第2次失敗詳細信息 */
     @TableField("fail_message_2")
     private String failMessage2;
 
-    /** 第3次失败原因 */
+    /** 第3次失敗原因 */
     @TableField("fail_reason_3")
     private String failReason3;
 
-    /** 第3次失败详细信息 */
+    /** 第3次失敗詳細信息 */
     @TableField("fail_message_3")
     private String failMessage3;
 
-    /** 累计失败次数（最大 3 次） */
+    /** 累計失敗次數（最大 3 次） */
     @TableField("fail_count")
     private Integer failCount;
 
-    /** 状态：0-待重发 1-已放弃 */
+    /** 狀態：0-待重發 1-已放棄 */
     @TableField("status")
     private String status;
 
-    /** 首次失败时间 */
+    /** 首次失敗時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("create_time")
     private LocalDateTime createTime;
 
-    /** 最近更新时间 */
+    /** 最近更新時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("update_time")
     private LocalDateTime updateTime;

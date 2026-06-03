@@ -6,27 +6,27 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 部门 Mapper 接口
+ * 部門 Mapper 接口
  *
  */
 public interface SysDepartmentMapper {
 
     /**
-     * 查询所有部门（按类型和排序值排序）
+     * 查詢所有部門（按類型和排序值排序）
      *
-     * @return 部门集合
+     * @return 部門集合
      */
     List<SysDepartment> selectAll();
 
     /**
-     * 批量保存部门信息
-     * @param departments 部门列表
+     * 批量保存部門信息
+     * @param departments 部門列表
      */
     void batchInsertDepartments(@Param("list") List<SysDepartment> departments);
 
     /**
-     * 获取班级部门 ID
-     * @return 班级部门 ID 列表
+     * 獲取班級部門 ID
+     * @return 班級部門 ID 列表
      */
     List<Long> selectClassDepartmentId();
 }

@@ -38,7 +38,7 @@
         </el-descriptions>
       </el-card>
 
-      <!-- 发送失败的用户列表 -->
+      <!-- 發送失敗的用戶列表 -->
       <el-card class="info-card" shadow="never" style="margin-top: 16px;">
         <template #header>
           <div class="card-header">
@@ -89,7 +89,7 @@
           <el-table-column prop="createTime" label="創建時間" width="160" align="center" />
         </el-table>
 
-        <!-- 分页组件 -->
+        <!-- 分頁組件 -->
         <div class="table-pagination" v-if="failedReadTotal > 0">
           <el-pagination
             v-model:current-page="failedReadPagination.currentPage"
@@ -104,7 +104,7 @@
         </div>
       </el-card>
 
-      <!-- 重发失败记录 -->
+      <!-- 重發失敗記錄 -->
       <el-card class="info-card" shadow="never" style="margin-top: 16px;">
         <template #header>
           <div class="card-header">
@@ -180,7 +180,7 @@
           <el-table-column prop="updateTime" label="最後更新時間" width="160" align="center" />
         </el-table>
 
-        <!-- 分页组件 -->
+        <!-- 分頁組件 -->
         <div class="table-pagination" v-if="resendFailTotal > 0">
           <el-pagination
             v-model:current-page="resendFailPagination.currentPage"
@@ -229,7 +229,7 @@ export default {
     return {
       loading: false,
       detail: {},
-      // 发送失败用户列表
+      // 發送失敗用戶列表
       failedReadLoading: false,
       failedReadRecords: [],
       failedReadTotal: 0,
@@ -237,7 +237,7 @@ export default {
         currentPage: 1,
         pageSize: 10
       },
-      // 重发失败记录
+      // 重發失敗記錄
       resendFailLoading: false,
       resendFailRecords: [],
       resendFailTotal: 0,
@@ -278,11 +278,11 @@ export default {
         if (response.code === 200 || response.code === 0) {
           this.detail = response.data || {}
         } else {
-          ElNotification({ title: "操作失敗", message: response.msg || '加载失败', type: "error", duration: 4000 })
+          ElNotification({ title: "操作失敗", message: response.msg || '加載失敗', type: "error", duration: 4000 })
         }
       } catch (error) {
-        console.error('加载详情错误:', error)
-        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
+        console.error('加載詳情錯誤:', error)
+        ElNotification({ title: "操作失敗", message: '數據加載失敗', type: "error", duration: 4000 })
       } finally {
         this.loading = false
       }
@@ -304,11 +304,11 @@ export default {
           this.failedReadRecords = response.rows || []
           this.failedReadTotal = response.total || 0
         } else {
-          ElNotification({ title: "操作失敗", message: response.msg || '加载失败', type: "error", duration: 4000 })
+          ElNotification({ title: "操作失敗", message: response.msg || '加載失敗', type: "error", duration: 4000 })
         }
       } catch (error) {
-        console.error('加载失败用户列表错误:', error)
-        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
+        console.error('加載失敗用戶列表錯誤:', error)
+        ElNotification({ title: "操作失敗", message: '數據加載失敗', type: "error", duration: 4000 })
       } finally {
         this.failedReadLoading = false
       }
@@ -330,11 +330,11 @@ export default {
           this.resendFailRecords = response.rows || []
           this.resendFailTotal = response.total || 0
         } else {
-          ElNotification({ title: "操作失敗", message: response.msg || '加载失败', type: "error", duration: 4000 })
+          ElNotification({ title: "操作失敗", message: response.msg || '加載失敗', type: "error", duration: 4000 })
         }
       } catch (error) {
-        console.error('加载重发失败记录错误:', error)
-        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
+        console.error('加載重發失敗記錄錯誤:', error)
+        ElNotification({ title: "操作失敗", message: '數據加載失敗', type: "error", duration: 4000 })
       } finally {
         this.resendFailLoading = false
       }
@@ -380,7 +380,7 @@ export default {
 
 <style scoped>
 .detail-container {
-  /* 移除固定高度和内部滚动，交由 el-dialog 自身统一处理滚动，避免双重滚动条 */
+  /* 移除固定高度和內部滾動，交由 el-dialog 自身統一處理滾動，避免雙重滾動條 */
 }
 
 .info-card {

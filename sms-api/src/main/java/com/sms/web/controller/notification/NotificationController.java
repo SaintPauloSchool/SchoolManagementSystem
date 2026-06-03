@@ -199,33 +199,33 @@ public class NotificationController extends BaseController {
     }
 
     /**
-     * 提示家长回复（重新发送通知给未回复的学生家长）
+     * 提示家長回復（重新發送通知給未回復的學生家長）
      */
     //@PreAuthorize("@ss.hasPermi('system:notification:remind')")
-    @Log(title = "提示家长回复", businessType = BusinessType.UPDATE)
+    @Log(title = "提示家長回復", businessType = BusinessType.UPDATE)
     @PostMapping("/remindParents/{notificationId}")
     public AjaxResult remindParents(@PathVariable Long notificationId) {
         try {
             Map<String, Object> result = notificationPublishHandler.remindParentsToReply(notificationId);
             
-            // 根据 Handler 返回的 success 字段决定返回状态
+            // 根據 Handler 返回的 success 字段決定返回狀態
             Boolean success = (Boolean) result.get("success");
             if (success != null && success) {
                 // 成功或部分成功
                 return AjaxResult.success(result);
             } else {
-                // 全部失败，返回 402
+                // 全部失敗，返回 402
                 return AjaxResult.error(402, (String) result.get("message"));
             }
         } catch (Exception e) {
-            return AjaxResult.error(402, "提示家长回复失败: " + e.getMessage());
+            return AjaxResult.error(402, "提示家長回復失敗: " + e.getMessage());
         }
     }
     /**
-     * 重新发送失败通知
+     * 重新發送失敗通知
      */
     //@PreAuthorize("@ss.hasPermi('system:notification:resend')")
-    @Log(title = "重新发送失败通知", businessType = BusinessType.UPDATE)
+    @Log(title = "重新發送失敗通知", businessType = BusinessType.UPDATE)
     @PostMapping("/resendFailed/{notificationId}")
     public AjaxResult resendFailed(@PathVariable Long notificationId) {
         try {
@@ -237,26 +237,26 @@ public class NotificationController extends BaseController {
                 return AjaxResult.error(402, (String) result.get("message"));
             }
         } catch (Exception e) {
-            return AjaxResult.error(402, "重发失败通知失败: " + e.getMessage());
+            return AjaxResult.error(402, "重發失敗通知失敗: " + e.getMessage());
         }
     }
 
     /**
-     * 导出通知回复答案（包含统计和详情两个Sheet）
+     * 導出通知回復答案（包含統計和詳情兩個Sheet）
      */
     //@PreAuthorize("@ss.hasPermi('system:notification:export')")
-    @Log(title = "导出通知回复答案", businessType = BusinessType.EXPORT)
+    @Log(title = "導出通知回復答案", businessType = BusinessType.EXPORT)
     @GetMapping("/exportAnswers/{notificationId}")
     public void exportAnswers(@PathVariable Long notificationId, HttpServletResponse response) {
         notificationExportService.exportNotificationAnswers(notificationId, response);
     }
 
     /**
-     * 查询失败通知列表（需要管理员权限）
+     * 查詢失敗通知列表（需要管理員權限）
      */
     @GetMapping("/failedList")
     public TableDataInfo failedList() {
-        // 验证管理员权限
+        // 驗證管理員權限
         String userId = getOpenUserId();
         if (sysAdminService.isNotAdmin(userId)) {
             return getDataTable(new ArrayList<>());
@@ -268,30 +268,30 @@ public class NotificationController extends BaseController {
     }
 
     /**
-     * 查询失败通知详情（需要管理员权限）
+     * 查詢失敗通知詳情（需要管理員權限）
      */
     @GetMapping("/failedDetail/{sendRecordId}")
     public AjaxResult failedDetail(@PathVariable Long sendRecordId) {
-        // 验证管理员权限
+        // 驗證管理員權限
         String userId = getOpenUserId();
         if (sysAdminService.isNotAdmin(userId)) {
-            return AjaxResult.error("无权限访问");
+            return AjaxResult.error("無權限訪問");
         }
 
         FailedNotificationDetailVO detail = failedNotificationService.selectFailedNotificationDetail(sendRecordId);
         if (detail == null) {
-            return AjaxResult.error("未找到相关数据");
+            return AjaxResult.error("未找到相關數據");
         }
 
         return AjaxResult.success(detail);
     }
 
     /**
-     * 分页查询发送失败的用户阅读记录（需要管理员权限）
+     * 分頁查詢發送失敗的用戶閱讀記錄（需要管理員權限）
      */
     @GetMapping("/failedReadRecords/{sendRecordId}")
     public TableDataInfo failedReadRecords(@PathVariable Long sendRecordId) {
-        // 验证管理员权限
+        // 驗證管理員權限
         String userId = getOpenUserId();
         if (sysAdminService.isNotAdmin(userId)) {
             return getDataTable(new ArrayList<>());
@@ -304,11 +304,11 @@ public class NotificationController extends BaseController {
     }
 
     /**
-     * 分页查询重发失败记录（需要管理员权限）
+     * 分頁查詢重發失敗記錄（需要管理員權限）
      */
     @GetMapping("/resendFailRecords/{sendRecordId}")
     public TableDataInfo resendFailRecords(@PathVariable Long sendRecordId) {
-        // 验证管理员权限
+        // 驗證管理員權限
         String userId = getOpenUserId();
         if (sysAdminService.isNotAdmin(userId)) {
             return getDataTable(new ArrayList<>());

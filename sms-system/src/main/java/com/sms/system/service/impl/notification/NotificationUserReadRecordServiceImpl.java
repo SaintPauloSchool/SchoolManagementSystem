@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 通知用户阅读记录 Service 业务层处理
+ * 通知用戶閱讀記錄 Service 業務層處理
  *
  */
 @Service
@@ -27,10 +27,10 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
     private NotificationSendRecordMapper notificationSendRecordMapper;
 
     /**
-     * 批量新增阅读记录
+     * 批量新增閱讀記錄
      *
-     * @param readRecords 阅读记录列表
-     * @return 结果
+     * @param readRecords 閱讀記錄列表
+     * @return 結果
      */
     @Override
     public int batchSave(List<NotificationUserReadRecord> readRecords) {
@@ -41,7 +41,7 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
     }
 
     /**
-     * 查询通知阅读统计信息（強類型 VO）
+     * 查詢通知閱讀統計信息（強類型 VO）
      *
      * @param notificationId 通知ID
      * @return 閱讀統計 VO
@@ -85,21 +85,21 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
     }
 
     /**
-     * 查询未回复的学生列表（按学生分组，只要有一个家长回复就算已回复）
+     * 查詢未回復的學生列表（按學生分組，只要有一個家長回復就算已回復）
      *
-     * @param sendRecordId 发送记录ID
-     * @return 未回复学生列表
+     * @param sendRecordId 發送記錄ID
+     * @return 未回復學生列表
      */
     @Override
     public List<UnrepliedStudentVO> selectUnrepliedStudents(Long sendRecordId) {
-        // 1. 查询所有阅读记录
+        // 1. 查詢所有閱讀記錄
         List<NotificationUserReadRecord> allRecords = notificationUserReadRecordMapper.selectBySendRecordId(sendRecordId);
         
         if (allRecords == null || allRecords.isEmpty()) {
             return Collections.emptyList();
         }
         
-        // 2. 过滤出有 studentUserId 的记录
+        // 2. 過濾出有 studentUserId 的記錄
         List<NotificationUserReadRecord> validRecords = allRecords.stream()
             .filter(record -> record.getStudentUserId() != null && !record.getStudentUserId().trim().isEmpty())
             .collect(Collectors.toList());
@@ -108,45 +108,45 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
             return Collections.emptyList();
         }
         
-        // 3. 找出已回复的学生和未回复的学生及其对应的家长列表
-        // 已回复的学生
+        // 3. 找出已回復的學生和未回復的學生及其對應的家長列表
+        // 已回復的學生
         Set<String> repliedStudents = new HashSet<>();
-        // 未回复的学生
+        // 未回復的學生
         Map<String, UnrepliedStudentVO> unrepliedStudentVOMap = new HashMap<>();
-        // 家长列表
+        // 家長列表
         for (NotificationUserReadRecord record : validRecords) {
             // 以 studentUserId 爲分組依據，若無則降級使用 userId
             String studentId = record.getStudentUserId();
             
-            // 只要有任何一个用户（学生或家长）回复了，该学生就算已回复
+            // 只要有任何一個用戶（學生或家長）回復了，該學生就算已回復
             if ("1".equals(record.getReplyStatus())) {
                 repliedStudents.add(studentId);
             }
             
-            // 只考虑家长类型，收集未回复学生的家长列表
+            // 只考慮家長類型，收集未回復學生的家長列表
             if ("2".equals(record.getUserType())) {
-                // 如果该学生还没有创建 VO，则创建一个新的
+                // 如果該學生還沒有創建 VO，則創建一個新的
                 UnrepliedStudentVO vo = unrepliedStudentVOMap.computeIfAbsent(
                     studentId, 
                     k -> new UnrepliedStudentVO(k, new ArrayList<>())
                 );
-                // 添加家长 ID 到列表中
+                // 添加家長 ID 到列表中
                 vo.getParentUserIds().add(record.getUserId());
             }
         }
         
-        // 4. 移除已回复的学生
+        // 4. 移除已回復的學生
         repliedStudents.forEach(unrepliedStudentVOMap::remove);
         
-        // 5. 构建返回结果
+        // 5. 構建返回結果
         return new ArrayList<>(unrepliedStudentVOMap.values());
     }
 
     /**
-     * 查询发送失败的阅读记录
+     * 查詢發送失敗的閱讀記錄
      *
-     * @param sendRecordId 发送记录ID
-     * @return 失败记录列表
+     * @param sendRecordId 發送記錄ID
+     * @return 失敗記錄列表
      */
     @Override
     public List<NotificationUserReadRecord> selectFailedRecords(Long sendRecordId) {
@@ -154,22 +154,22 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
         if (allRecords == null || allRecords.isEmpty()) {
             return Collections.emptyList();
         }
-        // 发送状态为 0 表示失败
+        // 發送狀態爲 0 表示失敗
         return allRecords.stream()
                 .filter(record -> "0".equals(record.getSendStatus()))
                 .collect(Collectors.toList());
     }
 
     /**
-     * 更新阅读记录的发送状态
+     * 更新閱讀記錄的發送狀態
      *
-     * @param readId 阅读记录ID
-     * @param sendStatus 发送状态
-     * @return 结果
+     * @param readId 閱讀記錄ID
+     * @param sendStatus 發送狀態
+     * @return 結果
      */
     @Override
     public int updateSendStatus(Long readId, String sendStatus) {
-        // 由于没有提供 updateById，我们可以创建一个新的 record 更新它
+        // 由於沒有提供 updateById，我們可以創建一個新的 record 更新它
         NotificationUserReadRecord record = new NotificationUserReadRecord();
         record.setReadId(readId);
         record.setSendStatus(sendStatus);

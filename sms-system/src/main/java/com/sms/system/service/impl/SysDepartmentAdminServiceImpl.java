@@ -48,16 +48,16 @@ public class SysDepartmentAdminServiceImpl implements ISysDepartmentAdminService
 
         if (!toInsert.isEmpty()) {
             departmentAdminMapper.batchInsertDepartmentAdmins(toInsert);
-            logger.info("新增部门管理员 {} 条", toInsert.size());
+            logger.info("新增部門管理員 {} 條", toInsert.size());
         }
 
         if (!toUpdate.isEmpty()) {
             for (SysDepartmentAdmin admin : toUpdate) {
                 departmentAdminMapper.updateByDepartmentIdAndUserid(admin);
             }
-            logger.info("更新部门管理员 {} 条", toUpdate.size());
+            logger.info("更新部門管理員 {} 條", toUpdate.size());
         }
 
-        logger.info("部门管理员同步完成 - 新增: {}, 更新: {}", toInsert.size(), toUpdate.size());
+        logger.info("部門管理員同步完成 - 新增: {}, 更新: {}", toInsert.size(), toUpdate.size());
     }
 }

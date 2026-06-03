@@ -383,7 +383,7 @@ body {
   border-radius: 0 0 24px 24px;
 }
 
-/* 对话框内容区域的滚动条优化 */
+/* 對話框內容區域的滾動條優化 */
 .el-dialog__body::-webkit-scrollbar {
   width: 8px;
 }
@@ -558,7 +558,7 @@ body {
   display: inline-block;
 }
 
-/* 确认框关闭按钮样式 */
+/* 確認框關閉按鈕樣式 */
 .el-message-box__headerbtn {
   top: 20px;
   right: 20px;
@@ -773,7 +773,7 @@ body {
   }
 }
 
-/* 对话框遮罩层优化 */
+/* 對話框遮罩層優化 */
 .v-modal {
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);

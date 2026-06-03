@@ -10,39 +10,39 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 系统管理员实体类（全局）
+ * 系統管理員實體類（全局）
  */
 @TableName("sys_admin")
 public class SysAdmin implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 主键ID */
+    /** 主鍵ID */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    /** 用户ID（关联token表的user_id） */
+    /** 用戶ID（關聯token表的user_id） */
     @TableField("user_id")
     private String userId;
 
-    /** 管理员姓名 */
+    /** 管理員姓名 */
     @TableField("admin_name")
     private String adminName;
 
-    /** 状态（0正常 1停用） */
+    /** 狀態（0正常 1停用） */
     @TableField("status")
     private String status;
 
-    /** 创建时间 */
+    /** 創建時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("create_time")
     private LocalDateTime createTime;
 
-    /** 更新时间 */
+    /** 更新時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("update_time")
     private LocalDateTime updateTime;
 
-    /** 备注 */
+    /** 備註 */
     @TableField("remark")
     private String remark;
 

@@ -1,7 +1,7 @@
 package com.sms.common.constant;
 
 /**
- * 用户常量信息
+ * 用戶常量信息
  *
  */
 public class UserConstants

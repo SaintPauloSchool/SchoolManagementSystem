@@ -13,14 +13,14 @@ export default defineConfig(({ mode }) => {
       vue({
         template: {
           compilerOptions: {
-            // 将所有带有 @ 符号的标签视为自定义元素
+            // 將所有帶有 @ 符號的標籤視爲自定義元素
             isCustomElement: (tag) => tag.startsWith('@')
           }
         }
       })
     ],
     define: {
-      // Vue 3 特性标志配置
+      // Vue 3 特性標誌配置
       __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
       __VUE_OPTIONS_API__: true,
       __VUE_PROD_DEVTOOLS__: false

@@ -1,6 +1,6 @@
 <template>
   <div class="notification-detail">
-    <!-- 顶部标题横幅 -->
+    <!-- 頂部標題橫幅 -->
     <div class="detail-hero">
       <div class="hero-text">
         <h2 class="hero-title">通知標題：{{ notification.title }}</h2>
@@ -593,7 +593,7 @@ export default {
 
     getReceiveTypeText(type) {
       const typeMap = {
-        '1': '班級群組',
+        '1': '班級羣組',
         '2': '個別學生/家長'
       }
       return typeMap[type] || '未知'
@@ -602,7 +602,7 @@ export default {
     getCcTypeText(type) {
       const typeMap = {
         '1': '個別教職工',
-        '2': '教職工群組'
+        '2': '教職工羣組'
       }
       return typeMap[type] || '未知'
     },
@@ -753,16 +753,16 @@ export default {
         }
       }
 
-      // 确认对话框
-      this.$confirm('系统将向未回复的学生家长重新发送提醒通知，是否继续？', '提示', {
-        confirmButtonText: '确定',
+      // 確認對話框
+      this.$confirm('系統將向未回復的學生家長重新發送提醒通知，是否繼續？', '提示', {
+        confirmButtonText: '確定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        // 调用后端 API
+        // 調用後端 API
         const loading = this.$loading({
           lock: true,
-          text: '正在发送提醒通知...',
+          text: '正在發送提醒通知...',
           spinner: 'el-icon-loading',
           background: 'rgba(0, 0, 0, 0.7)'
         })
@@ -773,38 +773,38 @@ export default {
         }).then(response => {
           loading.close()
 
-          // 调试日志：查看实际接收到的响应
-          console.log('=== 完整响应对象 ===', response)
+          // 調試日誌：查看實際接收到的響應
+          console.log('=== 完整響應對象 ===', response)
           console.log('response.code:', response.code)
           console.log('response.data:', response.data)
 
-          // 根据响应码显示不同类型的消息
+          // 根據響應碼顯示不同類型的消息
           if (response.code === 200) {
             // 成功
             const result = response.data
-            console.log('result对象:', result)
-            ElNotification({ title: "操作成功", message: result.message || '提醒通知发送成功', type: "success", duration: 3000 })
-            console.log('提醒结果:', result)
+            console.log('result對象:', result)
+            ElNotification({ title: "操作成功", message: result.message || '提醒通知發送成功', type: "success", duration: 3000 })
+            console.log('提醒結果:', result)
           } else if (response.code === 402) {
-            // 全部失败
-            ElNotification({ title: "操作失敗", message: response.msg || '微信发送失败', type: "error", duration: 4000 })
-            console.error('微信发送失败:', response.msg)
+            // 全部失敗
+            ElNotification({ title: "操作失敗", message: response.msg || '微信發送失敗', type: "error", duration: 4000 })
+            console.error('微信發送失敗:', response.msg)
           } else {
-            // 其他错误
-            ElNotification({ title: "操作失敗", message: response.msg || '提醒通知发送失败', type: "error", duration: 4000 })
+            // 其他錯誤
+            ElNotification({ title: "操作失敗", message: response.msg || '提醒通知發送失敗', type: "error", duration: 4000 })
           }
         }).catch(error => {
           loading.close()
-          console.error('=== 捕获的错误 ===', error)
-          ElNotification({ title: "操作失敗", message: '提醒通知发送失败: ' + (error.message || '未知错误'), type: "error", duration: 4000 })
+          console.error('=== 捕獲的錯誤 ===', error)
+          ElNotification({ title: "操作失敗", message: '提醒通知發送失敗: ' + (error.message || '未知錯誤'), type: "error", duration: 4000 })
         })
       }).catch(() => {
-        // 用户取消操作
+        // 用戶取消操作
       })
     },
 
     handleResendFailed() {
-      this.$confirm('系统将重新向发送失败的家长/学生发送通知，是否继续？', '重新發送失敗通知', {
+      this.$confirm('系統將重新向發送失敗的家長/學生發送通知，是否繼續？', '重新發送失敗通知', {
         confirmButtonText: '確定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -920,7 +920,7 @@ export default {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* ===== 顶部横幅 ===== */
+/* ===== 頂部橫幅 ===== */
 .detail-hero {
   display: flex;
   align-items: flex-start;
@@ -1030,7 +1030,7 @@ export default {
   color: #1d4ed8;
 }
 
-/* ===== 区块卡片 ===== */
+/* ===== 區塊卡片 ===== */
 .section-card {
   background: #ffffff;
   border: 1px solid #e8ecf1;
@@ -1111,7 +1111,7 @@ export default {
   font-weight: 600;
 }
 
-/* ===== 正文区域 ===== */
+/* ===== 正文區域 ===== */
 .content-body {
   padding: 18px 20px;
   background: #f9fafb;
@@ -1125,7 +1125,7 @@ export default {
   word-break: break-word;
 }
 
-/* ===== 芯片/标签列表 ===== */
+/* ===== 芯片/標籤列表 ===== */
 .chip-list {
   display: flex;
   flex-direction: column;
@@ -1199,7 +1199,7 @@ export default {
   background: #dbeafe;
 }
 
-/* ===== 接收对象分组卡片 ===== */
+/* ===== 接收對象分組卡片 ===== */
 .receiver-groups {
   display: flex;
   flex-direction: column;
@@ -1352,7 +1352,7 @@ export default {
   font-weight: 500;
 }
 
-/* ===== 抄送对象分组卡片 ===== */
+/* ===== 抄送對象分組卡片 ===== */
 .cc-groups {
   display: flex;
   flex-direction: column;
@@ -1371,7 +1371,7 @@ export default {
   border-color: #93c5fd;
 }
 
-/* ===== 問題卡片网格 ===== */
+/* ===== 問題卡片網格 ===== */
 .questions-grid {
   display: flex;
   flex-direction: column;
@@ -1788,7 +1788,7 @@ export default {
 
 
 
-/* ===== 动画 ===== */
+/* ===== 動畫 ===== */
 .section-card {
   animation: fadeSlideUp 0.35s ease both;
 }

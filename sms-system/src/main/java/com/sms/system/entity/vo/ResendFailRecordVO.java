@@ -5,19 +5,19 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.util.Date;
 
 /**
- * 重发失败记录VO
+ * 重發失敗記錄VO
  */
 public class ResendFailRecordVO {
-    /** 主键ID */
+    /** 主鍵ID */
     private Long id;
 
-    /** 用户ID */
+    /** 用戶ID */
     private String userId;
 
-    /** 用户类型（1学生 2家长） */
+    /** 用戶類型（1學生 2家長） */
     private String userType;
 
-    /** 关联学生ID */
+    /** 關聯學生ID */
     private String studentUserId;
 
     /** 學生名字 */
@@ -26,35 +26,35 @@ public class ResendFailRecordVO {
     /** 關係 */
     private String relation;
 
-    /** 累计失败次数 */
+    /** 累計失敗次數 */
     private Integer failCount;
 
-    /** 状态：0-待重发 1-已放弃 */
+    /** 狀態：0-待重發 1-已放棄 */
     private String status;
 
-    /** 第1次失败原因 */
+    /** 第1次失敗原因 */
     private String failReason1;
 
-    /** 第1次失败详细信息 */
+    /** 第1次失敗詳細信息 */
     private String failMessage1;
 
-    /** 第2次失败原因 */
+    /** 第2次失敗原因 */
     private String failReason2;
 
-    /** 第2次失败详细信息 */
+    /** 第2次失敗詳細信息 */
     private String failMessage2;
 
-    /** 第3次失败原因 */
+    /** 第3次失敗原因 */
     private String failReason3;
 
-    /** 第3次失败详细信息 */
+    /** 第3次失敗詳細信息 */
     private String failMessage3;
 
-    /** 首次失败时间 */
+    /** 首次失敗時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
 
-    /** 最近更新时间 */
+    /** 最近更新時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date updateTime;
 

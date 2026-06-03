@@ -3,15 +3,15 @@ package com.sms.system.service.notification;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 通知导出 Service 接口
+ * 通知導出 Service 接口
  */
 public interface INotificationExportService {
 
     /**
-     * 导出通知回复答案（包含统计和详情两个Sheet）
+     * 導出通知回復答案（包含統計和詳情兩個Sheet）
      *
      * @param notificationId 通知ID
-     * @param response HTTP响应
+     * @param response HTTP響應
      */
     void exportNotificationAnswers(Long notificationId, HttpServletResponse response);
 }

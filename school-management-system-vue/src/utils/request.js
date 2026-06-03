@@ -2,7 +2,7 @@ import axios from 'axios'
 import {ElMessageBox, ElNotification} from 'element-plus'
 import {API_BASE_PATH} from './deployment'
 import settings from '../config/settings'
-import MD5 from 'crypto-js/md5' // 导入 MD5 用于计算签名
+import MD5 from 'crypto-js/md5' // 導入 MD5 用於計算籤名
 
 // Create an axios instance aligned with the separated frontend/backend deployment.
 const service = axios.create({
@@ -10,7 +10,7 @@ const service = axios.create({
     timeout: 15000
 })
 
-// 生成唯一标识符(UUID的简易实现)
+// 生成唯一標識符(UUID的簡易實現)
 const generateNonce = () => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID().replace(/-/g, '');
@@ -35,7 +35,7 @@ service.interceptors.request.use(
             }
         }
 
-        // API 安全校驗拦截器
+        // API 安全校驗攔截器
         const timestamp = Date.now().toString();
         const nonce = generateNonce();
         const appSecret = settings.appSecret;
@@ -48,21 +48,21 @@ service.interceptors.request.use(
         return config
     },
     error => {
-        console.error('请求错误:', error)
+        console.error('請求錯誤:', error)
         return Promise.reject(error)
     }
 )
 
 service.interceptors.response.use(
     response => {
-        // 如果是 blob 类型（文件下载），直接返回原始 response
+        // 如果是 blob 類型（文件下載），直接返回原始 response
         if (response.config.responseType === 'blob') {
             return response.data
         }
 
         const res = response.data
 
-        // 402 业务状态码由组件自行处理，拦截器不显示错误提示
+        // 402 業務狀態碼由組件自行處理，攔截器不顯示錯誤提示
         if (res.code === 402) {
             return res
         }
@@ -105,49 +105,49 @@ service.interceptors.response.use(
                 })
             }
 
-            return Promise.reject(new Error(res.msg || res.message || '请求失败'))
+            return Promise.reject(new Error(res.msg || res.message || '請求失敗'))
         }
 
         return res
     },
     error => {
-        console.error('响应错误:', error)
+        console.error('響應錯誤:', error)
 
-        let message = '网络异常，请稍后重试'
+        let message = '網絡異常，請稍後重試'
 
         if (error.response) {
             switch (error.response.status) {
                 case 400:
-                    message = '请求参数错误'
+                    message = '請求參數錯誤'
                     break
                 case 401:
-                    message = '未授权，请重新登录'
+                    message = '未授權，請重新登錄'
                     break
                 case 403:
-                    message = '拒绝访问'
+                    message = '拒絕訪問'
                     break
                 case 404:
-                    message = '请求地址不存在'
+                    message = '請求地址不存在'
                     break
                 case 500:
-                    message = '服务器内部错误'
+                    message = '服務器內部錯誤'
                     break
                 case 502:
-                    message = '网关错误'
+                    message = '網關錯誤'
                     break
                 case 503:
-                    message = '服务不可用'
+                    message = '服務不可用'
                     break
                 case 504:
-                    message = '网关超时'
+                    message = '網關超時'
                     break
                 default:
-                    message = `请求失败(${error.response.status})`
+                    message = `請求失敗(${error.response.status})`
             }
         } else if (error.message.includes('timeout')) {
-            message = '请求超时'
+            message = '請求超時'
         } else if (error.message.includes('Network Error')) {
-            message = '网络连接失败'
+            message = '網絡連接失敗'
         }
 
         ElNotification({

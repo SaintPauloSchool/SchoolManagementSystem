@@ -24,7 +24,7 @@ import com.sms.common.utils.SecurityUtils;
 import com.sms.common.utils.StringUtils;
 
 /**
- * 操作日志记录处理
+ * 操作日誌記錄處理
  *
  */
 @Aspect
@@ -33,14 +33,14 @@ public class LogAspect
 {
     private static final Logger log = LoggerFactory.getLogger(LogAspect.class);
 
-    /** 排除敏感属性字段 */
+    /** 排除敏感屬性字段 */
     public static final String[] EXCLUDE_PROPERTIES = { "password", "oldPassword", "newPassword", "confirmPassword" };
 
-    /** 计算操作消耗时间 */
+    /** 計算操作消耗時間 */
     private static final ThreadLocal<Long> TIME_THREADLOCAL = new NamedThreadLocal<Long>("Cost Time");
 
     /**
-     * 处理请求前执行
+     * 處理請求前執行
      */
     @Before(value = "@annotation(controllerLog)")
     public void doBefore(JoinPoint joinPoint, Log controllerLog)
@@ -49,9 +49,9 @@ public class LogAspect
     }
 
     /**
-     * 处理完请求后执行
+     * 處理完請求後執行
      *
-     * @param joinPoint 切点
+     * @param joinPoint 切點
      */
     @AfterReturning(pointcut = "@annotation(controllerLog)", returning = "jsonResult")
     public void doAfterReturning(JoinPoint joinPoint, Log controllerLog, Object jsonResult)
@@ -60,10 +60,10 @@ public class LogAspect
     }
 
     /**
-     * 拦截异常操作
+     * 攔截異常操作
      * 
-     * @param joinPoint 切点
-     * @param e 异常
+     * @param joinPoint 切點
+     * @param e 異常
      */
     @AfterThrowing(value = "@annotation(controllerLog)", throwing = "e")
     public void doAfterThrowing(JoinPoint joinPoint, Log controllerLog, Exception e)
@@ -75,12 +75,12 @@ public class LogAspect
     {
         try
         {
-            // 日志處理邏輯待實現
+            // 日誌處理邏輯待實現
         }
         catch (Exception exp)
         {
-            // 记录本地异常日志
-            log.error("异常信息:{}", exp.getMessage());
+            // 記錄本地異常日誌
+            log.error("異常信息:{}", exp.getMessage());
         }
         finally
         {
@@ -89,7 +89,7 @@ public class LogAspect
     }
 
     /**
-     * 忽略敏感属性
+     * 忽略敏感屬性
      */
     public PropertyPreFilters.MySimplePropertyPreFilter excludePropertyPreFilter(String[] excludeParamNames)
     {
@@ -97,7 +97,7 @@ public class LogAspect
     }
 
     /**
-     * 参数拼装
+     * 參數拼裝
      */
     private String argsArrayToString(Object[] paramsArray, String[] excludeParamNames)
     {
@@ -123,10 +123,10 @@ public class LogAspect
     }
 
     /**
-     * 判断是否需要过滤的对象。
+     * 判斷是否需要過濾的對象。
      * 
-     * @param o 对象信息。
-     * @return 如果是需要过滤的对象，则返回true；否则返回false。
+     * @param o 對象信息。
+     * @return 如果是需要過濾的對象，則返回true；否則返回false。
      */
     @SuppressWarnings("rawtypes")
     public boolean isFilterObject(final Object o)

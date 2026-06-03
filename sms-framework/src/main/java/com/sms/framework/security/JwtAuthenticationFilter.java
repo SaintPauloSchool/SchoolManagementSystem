@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * JWT认证过滤器
+ * JWT認證過濾器
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -37,18 +37,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
         
-        // 从请求头中获取token
+        // 從請求頭中獲取token
         String token = getToken(request);
         
         if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // 从数据库查询 token 信息
+            // 從數據庫查詢 token 信息
             SysToken sysToken = sysTokenMapper.selectByToken(token);
             
-            // 验证 token 是否存在并且未过期
+            // 驗證 token 是否存在並且未過期
             if (sysToken != null && !sysToken.isExpired()) {
                 // 安全驗證：校園系統只能由員工 (userType == 2) 訪問
                 if (sysToken.getUserType() != null && sysToken.getUserType() == 2) {
-                    // 加载用户信息
+                    // 加載用戶信息
                     LoginUser loginUser = (LoginUser) userDetailsService.loadUserBySysToken(sysToken);
                     
                     if (loginUser != null) {
@@ -65,7 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 获取请求中的token
+     * 獲取請求中的token
      */
     private String getToken(HttpServletRequest request) {
         String token = request.getHeader("Authorization");

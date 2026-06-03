@@ -6,36 +6,36 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 系统管理员 Mapper 接口
+ * 系統管理員 Mapper 接口
  */
 public interface SysAdminMapper {
     /**
-     * 获取所有状态正常的管理员用户ID列表
+     * 獲取所有狀態正常的管理員用戶ID列表
      *
-     * @return 用户ID列表
+     * @return 用戶ID列表
      */
     List<String> selectAdminUserIds();
     /**
-     * 根据用户ID查询管理员信息
+     * 根據用戶ID查詢管理員信息
      *
-     * @param userId 用户ID
-     * @return 管理员信息
+     * @param userId 用戶ID
+     * @return 管理員信息
      */
     SysAdmin selectByUserId(@Param("userId") String userId);
 
     /**
-     * 新增管理员
+     * 新增管理員
      *
-     * @param admin 管理员信息
-     * @return 结果
+     * @param admin 管理員信息
+     * @return 結果
      */
     int insert(SysAdmin admin);
 
     /**
-     * 更新管理员状态
+     * 更新管理員狀態
      *
-     * @param admin 管理员信息
-     * @return 结果
+     * @param admin 管理員信息
+     * @return 結果
      */
     int updateById(SysAdmin admin);
 }

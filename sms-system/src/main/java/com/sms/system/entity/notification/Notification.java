@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * 通知实体类
+ * 通知實體類
  *
  */
 @TableName("notification")
@@ -25,7 +25,7 @@ public class Notification extends BaseEntity {
     @TableId(value = "notification_id", type = IdType.AUTO)
     private Long notificationId;
 
-    /** 通知标题 */
+    /** 通知標題 */
     @TableField("title")
     private String title;
 
@@ -33,27 +33,27 @@ public class Notification extends BaseEntity {
     @TableField("content")
     private String content;
 
-    /** 发送人ID */
+    /** 發送人ID */
     @TableField("sender_id")
     private Long senderId;
 
-    /** 发送人姓名 */
+    /** 發送人姓名 */
     @TableField("sender_name")
     private String senderName;
 
-    /** 跳转链接 */
+    /** 跳轉鏈接 */
     @TableField("jump_url")
     private String jumpUrl;
 
-    /** 附件/图片URL列表(JSON格式) */
+    /** 附件/圖片URL列表(JSON格式) */
     @TableField("attachment_urls")
     private String attachmentUrls;
 
-    /** 状态（0草稿 1已发布 2已撤回） */
+    /** 狀態（0草稿 1已發布 2已撤回） */
     @TableField("status")
     private String status;
 
-    /** 回复截止时间 */
+    /** 回復截止時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField("reply_deadline")
     private LocalDateTime replyDeadline;
@@ -64,35 +64,35 @@ public class Notification extends BaseEntity {
     @TableField("reminder_time")
     private LocalDateTime reminderTime;
     
-    /** 接收对象列表（非数据库字段） */
+    /** 接收對象列表（非數據庫字段） */
     @TableField(exist = false)
     private List<NotificationReceiver> receivers;
     
-    /** 抄送对象列表（非数据库字段） */
+    /** 抄送對象列表（非數據庫字段） */
     @TableField(exist = false)
     private List<NotificationCc> ccs;
     
-    /** 问题列表（非数据库字段） */
+    /** 問題列表（非數據庫字段） */
     @TableField(exist = false)
     private List<NotificationQuestion> questions;
 
-    /** 发布时间筛选（非数据库字段） */
+    /** 發布時間篩選（非數據庫字段） */
     @TableField(exist = false)
     private String publishDate;
 
-    /** 用户ID（非数据库字段，用于抄送列表） */
+    /** 用戶ID（非數據庫字段，用於抄送列表） */
     @TableField(exist = false)
     private Long userId;
 
-    /** 用户类型（非数据库字段，用于抄送列表） */
+    /** 用戶類型（非數據庫字段，用於抄送列表） */
     @TableField(exist = false)
     private String userType;
 
-    /** 企业微信userid（非数据库字段，用于抄送列表查询部门ID） */
+    /** 企業微信userid（非數據庫字段，用於抄送列表查詢部門ID） */
     @TableField(exist = false)
     private String openUserId;
 
-    /** 通知ID列表（非数据库字段，用于抄送列表查询） */
+    /** 通知ID列表（非數據庫字段，用於抄送列表查詢） */
     @TableField(exist = false)
     private Set<Long> notificationIds;
 

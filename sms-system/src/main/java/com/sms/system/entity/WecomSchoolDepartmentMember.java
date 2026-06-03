@@ -7,31 +7,31 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * wecom学校部门成员对象 wecom_school_department_member
+ * wecom學校部門成員對象 wecom_school_department_member
  *
  */
 public class WecomSchoolDepartmentMember implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 主键 ID */
+    /** 主鍵 ID */
     private Long id;
 
-    /** 成员 UserID */
+    /** 成員 UserID */
     private String userid;
 
-    /** 成员名称 */
+    /** 成員名稱 */
     private String name;
 
-    /** 部门 ID */
+    /** 部門 ID */
     private Long departmentId;
 
     /** 全局唯一 UserID */
     private String openUserid;
 
-    /** 创建时间 */
+    /** 創建時間 */
     private LocalDateTime createTime;
 
-    /** 更新时间 */
+    /** 更新時間 */
     private LocalDateTime updateTime;
 
     public Long getId() {

@@ -210,14 +210,14 @@ public class NotificationPublishHandler {
                                 log.debug("成功發送通知給家長 {}，學生 {}", parentUserId, msgInfo.getStudentUserId());
                             } else {
                                 failCount.incrementAndGet();
-                                String reason = "接口返回错误: " + errcode;
+                                String reason = "接口返回錯誤: " + errcode;
                                 failedUserReasons.put(parentUserId, reason);
                                 log.error("發送通知給家長 {} 失敗: code={}, msg={}", parentUserId, errcode,
                                         result.getString("errmsg"));
                             }
                         } catch (Exception e) {
                             failCount.incrementAndGet();
-                            failedUserReasons.put(parentUserId, "发送异常: " + e.getMessage());
+                            failedUserReasons.put(parentUserId, "發送異常: " + e.getMessage());
                             log.error("發送通知給家長 {} 異常", parentUserId, e);
                         }
                     }
@@ -261,7 +261,7 @@ public class NotificationPublishHandler {
         int failCount = 0;
         // 用於記錄成功接收到通知的用戶 ID（家長 + 學生）
         Set<String> successUserIds = new HashSet<>();
-        // 用于记录失败用户的失败原因
+        // 用於記錄失敗用戶的失敗原因
         Map<String, String> failedUserReasons = new HashMap<>();
 
         // 分批發送
@@ -293,7 +293,7 @@ public class NotificationPublishHandler {
                         notification.getNotificationId(), i + 1, errcode, errmsg);
                 failCount += currentParentIds.size() + currentStudentIds.size();
 
-                String reason = "接口返回错误: " + errcode;
+                String reason = "接口返回錯誤: " + errcode;
                 for (String uid : currentParentIds)
                     failedUserReasons.put(uid, reason);
                 for (String uid : currentStudentIds)
@@ -330,12 +330,12 @@ public class NotificationPublishHandler {
                     }
                 }
 
-                // 收集失败用户及原因
+                // 收集失敗用戶及原因
                 Set<String> batchFailedUsers = new HashSet<>(currentParentIds);
                 batchFailedUsers.addAll(currentStudentIds);
                 batchFailedUsers.removeAll(batchSuccessUsers);
                 for (String failedId : batchFailedUsers) {
-                    failedUserReasons.put(failedId, "无效用户或微信端未关注");
+                    failedUserReasons.put(failedId, "無效用戶或微信端未關注");
                 }
 
                 int batchTotal = currentParentIds.size() + currentStudentIds.size();
@@ -839,26 +839,26 @@ public class NotificationPublishHandler {
     // =========================================================================
 
     /**
-     * 提示家长回复（重新发送通知给未回复的学生家长）
+     * 提示家長回復（重新發送通知給未回復的學生家長）
      *
      * @param notificationId 通知ID
-     * @return 发送结果统计
+     * @return 發送結果統計
      */
     public Map<String, Object> remindParentsToReply(Long notificationId) {
         Map<String, Object> result = new HashMap<>();
 
-        // 1. 查询原始通知
+        // 1. 查詢原始通知
         Notification notification = notificationService.selectNotificationById(notificationId);
         if (notification == null) {
             throw new IllegalStateException("未找到通知信息");
         }
 
-        // 2. 检查是否超过回复截止时间
+        // 2. 檢查是否超過回復截止時間
         if (notification.getReplyDeadline() != null) {
             LocalDateTime now = LocalDateTime.now();
             if (now.isAfter(notification.getReplyDeadline())) {
                 result.put("success", false);
-                result.put("message", "已超过回复截止时间，无法提示家长回复");
+                result.put("message", "已超過回復截止時間，無法提示家長回復");
                 result.put("remindCount", 0);
                 return result;
             }
@@ -868,47 +868,47 @@ public class NotificationPublishHandler {
     }
 
     /**
-     * 提示家长回复（根据通知实体）
+     * 提示家長回復（根據通知實體）
      *
-     * @param notification 通知实体
-     * @return 发送结果统计
+     * @param notification 通知實體
+     * @return 發送結果統計
      */
     public Map<String, Object> remindParentsToReply(Notification notification) {
-        // 发送结果统计
+        // 發送結果統計
         Map<String, Object> result = new HashMap<>();
-        // 1. 获取通知ID
+        // 1. 獲取通知ID
         Long notificationId = notification.getNotificationId();
 
-        // 3. 查询发送记录
+        // 3. 查詢發送記錄
         NotificationSendRecord sendRecord = notificationSendRecordService.selectByNotificationId(notificationId);
         if (sendRecord == null) {
-            throw new IllegalStateException("未找到发送记录");
+            throw new IllegalStateException("未找到發送記錄");
         }
 
-        // 4. 查询未回复的学生列表（按学生分组，只要有一个家长回复就算已回复）
+        // 4. 查詢未回復的學生列表（按學生分組，只要有一個家長回復就算已回復）
         List<UnrepliedStudentVO> unrepliedStudents = notificationUserReadRecordService
                 .selectUnrepliedStudents(sendRecord.getSendRecordId());
 
-        // 5. 如果没有未回复的学生，则返回成功
+        // 5. 如果沒有未回復的學生，則返回成功
         if (unrepliedStudents == null || unrepliedStudents.isEmpty()) {
             result.put("success", true);
-            result.put("message", "所有 student 家长均已回复");
+            result.put("message", "所有 student 家長均已回復");
             result.put("remindCount", 0);
             return result;
         }
 
-        log.info("开始发送提醒通知，共 {} 个学生未回复", unrepliedStudents.size());
+        log.info("開始發送提醒通知，共 {} 個學生未回復", unrepliedStudents.size());
 
-        // 创建提醒记录列表
+        // 創建提醒記錄列表
         int successCount = 0;
         int failCount = 0;
         List<NotificationReminderRecord> reminderRecords = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
 
-        // 构建提醒消息内容（只需要构建一次）
+        // 構建提醒消息內容（只需要構建一次）
         String remindContent = buildRemindContent(notification);
 
-        // 6. 为每个未回复的学生发送提醒通知
+        // 6. 爲每個未回復的學生發送提醒通知
         for (UnrepliedStudentVO student : unrepliedStudents) {
             String studentUserId = student.getStudentUserId();
             List<String> parentUserIdList = student.getParentUserIds();
@@ -917,11 +917,11 @@ public class NotificationPublishHandler {
                 continue;
             }
 
-            // 直接使用 List 的 toString() 方法存储为字符串
+            // 直接使用 List 的 toString() 方法存儲爲字符串
             String parentUserIdsStr = parentUserIdList.toString();
 
             try {
-                // 分批发送提醒消息
+                // 分批發送提醒消息
                 boolean sendSuccess = sendRemindInBatches(parentUserIdList, remindContent);
 
                 // 建立提醒記錄
@@ -935,7 +935,7 @@ public class NotificationPublishHandler {
                     failCount++;
                 }
             } catch (Exception e) {
-                log.error("发送提醒通知失败，学生ID: {}", studentUserId, e);
+                log.error("發送提醒通知失敗，學生ID: {}", studentUserId, e);
                 failCount++;
 
                 // 即使失敗也建立記錄
@@ -945,43 +945,43 @@ public class NotificationPublishHandler {
             }
         }
 
-        // 7. 批量保存提醒记录
+        // 7. 批量保存提醒記錄
         if (!reminderRecords.isEmpty()) {
             notificationReminderRecordService.batchSave(reminderRecords);
         }
 
-        // 8. 构建返回结果
+        // 8. 構建返回結果
         result.put("success", true);
         result.put("remindCount", unrepliedStudents.size());
         result.put("successCount", successCount);
         result.put("failCount", failCount);
 
-        // 根据发送结果生成不同的提示信息
+        // 根據發送結果生成不同的提示信息
         if (failCount == 0) {
             // 全部成功
-            result.put("message", String.format("提醒发送成功，共发送 %d 个学生", successCount));
+            result.put("message", String.format("提醒發送成功，共發送 %d 個學生", successCount));
         } else if (successCount == 0) {
-            // 全部失败
+            // 全部失敗
             result.put("success", false);
-            result.put("message", String.format("微信发送失败，共 %d 个学生未能发送提醒", failCount));
+            result.put("message", String.format("微信發送失敗，共 %d 個學生未能發送提醒", failCount));
         } else {
             // 部分成功
-            result.put("message", String.format("提醒发送完成，成功 %d 个，失败 %d 个（微信发送异常）", successCount, failCount));
+            result.put("message", String.format("提醒發送完成，成功 %d 個，失敗 %d 個（微信發送異常）", successCount, failCount));
         }
 
         return result;
     }
 
     /**
-     * 构建提醒消息内容
+     * 構建提醒消息內容
      *
-     * @param notification 通知对象
-     * @return 提醒消息内容
+     * @param notification 通知對象
+     * @return 提醒消息內容
      */
     private String buildRemindContent(Notification notification) {
-        // 标题
+        // 標題
         String title = notification.getTitle() == null ? "" : notification.getTitle().trim();
-        // 跳转链接
+        // 跳轉鏈接
         String noticeUrl = noticeBaseUrl + notification.getNotificationId();
 
         // 格式化回覆截止時間
@@ -999,11 +999,11 @@ public class NotificationPublishHandler {
     }
 
     /**
-     * 分批发送提醒消息
+     * 分批發送提醒消息
      *
-     * @param parentUserIds 家长用户ID列表
-     * @param content       消息内容
-     * @return 是否发送成功
+     * @param parentUserIds 家長用戶ID列表
+     * @param content       消息內容
+     * @return 是否發送成功
      */
     private boolean sendRemindInBatches(List<String> parentUserIds, String content) {
         if (parentUserIds == null || parentUserIds.isEmpty()) {
@@ -1019,7 +1019,7 @@ public class NotificationPublishHandler {
                 continue;
             }
 
-            // 构建企业微信消息payload
+            // 構建企業微信消息payload
             JSONObject payload = buildParentOnlyPayload(currentBatch, content);
 
             try {
@@ -1027,14 +1027,14 @@ public class NotificationPublishHandler {
                 Integer errcode = result.getInteger("errcode");
 
                 if (errcode != null && errcode == 0) {
-                    log.info("第 {}/{} 批提醒消息发送成功", i + 1, totalBatches);
+                    log.info("第 {}/{} 批提醒消息發送成功", i + 1, totalBatches);
                 } else {
-                    log.error("第 {}/{} 批提醒消息发送失败: code={}, msg={}",
+                    log.error("第 {}/{} 批提醒消息發送失敗: code={}, msg={}",
                             i + 1, totalBatches, errcode, result.getString("errmsg"));
                     return false;
                 }
             } catch (Exception e) {
-                log.error("第 {}/{} 批提醒消息发送异常", i + 1, totalBatches, e);
+                log.error("第 {}/{} 批提醒消息發送異常", i + 1, totalBatches, e);
                 return false;
             }
         }
@@ -1064,36 +1064,36 @@ public class NotificationPublishHandler {
     // =========================================================================
 
     /**
-     * 重新发送失败通知（根据通知ID找到发送失败的用户重新发送）
+     * 重新發送失敗通知（根據通知ID找到發送失敗的用戶重新發送）
      *
      * @param notificationId 通知ID
-     * @param isAutoTask     是否是定时任务自动重发（自动重发会记录失败次数，满3次不再重发）
-     * @return 发送结果统计
+     * @param isAutoTask     是否是定時任務自動重發（自動重發會記錄失敗次數，滿3次不再重發）
+     * @return 發送結果統計
      */
     public Map<String, Object> resendFailedNotifications(Long notificationId, boolean isAutoTask) {
         Map<String, Object> result = new HashMap<>();
 
-        // 1. 查询原始通知
+        // 1. 查詢原始通知
         Notification notification = notificationService.selectNotificationById(notificationId);
         if (notification == null) {
             throw new IllegalStateException("未找到通知信息");
         }
 
-        // 2. 查询发送记录
+        // 2. 查詢發送記錄
         NotificationSendRecord sendRecord = notificationSendRecordService.selectByNotificationId(notificationId);
         if (sendRecord == null) {
-            throw new IllegalStateException("未找到发送记录");
+            throw new IllegalStateException("未找到發送記錄");
         }
 
-        // 3. 查询发送失败的阅读记录
+        // 3. 查詢發送失敗的閱讀記錄
         List<NotificationUserReadRecord> failedRecords = notificationUserReadRecordService
                 .selectFailedRecords(sendRecord.getSendRecordId());
 
-        // 4. 如果是自动任务，过滤掉已经达到最大失败次数（放弃重发）的用户
+        // 4. 如果是自動任務，過濾掉已經達到最大失敗次數（放棄重發）的用戶
         if (isAutoTask && failedRecords != null) {
-            // 如果是自动重发，过滤掉已经达到最大失败次数（放弃重发）的用户
+            // 如果是自動重發，過濾掉已經達到最大失敗次數（放棄重發）的用戶
             Set<String> abandonedIds = notificationResendFailRecordService.selectAbandonedUserIds(notificationId);
-            // 过滤掉已经放弃重发的用户
+            // 過濾掉已經放棄重發的用戶
             failedRecords = failedRecords.stream()
                     .filter(record -> !abandonedIds.contains(record.getUserId()))
                     .collect(java.util.stream.Collectors.toList());
@@ -1102,14 +1102,14 @@ public class NotificationPublishHandler {
         // 沒有失敗的記錄則結束
         if (failedRecords == null || failedRecords.isEmpty()) {
             result.put("success", true);
-            result.put("message", "没有需要重发的失败记录");
+            result.put("message", "沒有需要重發的失敗記錄");
             result.put("resendCount", 0);
             return result;
         }
 
-        log.info("开始重新发送失败通知，共 {} 条失败记录", failedRecords.size());
+        log.info("開始重新發送失敗通知，共 {} 條失敗記錄", failedRecords.size());
 
-        // 5. 按用户类型分组失败记录
+        // 5. 按用戶類型分組失敗記錄
         List<String> failedParentIds = new ArrayList<>();
         List<String> failedStudentIds = new ArrayList<>();
         for (NotificationUserReadRecord record : failedRecords) {
@@ -1120,9 +1120,9 @@ public class NotificationPublishHandler {
             }
         }
 
-        // 6. 重新发送并更新每条阅读记录 of send_status
+        // 6. 重新發送並更新每條閱讀記錄 of send_status
         Set<String> overallSuccessUserIds = new HashSet<>();
-        // 保存所有失败用户的失败原因
+        // 保存所有失敗用戶的失敗原因
         Map<String, String> allFailedUserReasons = new HashMap<>();
 
         // 重新發送家長消息
@@ -1145,13 +1145,13 @@ public class NotificationPublishHandler {
                 allFailedUserReasons.putAll(studentResult.getFailedUserReasons());
         }
 
-        // 如果是自动重发， 记录自动重发的失败信息
+        // 如果是自動重發， 記錄自動重發的失敗信息
         if (isAutoTask) {
-            // 遍歷失败记录
+            // 遍歷失敗記錄
             for (NotificationUserReadRecord record : failedRecords) {
-                // 存在失败
+                // 存在失敗
                 if (!overallSuccessUserIds.contains(record.getUserId())) {
-                    // 创建失败记录
+                    // 創建失敗記錄
                     NotificationResendFailRecord failRecord = new NotificationResendFailRecord();
                     failRecord.setNotificationId(notificationId);
                     failRecord.setSendRecordId(sendRecord.getSendRecordId());
@@ -1159,7 +1159,7 @@ public class NotificationPublishHandler {
                     failRecord.setUserType(record.getUserType());
                     failRecord.setStudentUserId(record.getStudentUserId());
                     String reason = allFailedUserReasons.getOrDefault(record.getUserId(), "未知原因");
-                    failRecord.setFailReason1("自动重发失败");
+                    failRecord.setFailReason1("自動重發失敗");
                     failRecord.setFailMessage1(reason);
                     // 保存或者更新
                     notificationResendFailRecordService.saveOrUpdate(failRecord);
@@ -1167,16 +1167,16 @@ public class NotificationPublishHandler {
             }
         }
 
-        // 7. 以学生为维度统计成功/失败数（与 createSendRecord 逻辑一致）
-        // - 按 studentUserId 分组失败记录
-        // - 只要该学生下任意一个家长重发成功，就算该学生成功
-        // 建立 studentUserId -> 该学生下所有 userId 集合
+        // 7. 以學生爲維度統計成功/失敗數（與 createSendRecord 邏輯一致）
+        // - 按 studentUserId 分組失敗記錄
+        // - 只要該學生下任意一個家長重發成功，就算該學生成功
+        // 建立 studentUserId -> 該學生下所有 userId 集合
         Map<String, Set<String>> studentToUsersMap = new HashMap<>();
-        // 建立 userId -> 该用户对应的 studentUserId
+        // 建立 userId -> 該用戶對應的 studentUserId
         for (NotificationUserReadRecord record : failedRecords) {
             String studentId = record.getStudentUserId();
             if (studentId == null || studentId.trim().isEmpty()) {
-                // 直接发给学生的情况，studentUserId = userId
+                // 直接發給學生的情況，studentUserId = userId
                 studentId = record.getUserId();
             }
             studentToUsersMap.computeIfAbsent(studentId, k -> new HashSet<>()).add(record.getUserId());
@@ -1184,12 +1184,12 @@ public class NotificationPublishHandler {
 
         int successCount = 0;
         int failCount = 0;
-        // 遍历所有 student
+        // 遍歷所有 student
         for (Map.Entry<String, Set<String>> entry : studentToUsersMap.entrySet()) {
             boolean anySuccess = false;
-            // 遍历该学生的所有用户
+            // 遍歷該學生的所有用戶
             for (String uid : entry.getValue()) {
-                // 判断该用户是否成功
+                // 判斷該用戶是否成功
                 if (overallSuccessUserIds.contains(uid)) {
                     anySuccess = true;
                     break;
@@ -1201,25 +1201,25 @@ public class NotificationPublishHandler {
                 failCount++;
         }
 
-        // 8. 更新发送记录的统计信息（以学生为维度）
+        // 8. 更新發送記錄的統計信息（以學生爲維度）
         NotificationSendRecord updateRecord = buildSendRecordUpdate(sendRecord, successCount);
         notificationSendRecordService.update(updateRecord);
 
-        // 9. 构建返回结果
+        // 9. 構建返回結果
         result.put("resendCount", studentToUsersMap.size());
         result.put("successCount", successCount);
         result.put("failCount", failCount);
 
-        // 10. 构建返回结果
+        // 10. 構建返回結果
         if (failCount == 0) {
             result.put("success", true);
-            result.put("message", String.format("重发成功，共 %d 个学生", successCount));
+            result.put("message", String.format("重發成功，共 %d 個學生", successCount));
         } else if (successCount == 0) {
             result.put("success", false);
-            result.put("message", String.format("重发失败，共 %d 个学生未能发送", failCount));
+            result.put("message", String.format("重發失敗，共 %d 個學生未能發送", failCount));
         } else {
             result.put("success", true);
-            result.put("message", String.format("重发完成，成功 %d 个学生，失败 %d 个学生", successCount, failCount));
+            result.put("message", String.format("重發完成，成功 %d 個學生，失敗 %d 個學生", successCount, failCount));
         }
 
         return result;
@@ -1239,14 +1239,14 @@ public class NotificationPublishHandler {
     }
 
     /**
-     * 构建发送记录更新对象（以学生维度，将重发成功数加到现有记录中）
+     * 構建發送記錄更新對象（以學生維度，將重發成功數加到現有記錄中）
      *
-     * @param sendRecord   原发送记录
-     * @param successDelta 本次重发成功的学生数
-     * @return 待更新的发送记录对象
+     * @param sendRecord   原發送記錄
+     * @param successDelta 本次重發成功的學生數
+     * @return 待更新的發送記錄對象
      */
     private NotificationSendRecord buildSendRecordUpdate(NotificationSendRecord sendRecord, int successDelta) {
-        // 计算新的成功/失败数
+        // 計算新的成功/失敗數
         int newSuccessCount = (sendRecord.getSuccessCount() != null ? sendRecord.getSuccessCount() : 0) + successDelta;
         int newFailCount = (sendRecord.getFailCount() != null ? sendRecord.getFailCount() : 0) - successDelta;
         if (newFailCount < 0)

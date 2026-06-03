@@ -14,7 +14,7 @@
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
-    <!-- 批量查询多个部门的成员 -->
+    <!-- 批量查詢多個部門的成員 -->
     <select id="selectMembersByDepartmentIds" resultMap="WecomSchoolDepartmentMemberResult">
         SELECT id, userid, name, department_id, open_userid, create_time, update_time
         FROM wecom_school_department_member
@@ -25,7 +25,7 @@
         ORDER BY department_id ASC, name ASC
     </select>
 
-    <!-- 根据 ID 批量查询部门成员 -->
+    <!-- 根據 ID 批量查詢部門成員 -->
     <select id="selectMembersByIds" resultMap="WecomSchoolDepartmentMemberResult">
         SELECT id, userid, name, department_id, open_userid, create_time, update_time
         FROM wecom_school_department_member
@@ -36,7 +36,7 @@
         ORDER BY department_id ASC, name ASC
     </select>
 
-    <!-- 根据企業微信 userid 字串查詢完整成員對象 -->
+    <!-- 根據企業微信 userid 字串查詢完整成員對象 -->
     <select id="selectByUserid" resultMap="WecomSchoolDepartmentMemberResult">
         SELECT id, userid, name, department_id, open_userid, create_time, update_time
         FROM wecom_school_department_member

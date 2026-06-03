@@ -14,7 +14,7 @@
         <result property="updateTime"   column="update_time"/>
     </resultMap>
 
-    <!-- 根据企业微信 userid 查询该用户的部门管理员记录 -->
+    <!-- 根據企業微信 userid 查詢該用戶的部門管理員記錄 -->
     <select id="selectByUserid" resultMap="SysDepartmentAdminResult">
         SELECT id, department_id, userid, type, subject, create_time, update_time
         FROM sys_department_admin

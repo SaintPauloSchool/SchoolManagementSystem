@@ -5,7 +5,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import com.sms.common.core.text.Convert;
 
 /**
- * 权限信息
+ * 權限信息
  *
  */
 public class PermissionContextHolder

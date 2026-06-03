@@ -10,56 +10,56 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 通知用户阅读记录实体类（从表）
+ * 通知用戶閱讀記錄實體類（從表）
  *
  */
 @TableName("notification_user_read_record")
 public class NotificationUserReadRecord implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 阅读记录ID */
+    /** 閱讀記錄ID */
     @TableId(value = "read_id", type = IdType.AUTO)
     private Long readId;
 
-    /** 发送记录ID */
+    /** 發送記錄ID */
     @TableField("send_record_id")
     private Long sendRecordId;
 
-    /** 用户ID */
+    /** 用戶ID */
     @TableField("user_id")
     private String userId;
 
-    /** 用户类型（1学生 2家长 3教师） */
+    /** 用戶類型（1學生 2家長 3教師） */
     @TableField("user_type")
     private String userType;
 
-    /** 是否已读（0未读 1已读） */
+    /** 是否已讀（0未讀 1已讀） */
     @TableField("is_read")
     private String isRead;
 
-    /** 阅读时间 */
+    /** 閱讀時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("read_time")
     private LocalDateTime readTime;
 
-    /** 回复状态（0未回复 1已回复） */
+    /** 回復狀態（0未回復 1已回復） */
     @TableField("reply_status")
     private String replyStatus;
 
-    /** 回复时间 */
+    /** 回復時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("reply_time")
     private LocalDateTime replyTime;
 
-    /** 发送状态（0发送失败 1发送成功） */
+    /** 發送狀態（0發送失敗 1發送成功） */
     @TableField("send_status")
     private String sendStatus;
 
-    /** 关联的学生ID（当接收者是家长时记录，若发送给学生本身则与userId相同） */
+    /** 關聯的學生ID（當接收者是家長時記錄，若發送給學生本身則與userId相同） */
     @TableField("student_user_id")
     private String studentUserId;
 
-    /** 创建时间 */
+    /** 創建時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("create_time")
     private LocalDateTime createTime;

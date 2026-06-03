@@ -8,43 +8,43 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 系统学校部门对象 sys_school_department
+ * 系統學校部門對象 sys_school_department
  *
  */
 public class SysSchoolDepartment implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 部门 id */
+    /** 部門 id */
     private Long id;
 
-    /** 父部门 id */
+    /** 父部門 id */
     private Integer parentId;
 
-    /** 部门名称 */
+    /** 部門名稱 */
     private String name;
 
-    /** 部门英文名称 */
+    /** 部門英文名稱 */
     private String nameEn;
 
-    /** 在父部门中的次序值 */
+    /** 在父部門中的次序值 */
     private Integer orderNum;
 
-    /** 部门负责人的 UserID（JSON 数组字符串） */
+    /** 部門負責人的 UserID（JSON 數組字符串） */
     private String departmentLeader;
 
-    /** 类型：1-学校部门通讯录，2-家校通讯录 */
+    /** 類型：1-學校部門通訊錄，2-家校通訊錄 */
     private Integer type;
 
-    /** 创建时间 */
+    /** 創建時間 */
     private LocalDateTime createTime;
 
-    /** 更新时间 */
+    /** 更新時間 */
     private LocalDateTime updateTime;
 
-    /** 子部门列表（树形结构用） */
+    /** 子部門列表（樹形結構用） */
     private List<SysSchoolDepartment> children;
 
-    /** 是否为叶子节点（用于树形选择器） */
+    /** 是否爲葉子節點（用於樹形選擇器） */
     private Boolean isLeaf;
 
     public Long getId() {

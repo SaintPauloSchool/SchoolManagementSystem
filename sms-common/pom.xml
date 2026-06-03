@@ -36,13 +36,13 @@
             <version>${spring-boot.version}</version>
         </dependency>
 
-        <!-- pagehelper ?†é¡µ?’ä»¶ -->
+        <!-- pagehelper ?†é ?’ä»¶ -->
         <dependency>
             <groupId>com.github.pagehelper</groupId>
             <artifactId>pagehelper-spring-boot-starter</artifactId>
         </dependency>
 
-        <!-- ?ªå?ä¹‰é?è¯æ³¨è§?-->
+        <!-- ?ªå?ç¾©é?è­‰æ³¨è§?-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>

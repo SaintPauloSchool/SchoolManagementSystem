@@ -8,7 +8,7 @@
     top="10vh"
   >
     <div class="selector-wrapper">
-      <!-- 左侧树形结构 -->
+      <!-- 左側樹形結構 -->
       <div class="left-panel">
         <div class="panel-tabs">
           <el-tabs v-model="activeTab" class="custom-tabs">
@@ -94,7 +94,7 @@
         </div>
       </div>
 
-      <!-- 右侧已选区域 -->
+      <!-- 右側已選區域 -->
       <div class="right-panel">
         <div class="panel-title">
           <el-icon><Checked /></el-icon>
@@ -350,7 +350,7 @@ export default {
       const index = this.selectedClassIds.indexOf(cls.id)
       if (index > -1) {
         this.selectedClassIds.splice(index, 1)
-        // 更新两边树的勾选状态
+        // 更新兩邊樹的勾選狀態
         if (this.$refs.classTree) {
           this.$refs.classTree.setCheckedKeys(this.selectedClassIds)
         }
@@ -361,7 +361,7 @@ export default {
     },
 
     handleCheckChange(data, checkInfo) {
-      // 找到事件源树
+      // 找到事件源樹
       const sourceTree = this.activeTab === 'wecom' ? this.$refs.classTree : this.$refs.customClassTree;
       if (!sourceTree) return;
       
@@ -380,7 +380,7 @@ export default {
         }
         
         if (ancestorInSelected) {
-           ElNotification({ title: "提示", message: '已选中上级组织，无法单独取消子项', type: "warning", duration: 3000 });
+           ElNotification({ title: "提示", message: '已選中上級組織，無法單獨取消子項', type: "warning", duration: 3000 });
            sourceTree.setCheckedKeys(this.selectedClassIds);
            return;
         }
@@ -388,7 +388,7 @@ export default {
       
       this.updateSelectedClassIds();
       
-      // 如果是选中操作，自动滚动到底部
+      // 如果是選中操作，自動滾動到底部
       if (isChecked) {
         this.$nextTick(() => {
           if (this.$refs.selectedContainer) {
@@ -444,7 +444,7 @@ export default {
   background: #ffffff;
 }
 
-/* 左侧面板 */
+/* 左側面板 */
 .left-panel {
   flex: 1.5;
   display: flex;
@@ -456,7 +456,7 @@ export default {
   box-shadow: none;
 }
 
-/* 右侧面板 */
+/* 右側面板 */
 .right-panel {
   flex: 1;
   display: flex;
@@ -698,7 +698,7 @@ export default {
   border-color: #3a8ee6;
 }
 
-/* 树节点样式优化 */
+/* 樹節點樣式優化 */
 :deep(.el-tree) {
   background: transparent;
 }
@@ -740,7 +740,7 @@ export default {
   background: #409EFF;
 }
 
-/* 空状态优化 */
+/* 空狀態優化 */
 :deep(.el-empty__description) {
   color: #909399;
   font-size: 14px;

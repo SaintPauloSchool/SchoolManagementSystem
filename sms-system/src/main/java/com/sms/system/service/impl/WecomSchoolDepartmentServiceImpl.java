@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * wecom学校部门 Service 实现类
+ * wecom學校部門 Service 實現類
  *
  */
 @Service
@@ -33,7 +33,7 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
     private WecomSchoolDepartmentMemberMapper schoolDepartmentMemberMapper;
 
     /**
-     * 获取学校部门树形结构（带成员）
+     * 獲取學校部門樹形結構（帶成員）
      */
     @Override
     public List<WecomSchoolDepartment> getWecomSchoolDepartmentTreeWithMembers() {
@@ -43,7 +43,7 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
     }
 
     /**
-     * 获取学校部门树形结构（仅部门，不含人员）
+     * 獲取學校部門樹形結構（僅部門，不含人員）
      */
     @Override
     public List<WecomSchoolDepartment> getWecomSchoolDepartmentTree() {
@@ -51,30 +51,30 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
     }
 
     /**
-     * 构建部门树形结构
+     * 構建部門樹形結構
      */
     private List<WecomSchoolDepartment> buildDepartmentTree() {
-        // 1. 查询所有部门数据
+        // 1. 查詢所有部門數據
         List<WecomSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll();
 
         if (allDepartments == null || allDepartments.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 2. 构建父子关系映射
+        // 2. 構建父子關係映射
         Map<Long, List<WecomSchoolDepartment>> childrenMap = buildChildrenMap(allDepartments);
 
-        // 3. 找到根节点（parentId 为 null 或 0）
+        // 3. 找到根節點（parentId 爲 null 或 0）
         List<WecomSchoolDepartment> rootNodes = getRootNodes(allDepartments);
 
-        // 4. 递归构建树形结构
+        // 4. 遞歸構建樹形結構
         buildTree(rootNodes, childrenMap);
 
         return rootNodes;
     }
 
     /**
-     * 构建父子关系映射
+     * 構建父子關係映射
      */
     private Map<Long, List<WecomSchoolDepartment>> buildChildrenMap(List<WecomSchoolDepartment> allDepartments) {
         return allDepartments.stream()
@@ -85,7 +85,7 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
     }
 
     /**
-     * 获取根节点列表
+     * 獲取根節點列表
      */
     private List<WecomSchoolDepartment> getRootNodes(List<WecomSchoolDepartment> allDepartments) {
         return allDepartments.stream()
@@ -94,7 +94,7 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
     }
 
     /**
-     * 递归构建树形结构
+     * 遞歸構建樹形結構
      */
     private void buildTree(List<WecomSchoolDepartment> nodes, Map<Long, List<WecomSchoolDepartment>> childrenMap) {
         nodes.stream()
@@ -110,14 +110,14 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
     }
 
     /**
-     * 为部门加载成员数据
+     * 爲部門加載成員數據
      */
     private void loadMembersForDepartments(List<WecomSchoolDepartment> nodes) {
         if (nodes == null || nodes.isEmpty()) {
             return;
         }
 
-        // 收集所有需要查询成员的部门 ID
+        // 收集所有需要查詢成員的部門 ID
         List<Long> departmentIds = nodes.stream()
                 .filter(this::isValidNonLeafDepartment)
                 .map(WecomSchoolDepartment::getId)
@@ -128,10 +128,10 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
             return;
         }
 
-        // 批量查询所有部门的成员并按部门 ID 分组
+        // 批量查詢所有部門的成員並按部門 ID 分組
         Map<Long, List<WecomSchoolDepartmentMember>> membersMap = queryMembersByDepartmentIds(departmentIds);
 
-        // 为每个部门分配成员数据并递归处理子部门
+        // 爲每個部門分配成員數據並遞歸處理子部門
         nodes.stream()
                 .filter(Objects::nonNull)
                 .filter(dept -> dept.getId() != null)
@@ -140,17 +140,17 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
     }
 
     /**
-     * 处理部门成员数据
+     * 處理部門成員數據
      */
     private void processDepartmentMembers(WecomSchoolDepartment dept, Map<Long, List<WecomSchoolDepartmentMember>> membersMap) {
-        // 获取部门成员
+        // 獲取部門成員
         List<WecomSchoolDepartmentMember> members = membersMap.get(dept.getId());
 
         if (members == null || members.isEmpty()) {
             return;
         }
 
-        // 转换成员为节点并添加到 children
+        // 轉換成員爲節點並添加到 children
         List<WecomSchoolDepartment> memberNodes = members.stream()
                 .filter(Objects::nonNull)
                 .map(member -> convertToMemberNode(member, dept.getId()))
@@ -164,7 +164,7 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
             }
         }
 
-        // 递归处理子部门
+        // 遞歸處理子部門
         if (dept.getChildren() != null) {
             List<WecomSchoolDepartment> childDepartments = dept.getChildren().stream()
                     .filter(child -> !Boolean.TRUE.equals(child.getIsLeaf()))
@@ -177,7 +177,7 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
     }
 
     /**
-     * 判断是否为有效的非叶子部门节点
+     * 判斷是否爲有效的非葉子部門節點
      */
     private boolean isValidNonLeafDepartment(WecomSchoolDepartment dept) {
         return dept != null
@@ -186,19 +186,19 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
     }
 
     /**
-     * 批量查询部门成员
+     * 批量查詢部門成員
      */
     private Map<Long, List<WecomSchoolDepartmentMember>> queryMembersByDepartmentIds(List<Long> departmentIds) {
-        // 查询所有部门成员
+        // 查詢所有部門成員
         List<WecomSchoolDepartmentMember> allMembers = schoolDepartmentMemberMapper.selectMembersByDepartmentIds(departmentIds);
-        // 按部门 ID 分组
+        // 按部門 ID 分組
         return allMembers.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(WecomSchoolDepartmentMember::getDepartmentId));
     }
 
     /**
-     * 将成员转换为部门节点（用于树形展示）
+     * 將成員轉換爲部門節點（用於樹形展示）
      */
     private WecomSchoolDepartment convertToMemberNode(WecomSchoolDepartmentMember member, Long currentDepartmentId) {
         WecomSchoolDepartment node = new WecomSchoolDepartment();

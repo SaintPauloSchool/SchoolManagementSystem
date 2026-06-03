@@ -7,37 +7,37 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 通知重发失败记录 Mapper 接口
+ * 通知重發失敗記錄 Mapper 接口
  */
 public interface NotificationResendFailRecordMapper {
 
     /**
-     * 新增重发失败记录
+     * 新增重發失敗記錄
      */
     int insert(NotificationResendFailRecord record);
 
     /**
-     * 更新重发失败记录（累加失败次数、更新原因）
+     * 更新重發失敗記錄（累加失敗次數、更新原因）
      */
     int updateById(NotificationResendFailRecord record);
 
     /**
-     * 根据通知ID查询所有重发失败记录
+     * 根據通知ID查詢所有重發失敗記錄
      */
     List<NotificationResendFailRecord> selectByNotificationId(@Param("notificationId") Long notificationId);
 
     /**
-     * 根据发送记录ID查询重发失败记录
+     * 根據發送記錄ID查詢重發失敗記錄
      */
     List<NotificationResendFailRecord> selectBySendRecordId(@Param("sendRecordId") Long sendRecordId);
 
     /**
-     * 根据发送记录ID查询重发失败记录VO列表（直接返回VO，用于分页）
+     * 根據發送記錄ID查詢重發失敗記錄VO列表（直接返回VO，用於分頁）
      */
     List<ResendFailRecordVO> selectBySendRecordIdVO(@Param("sendRecordId") Long sendRecordId);
 
     /**
-     * 根据通知ID和用户ID查询单条记录（用于判断是否已存在）
+     * 根據通知ID和用戶ID查詢單條記錄（用於判斷是否已存在）
      */
     NotificationResendFailRecord selectByNotificationIdAndUserId(
             @Param("notificationId") Long notificationId,

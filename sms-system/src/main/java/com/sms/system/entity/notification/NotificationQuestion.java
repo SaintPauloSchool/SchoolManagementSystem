@@ -9,14 +9,14 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 通知问题实体类
+ * 通知問題實體類
  *
  */
 @TableName("notification_question")
 public class NotificationQuestion implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 问题ID */
+    /** 問題ID */
     @TableId(value = "question_id", type = IdType.AUTO)
     private Long questionId;
 
@@ -24,21 +24,21 @@ public class NotificationQuestion implements Serializable {
     @TableField("notification_id")
     private Long notificationId;
 
-    /** 父问题ID（用于分支问题） */
+    /** 父問題ID（用於分支問題） */
     @TableField("parent_question_id")
     private Long parentQuestionId;
 
-    /** 问题标题 */
+    /** 問題標題 */
     @TableField("question_title")
     private String questionTitle;
 
-    /** 问题类型（1 单选 2 多选 3 填空 4 附件上传 5 逻辑表单） */
+    /** 問題類型（1 單選 2 多選 3 填空 4 附件上傳 5 邏輯表單） */
     @TableField("question_type")
     private String questionType;
     
-    /** 选项列表 (JSON 格式，适用于单选、多选)
-     * 单选/多选格式：["选项 1","选项 2",...]
-     * 逻辑表单题型的选项和数据存储在 content 字段中
+    /** 選項列表 (JSON 格式，適用於單選、多選)
+     * 單選/多選格式：["選項 1","選項 2",...]
+     * 邏輯表單題型的選項和數據存儲在 content 字段中
      */
     @TableField("options")
     private String options;
@@ -67,7 +67,7 @@ public class NotificationQuestion implements Serializable {
     @TableField("content")
     private String content;
 
-    /** 创建时间 */
+    /** 創建時間 */
     @TableField("create_time")
     private LocalDateTime createTime;
 
