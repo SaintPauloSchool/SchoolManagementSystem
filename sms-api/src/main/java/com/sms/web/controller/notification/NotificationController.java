@@ -242,6 +242,41 @@ public class NotificationController extends BaseController {
     }
 
     /**
+     * 撤回通知
+     */
+    //@PreAuthorize("@ss.hasPermi('system:notification:recall')")
+    @Log(title = "撤回通知", businessType = BusinessType.UPDATE)
+    @PostMapping("/recall/{notificationId}")
+    public AjaxResult recall(@PathVariable Long notificationId) {
+        try {
+            // 1. 查詢原通知對象，用於微信推送中獲取標題等信息
+            Notification notification = notificationService.selectNotificationById(notificationId);
+            if (notification == null) {
+                return AjaxResult.error("通告不存在");
+            }
+            
+            // 2. 執行資料庫更新
+            boolean success = notificationService.recallNotification(notificationId);
+            if (success) {
+                // 3. 異步發送撤回微信通知
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        notificationPublishHandler.sendRecallNotification(notification);
+                    } catch (Exception e) {
+                        logger.error("發送撤回微信通知失敗: {}", e.getMessage(), e);
+                    }
+                });
+                return AjaxResult.success("撤回成功");
+            } else {
+                return AjaxResult.error("撤回失敗，通告可能已被撤回或狀態不正確");
+            }
+        } catch (Exception e) {
+            logger.error("撤回通知失敗: {}", e.getMessage(), e);
+            return AjaxResult.error("撤回失敗: " + e.getMessage());
+        }
+    }
+
+    /**
      * 導出通知回復答案（包含統計和詳情兩個Sheet）
      */
     //@PreAuthorize("@ss.hasPermi('system:notification:export')")

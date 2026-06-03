@@ -86,7 +86,7 @@
             <span v-else class="no-deadline">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right" align="center">
+        <el-table-column label="操作" :width="type === 'mySend' ? 180 : 120" fixed="right" align="center">
           <template #default="scope">
             <div class="action-buttons">
               <el-button
@@ -96,6 +96,15 @@
               >
                 <el-icon><View /></el-icon>
                 查看
+              </el-button>
+              <el-button
+                  v-if="type === 'mySend' && scope.row.status === '1'"
+                  size="small"
+                  type="warning"
+                  @click="handleRecall(scope.row)"
+              >
+                <el-icon><RefreshLeft /></el-icon>
+                撤回
               </el-button>
             </div>
           </template>
@@ -143,7 +152,7 @@
 
 <script>
 import { ElNotification } from 'element-plus'
-import { Search, Refresh, View, List } from '@element-plus/icons-vue'
+import { Search, Refresh, View, List, RefreshLeft } from '@element-plus/icons-vue'
 import NotificationDetail from './NotificationDetail.vue'
 import request from '@/utils/request'
 
@@ -284,6 +293,50 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    handleRecall(row) {
+      this.$confirm('確定要撤回該通告嗎？撤回後家長及學生將無法查看。', '提示', {
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        try {
+          this.loading = true
+          const response = await request({
+            url: `/system/notification/recall/${row.notificationId}`,
+            method: 'post'
+          })
+          if (response.code === 200 || response.code === 0) {
+            ElNotification({
+              title: '操作成功',
+              message: '通告已成功撤回',
+              type: 'success',
+              duration: 3000
+            })
+            this.handleRefresh()
+          } else {
+            ElNotification({
+              title: '操作失敗',
+              message: response.msg || '撤回失敗',
+              type: 'error',
+              duration: 4000
+            })
+          }
+        } catch (error) {
+          console.error('撤回失敗:', error)
+          ElNotification({
+            title: '操作失敗',
+            message: '撤回請求失敗: ' + (error.message || '未知錯誤'),
+            type: 'error',
+            duration: 4000
+          })
+        } finally {
+          this.loading = false
+        }
+      }).catch(() => {
+        // 取消撤回
+      })
     },
 
     handleDetailClose() {

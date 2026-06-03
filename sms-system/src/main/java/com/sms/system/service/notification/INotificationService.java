@@ -48,4 +48,12 @@ public interface INotificationService {
      * @return 結果
      */
     boolean save(Notification notification);
+
+    /**
+     * 撤回通知
+     *
+     * @param notificationId 通知 ID
+     * @return 結果
+     */
+    boolean recallNotification(Long notificationId);
 }
