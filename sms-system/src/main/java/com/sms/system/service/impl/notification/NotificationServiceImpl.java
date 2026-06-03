@@ -135,4 +135,22 @@ public class NotificationServiceImpl implements INotificationService {
     public boolean save(Notification notification) {
         return notificationMapper.insert(notification) > 0;
     }
+
+    /**
+     * 撤回通知
+     *
+     * @param notificationId 通知 ID
+     * @return 結果
+     */
+    @Override
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
+    public boolean recallNotification(Long notificationId) {
+        Notification notification = notificationMapper.selectById(notificationId);
+        if (notification == null || !"1".equals(notification.getStatus())) {
+            return false;
+        }
+
+        int rows = notificationMapper.updateStatus(notificationId, "2");
+        return rows > 0;
+    }
 }
