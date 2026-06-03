@@ -5,35 +5,35 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 
 /**
- * 失败通知列表VO（用于展示发送失败的通知）
+ * 失敗通知列表VO（用於展示發送失敗的通知）
  */
 public class FailedNotificationVO {
     /** 通知ID */
     private Long notificationId;
 
-    /** 通知标题 */
+    /** 通知標題 */
     private String title;
 
-    /** 发送记录ID */
+    /** 發送記錄ID */
     private Long sendRecordId;
 
-    /** 发送时间 */
+    /** 發送時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime sendTime;
 
-    /** 发送状态（0待发送 1发送中 2发送成功 3发送失败 4部分成功） */
+    /** 發送狀態（0待發送 1發送中 2發送成功 3發送失敗 4部分成功） */
     private String sendStatus;
 
-    /** 应发送总人数 */
+    /** 應發送總人數 */
     private Integer totalCount;
 
-    /** 发送成功人数 */
+    /** 發送成功人數 */
     private Integer successCount;
 
-    /** 发送失败人数 */
+    /** 發送失敗人數 */
     private Integer failCount;
 
-    /** 发送人姓名 */
+    /** 發送人姓名 */
     private String senderName;
 
     // Getters and Setters

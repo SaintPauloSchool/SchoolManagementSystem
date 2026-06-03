@@ -13,7 +13,7 @@ import com.sms.common.utils.spring.SpringUtils;
 import eu.bitwalker.useragentutils.UserAgent;
 
 /**
- * 异步工厂（产生任务用）
+ * 異步工廠（產生任務用）
  *
  *
  */
@@ -22,10 +22,10 @@ public class AsyncFactory
     /*private static final Logger sys_user_logger = LoggerFactory.getLogger("sys-user");
 
     *//**
-     * 同步session到数据库
+     * 同步session到數據庫
      * 
-     * @param session 在线用户会话
-     * @return 任务task
+     * @param session 在線用戶會話
+     * @return 任務task
      *//*
     public static TimerTask syncSessionToDb(final OnlineSession session)
     {
@@ -53,10 +53,10 @@ public class AsyncFactory
     }
 
     *//**
-     * 操作日志记录
+     * 操作日誌記錄
      * 
-     * @param operLog 操作日志信息
-     * @return 任务task
+     * @param operLog 操作日誌信息
+     * @return 任務task
      *//*
     public static TimerTask recordOper(final SysOperLog operLog)
     {
@@ -65,7 +65,7 @@ public class AsyncFactory
             @Override
             public void run()
             {
-                // 远程查询操作地点
+                // 遠程查詢操作地點
                 operLog.setOperLocation(AddressUtils.getRealAddressByIP(operLog.getOperIp()));
                 SpringUtils.getBean(ISysOperLogService.class).insertOperlog(operLog);
             }
@@ -73,13 +73,13 @@ public class AsyncFactory
     }
 
     *//**
-     * 记录登录信息
+     * 記錄登錄信息
      * 
-     * @param username 用户名
-     * @param status 状态
+     * @param username 用戶名
+     * @param status 狀態
      * @param message 消息
      * @param args 列表
-     * @return 任务task
+     * @return 任務task
      *//*
     public static TimerTask recordLogininfor(final String username, final String status, final String message, final Object... args)
     {
@@ -97,13 +97,13 @@ public class AsyncFactory
                 s.append(LogUtils.getBlock(username));
                 s.append(LogUtils.getBlock(status));
                 s.append(LogUtils.getBlock(message));
-                // 打印信息到日志
+                // 打印信息到日誌
                 sys_user_logger.info(s.toString(), args);
-                // 获取客户端操作系统
+                // 獲取客戶端操作系統
                 String os = userAgent.getOperatingSystem().getName();
-                // 获取客户端浏览器
+                // 獲取客戶端瀏覽器
                 String browser = userAgent.getBrowser().getName();
-                // 封装对象
+                // 封裝對象
                 SysLogininfor logininfor = new SysLogininfor();
                 logininfor.setLoginName(username);
                 logininfor.setIpaddr(ip);
@@ -111,7 +111,7 @@ public class AsyncFactory
                 logininfor.setBrowser(browser);
                 logininfor.setOs(os);
                 logininfor.setMsg(message);
-                // 日志状态
+                // 日誌狀態
                 if (StringUtils.equalsAny(status, Constants.LOGIN_SUCCESS, Constants.LOGOUT, Constants.REGISTER))
                 {
                     logininfor.setStatus(Constants.SUCCESS);
@@ -120,7 +120,7 @@ public class AsyncFactory
                 {
                     logininfor.setStatus(Constants.FAIL);
                 }
-                // 插入数据
+                // 插入數據
                 SpringUtils.getBean(SysLogininforServiceImpl.class).insertLogininfor(logininfor);
             }
         };

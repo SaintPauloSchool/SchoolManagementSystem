@@ -14,7 +14,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
- * 系统学校部门成员 Service 实现类
+ * 系統學校部門成員 Service 實現類
  *
  */
 @Service
@@ -24,7 +24,7 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
     private SysSchoolDepartmentMemberMapper memberMapper;
 
     /**
-     * 批量查询多个部门的成员列表
+     * 批量查詢多個部門的成員列表
      */
     @Override
     public List<SysSchoolDepartmentMember> getMembersByDepartmentIds(List<Long> departmentIds) {
@@ -36,7 +36,7 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
     }
 
     /**
-     * 根据 ID 删除部门成员
+     * 根據 ID 刪除部門成員
      */
     @Override
     public int deleteMemberById(Long id) {
@@ -47,7 +47,7 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
     }
 
     /**
-     * 批量添加部门成员 (自动过滤该部门下已存在的 userid)
+     * 批量添加部門成員 (自動過濾該部門下已存在的 userid)
      */
     @Override
     public int batchAddMembers(List<SysSchoolDepartmentMember> members) {
@@ -55,37 +55,37 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
             return 0;
         }
         
-        // 1. 获取本次要添加人员所涉及的所有部门 ID
+        // 1. 獲取本次要添加人員所涉及的所有部門 ID
         List<Long> departmentIds = members.stream()
                 .map(SysSchoolDepartmentMember::getDepartmentId)
                 .filter(id -> id != null)
                 .distinct()
                 .collect(Collectors.toList());
 
-        // 2. 查出这些部门下已经存在的人员
+        // 2. 查出這些部門下已經存在的人員
         List<SysSchoolDepartmentMember> existingMembers = memberMapper.selectMembersByDepartmentIds(departmentIds);
 
-        // 3. 过滤掉已经在该部门存在的人员
+        // 3. 過濾掉已經在該部門存在的人員
         List<SysSchoolDepartmentMember> toInsert = members.stream()
                 .filter(m -> existingMembers.stream().noneMatch(exist -> 
                         exist.getDepartmentId().equals(m.getDepartmentId()) && 
                         exist.getUserid().equals(m.getUserid())
                 ))
-                // 顺便做个去重，防止前端传来的 members 列表里有重复对象
+                // 順便做個去重，防止前端傳來的 members 列表裏有重複對象
                 .collect(Collectors.collectingAndThen(
                         Collectors.toCollection(() -> new TreeSet<>(
                                 Comparator.comparing(m -> m.getDepartmentId() + "_" + m.getUserid())
                         )), ArrayList::new));
 
-        // 4. 如果全都被过滤掉了（说明想加的人都已经在了），直接返回成功数量，不报错
+        // 4. 如果全都被過濾掉了（說明想加的人都已經在了），直接返回成功數量，不報錯
         if (toInsert.isEmpty()) {
             return members.size();
         }
 
-        // 5. 插入过滤后的真实增量人员
+        // 5. 插入過濾後的真實增量人員
         memberMapper.batchInsertMembers(toInsert);
         
-        // 外部可能依赖返回值判断是否成功，所以统一回传原数组大小，制造"全部成功加入"(包括已存在的)的假象
+        // 外部可能依賴返回值判斷是否成功，所以統一回傳原數組大小，製造"全部成功加入"(包括已存在的)的假象
         return members.size();
     }
 

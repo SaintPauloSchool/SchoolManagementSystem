@@ -13,7 +13,7 @@
         </div>
       </template>
 
-      <!-- 数据表格 -->
+      <!-- 數據表格 -->
       <el-table
         v-loading="loading"
         :data="failedNotifications"
@@ -88,14 +88,14 @@
         </el-table-column>
       </el-table>
 
-      <!-- 空状态 -->
+      <!-- 空狀態 -->
       <el-empty 
         v-if="!loading && failedNotifications.length === 0" 
         description="暫無發送失敗的通知"
         :image-size="120"
       />
 
-      <!-- 分页组件 -->
+      <!-- 分頁組件 -->
       <div class="pagination-container" v-if="total > 0">
         <el-pagination
           v-model:current-page="pagination.currentPage"
@@ -110,7 +110,7 @@
       </div>
     </el-card>
 
-    <!-- 详情对话框 -->
+    <!-- 詳情對話框 -->
     <FailedNotificationDetail 
       v-model:visible="detailDialogVisible" 
       :send-record-id="currentSendRecordId"
@@ -162,11 +162,11 @@ export default {
           this.failedNotifications = response.rows || []
           this.total = response.total || 0
         } else {
-          ElNotification({ title: "操作失敗", message: response.msg || '加载失败', type: "error", duration: 4000 })
+          ElNotification({ title: "操作失敗", message: response.msg || '加載失敗', type: "error", duration: 4000 })
         }
       } catch (error) {
-        console.error('加载失败通知列表错误:', error)
-        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
+        console.error('加載失敗通知列表錯誤:', error)
+        ElNotification({ title: "操作失敗", message: '數據加載失敗', type: "error", duration: 4000 })
       } finally {
         this.loading = false
       }
@@ -190,7 +190,7 @@ export default {
 
     getStatusTagType(status) {
       const statusMap = {
-        '3': 'danger',  // 发送失败
+        '3': 'danger',  // 發送失敗
         '4': 'warning'  // 部分成功
       }
       return statusMap[status] || 'info'

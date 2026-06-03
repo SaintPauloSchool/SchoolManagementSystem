@@ -8,59 +8,59 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 
 /**
- * 登录用户身份权限
+ * 登錄用戶身份權限
  */
 public class LoginUser implements UserDetails {
     
     private static final long serialVersionUID = 1L;
 
     /**
-     * 用户ID
+     * 用戶ID
      */
     private Long userId;
 
     /**
-     * 用户唯一标识
+     * 用戶唯一標識
      */
     private String token;
 
     /**
-     * 登录时间
+     * 登錄時間
      */
     private Long loginTime;
 
     /**
-     * 过期时间
+     * 過期時間
      */
     private Long expireTime;
 
     /**
-     * 登录IP地址
+     * 登錄IP地址
      */
     private String ipaddr;
 
     /**
-     * 登录地点
+     * 登錄地點
      */
     private String loginLocation;
 
     /**
-     * 浏览器类型
+     * 瀏覽器類型
      */
     private String browser;
 
     /**
-     * 操作系统
+     * 操作系統
      */
     private String os;
 
     /**
-     * 权限列表
+     * 權限列表
      */
     private Collection<? extends GrantedAuthority> authorities;
 
     /**
-     * 用户信息
+     * 用戶信息
      */
     private SysUser user;
 
@@ -85,7 +85,7 @@ public class LoginUser implements UserDetails {
     }
 
     /**
-     * 账户是否未过期
+     * 賬戶是否未過期
      */
     @JsonIgnore
     @Override
@@ -94,7 +94,7 @@ public class LoginUser implements UserDetails {
     }
 
     /**
-     * 账户是否未锁定
+     * 賬戶是否未鎖定
      */
     @JsonIgnore
     @Override
@@ -103,7 +103,7 @@ public class LoginUser implements UserDetails {
     }
 
     /**
-     * 密码是否未过期
+     * 密碼是否未過期
      */
     @JsonIgnore
     @Override
@@ -112,7 +112,7 @@ public class LoginUser implements UserDetails {
     }
 
     /**
-     * 账户是否可用
+     * 賬戶是否可用
      */
     @JsonIgnore
     @Override

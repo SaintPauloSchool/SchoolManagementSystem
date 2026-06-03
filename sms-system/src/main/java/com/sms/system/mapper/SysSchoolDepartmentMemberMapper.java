@@ -6,47 +6,47 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 系统学校部门成员 Mapper 接口
+ * 系統學校部門成員 Mapper 接口
  *
  */
 public interface SysSchoolDepartmentMemberMapper {
 
     /**
-     * 批量查询多个部门的成员
+     * 批量查詢多個部門的成員
      *
-     * @param departmentIds 部门 ID 列表
-     * @return 成员集合
+     * @param departmentIds 部門 ID 列表
+     * @return 成員集合
      */
     List<SysSchoolDepartmentMember> selectMembersByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
 
     /**
-     * 根据 ID 批量查询部门成员
+     * 根據 ID 批量查詢部門成員
      * @param ids
      * @return
      */
     List<SysSchoolDepartmentMember> selectMembersByIds(@Param("ids") List<Long> ids);
 
     /**
-     * 根据 ID 删除部门成员
+     * 根據 ID 刪除部門成員
      *
-     * @param id 成员 ID
-     * @return 影响行数
+     * @param id 成員 ID
+     * @return 影響行數
      */
     int deleteMemberById(@Param("id") Long id);
 
     /**
-     * 根据部门 ID 删除成员
+     * 根據部門 ID 刪除成員
      *
-     * @param departmentId 部门 ID
-     * @return 影响行数
+     * @param departmentId 部門 ID
+     * @return 影響行數
      */
     int deleteByDepartmentId(@Param("departmentId") Long departmentId);
 
     /**
-     * 批量插入部门成员
+     * 批量插入部門成員
      *
-     * @param members 成员列表
-     * @return 影响行数
+     * @param members 成員列表
+     * @return 影響行數
      */
     int batchInsertMembers(@Param("members") List<SysSchoolDepartmentMember> members);
 

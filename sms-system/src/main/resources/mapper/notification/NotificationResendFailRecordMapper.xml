@@ -23,7 +23,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="updateTime"      column="update_time"     />
     </resultMap>
 
-    <!-- 新增重发失败记录 -->
+    <!-- 新增重發失敗記錄 -->
     <insert id="insert" parameterType="com.sms.system.entity.notification.NotificationResendFailRecord"
             useGeneratedKeys="true" keyProperty="id">
         insert into notification_resend_fail_record
@@ -34,7 +34,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
          #{failReason1}, #{failMessage1}, #{failReason2}, #{failMessage2}, #{failReason3}, #{failMessage3}, #{failCount}, #{status}, #{createTime}, #{updateTime})
     </insert>
 
-    <!-- 更新重发失败记录 -->
+    <!-- 更新重發失敗記錄 -->
     <update id="updateById" parameterType="com.sms.system.entity.notification.NotificationResendFailRecord">
         update notification_resend_fail_record
         <set>
@@ -51,7 +51,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{id}
     </update>
 
-    <!-- 根据通知ID查询所有重发失败记录 -->
+    <!-- 根據通知ID查詢所有重發失敗記錄 -->
     <select id="selectByNotificationId" resultMap="ResendFailRecordResult">
         select id, notification_id, send_record_id, user_id, user_type, student_user_id,
                fail_reason_1, fail_message_1, fail_reason_2, fail_message_2, fail_reason_3, fail_message_3, fail_count, status, create_time, update_time
@@ -59,7 +59,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where notification_id = #{notificationId}
     </select>
 
-    <!-- 根据发送记录ID查询重发失败记录 -->
+    <!-- 根據發送記錄ID查詢重發失敗記錄 -->
     <select id="selectBySendRecordId" resultMap="ResendFailRecordResult">
         select id, notification_id, send_record_id, user_id, user_type, student_user_id,
                fail_reason_1, fail_message_1, fail_reason_2, fail_message_2, fail_reason_3, fail_message_3, fail_count, status, create_time, update_time
@@ -67,7 +67,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where send_record_id = #{sendRecordId}
     </select>
 
-    <!-- 直接返回 VO，用于分页查询 -->
+    <!-- 直接返回 VO，用於分頁查詢 -->
     <select id="selectBySendRecordIdVO" resultType="com.sms.system.entity.vo.ResendFailRecordVO">
         select r.id,
                r.user_id as userId,
@@ -90,7 +90,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where r.send_record_id = #{sendRecordId}
     </select>
 
-    <!-- 根据通知ID和用户ID查询单条记录 -->
+    <!-- 根據通知ID和用戶ID查詢單條記錄 -->
     <select id="selectByNotificationIdAndUserId" resultMap="ResendFailRecordResult">
         select id, notification_id, send_record_id, user_id, user_type, student_user_id,
                fail_reason_1, fail_message_1, fail_reason_2, fail_message_2, fail_reason_3, fail_message_3, fail_count, status, create_time, update_time

@@ -3,15 +3,15 @@ package com.sms.system.service;
 import com.sms.system.entity.SysAdmin;
 
 /**
- * 系统管理员 Service 接口
+ * 系統管理員 Service 接口
  */
 public interface ISysAdminService {
 
     /**
-     * 验证用户是否「非」管理员
+     * 驗證用戶是否「非」管理員
      *
-     * @param userId 用户ID
-     * @return true-不是管理员 false-是管理员
+     * @param userId 用戶ID
+     * @return true-不是管理員 false-是管理員
      */
     boolean isNotAdmin(String userId);
 }

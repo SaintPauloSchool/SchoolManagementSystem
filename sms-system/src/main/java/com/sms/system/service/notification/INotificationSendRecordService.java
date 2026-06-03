@@ -6,20 +6,20 @@ import com.sms.system.entity.vo.SendStatisticsVO;
 import java.util.List;
 
 /**
- * 通知发送记录 Service 接口
+ * 通知發送記錄 Service 接口
  *
  */
 public interface INotificationSendRecordService {
     /**
-     * 新增发送记录
+     * 新增發送記錄
      *
-     * @param sendRecord 发送记录
-     * @return 结果
+     * @param sendRecord 發送記錄
+     * @return 結果
      */
     int save(NotificationSendRecord sendRecord);
 
     /**
-     * 查询通知发送统计信息（強類型 VO）
+     * 查詢通知發送統計信息（強類型 VO）
      *
      * @param notificationId 通知ID
      * @return 發送統計 VO
@@ -27,23 +27,23 @@ public interface INotificationSendRecordService {
     SendStatisticsVO getSendStatisticsVO(Long notificationId);
 
     /**
-     * 根据通知ID查询发送记录
+     * 根據通知ID查詢發送記錄
      *
      * @param notificationId 通知ID
-     * @return 发送记录
+     * @return 發送記錄
      */
     NotificationSendRecord selectByNotificationId(Long notificationId);
     
     /**
-     * 更新发送记录
+     * 更新發送記錄
      *
-     * @param sendRecord 发送记录
-     * @return 结果
+     * @param sendRecord 發送記錄
+     * @return 結果
      */
     int update(NotificationSendRecord sendRecord);
 
     /**
-     * 查询所有发送失败的记录
+     * 查詢所有發送失敗的記錄
      *
      * @return 列表
      */

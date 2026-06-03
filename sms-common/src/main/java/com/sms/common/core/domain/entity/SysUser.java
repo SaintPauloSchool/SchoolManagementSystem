@@ -14,7 +14,7 @@ import com.sms.common.core.domain.BaseEntity;
 import com.sms.common.xss.Xss;
 
 /**
- * 用户对象 sys_user
+ * 用戶對象 sys_user
  *
  */
 public class SysUser extends BaseEntity

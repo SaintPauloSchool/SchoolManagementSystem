@@ -44,7 +44,7 @@
         </foreach>
     </delete>
 
-    <!-- 插入部门信息 -->
+    <!-- 插入部門信息 -->
     <insert id="insertDepartment" parameterType="com.sms.system.entity.SysSchoolDepartment" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO sys_school_department (
             <if test="parentId != null">parent_id,</if>

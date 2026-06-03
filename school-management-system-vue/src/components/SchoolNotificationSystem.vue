@@ -110,7 +110,7 @@
           </ul>
         </div>
         
-        <!-- 占位大類 2 -->
+        <!-- 佔位大類 2 -->
         <div class="nav-section">
           <div class="nav-section-title" @click="toggleSection('report')">
             <el-icon><Document /></el-icon>
@@ -261,7 +261,7 @@ export default {
   mounted() {
     this.checkScreenSize()
     window.addEventListener('resize', this.handleResize)
-    // 根据当前激活的菜单加载对应数据
+    // 根據當前激活的菜單加載對應數據
     this.loadInitialData()
     this.checkAdminStatus()
     this.checkPendingNotice()
@@ -271,27 +271,27 @@ export default {
   },
   methods: {
     getInitialActiveMenu() {
-      // 从 sessionStorage 获取上次访问的菜单，如果没有则默认为 '1-1'
+      // 從 sessionStorage 獲取上次訪問的菜單，如果沒有則默認爲 '1-1'
       const savedMenu = sessionStorage.getItem('activeMenu')
       return savedMenu || '1-1'
     },
     
     saveActiveMenu(menu) {
-      // 保存当前菜单到 sessionStorage
+      // 保存當前菜單到 sessionStorage
       sessionStorage.setItem('activeMenu', menu)
     },
     
     getInitialExpandedSections() {
-      // 从 sessionStorage 获取上次菜单展开状态
+      // 從 sessionStorage 獲取上次菜單展開狀態
       const savedSections = sessionStorage.getItem('expandedSections')
       if (savedSections) {
         try {
           return JSON.parse(savedSections)
         } catch (e) {
-          console.error('解析菜单展开状态失败:', e)
+          console.error('解析菜單展開狀態失敗:', e)
         }
       }
-      // 默认状态：家校通知展开，其他折叠
+      // 默認狀態：家校通知展開，其他摺疊
       return {
         homeSchool: true,
         contact: false,
@@ -322,17 +322,17 @@ export default {
     },
     
     saveExpandedSections() {
-      // 保存菜单展开状态到 sessionStorage
+      // 保存菜單展開狀態到 sessionStorage
       sessionStorage.setItem('expandedSections', JSON.stringify(this.expandedSections))
     },
     loadInitialData() {
-      // 根据当前激活的菜单加载对应的数据
+      // 根據當前激活的菜單加載對應的數據
       if (this.activeMenu === '1-2') {
         this.loadCcToMeNotifications()
       } else if (this.activeMenu === '1-3') {
         this.loadMySendNotifications()
       }
-      // 其他菜单无需加载数据
+      // 其他菜單無需加載數據
     },
     async checkAdminStatus() {
       try {
@@ -373,32 +373,32 @@ export default {
         this.isCollapsed = false
       }
       this.expandedSections[sectionName] = !this.expandedSections[sectionName]
-      this.saveExpandedSections() // 保存展开状态
+      this.saveExpandedSections() // 保存展開狀態
     },
     
     handleMenuSelect(index) {
       this.activeMenu = index
-      this.saveActiveMenu(index) // 保存菜单选择
+      this.saveActiveMenu(index) // 保存菜單選擇
       if (this.isMobile) {
         this.isMobileMenuOpen = false
       }
       if (index === '1-1') {
-        // 發佈通知，无需加载数据
+        // 發佈通知，無需加載數據
       } else if (index === '1-2') {
         this.loadCcToMeNotifications()
       } else if (index === '1-3') {
         this.mySendPagination.currentPage = 1
         this.loadMySendNotifications()
       } else if (index === '2-1') {
-        // 老師通訊錄，无需加载数据
+        // 老師通訊錄，無需加載數據
       } else if (index === '2-2') {
-        // 家校通訊錄，无需加载数据
+        // 家校通訊錄，無需加載數據
       } else if (index === '3-1') {
-        // 查詢失敗通知，无需加载数据
+        // 查詢失敗通知，無需加載數據
       } else if (index === '3-2') {
-        // 行事曆管理，无需加载数据
+        // 行事曆管理，無需加載數據
       } else if (index === '3-3') {
-        // 定時任務日誌，无需加载数据
+        // 定時任務日誌，無需加載數據
       }
     },
 
@@ -419,8 +419,8 @@ export default {
           this.ccPagination.total = response.total || 0
         }
       } catch (error) {
-        console.error('加载失败:', error)
-        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
+        console.error('加載失敗:', error)
+        ElNotification({ title: "操作失敗", message: '數據加載失敗', type: "error", duration: 4000 })
       }
     },
 
@@ -441,8 +441,8 @@ export default {
           this.mySendPagination.total = response.total || 0
         }
       } catch (error) {
-        console.error('加载失败:', error)
-        ElNotification({ title: "操作失敗", message: '数据加载失败', type: "error", duration: 4000 })
+        console.error('加載失敗:', error)
+        ElNotification({ title: "操作失敗", message: '數據加載失敗', type: "error", duration: 4000 })
       }
     },
 

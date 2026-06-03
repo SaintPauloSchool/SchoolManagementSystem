@@ -10,7 +10,7 @@ import java.util.List;
  */
 public interface NotificationAnswerMapper {
     /**
-     * 根据通知ID查询回答列表
+     * 根據通知ID查詢回答列表
      *
      * @param notificationId 通知ID
      * @return 回答集合
@@ -18,10 +18,10 @@ public interface NotificationAnswerMapper {
     List<NotificationAnswer> selectByNotificationId(Long notificationId);
 
     /**
-     * 根据通知ID和用户ID查询回答列表
+     * 根據通知ID和用戶ID查詢回答列表
      *
      * @param notificationId 通知ID
-     * @param userId 用户ID
+     * @param userId 用戶ID
      * @return 回答集合
      */
     List<NotificationAnswer> selectByNotificationIdAndUserId(@Param("notificationId") Long notificationId, @Param("userId") String userId);

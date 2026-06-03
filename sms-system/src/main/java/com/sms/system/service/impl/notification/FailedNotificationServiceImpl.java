@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 失败通知 Service 业务层处理
+ * 失敗通知 Service 業務層處理
  */
 @Service
 public class FailedNotificationServiceImpl implements IFailedNotificationService {
@@ -35,47 +35,47 @@ public class FailedNotificationServiceImpl implements IFailedNotificationService
     private NotificationResendFailRecordMapper notificationResendFailRecordMapper;
 
     /**
-     * 查询失败通知列表
+     * 查詢失敗通知列表
      *
-     * @return 失败通知列表
+     * @return 失敗通知列表
      */
     @Override
     public List<FailedNotificationVO> selectFailedNotificationList() {
-        // 1. 查询失败通知列表
+        // 1. 查詢失敗通知列表
         return notificationSendRecordMapper.selectAllFailedRecordsWithVO();
     }
 
     /**
-     * 根据发送记录ID查询失败通知详情
+     * 根據發送記錄ID查詢失敗通知詳情
      *
-     * @param sendRecordId 发送记录ID
-     * @return 失败通知详情
+     * @param sendRecordId 發送記錄ID
+     * @return 失敗通知詳情
      */
     @Override
     public FailedNotificationDetailVO selectFailedNotificationDetail(Long sendRecordId) {
-        // 1. 直接查询发送记录（不需要分页）
+        // 1. 直接查詢發送記錄（不需要分頁）
         NotificationSendRecord sendRecord = notificationSendRecordMapper.selectById(sendRecordId);
 
         if (sendRecord == null) {
             return null;
         }
 
-        // 2. 查询对应的通知信息
+        // 2. 查詢對應的通知信息
         Notification notification = notificationMapper.selectById(sendRecord.getNotificationId());
         if (notification == null) {
             return null;
         }
 
-        // 3. 构建详情VO
+        // 3. 構建詳情VO
         return getFailedNotificationDetailVO(notification, sendRecord);
     }
 
     /**
-     * 构建失败通知详情VO
+     * 構建失敗通知詳情VO
      *
      * @param notification 通知信息
-     * @param sendRecord   发送记录信息
-     * @return 详情VO
+     * @param sendRecord   發送記錄信息
+     * @return 詳情VO
      */
     private static FailedNotificationDetailVO getFailedNotificationDetailVO(Notification notification, NotificationSendRecord sendRecord) {
         FailedNotificationDetailVO detailVO = new FailedNotificationDetailVO();
@@ -92,26 +92,26 @@ public class FailedNotificationServiceImpl implements IFailedNotificationService
     }
 
     /**
-     * 查询失败的阅读记录
+     * 查詢失敗的閱讀記錄
      *
-     * @param sendRecordId 发送记录ID
-     * @return 失败的阅读记录
+     * @param sendRecordId 發送記錄ID
+     * @return 失敗的閱讀記錄
      */
     @Override
     public List<UserReadRecordVO> selectFailedReadRecordsPage(Long sendRecordId) {
-        // 查询失败的阅读记录
+        // 查詢失敗的閱讀記錄
         return notificationUserReadRecordMapper.selectFailedBySendRecordIdVO(sendRecordId);
     }
 
     /**
-     * 查询失败的重发记录
+     * 查詢失敗的重發記錄
      *
-     * @param sendRecordId 发送记录ID
-     * @return 失败的重发记录
+     * @param sendRecordId 發送記錄ID
+     * @return 失敗的重發記錄
      */
     @Override
     public List<ResendFailRecordVO> selectResendFailRecordsPage(Long sendRecordId) {
-        // 查询失败的重发记录
+        // 查詢失敗的重發記錄
         return notificationResendFailRecordMapper.selectBySendRecordIdVO(sendRecordId);
     }
 }

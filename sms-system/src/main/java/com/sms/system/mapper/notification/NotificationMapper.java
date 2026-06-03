@@ -11,7 +11,7 @@ import java.util.List;
  */
 public interface NotificationMapper {
     /**
-     * 查询通知列表
+     * 查詢通知列表
      *
      * @param notification 通知信息
      * @return 通知集合
@@ -19,7 +19,7 @@ public interface NotificationMapper {
     List<Notification> selectNotificationList(Notification notification);
 
     /**
-     * 根据用户 ID 查询抄送给我的通知列表
+     * 根據用戶 ID 查詢抄送給我的通知列表
      *
      * @param notification 通知信息（包含 userId, userType, publishDate）
      * @return 通知集合
@@ -27,7 +27,7 @@ public interface NotificationMapper {
     List<Notification> selectCcToMeList(Notification notification);
 
     /**
-     * 根据用户 ID 查询我发送的通知列表
+     * 根據用戶 ID 查詢我發送的通知列表
      *
      * @param notification 通知信息（包含 senderId, publishDate）
      * @return 通知集合
@@ -38,12 +38,12 @@ public interface NotificationMapper {
      * 新增通知
      *
      * @param notification 通知
-     * @return 结果
+     * @return 結果
      */
     int insert(Notification notification);
     
     /**
-     * 根据 ID 查询通知
+     * 根據 ID 查詢通知
      *
      * @param notificationId 通知 ID
      * @return 通知

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家校通知系统 - 数据库表结构关系图</title>
+    <title>家校通知系統 - 數據庫表結構關係圖</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
         body {
@@ -51,179 +51,179 @@
 </head>
 <body>
     <div class="container">
-        <h1>📊 家校通知系统 - 数据库表结构关系图</h1>
+        <h1>📊 家校通知系統 - 數據庫表結構關係圖</h1>
         <p class="subtitle">Database Schema Relationship Diagram</p>
         
         <div class="mermaid">
 erDiagram
-    notification ||--o{ notification_receiver : "发布通知给"
-    notification ||--o{ notification_cc : "抄送给"
-    notification ||--o{ notification_question : "包含问题"
-    notification ||--o{ user_notification_read : "用户查看"
+    notification ||--o{ notification_receiver : "發布通知給"
+    notification ||--o{ notification_cc : "抄送給"
+    notification ||--o{ notification_question : "包含問題"
+    notification ||--o{ user_notification_read : "用戶查看"
     notification ||--o{ notification_answer : "收集答案"
     
-    notification_question ||--o{ notification_answer : "回答问题"
-    notification_question ||--o| notification_question : "父子问题关联"
+    notification_question ||--o{ notification_answer : "回答問題"
+    notification_question ||--o| notification_question : "父子問題關聯"
     
-    sys_department ||--o{ sys_department_parent_binding : "绑定家长"
-    sys_department_parent_binding }|--|| sys_parent_student_relation : "通过学生 ID 关联"
-    sys_parent_student_relation }|--|| sys_department_parent_binding : "通过家长 ID 关联"
+    sys_department ||--o{ sys_department_parent_binding : "綁定家長"
+    sys_department_parent_binding }|--|| sys_parent_student_relation : "通過學生 ID 關聯"
+    sys_parent_student_relation }|--|| sys_department_parent_binding : "通過家長 ID 關聯"
     
-    wecom_school_department ||--o{ wecom_school_department_member : "包含成员"
+    wecom_school_department ||--o{ wecom_school_department_member : "包含成員"
 
     notification {
         bigint notification_id PK "通知 ID"
-        varchar title "通知标题"
+        varchar title "通知標題"
         text content "通知正文"
-        bigint sender_id "发送人 ID"
-        varchar sender_name "发送人姓名"
-        varchar jump_url "跳转链接"
+        bigint sender_id "發送人 ID"
+        varchar sender_name "發送人姓名"
+        varchar jump_url "跳轉鏈接"
         text attachment_urls "附件 URLs"
-        char status "状态 0 草稿 1 发布 2 撤回"
-        datetime reply_deadline "回复截止时间"
-        datetime create_time "创建时间"
+        char status "狀態 0 草稿 1 發布 2 撤回"
+        datetime reply_deadline "回復截止時間"
+        datetime create_time "創建時間"
     }
     
     notification_receiver {
-        bigint receiver_id PK "接收关系 ID"
+        bigint receiver_id PK "接收關係 ID"
         bigint notification_id FK "通知 ID"
-        char receive_type "接收类型 1 班级 2 学生/家长"
-        text receive_ids "接收对象 ID 列表"
-        text receive_names "接收对象名称列表"
-        datetime create_time "创建时间"
+        char receive_type "接收類型 1 班級 2 學生/家長"
+        text receive_ids "接收對象 ID 列表"
+        text receive_names "接收對象名稱列表"
+        datetime create_time "創建時間"
     }
     
     notification_cc {
-        bigint cc_id PK "抄送关系 ID"
+        bigint cc_id PK "抄送關係 ID"
         bigint notification_id FK "通知 ID"
-        char cc_type "抄送类型 1 教职工 2 通讯录"
-        text cc_ids "抄送对象 ID 列表"
-        text cc_names "抄送对象名称列表"
-        datetime create_time "创建时间"
+        char cc_type "抄送類型 1 教職工 2 通訊錄"
+        text cc_ids "抄送對象 ID 列表"
+        text cc_names "抄送對象名稱列表"
+        datetime create_time "創建時間"
     }
     
     notification_question {
-        bigint question_id PK "问题 ID"
+        bigint question_id PK "問題 ID"
         bigint notification_id FK "通知 ID"
-        bigint parent_question_id FK "父问题 ID"
-        varchar question_title "问题标题"
-        char question_type "问题类型 1 单选 2 多选 3 填空 4 附件 5 逻辑表单"
-        text options "选项列表 JSON"
+        bigint parent_question_id FK "父問題 ID"
+        varchar question_title "問題標題"
+        char question_type "問題類型 1 單選 2 多選 3 填空 4 附件 5 邏輯表單"
+        text options "選項列表 JSON"
         char is_required "是否必答 0 否 1 是"
         int sort_order "排序"
-        text logic_rules "跳转逻辑"
-        datetime create_time "创建时间"
+        text logic_rules "跳轉邏輯"
+        datetime create_time "創建時間"
     }
     
     user_notification_read {
-        bigint read_id PK "阅读记录 ID"
+        bigint read_id PK "閱讀記錄 ID"
         bigint notification_id FK "通知 ID"
-        bigint user_id "用户 ID"
-        char user_type "用户类型 1 学生 2 家长 3 教师"
-        char is_read "是否已读 0 未读 1 已读"
-        datetime read_time "阅读时间"
-        char reply_status "回复状态 0 未回复 1 已回复"
-        datetime reply_time "回复时间"
+        bigint user_id "用戶 ID"
+        char user_type "用戶類型 1 學生 2 家長 3 教師"
+        char is_read "是否已讀 0 未讀 1 已讀"
+        datetime read_time "閱讀時間"
+        char reply_status "回復狀態 0 未回復 1 已回復"
+        datetime reply_time "回復時間"
     }
     
     notification_answer {
         bigint answer_id PK "答案 ID"
         bigint notification_id FK "通知 ID"
-        bigint question_id FK "问题 ID"
-        bigint user_id "用户 ID"
-        char user_type "用户类型 1 学生 2 家长 3 教师"
-        text answer_content "答案内容"
+        bigint question_id FK "問題 ID"
+        bigint user_id "用戶 ID"
+        char user_type "用戶類型 1 學生 2 家長 3 教師"
+        text answer_content "答案內容"
         text attachment_urls "附件 URLs"
-        datetime create_time "创建时间"
+        datetime create_time "創建時間"
     }
     
     sys_parent_student_relation {
-        bigint id PK "主键 ID"
-        varchar parent_user_id "家长用户 ID"
-        varchar student_user_id "学生用户 ID"
-        varchar student_name "学生姓名"
-        varchar relation_desc "关系描述"
-        varchar mobile "家长手机号"
-        datetime create_time "创建时间"
+        bigint id PK "主鍵 ID"
+        varchar parent_user_id "家長用戶 ID"
+        varchar student_user_id "學生用戶 ID"
+        varchar student_name "學生姓名"
+        varchar relation_desc "關係描述"
+        varchar mobile "家長手機號"
+        datetime create_time "創建時間"
     }
     
     sys_department {
-        bigint id PK "部门 ID"
-        int parent_id "父部门 ID"
-        varchar name "部门名称"
-        int type "部门类型 1 班级 2 年级 3 学段 4 校区 5 学校"
-        int register_year "入学年份"
-        int standard_grade "标准年级"
+        bigint id PK "部門 ID"
+        int parent_id "父部門 ID"
+        varchar name "部門名稱"
+        int type "部門類型 1 班級 2 年級 3 學段 4 校區 5 學校"
+        int register_year "入學年份"
+        int standard_grade "標準年級"
         int order_num "排序值"
-        tinyint is_graduated "是否毕业 1 是 0 否"
-        tinyint open_group_chat "是否开启班级群 1 是 0 否"
-        varchar group_chat_id "班级群 ID"
+        tinyint is_graduated "是否畢業 1 是 0 否"
+        tinyint open_group_chat "是否開啓班級羣 1 是 0 否"
+        varchar group_chat_id "班級羣 ID"
     }
     
     sys_department_parent_binding {
-        bigint id PK "主键 ID"
-        bigint department_id FK "部门 ID"
-        varchar parent_user_id "家长用户 ID"
-        varchar student_user_id "学生用户 ID"
-        datetime create_time "创建时间"
-        datetime update_time "更新时间"
+        bigint id PK "主鍵 ID"
+        bigint department_id FK "部門 ID"
+        varchar parent_user_id "家長用戶 ID"
+        varchar student_user_id "學生用戶 ID"
+        datetime create_time "創建時間"
+        datetime update_time "更新時間"
     }
     
     wecom_school_department {
-        bigint id PK "部门 ID"
-        int parent_id "父部门 ID"
-        varchar name "部门名称"
-        varchar name_en "部门英文名称"
+        bigint id PK "部門 ID"
+        int parent_id "父部門 ID"
+        varchar name "部門名稱"
+        varchar name_en "部門英文名稱"
         int order_num "次序值"
-        text department_leader "部门负责人"
-        datetime create_time "创建时间"
+        text department_leader "部門負責人"
+        datetime create_time "創建時間"
     }
     
     wecom_school_department_member {
-        bigint id PK "主键 ID"
-        varchar userid "成员 UserID"
-        varchar name "成员名称"
-        bigint department_id FK "部门 ID"
+        bigint id PK "主鍵 ID"
+        varchar userid "成員 UserID"
+        varchar name "成員名稱"
+        bigint department_id FK "部門 ID"
         varchar open_userid "全局唯一 UserID"
-        datetime create_time "创建时间"
+        datetime create_time "創建時間"
     }
     
     class_log {
-        varchar id PK "主键 ID"
-        varchar student_class "班级"
-        varchar teacher "教师"
-        varchar course "课程"
-        varchar course_type "课程类型"
-        text content "内容"
-        varchar start_date "开始日期"
-        varchar end_date "结束日期"
+        varchar id PK "主鍵 ID"
+        varchar student_class "班級"
+        varchar teacher "教師"
+        varchar course "課程"
+        varchar course_type "課程類型"
+        text content "內容"
+        varchar start_date "開始日期"
+        varchar end_date "結束日期"
         datetime update_date "更新日期"
     }
     
     class_section {
-        bigint id PK "主键 ID"
-        varchar class_section_dsedj "班级 section dsedj"
-        varchar class_section_sp "班级 section sp"
+        bigint id PK "主鍵 ID"
+        varchar class_section_dsedj "班級 section dsedj"
+        varchar class_section_sp "班級 section sp"
     }
         </div>
         
         <div class="info">
-            <h3>📋 图例说明</h3>
+            <h3>📋 圖例說明</h3>
             <ul>
-                <li><strong>PK</strong>: 主键 (Primary Key)</li>
-                <li><strong>FK</strong>: 外键 (Foreign Key)</li>
-                <li><strong>||--o{</strong>: 一对多关系</li>
-                <li><strong>||--o|</strong>: 一对一或零关系</li>
-                <li><strong>}|--||</strong>: 多对一关系</li>
+                <li><strong>PK</strong>: 主鍵 (Primary Key)</li>
+                <li><strong>FK</strong>: 外鍵 (Foreign Key)</li>
+                <li><strong>||--o{</strong>: 一對多關係</li>
+                <li><strong>||--o|</strong>: 一對一或零關係</li>
+                <li><strong>}|--||</strong>: 多對一關係</li>
             </ul>
         </div>
         
         <div class="info" style="background: #e8f5e9; margin-top: 20px;">
-            <h3 style="color: #388e3c;">💡 核心业务流程</h3>
+            <h3 style="color: #388e3c;">💡 核心業務流程</h3>
             <ol>
-                <li><strong>通知发布</strong>: 创建通知 → 设置接收人 → 添加问题 → 发布</li>
-                <li><strong>通知接收</strong>: 用户收到 → 记录阅读状态 → 查看问题 → 提交答案</li>
-                <li><strong>关系链</strong>: 企业微信部门 → 家长学生关系 → 通知接收对象</li>
+                <li><strong>通知發布</strong>: 創建通知 → 設置接收人 → 添加問題 → 發布</li>
+                <li><strong>通知接收</strong>: 用戶收到 → 記錄閱讀狀態 → 查看問題 → 提交答案</li>
+                <li><strong>關係鏈</strong>: 企業微信部門 → 家長學生關係 → 通知接收對象</li>
             </ol>
         </div>
     </div>

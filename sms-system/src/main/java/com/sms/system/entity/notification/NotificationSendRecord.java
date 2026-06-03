@@ -10,14 +10,14 @@ import com.sms.common.core.domain.BaseEntity;
 import java.time.LocalDateTime;
 
 /**
- * 发送通知记录实体类（主表）
+ * 發送通知記錄實體類（主表）
  *
  */
 @TableName("notification_send_record")
 public class NotificationSendRecord extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
-    /** 发送记录ID */
+    /** 發送記錄ID */
     @TableId(value = "send_record_id", type = IdType.AUTO)
     private Long sendRecordId;
 
@@ -25,32 +25,32 @@ public class NotificationSendRecord extends BaseEntity {
     @TableField("notification_id")
     private Long notificationId;
 
-    /** 发送人ID */
+    /** 發送人ID */
     @TableField("sender_id")
     private Long senderId;
 
-    /** 发送人姓名 */
+    /** 發送人姓名 */
     @TableField("sender_name")
     private String senderName;
 
-    /** 发送时间 */
+    /** 發送時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("send_time")
     private LocalDateTime sendTime;
 
-    /** 发送状态（0待发送 1发送中 2发送成功 3发送失败 4部分成功） */
+    /** 發送狀態（0待發送 1發送中 2發送成功 3發送失敗 4部分成功） */
     @TableField("send_status")
     private String sendStatus;
 
-    /** 应发送总人数 */
+    /** 應發送總人數 */
     @TableField("total_count")
     private Integer totalCount;
 
-    /** 发送成功人数 */
+    /** 發送成功人數 */
     @TableField("success_count")
     private Integer successCount;
 
-    /** 发送失败人数 */
+    /** 發送失敗人數 */
     @TableField("fail_count")
     private Integer failCount;
 

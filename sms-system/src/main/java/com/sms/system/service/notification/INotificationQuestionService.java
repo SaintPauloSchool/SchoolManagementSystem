@@ -5,23 +5,23 @@ import com.sms.system.entity.notification.NotificationQuestion;
 import java.util.List;
 
 /**
- * 通知问题 Service 接口
+ * 通知問題 Service 接口
  *
  */
 public interface INotificationQuestionService {
     /**
-     * 根据通知 ID 查询问题列表
+     * 根據通知 ID 查詢問題列表
      *
      * @param notificationId 通知 ID
-     * @return 问题集合
+     * @return 問題集合
      */
     List<NotificationQuestion> selectByNotificationId(Long notificationId);
     
     /**
-     * 新增问题
+     * 新增問題
      *
-     * @param question 问题
-     * @return 结果
+     * @param question 問題
+     * @return 結果
      */
     int save(NotificationQuestion question);
 }

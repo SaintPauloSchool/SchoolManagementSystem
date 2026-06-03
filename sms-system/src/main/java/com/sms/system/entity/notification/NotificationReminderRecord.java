@@ -10,13 +10,13 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 通知提醒记录实体类（用于收集提示家长回复的记录）
+ * 通知提醒記錄實體類（用於收集提示家長回復的記錄）
  */
 @TableName("notification_reminder_record")
 public class NotificationReminderRecord implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 提醒记录ID */
+    /** 提醒記錄ID */
     @TableId(value = "reminder_id", type = IdType.AUTO)
     private Long reminderId;
 
@@ -24,28 +24,28 @@ public class NotificationReminderRecord implements Serializable {
     @TableField("notification_id")
     private Long notificationId;
 
-    /** 原发送记录ID */
+    /** 原發送記錄ID */
     @TableField("send_record_id")
     private Long sendRecordId;
 
-    /** 学生用户ID */
+    /** 學生用戶ID */
     @TableField("student_user_id")
     private String studentUserId;
 
-    /** 未回复的家长用户ID列表(JSON格式) */
+    /** 未回復的家長用戶ID列表(JSON格式) */
     @TableField("parent_user_ids")
     private String parentUserIds;
 
-    /** 提醒发送时间 */
+    /** 提醒發送時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("remind_send_time")
     private LocalDateTime remindSendTime;
 
-    /** 提醒发送状态（0待发送 1发送成功 2发送失败） */
+    /** 提醒發送狀態（0待發送 1發送成功 2發送失敗） */
     @TableField("remind_send_status")
     private String remindSendStatus;
 
-    /** 创建时间 */
+    /** 創建時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("create_time")
     private LocalDateTime createTime;

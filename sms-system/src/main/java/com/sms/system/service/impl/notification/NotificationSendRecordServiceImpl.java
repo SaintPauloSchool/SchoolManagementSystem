@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 通知发送记录 Service 业务层处理
+ * 通知發送記錄 Service 業務層處理
  *
  */
 @Service
@@ -20,10 +20,10 @@ public class NotificationSendRecordServiceImpl implements INotificationSendRecor
     private NotificationSendRecordMapper notificationSendRecordMapper;
 
     /**
-     * 新增发送记录
+     * 新增發送記錄
      *
-     * @param sendRecord 发送记录
-     * @return 结果
+     * @param sendRecord 發送記錄
+     * @return 結果
      */
     @Override
     public int save(NotificationSendRecord sendRecord) {
@@ -31,7 +31,7 @@ public class NotificationSendRecordServiceImpl implements INotificationSendRecor
     }
 
     /**
-     * 查询通知发送统计信息（強類型 VO）
+     * 查詢通知發送統計信息（強類型 VO）
      *
      * @param notificationId 通知ID
      * @return 發送統計 VO
@@ -50,10 +50,10 @@ public class NotificationSendRecordServiceImpl implements INotificationSendRecor
     }
 
     /**
-     * 根据通知ID查询发送记录
+     * 根據通知ID查詢發送記錄
      *
      * @param notificationId 通知ID
-     * @return 发送记录
+     * @return 發送記錄
      */
     @Override
     public NotificationSendRecord selectByNotificationId(Long notificationId) {
@@ -61,10 +61,10 @@ public class NotificationSendRecordServiceImpl implements INotificationSendRecor
     }
 
     /**
-     * 更新发送记录
+     * 更新發送記錄
      *
-     * @param sendRecord 发送记录
-     * @return 结果
+     * @param sendRecord 發送記錄
+     * @return 結果
      */
     @Override
     public int update(NotificationSendRecord sendRecord) {
@@ -72,7 +72,7 @@ public class NotificationSendRecordServiceImpl implements INotificationSendRecor
     }
 
     /**
-     * 查询所有发送失败的记录
+     * 查詢所有發送失敗的記錄
      *
      * @return 列表
      */

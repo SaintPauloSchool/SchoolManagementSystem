@@ -4,20 +4,20 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 未回复学生信息 VO
- * 用于提示家长回复功能
+ * 未回復學生信息 VO
+ * 用於提示家長回復功能
  *
  */
 public class UnrepliedStudentVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 学生用户ID
+     * 學生用戶ID
      */
     private String studentUserId;
 
     /**
-     * 未回复的家长用户ID列表
+     * 未回復的家長用戶ID列表
      */
     private List<String> parentUserIds;
 

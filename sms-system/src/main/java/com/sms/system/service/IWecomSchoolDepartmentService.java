@@ -7,24 +7,24 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * wecom学校部门 Service 接口
+ * wecom學校部門 Service 接口
  *
  */
 public interface IWecomSchoolDepartmentService {
 
     /**
-     * 获取学校部门树形结构（带成员，用于教职员工选择器）
-     * 在构建树形结构的基础上为每个部门加载成员数据
+     * 獲取學校部門樹形結構（帶成員，用於教職員工選擇器）
+     * 在構建樹形結構的基礎上爲每個部門加載成員數據
      *
-     * @return 带成员的部门树形结构
+     * @return 帶成員的部門樹形結構
      */
     List<WecomSchoolDepartment> getWecomSchoolDepartmentTreeWithMembers();
 
     /**
-     * 获取学校部门树形结构（仅部门，不含人员）
-     * 只返回部门层级结构，不包含人员数据
+     * 獲取學校部門樹形結構（僅部門，不含人員）
+     * 只返回部門層級結構，不包含人員數據
      *
-     * @return 仅部门的树形结构
+     * @return 僅部門的樹形結構
      */
     List<WecomSchoolDepartment> getWecomSchoolDepartmentTree();
 

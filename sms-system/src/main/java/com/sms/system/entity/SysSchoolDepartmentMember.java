@@ -7,34 +7,34 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 系统学校部门成员对象 sys_school_department_member
+ * 系統學校部門成員對象 sys_school_department_member
  *
  */
 public class SysSchoolDepartmentMember implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 主键 ID */
+    /** 主鍵 ID */
     private Long id;
 
-    /** 成员 UserID */
+    /** 成員 UserID */
     private String userid;
 
-    /** 成员名称 */
+    /** 成員名稱 */
     private String name;
 
-    /** 部门 ID */
+    /** 部門 ID */
     private Long departmentId;
 
     /** 全局唯一 UserID */
     private String openUserid;
 
-    /** 类型：1-学校部门通讯录，2-家校通讯录 */
+    /** 類型：1-學校部門通訊錄，2-家校通訊錄 */
     private Integer type;
 
-    /** 创建时间 */
+    /** 創建時間 */
     private LocalDateTime createTime;
 
-    /** 更新时间 */
+    /** 更新時間 */
     private LocalDateTime updateTime;
 
     public Long getId() {

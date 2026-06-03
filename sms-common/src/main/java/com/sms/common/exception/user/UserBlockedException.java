@@ -1,7 +1,7 @@
 package com.sms.common.exception.user;
 
 /**
- * 用户锁定异常类
+ * 用戶鎖定異常類
  *
  */
 public class UserBlockedException extends UserException

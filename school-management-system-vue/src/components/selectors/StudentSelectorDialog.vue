@@ -103,7 +103,7 @@
         </div>
       </div>
 
-      <!-- 右侧已选区域 -->
+      <!-- 右側已選區域 -->
       <div class="right-panel">
         <div class="panel-title">
           <el-icon><Checked /></el-icon>
@@ -200,7 +200,7 @@ export default {
         children: 'children',
         label: 'name',
         isLeaf: (data) => {
-          // 使用 isLeaf 字段判断是否为叶子节点
+          // 使用 isLeaf 字段判斷是否爲葉子節點
           return data.isLeaf === true;
         }
       }
@@ -394,7 +394,7 @@ export default {
   background: #ffffff;
 }
 
-/* 左侧面板 */
+/* 左側面板 */
 .left-panel {
   flex: 1.5;
   display: flex;
@@ -406,7 +406,7 @@ export default {
   box-shadow: none;
 }
 
-/* 右侧面板 */
+/* 右側面板 */
 .right-panel {
   flex: 1;
   display: flex;
@@ -658,7 +658,7 @@ export default {
   border-color: #3a8ee6;
 }
 
-/* 树节点样式优化 */
+/* 樹節點樣式優化 */
 :deep(.el-tree) {
   background: transparent;
 }
@@ -700,7 +700,7 @@ export default {
   background: #409EFF;
 }
 
-/* 空状态优化 */
+/* 空狀態優化 */
 :deep(.el-empty__description) {
   color: #909399;
   font-size: 14px;

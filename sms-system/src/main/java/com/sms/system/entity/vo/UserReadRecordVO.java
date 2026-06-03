@@ -5,32 +5,32 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 
 /**
- * 用户阅读记录VO
+ * 用戶閱讀記錄VO
  */
 public class UserReadRecordVO {
-    /** 阅读记录ID */
+    /** 閱讀記錄ID */
     private Long readId;
 
-    /** 用户ID */
+    /** 用戶ID */
     private String userId;
 
-    /** 用户类型（1学生 2家长 3教师） */
+    /** 用戶類型（1學生 2家長 3教師） */
     private String userType;
 
-    /** 是否已读（0未读 1已读） */
+    /** 是否已讀（0未讀 1已讀） */
     private String isRead;
 
-    /** 阅读时间 */
+    /** 閱讀時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime readTime;
 
-    /** 回复状态（0未回复 1已回复） */
+    /** 回復狀態（0未回復 1已回復） */
     private String replyStatus;
 
-    /** 发送状态（0发送失败 1发送成功） */
+    /** 發送狀態（0發送失敗 1發送成功） */
     private String sendStatus;
 
-    /** 关联的学生ID */
+    /** 關聯的學生ID */
     private String studentUserId;
 
     /** 學生名字 */
@@ -39,7 +39,7 @@ public class UserReadRecordVO {
     /** 關係 */
     private String relation;
 
-    /** 创建时间 */
+    /** 創建時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 

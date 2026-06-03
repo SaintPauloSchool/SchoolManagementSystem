@@ -65,12 +65,12 @@ public class Md5Utils
     }
 
     /**
-     * 加密敏感 ID（如学生用户 ID）
-     * 将原始 ID 与盐值组合后进行 MD5 加密
+     * 加密敏感 ID（如學生用戶 ID）
+     * 將原始 ID 與鹽值組合後進行 MD5 加密
      *
      * @param originalId 原始 ID（如 studentUserId）
-     * @param salt 盐值
-     * @return 加密后的字符串（32位 MD5 哈希值）
+     * @param salt 鹽值
+     * @return 加密後的字符串（32位 MD5 哈希值）
      */
     public static String encryptSensitiveId(String originalId, String salt)
     {
@@ -81,7 +81,7 @@ public class Md5Utils
 
         try
         {
-            // 组合原始数据：originalId + 盐值
+            // 組合原始數據：originalId + 鹽值
             String originalData = originalId + salt;
             
             // MD5 加密
@@ -89,8 +89,8 @@ public class Md5Utils
         }
         catch (Exception e)
         {
-            log.error("加密敏感 ID 失败: {}", originalId, e);
-            // 如果加密失败，返回原始的 MD5（不加盐）
+            log.error("加密敏感 ID 失敗: {}", originalId, e);
+            // 如果加密失敗，返回原始的 MD5（不加鹽）
             return hash(originalId);
         }
     }

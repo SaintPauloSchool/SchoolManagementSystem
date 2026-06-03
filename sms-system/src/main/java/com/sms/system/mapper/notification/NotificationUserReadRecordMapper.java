@@ -7,47 +7,47 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 通知用户阅读记录 Mapper 接口
+ * 通知用戶閱讀記錄 Mapper 接口
  *
  */
 public interface NotificationUserReadRecordMapper {
     /**
-     * 批量新增阅读记录
+     * 批量新增閱讀記錄
      *
-     * @param readRecords 阅读记录列表
-     * @return 结果
+     * @param readRecords 閱讀記錄列表
+     * @return 結果
      */
     int batchInsert(@Param("list") List<NotificationUserReadRecord> readRecords);
 
     /**
-     * 根据发送记录ID查询阅读记录列表
+     * 根據發送記錄ID查詢閱讀記錄列表
      *
-     * @param sendRecordId 发送记录ID
-     * @return 阅读记录列表
+     * @param sendRecordId 發送記錄ID
+     * @return 閱讀記錄列表
      */
     List<NotificationUserReadRecord> selectBySendRecordId(Long sendRecordId);
 
     /**
-     * 根据发送记录ID查询发送失败的阅读记录列表（send_status = '0'）
+     * 根據發送記錄ID查詢發送失敗的閱讀記錄列表（send_status = '0'）
      *
-     * @param sendRecordId 发送记录ID
-     * @return 阅读记录列表
+     * @param sendRecordId 發送記錄ID
+     * @return 閱讀記錄列表
      */
     List<NotificationUserReadRecord> selectFailedBySendRecordId(Long sendRecordId);
 
     /**
-     * 根据发送记录ID查询发送失败的阅读记录VO列表（直接返回VO，用于分页）
+     * 根據發送記錄ID查詢發送失敗的閱讀記錄VO列表（直接返回VO，用於分頁）
      *
-     * @param sendRecordId 发送记录ID
-     * @return 阅读记录VO列表
+     * @param sendRecordId 發送記錄ID
+     * @return 閱讀記錄VO列表
      */
     List<UserReadRecordVO> selectFailedBySendRecordIdVO(Long sendRecordId);
 
     /**
-     * 更新阅读记录
+     * 更新閱讀記錄
      *
-     * @param record 阅读记录
-     * @return 结果
+     * @param record 閱讀記錄
+     * @return 結果
      */
     int updateById(NotificationUserReadRecord record);
 }

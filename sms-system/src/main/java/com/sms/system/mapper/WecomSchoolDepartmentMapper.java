@@ -5,30 +5,30 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * wecom学校部门 Mapper 接口
+ * wecom學校部門 Mapper 接口
  *
  */
 public interface WecomSchoolDepartmentMapper {
 
     /**
-     * 查询所有学校部门（按排序值排序）
+     * 查詢所有學校部門（按排序值排序）
      *
-     * @return 学校部门集合
+     * @return 學校部門集合
      */
     List<WecomSchoolDepartment> selectAll();
 
     /**
-     * 批量新增学校部门
+     * 批量新增學校部門
      */
     int batchInsertSchoolDepartments(@Param("list") List<WecomSchoolDepartment> list);
 
     /**
-     * 更新学校部门
+     * 更新學校部門
      */
     int updateSchoolDepartment(WecomSchoolDepartment department);
 
     /**
-     * 根据ID删除学校部门
+     * 根據ID刪除學校部門
      */
     int deleteSchoolDepartmentById(Long id);
 

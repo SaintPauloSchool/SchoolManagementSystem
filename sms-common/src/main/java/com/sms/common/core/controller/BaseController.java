@@ -28,7 +28,7 @@ import com.sms.common.utils.StringUtils;
 import com.sms.common.utils.sql.SqlUtil;
 
 /**
- * web层通用数据处理
+ * web層通用數據處理
  *
  */
 public class BaseController
@@ -36,12 +36,12 @@ public class BaseController
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
-     * 将前台传递过来的日期格式的字符串，自动转化为Date类型
+     * 將前臺傳遞過來的日期格式的字符串，自動轉化爲Date類型
      */
     @InitBinder
     public void initBinder(WebDataBinder binder)
     {
-        // Date 类型转换
+        // Date 類型轉換
         binder.registerCustomEditor(Date.class, new PropertyEditorSupport()
         {
             @Override
@@ -51,7 +51,7 @@ public class BaseController
             }
         });
         
-        // LocalDateTime 类型转换
+        // LocalDateTime 類型轉換
         binder.registerCustomEditor(LocalDateTime.class, new PropertyEditorSupport()
         {
             @Override
@@ -70,14 +70,14 @@ public class BaseController
                     }
                     catch (Exception e)
                     {
-                        // 尝试其他格式
+                        // 嘗試其他格式
                         try
                         {
                             setValue(LocalDateTime.parse(text + " 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                         }
                         catch (Exception ex)
                         {
-                            logger.warn("日期格式转换失败: {}", text);
+                            logger.warn("日期格式轉換失敗: {}", text);
                             setValue(null);
                         }
                     }
@@ -87,7 +87,7 @@ public class BaseController
     }
 
     /**
-     * 设置请求分页数据
+     * 設置請求分頁數據
      */
     protected void startPage()
     {
@@ -95,7 +95,7 @@ public class BaseController
     }
 
     /**
-     * 设置请求排序数据
+     * 設置請求排序數據
      */
     protected void startOrderBy()
     {
@@ -108,7 +108,7 @@ public class BaseController
     }
 
     /**
-     * 清理分页的线程变量
+     * 清理分頁的線程變量
      */
     protected void clearPage()
     {
@@ -116,7 +116,7 @@ public class BaseController
     }
 
     /**
-     * 获取request
+     * 獲取request
      */
     public HttpServletRequest getRequest()
     {
@@ -124,7 +124,7 @@ public class BaseController
     }
 
     /**
-     * 获取response
+     * 獲取response
      */
     public HttpServletResponse getResponse()
     {
@@ -132,7 +132,7 @@ public class BaseController
     }
 
     /**
-     * 获取session
+     * 獲取session
      */
     public HttpSession getSession()
     {
@@ -140,7 +140,7 @@ public class BaseController
     }
 
     /**
-     * 响应请求分页数据
+     * 響應請求分頁數據
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     protected TableDataInfo getDataTable(List<?> list)
@@ -153,10 +153,10 @@ public class BaseController
     }
 
     /**
-     * 响应返回结果
+     * 響應返回結果
      * 
-     * @param rows 影响行数
-     * @return 操作结果
+     * @param rows 影響行數
+     * @return 操作結果
      */
     protected AjaxResult toAjax(int rows)
     {
@@ -164,10 +164,10 @@ public class BaseController
     }
 
     /**
-     * 响应返回结果
+     * 響應返回結果
      * 
-     * @param result 结果
-     * @return 操作结果
+     * @param result 結果
+     * @return 操作結果
      */
     protected AjaxResult toAjax(boolean result)
     {
@@ -183,7 +183,7 @@ public class BaseController
     }
 
     /**
-     * 返回失败消息
+     * 返回失敗消息
      */
     public AjaxResult error()
     {
@@ -199,7 +199,7 @@ public class BaseController
     }
 
     /**
-     * 返回成功数据
+     * 返回成功數據
      */
     public static AjaxResult success(Object data)
     {
@@ -207,7 +207,7 @@ public class BaseController
     }
 
     /**
-     * 返回失败消息
+     * 返回失敗消息
      */
     public AjaxResult error(String message)
     {
@@ -215,7 +215,7 @@ public class BaseController
     }
 
     /**
-     * 返回错误码消息
+     * 返回錯誤碼消息
      */
     public AjaxResult error(Type type, String message)
     {
@@ -223,7 +223,7 @@ public class BaseController
     }
 
     /**
-     * 页面跳转
+     * 頁面跳轉
      */
     public String redirect(String url)
     {
@@ -231,7 +231,7 @@ public class BaseController
     }
 
     /**
-     * 获取用户缓存信息
+     * 獲取用戶緩存信息
      */
     public SysUser getSysUser()
     {
@@ -239,7 +239,7 @@ public class BaseController
     }
 
     /**
-     * 设置用户缓存信息
+     * 設置用戶緩存信息
      */
     public void setSysUser(SysUser user)
     {
@@ -247,7 +247,7 @@ public class BaseController
     }
 
     /**
-     * 获取登录用户id
+     * 獲取登錄用戶id
      */
     public Long getUserId()
     {
@@ -260,7 +260,7 @@ public class BaseController
     }
 
     /**
-     * 获取登录用户名
+     * 獲取登錄用戶名
      */
     public String getLoginName()
     {
@@ -273,7 +273,7 @@ public class BaseController
     }
 
     /**
-     * 获取用户名
+     * 獲取用戶名
      */
     public String getUsername()
     {
@@ -286,7 +286,7 @@ public class BaseController
     }
 
     /**
-     * 获取用户类型
+     * 獲取用戶類型
      */
     public String getUserType()
     {

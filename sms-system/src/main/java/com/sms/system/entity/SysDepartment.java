@@ -7,58 +7,58 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 部门对象 sys_department
+ * 部門對象 sys_department
  *
  */
 public class SysDepartment implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 部门 id */
+    /** 部門 id */
     private Long id;
 
-    /** 父部门 id */
+    /** 父部門 id */
     private Integer parentId;
 
-    /** 部门名称 */
+    /** 部門名稱 */
     private String name;
 
-    /** 部门类型：1-班级，2-年级，3-学段，4-校区，5-学校 */
+    /** 部門類型：1-班級，2-年級，3-學段，4-校區，5-學校 */
     private Integer type;
 
-    /** 入学年份 */
+    /** 入學年份 */
     private Integer registerYear;
 
-    /** 标准年级 */
+    /** 標準年級 */
     private Integer standardGrade;
 
     /** 排序值 */
     private Integer orderNum;
 
-    /** 是否毕业：1-是，0-否 */
+    /** 是否畢業：1-是，0-否 */
     private Boolean isGraduated;
 
-    /** 是否开启班级群：1-是，0-否 */
+    /** 是否開啓班級羣：1-是，0-否 */
     private Boolean openGroupChat;
 
-    /** 班级群 id */
+    /** 班級羣 id */
     private String groupChatId;
 
-    /** 家长用户 ID（type=10 时使用） */
+    /** 家長用戶 ID（type=10 時使用） */
     private String parentUserId;
 
-    /** 学生用户 ID（type=11 时使用） */
+    /** 學生用戶 ID（type=11 時使用） */
     private String studentUserId;
 
-    /** 关系描述（type=11 时使用） */
+    /** 關係描述（type=11 時使用） */
     private String relationDesc;
 
-    /** 手机号（type=11 时使用） */
+    /** 手機號（type=11 時使用） */
     private String mobile;
 
-    /** 是否叶子节点 */
+    /** 是否葉子節點 */
     private Boolean isLeaf;
 
-    /** 子部门（非数据库字段） */
+    /** 子部門（非數據庫字段） */
     private List<SysDepartment> children;
 
     public Long getId() {
