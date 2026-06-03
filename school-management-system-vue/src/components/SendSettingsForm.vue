@@ -103,8 +103,8 @@
             </div>
           </el-form-item>
 
-          <!-- 抄送教職工群組 -->
-          <el-form-item label="抄送教職工群組">
+          <!-- 抄送教職工羣組 -->
+          <el-form-item label="抄送教職工羣組">
             <div class="selection-item">
               <el-button 
                 type="primary" 
@@ -130,7 +130,7 @@
         </div>
       </el-card>
 
-      <!-- 发送设置 -->
+      <!-- 發送設置 -->
       <el-card class="settings-card">
         <template #header>
           <div class="card-header">
@@ -165,7 +165,7 @@
         </div>
       </el-card>
 
-      <!-- 操作按钮 -->
+      <!-- 操作按鈕 -->
       <el-form-item class="form-actions">
         <el-button @click="goToPrev">
           <el-icon><ArrowLeft /></el-icon>
@@ -178,7 +178,7 @@
       </el-form-item>
     </el-form>
 
-    <!-- 选择器对话框 -->
+    <!-- 選擇器對話框 -->
     <ClassSelectorDialog
       v-model:visible="classSelectorVisible"
       :selected-classes="selectedClasses"
@@ -252,7 +252,7 @@ export default {
     }
   },
   computed: {
-    // 获取当前发布日期（通知创建时间）
+    // 獲取當前發布日期（通知創建時間）
     publishDate() {
       return this.localFormData.createTime || new Date()
     }
@@ -365,19 +365,19 @@ export default {
           }
         }
 
-        // 验证提示回覆时间
+        // 驗證提示回覆時間
         if (this.localFormData.reminderTime) {
           const reminderDate = dayjs(this.localFormData.reminderTime)
           const tomorrow = dayjs().add(1, 'day').startOf('day')
           
-          // 必须从明天开始（不能是今天或更早）
+          // 必須從明天開始（不能是今天或更早）
           if (reminderDate.isBefore(tomorrow)) {
             ElNotification({ title: "提示", message: '提示回覆時間必須從明天開始', type: "warning", duration: 3000 })
             reject()
             return
           }
           
-          // 如果设置了回覆截止时间，不能晚于回覆截止时间
+          // 如果設置了回覆截止時間，不能晚於回覆截止時間
           if (this.localFormData.replyDeadline) {
             const deadline = dayjs(this.localFormData.replyDeadline).startOf('day')
             if (reminderDate.isAfter(deadline)) {
@@ -603,7 +603,7 @@ export default {
     },
 
     disabledReminderDate(date) {
-      // 提示回覆时间必须从明天开始（不能是今天或更早）
+      // 提示回覆時間必須從明天開始（不能是今天或更早）
       const tomorrow = new Date()
       tomorrow.setDate(tomorrow.getDate() + 1)
       tomorrow.setHours(0, 0, 0, 0)
@@ -612,7 +612,7 @@ export default {
         return true
       }
       
-      // 如果设置了回覆截止时间，提示回覆时间不能晚于回覆截止时间
+      // 如果設置了回覆截止時間，提示回覆時間不能晚於回覆截止時間
       if (this.localFormData.replyDeadline) {
         const deadline = new Date(this.localFormData.replyDeadline)
         deadline.setHours(0, 0, 0, 0)
@@ -640,7 +640,7 @@ export default {
   margin-bottom: 20px;
 }
 
-/* 选择区域布局 */
+/* 選擇區域布局 */
 .receivers-section,
 .cc-section {
   display: flex;
@@ -668,7 +668,7 @@ export default {
   margin: 4px 0;
 }
 
-/* 发送选项布局 */
+/* 發送選項布局 */
 .send-options {
   display: flex;
   flex-direction: column;
@@ -676,12 +676,12 @@ export default {
 }
 
 
-/* 日期选择器 */
+/* 日期選擇器 */
 .el-date-picker {
   width: 100%;
 }
 
-/* 操作按钮区域 */
+/* 操作按鈕區域 */
 .form-actions {
   text-align: right;
   padding-top: 20px;
@@ -705,7 +705,7 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* 响应式设计 */
+/* 響應式設計 */
 @media (max-width: 768px) {
   .form-container {
     padding: 0;

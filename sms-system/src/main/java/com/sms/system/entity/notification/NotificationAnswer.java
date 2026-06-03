@@ -10,7 +10,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 通知回答实体类
+ * 通知回答實體類
  */
 @TableName("notification_answer")
 public class NotificationAnswer implements Serializable {
@@ -24,27 +24,27 @@ public class NotificationAnswer implements Serializable {
     @TableField("notification_id")
     private Long notificationId;
 
-    /** 问题ID */
+    /** 問題ID */
     @TableField("question_id")
     private Long questionId;
 
-    /** 用户ID（parentUserId） */
+    /** 用戶ID（parentUserId） */
     @TableField("user_id")
     private String userId;
 
-    /** 用户类型（1 学生 2 家长 3 教师） */
+    /** 用戶類型（1 學生 2 家長 3 教師） */
     @TableField("user_type")
     private String userType;
 
-    /** 学生用户ID */
+    /** 學生用戶ID */
     @TableField("student_user_id")
     private String studentUserId;
 
-    /** 答案数据（JSON格式） */
+    /** 答案數據（JSON格式） */
     @TableField("answer_data")
     private String answerData;
 
-    /** 创建时间 */
+    /** 創建時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("create_time")
     private LocalDateTime createTime;

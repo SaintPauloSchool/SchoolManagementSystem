@@ -7,13 +7,13 @@ import com.sms.common.web.domain.LoginUser;
 import com.sms.common.core.domain.entity.SysUser;
 
 /**
- * Spring Security 工具类
+ * Spring Security 工具類
  *
  */
 public class SecurityUtils
 {
     /**
-     * 获取Authentication
+     * 獲取Authentication
      */
     public static Authentication getAuthentication()
     {
@@ -21,7 +21,7 @@ public class SecurityUtils
     }
 
     /**
-     * 获取用户
+     * 獲取用戶
      */
     public static LoginUser getLoginUser()
     {
@@ -46,7 +46,7 @@ public class SecurityUtils
     }
 
     /**
-     * 获取用户账户
+     * 獲取用戶賬戶
      */
     public static String getUsername()
     {
@@ -61,7 +61,7 @@ public class SecurityUtils
     }
 
     /**
-     * 获取用户ID
+     * 獲取用戶ID
      */
     public static Long getUserId()
     {
@@ -76,7 +76,7 @@ public class SecurityUtils
     }
 
     /**
-     * 生成BCryptPasswordEncoder密码
+     * 生成BCryptPasswordEncoder密碼
      */
     public static String encryptPassword(String password)
     {
@@ -85,7 +85,7 @@ public class SecurityUtils
     }
 
     /**
-     * 判断密码是否相同
+     * 判斷密碼是否相同
      */
     public static boolean matchesPassword(String rawPassword, String encodedPassword)
     {
@@ -94,7 +94,7 @@ public class SecurityUtils
     }
 
     /**
-     * 是否为管理员
+     * 是否爲管理員
      */
     public static boolean isAdmin(Long userId)
     {
@@ -102,7 +102,7 @@ public class SecurityUtils
     }
 
     /**
-     * 获取系统用户
+     * 獲取系統用戶
      */
     public static SysUser getSysUser()
     {
@@ -115,11 +115,11 @@ public class SecurityUtils
     }
 
     /**
-     * 设置系统用户
+     * 設置系統用戶
      */
     public static void setSysUser(SysUser user)
     {
-        // 在Spring Security中，用户信息通过认证过程设置
-        // 这里留空或根据具体需求实现
+        // 在Spring Security中，用戶信息通過認證過程設置
+        // 這裡留空或根據具體需求實現
     }
 }

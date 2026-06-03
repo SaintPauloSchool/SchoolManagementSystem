@@ -47,7 +47,7 @@ public class SysToken {
     public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
 
     /**
-     * 判断 Token 是否已过期
+     * 判斷 Token 是否已過期
      */
     public boolean isExpired() {
         return expireTime != null && LocalDateTime.now().isAfter(expireTime);

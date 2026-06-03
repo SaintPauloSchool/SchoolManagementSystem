@@ -10,7 +10,7 @@ import java.util.List;
  */
 public interface INotificationService {
     /**
-     * 查询通知列表
+     * 查詢通知列表
      *
      * @param notification 通知信息
      * @return 通知集合
@@ -18,15 +18,15 @@ public interface INotificationService {
     List<Notification> selectNotificationList(Notification notification);
 
     /**
-     * 查询通知详细信息
+     * 查詢通知詳細信息
      *
-     * @param notificationId 通知主键
+     * @param notificationId 通知主鍵
      * @return 通知信息
      */
     Notification selectNotificationById(Long notificationId);
 
     /**
-     * 根据用户 ID 查询抄送给我的通知列表
+     * 根據用戶 ID 查詢抄送給我的通知列表
      *
      * @param notification 通知信息（包含 userId, userType, publishDate）
      * @return 通知集合
@@ -34,7 +34,7 @@ public interface INotificationService {
     List<Notification> selectCcToMeList(Notification notification);
 
     /**
-     * 根据用户 ID 查询我发送的通知列表
+     * 根據用戶 ID 查詢我發送的通知列表
      *
      * @param notification 通知信息（包含 senderId, publishDate）
      * @return 通知集合
@@ -45,7 +45,7 @@ public interface INotificationService {
      * 保存通知
      *
      * @param notification 通知
-     * @return 结果
+     * @return 結果
      */
     boolean save(Notification notification);
 }

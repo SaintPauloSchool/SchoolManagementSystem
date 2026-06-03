@@ -9,14 +9,14 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 通知接收对象实体类
+ * 通知接收對象實體類
  *
  */
 @TableName("notification_receiver")
 public class NotificationReceiver implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 接收关系ID */
+    /** 接收關係ID */
     @TableId(value = "receiver_id", type = IdType.AUTO)
     private Long receiverId;
 
@@ -24,15 +24,15 @@ public class NotificationReceiver implements Serializable {
     @TableField("notification_id")
     private Long notificationId;
 
-    /** 接收类型（1 班级 2 学生/家长） */
+    /** 接收類型（1 班級 2 學生/家長） */
     @TableField("receive_type")
     private String receiveType;
 
-    /** 接收数据来源集合(存储多源JSON) */
+    /** 接收數據來源集合(存儲多源JSON) */
     @TableField("receive_data")
     private String receiveData;
 
-    /** 创建时间 */
+    /** 創建時間 */
     @TableField("create_time")
     private LocalDateTime createTime;
 

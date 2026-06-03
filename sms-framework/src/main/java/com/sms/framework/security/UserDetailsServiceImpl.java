@@ -18,7 +18,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 用户验证处理
+ * 用戶驗證處理
  */
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -33,7 +33,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     public UserDetails loadUserBySysToken(SysToken sysToken) {
-        // 生成用户信息
+        // 生成用戶信息
         SysUser user = new SysUser();
         // openUserId 存放企業微信原始字串 Controller 透過 getOpenUserId() 取得
         user.setOpenUserId(sysToken.getUserId());
@@ -65,17 +65,17 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     /**
-     * 获取用户权限信息
+     * 獲取用戶權限信息
      */
     public Collection<? extends GrantedAuthority> getUserPermissions(SysUser user) {
         List<GrantedAuthority> authorities = new ArrayList<>();
         
-        // 管理员拥有所有权限
+        // 管理員擁有所有權限
         if (user.isAdmin()) {
             authorities.add(new SimpleGrantedAuthority("admin"));
             authorities.add(new SimpleGrantedAuthority("*:*:*"));
         } else {
-            // 普通用户权限（这里应该从数据库获取）
+            // 普通用戶權限（這裡應該從數據庫獲取）
             authorities.add(new SimpleGrantedAuthority("user:view"));
             authorities.add(new SimpleGrantedAuthority("user:list"));
         }

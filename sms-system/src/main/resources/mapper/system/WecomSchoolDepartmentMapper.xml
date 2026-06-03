@@ -15,7 +15,7 @@
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
-    <!-- 查询所有学校部门 -->
+    <!-- 查詢所有學校部門 -->
     <select id="selectAll" resultMap="WecomSchoolDepartmentResult">
         SELECT id, parent_id, name, name_en, order_num, department_leader, create_time, update_time
         FROM wecom_school_department

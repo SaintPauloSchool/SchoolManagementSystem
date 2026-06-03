@@ -5,40 +5,40 @@ import com.sms.system.entity.SysDepartment;
 import java.util.List;
 
 /**
- * 部门 Service 接口
+ * 部門 Service 接口
  *
  */
 public interface ISysDepartmentService {
 
     /**
-     * 根据管理员权限获取班级树形结构（仅返回该用户有权管理的部门）
-     * 通过 sys_department_admin 查询用户管理的部门 ID，再过滤完整树
+     * 根據管理員權限獲取班級樹形結構（僅返回該用戶有權管理的部門）
+     * 通過 sys_department_admin 查詢用戶管理的部門 ID，再過濾完整樹
      *
-     * @param openUserId 企业微信 userid（当前登录用户）
-     * @return 过滤后的学校层级树形结构
+     * @param openUserId 企業微信 userid（當前登錄用戶）
+     * @return 過濾後的學校層級樹形結構
      */
     List<SysDepartment> getClassTreeByAdmin(String openUserId);
 
     /**
-     * 根据管理员权限获取班级树形结构（带家长学生关系）
-     * 在 getClassTreeByAdmin 的基础上为 type=1 的班级加载家长学生关系数据
+     * 根據管理員權限獲取班級樹形結構（帶家長學生關係）
+     * 在 getClassTreeByAdmin 的基礎上爲 type=1 的班級加載家長學生關係數據
      *
-     * @param openUserId 企业微信 userid（当前登录用户）
-     * @return 过滤后的带家长学生关系的树形结构
+     * @param openUserId 企業微信 userid（當前登錄用戶）
+     * @return 過濾後的帶家長學生關係的樹形結構
      */
     List<SysDepartment> getClassTreeWithParentsByAdmin(String openUserId);
 
     /**
-     * 批量保存部门信息
+     * 批量保存部門信息
      *
-     * @param departments 部门列表
+     * @param departments 部門列表
      */
     void batchSaveDepartments(List<SysDepartment> departments);
 
     /**
-     * 获取班级部门 ID
+     * 獲取班級部門 ID
      *
-     * @return 班级部门 ID 列表
+     * @return 班級部門 ID 列表
      */
     List<Long> getClassDepartmentId();
 

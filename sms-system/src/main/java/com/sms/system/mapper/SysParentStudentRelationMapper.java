@@ -6,43 +6,43 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 家长学生关系 Mapper 接口
+ * 家長學生關係 Mapper 接口
  *
  */
 public interface SysParentStudentRelationMapper {
 
     /**
-     * 批量查询家长学生关系
+     * 批量查詢家長學生關係
      *
-     * @param parentUserIds 家长用户 ID 列表
-     * @return 家长学生关系集合
+     * @param parentUserIds 家長用戶 ID 列表
+     * @return 家長學生關係集合
      */
     List<SysParentStudentRelation> selectByParentUserIds(@Param("parentUserIds") List<String> parentUserIds);
 
     /**
-     * 根据 ID 批量查询家长学生关系
+     * 根據 ID 批量查詢家長學生關係
      *
-     * @param ids 家长学生关系 ID 列表
-     * @return 家长学生关系集合
+     * @param ids 家長學生關係 ID 列表
+     * @return 家長學生關係集合
      */
     List<SysParentStudentRelation> selectByIds(@Param("ids") List<Long> ids);
 
     /**
-     * 根据家长用户ID和学生用户ID批量查询家长学生关系
+     * 根據家長用戶ID和學生用戶ID批量查詢家長學生關係
      *
-     * @param parentUserIds 家长用户 ID 列表
-     * @param studentUserIds 学生用户 ID 列表
-     * @return 家长学生关系集合
+     * @param parentUserIds 家長用戶 ID 列表
+     * @param studentUserIds 學生用戶 ID 列表
+     * @return 家長學生關係集合
      */
     List<SysParentStudentRelation> selectByParentAndStudentUserIds(
             @Param("parentUserIds") List<String> parentUserIds,
             @Param("studentUserIds") List<String> studentUserIds);
 
     /**
-     * 新增家长学生关系
+     * 新增家長學生關係
      *
-     * @param sysParentStudentRelation 家长学生关系
-     * @return 结果
+     * @param sysParentStudentRelation 家長學生關係
+     * @return 結果
      */
     int insertIgnore(SysParentStudentRelation sysParentStudentRelation);
 

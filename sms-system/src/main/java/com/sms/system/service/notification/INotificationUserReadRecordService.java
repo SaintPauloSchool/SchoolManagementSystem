@@ -7,20 +7,20 @@ import com.sms.system.entity.vo.UnrepliedStudentVO;
 import java.util.List;
 
 /**
- * 通知用户阅读记录 Service 接口
+ * 通知用戶閱讀記錄 Service 接口
  *
  */
 public interface INotificationUserReadRecordService {
     /**
-     * 批量新增阅读记录
+     * 批量新增閱讀記錄
      *
-     * @param readRecords 阅读记录列表
-     * @return 结果
+     * @param readRecords 閱讀記錄列表
+     * @return 結果
      */
     int batchSave(List<NotificationUserReadRecord> readRecords);
 
     /**
-     * 查询通知阅读统计信息（強類型 VO）
+     * 查詢通知閱讀統計信息（強類型 VO）
      *
      * @param notificationId 通知ID
      * @return 閱讀統計 VO
@@ -28,27 +28,27 @@ public interface INotificationUserReadRecordService {
     ReadStatisticsVO getReadStatisticsVO(Long notificationId);
 
     /**
-     * 查询未回复的学生列表（按学生分组，只要有一个家长回复就算已回复）
+     * 查詢未回復的學生列表（按學生分組，只要有一個家長回復就算已回復）
      *
-     * @param sendRecordId 发送记录ID
-     * @return 未回复学生列表
+     * @param sendRecordId 發送記錄ID
+     * @return 未回復學生列表
      */
     List<UnrepliedStudentVO> selectUnrepliedStudents(Long sendRecordId);
     
     /**
-     * 查询发送失败的阅读记录
+     * 查詢發送失敗的閱讀記錄
      *
-     * @param sendRecordId 发送记录ID
-     * @return 失败记录列表
+     * @param sendRecordId 發送記錄ID
+     * @return 失敗記錄列表
      */
     List<NotificationUserReadRecord> selectFailedRecords(Long sendRecordId);
 
     /**
-     * 更新阅读记录的发送状态
+     * 更新閱讀記錄的發送狀態
      *
-     * @param readId 阅读记录ID
-     * @param sendStatus 发送状态
-     * @return 结果
+     * @param readId 閱讀記錄ID
+     * @param sendStatus 發送狀態
+     * @return 結果
      */
     int updateSendStatus(Long readId, String sendStatus);
 }

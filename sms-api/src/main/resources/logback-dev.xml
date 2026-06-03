@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 開發環境日誌配置 - 僅輸出到控制台，不寫文件 -->
+<!-- 開發環境日誌配置 - 僅輸出到控制臺，不寫文件 -->
 <configuration>
-    <!-- 控制台輸出 -->
+    <!-- 控制臺輸出 -->
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{20} - [%method,%line] - %msg%n</pattern>

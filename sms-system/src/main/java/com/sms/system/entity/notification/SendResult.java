@@ -6,22 +6,22 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 通知发送结果实体类
+ * 通知發送結果實體類
  *
  */
 public class SendResult implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 发送成功人数 */
+    /** 發送成功人數 */
     private final int successCount;
 
-    /** 发送失败人数 */
+    /** 發送失敗人數 */
     private final int failCount;
 
-    /** 发送成功的用户 ID 集合（家长 + 学生） */
+    /** 發送成功的用戶 ID 集合（家長 + 學生） */
     private final Set<String> successUserIds;
 
-    /** 发送失败的用户 ID 与失败原因的映射 */
+    /** 發送失敗的用戶 ID 與失敗原因的映射 */
     private final Map<String, String> failedUserReasons;
 
     public SendResult(int successCount, int failCount, Set<String> successUserIds) {
@@ -44,18 +44,18 @@ public class SendResult implements Serializable {
     }
 
     /**
-     * 获取发送成功的用户 ID 集合
+     * 獲取發送成功的用戶 ID 集合
      *
-     * @return 成功用户 ID 集合（不可为 null）
+     * @return 成功用戶 ID 集合（不可爲 null）
      */
     public Set<String> getSuccessUserIds() {
         return successUserIds;
     }
 
     /**
-     * 获取发送失败的用户 ID 及原因的映射
+     * 獲取發送失敗的用戶 ID 及原因的映射
      *
-     * @return 失败用户及原因映射（不可为 null）
+     * @return 失敗用戶及原因映射（不可爲 null）
      */
     public Map<String, String> getFailedUserReasons() {
         return failedUserReasons;

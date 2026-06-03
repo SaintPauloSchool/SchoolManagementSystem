@@ -18,7 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Spring Security配置类
+ * Spring Security配置類
  */
 @Configuration
 @EnableWebSecurity
@@ -35,7 +35,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
-     * 密码编码器
+     * 密碼編碼器
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -43,7 +43,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
     }
 
     /**
-     * 认证管理器
+     * 認證管理器
      */
     @Bean
     @Override
@@ -52,7 +52,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
     }
 
     /**
-     * 配置认证管理器
+     * 配置認證管理器
      */
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -65,17 +65,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-            // 关闭CSRF
+            // 關閉CSRF
             .csrf().disable()
-            // 不创建session
+            // 不創建session
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
-            // 异常处理
+            // 異常處理
             .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
             .and()
-            // 授权配置
+            // 授權配置
             .authorizeRequests()
-            // 公开访问的资源
+            // 公開訪問的資源
             .antMatchers("/favicon.ico", "/sp.png").permitAll()
             .antMatchers("/html/**", "/css/**", "/docs/**", "/fonts/**", "/img/**", "/ajax/**", "/js/**", "/sp/**").permitAll()
             .antMatchers("/captcha/captchaImage**").permitAll()
@@ -84,13 +84,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
             .antMatchers("/common/upload").permitAll()
             // 文件下載不需要 JWT token，亦不受驗簽保護
             .antMatchers("/common/download/**").permitAll()
-            // 其他请求都需要认证
+            // 其他請求都需要認證
             .anyRequest().authenticated();
 
-        // 添加JWT过滤器
+        // 添加JWT過濾器
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        // 禁用缓存
+        // 禁用緩存
         http.headers().cacheControl();
     }
 

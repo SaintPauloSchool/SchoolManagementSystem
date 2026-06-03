@@ -5,32 +5,32 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import com.sms.common.core.domain.BaseEntity;
 
 /**
- * 家长学生关系表 sys_parent_student_relation
+ * 家長學生關係表 sys_parent_student_relation
  * 
  */
 public class SysParentStudentRelation extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    /** 主键 ID */
+    /** 主鍵 ID */
     private Long id;
 
-    /** 家长用户 ID */
+    /** 家長用戶 ID */
     private String parentUserId;
 
-    /** 学生用户 ID */
+    /** 學生用戶 ID */
     private String studentUserId;
 
-    /** 学生姓名 */
+    /** 學生姓名 */
     private String studentName;
 
-    /** 关系描述 */
+    /** 關係描述 */
     private String relationDesc;
 
-    /** 家长手机号 */
+    /** 家長手機號 */
     private String mobile;
 
-    /** 家长外部用户 ID */
+    /** 家長外部用戶 ID */
     private String externalUserid;
 
     public Long getId()

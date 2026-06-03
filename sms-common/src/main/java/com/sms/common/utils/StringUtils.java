@@ -190,7 +190,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
         }
         if (startInclude > endExclude)
         {
-            // 如果起始位置大于结束位置，不替换
+            // 如果起始位置大於結束位置，不替換
             return NULLSTR;
         }
         final char[] chars = new char[strLength];
@@ -385,7 +385,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
             return list;
         }
 
-        // 过滤空白字符串
+        // 過濾空白字符串
         if (filterBlank && StringUtils.isBlank(str))
         {
             return list;
@@ -457,7 +457,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     }
 
     /**
-     * 駝峰轉下劃線命名
+     * 駝峯轉下劃線命名
      */
     public static String toUnderScoreCase(String str)
     {
@@ -466,11 +466,11 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
             return null;
         }
         StringBuilder sb = new StringBuilder();
-        // 前置字符是否大写
+        // 前置字符是否大寫
         boolean preCharIsUpperCase = true;
-        // 当前字符是否大写
+        // 當前字符是否大寫
         boolean curreCharIsUpperCase = true;
-        // 下一字符是否大写
+        // 下一字符是否大寫
         boolean nexteCharIsUpperCase = true;
         for (int i = 0; i < str.length(); i++)
         {
@@ -544,35 +544,35 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     }
 
     /**
-     * 將下劃線大寫方式命名的字符串轉換為駝峰式。如果轉換前的下劃線大寫方式命名的字符串為空，則返回空字符串。例如：HELLO_WORLD->HelloWorld
+     * 將下劃線大寫方式命名的字符串轉換為駝峯式。如果轉換前的下劃線大寫方式命名的字符串為空，則返回空字符串。例如：HELLO_WORLD->HelloWorld
      * 
      * @param name 轉換前的下劃線大寫方式命名的字符串
-     * @return 轉換後的駝峰式命名的字符串
+     * @return 轉換後的駝峯式命名的字符串
      */
     public static String convertToCamelCase(String name)
     {
         StringBuilder result = new StringBuilder();
-        // 快速检查
+        // 快速檢查
         if (name == null || name.isEmpty())
         {
-            // 没必要转换
+            // 沒必要轉換
             return "";
         }
         else if (!name.contains("_"))
         {
-            // 不含下划线，仅将首字母大写
+            // 不含下劃線，僅將首字母大寫
             return name.substring(0, 1).toUpperCase() + name.substring(1);
         }
-        // 用下划线将原始字符串分割
+        // 用下劃線將原始字符串分割
         String[] camels = name.split("_");
         for (String camel : camels)
         {
-            // 跳过原始字符串中开头、结尾的下换线或双重下划线
+            // 跳過原始字符串中開頭、結尾的下換線或雙重下劃線
             if (camel.isEmpty())
             {
                 continue;
             }
-            // 首字母大写
+            // 首字母大寫
             result.append(camel.substring(0, 1).toUpperCase());
             result.append(camel.substring(1).toLowerCase());
         }
@@ -580,7 +580,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     }
 
     /**
-     * 駝峰式命名法
+     * 駝峯式命名法
      * 例如：user_name->userName
      */
     public static String toCamelCase(String s)

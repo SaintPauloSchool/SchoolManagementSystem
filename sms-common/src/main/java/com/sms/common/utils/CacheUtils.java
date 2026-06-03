@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.sms.common.utils.spring.SpringUtils;
 
 /**
- * Cache工具类
+ * Cache工具類
  *
  */
 public class CacheUtils
@@ -21,7 +21,7 @@ public class CacheUtils
     private static final String SYS_CACHE = "sys-cache";
 
     /**
-     * 获取SYS_CACHE缓存
+     * 獲取SYS_CACHE緩存
      * 
      * @param key
      * @return
@@ -32,7 +32,7 @@ public class CacheUtils
     }
 
     /**
-     * 获取SYS_CACHE缓存
+     * 獲取SYS_CACHE緩存
      * 
      * @param key
      * @param defaultValue
@@ -45,7 +45,7 @@ public class CacheUtils
     }
 
     /**
-     * 写入SYS_CACHE缓存
+     * 寫入SYS_CACHE緩存
      * 
      * @param key
      * @return
@@ -56,7 +56,7 @@ public class CacheUtils
     }
 
     /**
-     * 从SYS_CACHE缓存中移除
+     * 從SYS_CACHE緩存中移除
      * 
      * @param key
      * @return
@@ -67,7 +67,7 @@ public class CacheUtils
     }
 
     /**
-     * 获取缓存
+     * 獲取緩存
      * 
      * @param cacheName
      * @param key
@@ -79,7 +79,7 @@ public class CacheUtils
     }
 
     /**
-     * 获取缓存
+     * 獲取緩存
      * 
      * @param cacheName
      * @param key
@@ -93,7 +93,7 @@ public class CacheUtils
     }
 
     /**
-     * 写入缓存
+     * 寫入緩存
      * 
      * @param cacheName
      * @param key
@@ -105,7 +105,7 @@ public class CacheUtils
     }
 
     /**
-     * 从缓存中移除
+     * 從緩存中移除
      * 
      * @param cacheName
      * @param key
@@ -116,7 +116,7 @@ public class CacheUtils
     }
 
     /**
-     * 从缓存中移除所有
+     * 從緩存中移除所有
      * 
      * @param cacheName
      */
@@ -124,11 +124,11 @@ public class CacheUtils
     {
         Cache cache = getCache(cacheName);
         cache.clear();
-        logger.info("清理缓存： {}", cacheName);
+        logger.info("清理緩存： {}", cacheName);
     }
 
     /**
-     * 从缓存中移除指定key
+     * 從緩存中移除指定key
      * 
      * @param keys
      */
@@ -138,7 +138,7 @@ public class CacheUtils
     }
 
     /**
-     * 从缓存中移除指定key
+     * 從緩存中移除指定key
      * 
      * @param cacheName
      * @param keys
@@ -149,11 +149,11 @@ public class CacheUtils
         {
             remove(it.next());
         }
-        logger.info("清理缓存： {} => {}", cacheName, keys);
+        logger.info("清理緩存： {} => {}", cacheName, keys);
     }
 
     /**
-     * 获取缓存键名
+     * 獲取緩存鍵名
      * 
      * @param key
      * @return
@@ -164,7 +164,7 @@ public class CacheUtils
     }
 
     /**
-     * 获得一个Cache，没有则显示日志。
+     * 獲得一個Cache，沒有則顯示日誌。
      * 
      * @param cacheName
      * @return
@@ -174,15 +174,15 @@ public class CacheUtils
         Cache cache = springCacheManager.getCache(cacheName);
         if (cache == null)
         {
-            throw new RuntimeException("当前系统中没有定义“" + cacheName + "”这个缓存。");
+            throw new RuntimeException("當前系統中沒有定義「" + cacheName + "」這個緩存。");
         }
         return cache;
     }
 
     /**
-     * 获取所有缓存
+     * 獲取所有緩存
      * 
-     * @return 缓存组
+     * @return 緩存組
      */
     public static String[] getCacheNames()
     {

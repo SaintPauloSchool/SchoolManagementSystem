@@ -17,21 +17,21 @@ import com.sms.common.exception.file.InvalidExtensionException;
 import com.sms.common.utils.file.FileUploadUtils;
 
 /**
- * 通用请求处理
+ * 通用請求處理
  */
 @RestController
 @RequestMapping("/common")
 public class CommonController
 {
     /**
-     * 通用上传请求
+     * 通用上傳請求
      */
     @PostMapping("/upload")
     public AjaxResult uploadFile(@RequestParam("file") MultipartFile file) throws Exception
     {
         try
         {
-            // 上传并返回新文件名称
+            // 上傳並返回新文件名稱
             String fileName = FileUploadUtils.upload(file);
             Map<String, Object> data = new HashMap<>();
             data.put("url", fileName);

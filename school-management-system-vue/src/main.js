@@ -10,7 +10,7 @@ app.use(ElementPlus, {
   locale: zhTw,
 })
 
-// 注册所有图标
+// 註冊所有圖標
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }

@@ -238,7 +238,7 @@ export default {
               }
             }
           })
-          // 更新 localFormData 中的 attachmentUrls，确保使用统一格式
+          // 更新 localFormData 中的 attachmentUrls，確保使用統一格式
           this.localFormData.attachmentUrls = this.fileList.map(file => ({
             name: file.name,
             url: file._originalUrl
@@ -295,14 +295,14 @@ export default {
 
     handleUploadSuccess(response, file, fileList) {
       if (response.code === 200) {
-        // 保存到数据库的URL
+        // 保存到數據庫的URL
         const originalUrl = response.data.url
         
-        // 前端显示用的URL（带 /sms-api 前缀）
+        // 前端顯示用的URL（帶 /sms-api 前綴）
         const displayUrl = normalizeProfileUrl(originalUrl)
         
-        // 更新 fileList 中的对应文件
-        // 替换整个数组以触发响应式更新
+        // 更新 fileList 中的對應文件
+        // 替換整個數組以觸發響應式更新
         this.fileList = this.fileList.map(f => {
           if (f.uid === file.uid) {
             return {
@@ -310,7 +310,7 @@ export default {
               url: displayUrl,
               status: 'success',
               name: f.name.startsWith('附件') ? file.name : f.name,
-              _originalUrl: originalUrl // 保存原始URL用于存储
+              _originalUrl: originalUrl // 保存原始URL用於存儲
             }
           }
           return f
@@ -346,7 +346,7 @@ export default {
     },
 
     handleChange(file, fileList) {
-      // 保留原始文件名，不要用 Element Plus 的默认名称
+      // 保留原始文件名，不要用 Element Plus 的默認名稱
       this.fileList = fileList.filter(f => f.status !== 'removed').map(f => {
         // 如果是新添加的文件且名字是默認的，使用原始文件名
         if (!f.name || f.name === file.name && f.raw && f.raw.name) {
@@ -357,7 +357,7 @@ export default {
     },
 
     handleUploadRemove(file) {
-      // 使用 _originalUrl 进行匹配，确保正确删除
+      // 使用 _originalUrl 進行匹配，確保正確刪除
       const index = this.localFormData.attachmentUrls.findIndex(item => {
         const itemUrl = typeof item === 'string' ? item : (item._originalUrl || item.url)
         const fileOriginalUrl = file._originalUrl || file.url
@@ -429,7 +429,7 @@ export default {
       }
       
       // 直接同步到父組件，使用深拷貝避免引用問題
-      // 注意：这里不会触发 watch，因为 showFormQuestionDialog 还是 true
+      // 注意：這裡不會觸發 watch，因爲 showFormQuestionDialog 還是 true
       this.$nextTick(() => {
         this.formData.questions = JSON.parse(JSON.stringify(this.localFormData.questions))
       })

@@ -1,6 +1,6 @@
 <template>
   <div class="notification-list">
-    <!-- 列表头部 -->
+    <!-- 列表頭部 -->
     <div class="list-header">
       <div class="header-left">
         <el-icon class="header-icon"><List /></el-icon>
@@ -8,7 +8,7 @@
         <el-tag type="info" size="small" class="count-tag">
           {{ pagination.total }} 條記錄
         </el-tag>
-        <!-- 搜索框和发布时间筛选 -->
+        <!-- 搜索框和發布時間篩選 -->
         <el-input
             v-model="searchQuery"
             placeholder="搜索通知標題或發送人..."
@@ -103,7 +103,7 @@
       </el-table>
     </div>
 
-    <!-- 分页 -->
+    <!-- 分頁 -->
     <div class="pagination-area">
       <el-pagination
           @size-change="handleSizeChange"
@@ -117,7 +117,7 @@
       />
     </div>
 
-    <!-- 详情对话框 -->
+    <!-- 詳情對話框 -->
     <el-dialog
         v-model="detailDialogVisible"
         title="通知詳情"
@@ -189,7 +189,7 @@ export default {
       return titleMap[this.type] || '通知列表'
     },
     displayData() {
-      // 直接使用后端返回的分页数据，不做前端切片
+      // 直接使用後端返回的分頁數據，不做前端切片
       let result = [...this.notifications]
 
       // 搜索過濾（僅在前端過濾當前頁數據）
@@ -318,7 +318,7 @@ export default {
   }
 }
 
-/* ===== 列表头部（含搜索） ===== */
+/* ===== 列表頭部（含搜索） ===== */
 .list-header {
   display: flex;
   justify-content: space-between;
@@ -403,7 +403,7 @@ export default {
   color: #9ca3af;
 }
 
-/* 日期选择器 */
+/* 日期選擇器 */
 .date-picker {
   width: 160px;
   flex-shrink: 0;
@@ -441,7 +441,7 @@ export default {
   color: #9ca3af;
 }
 
-/* 刷新按钮 */
+/* 刷新按鈕 */
 .list-header :deep(.el-button) {
   border-radius: 8px;
   font-size: 13px;
@@ -460,7 +460,7 @@ export default {
   background: #eff6ff;
 }
 
-/* ===== 表格区域 ===== */
+/* ===== 表格區域 ===== */
 .table-container {
   flex: 1;
   overflow: hidden;
@@ -520,12 +520,12 @@ export default {
   color: #4b5563;
 }
 
-/* 标题列保持左对齐 */
+/* 標題列保持左對齊 */
 .table-container :deep(.el-table__body tr td:first-child) {
   text-align: left;
 }
 
-/* stripe 行颜色优化 */
+/* stripe 行顏色優化 */
 .table-container :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
   background: #fafbfe;
 }
@@ -574,7 +574,7 @@ export default {
   color: #d1d5db;
 }
 
-/* 状态 tag 优化 */
+/* 狀態 tag 優化 */
 .table-container :deep(.el-tag) {
   border-radius: 6px;
   font-size: 12px;
@@ -582,7 +582,7 @@ export default {
   padding: 2px 10px;
 }
 
-/* ===== 操作按钮 ===== */
+/* ===== 操作按鈕 ===== */
 .action-buttons {
   display: flex;
   gap: 8px;
@@ -616,7 +616,7 @@ export default {
   --el-button-size: 28px;
 }
 
-/* ===== 对话框样式 ===== */
+/* ===== 對話框樣式 ===== */
 .notification-detail-dialog :deep(.el-dialog) {
   border-radius: 16px;
   overflow: hidden;
@@ -674,7 +674,7 @@ export default {
   background: transparent;
 }
 
-/* ===== 分页区域 ===== */
+/* ===== 分頁區域 ===== */
 .pagination-area {
   padding: 14px 24px;
   background: #fafbfc;
@@ -701,7 +701,7 @@ export default {
   color: #ffffff;
 }
 
-/* ===== 响应式设计 ===== */
+/* ===== 響應式設計 ===== */
 @media (max-width: 1200px) {
   .list-header {
     padding: 14px 20px;

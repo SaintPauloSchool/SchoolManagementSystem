@@ -9,7 +9,7 @@ import com.sms.common.core.context.PermissionContextHolder;
 import com.sms.common.utils.StringUtils;
 
 /**
- * 自定义权限拦截器，将权限字符串放到当前请求中以便用于多个角色匹配符合要求的权限
+ * 自定義權限攔截器，將權限字符串放到當前請求中以便用於多個角色匹配符合要求的權限
  *
  */
 @Aspect

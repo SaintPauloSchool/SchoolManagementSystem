@@ -33,7 +33,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </select>
 
-    <!-- 根据家长用户ID和学生用户ID批量查询部门绑定关系 -->
+    <!-- 根據家長用戶ID和學生用戶ID批量查詢部門綁定關係 -->
     <select id="selectByParentAndStudentUserIds" resultMap="SysDepartmentParentBindingResult">
         SELECT id, department_id, parent_user_id, student_user_id, create_time, update_time
         FROM sys_department_parent_binding

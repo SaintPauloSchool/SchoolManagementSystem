@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 部门信息管理
+ * 部門信息管理
  *
  */
 @RestController

@@ -1,7 +1,7 @@
 package com.sms.system.service;
 
 /**
- * 家长学生关系Service接口
+ * 家長學生關係Service接口
  */
 public interface ISysParentStudentRelationService {
 

@@ -3,18 +3,18 @@ package com.sms.system.entity;
 import java.io.Serializable;
 
 /**
- * 课程班级实体类
+ * 課程班級實體類
  */
 public class ClassSection implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 主键 ID */
+    /** 主鍵 ID */
     private Long id;
 
-    /** DSEDJ 班级名称（如：P1_A_家長） */
+    /** DSEDJ 班級名稱（如：P1_A_家長） */
     private String classSectionDsedj;
 
-    /** SP 班级名称（如：P1A） */
+    /** SP 班級名稱（如：P1A） */
     private String classSectionSp;
 
     public Long getId() {

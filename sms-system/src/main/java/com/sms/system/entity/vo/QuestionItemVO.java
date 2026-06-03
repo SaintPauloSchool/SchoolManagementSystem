@@ -4,30 +4,30 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 问题项 VO
- * 用于通知导出功能中的问题数据封装
+ * 問題項 VO
+ * 用於通知導出功能中的問題數據封裝
  */
 public class QuestionItemVO implements Serializable {
     
     private static final long serialVersionUID = 1L;
     
     /**
-     * 问题ID
+     * 問題ID
      */
     private Long id;
     
     /**
-     * 问题标题
+     * 問題標題
      */
     private String title;
     
     /**
-     * 问题类型
+     * 問題類型
      */
     private String type;
     
     /**
-     * 选项列表
+     * 選項列表
      */
     private List<String> options;
 

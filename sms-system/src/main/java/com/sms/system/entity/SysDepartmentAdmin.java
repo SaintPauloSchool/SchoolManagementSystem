@@ -4,30 +4,30 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 部门管理员对象 sys_department_admin
+ * 部門管理員對象 sys_department_admin
  */
 public class SysDepartmentAdmin implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 主键ID */
+    /** 主鍵ID */
     private Long id;
 
-    /** 部门ID */
+    /** 部門ID */
     private Long departmentId;
 
-    /** 部门管理员的userid（企业微信 userid） */
+    /** 部門管理員的userid（企業微信 userid） */
     private String userid;
 
-    /** 部门管理员的类型：1-校区负责人, 2-年级负责人, 3-班主任, 4-任课老师, 5-学段负责人 */
+    /** 部門管理員的類型：1-校區負責人, 2-年級負責人, 3-班主任, 4-任課老師, 5-學段負責人 */
     private Integer type;
 
-    /** 教师或班主任的科目 */
+    /** 教師或班主任的科目 */
     private String subject;
 
-    /** 创建时间 */
+    /** 創建時間 */
     private LocalDateTime createTime;
 
-    /** 更新时间 */
+    /** 更新時間 */
     private LocalDateTime updateTime;
 
     public Long getId() { return id; }

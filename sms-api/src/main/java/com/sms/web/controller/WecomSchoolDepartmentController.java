@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * WeCom学校部门信息管理
+ * WeCom學校部門信息管理
  *
  */
 @RestController

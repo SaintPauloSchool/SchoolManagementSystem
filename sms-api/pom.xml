@@ -12,7 +12,7 @@
     <artifactId>sms-api</artifactId>
 
     <description>
-        web?çÂä°?•Âè£
+        web?çÂãô?•Âè£
     </description>
 
     <dependencies>
@@ -27,7 +27,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
-            <optional>true</optional> <!-- Ë°®Á§∫‰æùË?‰∏ç‰?‰º†ÈÄ?-->
+            <optional>true</optional> <!-- Ë°®Á§∫‰æùË?‰∏ç‰?ÂÇ≥ÈÄ?-->
         </dependency>
 
         <!-- swagger3-->
@@ -36,14 +36,14 @@
             <artifactId>springfox-boot-starter</artifactId>
         </dependency>
 
-        <!-- ?≤Ê≠¢ËøõÂÖ•swaggerÈ°µÈù¢?•Á±ª?ãËΩ¨?¢È?ËØØÔ??íÈô§3.0.0‰∏≠Á?ÂºïÁî®ÔºåÊ??®Â???.6.2?àÊú¨ -->
+        <!-- ?≤Ê≠¢ÈÄ≤ÂÖ•swaggerÈ†ÅÈù¢?•È°û?ãËΩâ?¢È?Ë™§Ô??íÈô§3.0.0‰∏≠Á?ÂºïÁî®ÔºåÊ??®Â???.6.2?àÊú¨ -->
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-models</artifactId>
             <version>1.6.2</version>
         </dependency>
 
-        <!-- MysqlÈ©±Âä®??-->
+        <!-- MysqlÈ©ÖÂãï??-->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
@@ -83,7 +83,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>2.5.15</version>
                 <configuration>
-                    <fork>true</fork> <!-- Â¶ÇÊ?Ê≤°Ê?ËØ•È?ÁΩÆÔ?devtools‰∏ç‰??üÊ? -->
+                    <fork>true</fork> <!-- Â¶ÇÊ?Ê≤íÊ?Ë©≤È?ÁΩÆÔ?devtools‰∏ç‰??üÊ? -->
                 </configuration>
                 <executions>
                     <execution>

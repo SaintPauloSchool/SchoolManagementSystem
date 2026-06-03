@@ -77,7 +77,7 @@ public class SysDepartmentParentBindingServiceImpl implements ISysDepartmentPare
                 }
             }
         }
-        logger.info("家长数据同步完成，共删除 {} 个过期的家长绑定", deletedCount);
+        logger.info("家長數據同步完成，共刪除 {} 個過期的家長綁定", deletedCount);
     }
 
     private SysDepartmentParentBinding createOrUpdateBinding(Long departmentId, String parentUserId, String studentUserId) {

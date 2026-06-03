@@ -3,7 +3,7 @@ package com.sms.system.entity.vo;
 import java.io.Serializable;
 
 /**
- * 发送统计 VO
+ * 發送統計 VO
  *
  */
 public class SendStatisticsVO implements Serializable {

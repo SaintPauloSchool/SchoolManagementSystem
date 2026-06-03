@@ -35,7 +35,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </select>
 
-    <!-- 根据家长用户ID和学生用户ID批量查询家长学生关系 -->
+    <!-- 根據家長用戶ID和學生用戶ID批量查詢家長學生關係 -->
     <select id="selectByParentAndStudentUserIds" resultMap="SysParentStudentRelationResult">
         SELECT id, parent_user_id, student_user_id, student_name, relation_desc, mobile, external_userid, create_time, update_time
         FROM sys_parent_student_relation

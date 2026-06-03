@@ -1196,17 +1196,17 @@ export default {
       // 切換前同步當前編輯的內容
       if (this.selectedQuestion && this.selectedQuestion.type === '3' && this.selectedQuestion.fillBlanks && this.selectedQuestion.fillBlanks.length > 0) {
         let editableDiv = this.$refs.contentEditableDiv
-        // 如果是数组，取第一个元素
+        // 如果是數組，取第一個元素
         if (Array.isArray(editableDiv) && editableDiv.length > 0) {
           editableDiv = editableDiv[0]
         }
         
-        // 如果是 Vue 组件实例，获取其 $el 属性
+        // 如果是 Vue 組件實例，獲取其 $el 屬性
         if (editableDiv && editableDiv.$el) {
           editableDiv = editableDiv.$el
         }
         
-        // 确保是原生 DOM 元素且有 querySelectorAll 方法
+        // 確保是原生 DOM 元素且有 querySelectorAll 方法
         if (editableDiv && typeof editableDiv.querySelectorAll === 'function') {
           let html = editableDiv.innerHTML
           const tags = editableDiv.querySelectorAll('.editable-blank-tag')
@@ -1237,19 +1237,19 @@ export default {
           // 如果有選中題目且是填空題，額外恢復該題目的內容
           if (this.selectedQuestion && this.selectedQuestion.type === '3' && this.selectedQuestion.fillBlanks && this.selectedQuestion.fillBlanks.length > 0) {
             let editableDiv = this.$refs.contentEditableDiv
-            // 如果是数组，取第一个元素
+            // 如果是數組，取第一個元素
             if (Array.isArray(editableDiv) && editableDiv.length > 0) {
               editableDiv = editableDiv[0]
             }
             
-            // 如果是 Vue 组件实例，获取其 $el 属性
+            // 如果是 Vue 組件實例，獲取其 $el 屬性
             if (editableDiv && editableDiv.$el) {
               editableDiv = editableDiv.$el
             }
             
-            // 确保是原生 DOM 元素且有 querySelectorAll 方法
+            // 確保是原生 DOM 元素且有 querySelectorAll 方法
             if (editableDiv && typeof editableDiv.querySelectorAll === 'function' && this.selectedQuestion.content) {
-              // 将 content 中的 {{fillblank-n}} 转换回 HTML 标签
+              // 將 content 中的 {{fillblank-n}} 轉換回 HTML 標籤
               let html = this.selectedQuestion.content
               const fillBlankMatches = html.match(/\{\{fillblank-(\d+)\}\}/g)
               if (fillBlankMatches) {
@@ -1548,7 +1548,7 @@ export default {
       })
     },
 
-    // 从 fillBlanks 数据生成 content
+    // 從 fillBlanks 數據生成 content
     generateContentFromFillBlanks(question) {
       if (!question.fillBlanks || question.fillBlanks.length === 0) {
         return question.title || ''
@@ -1946,7 +1946,7 @@ export default {
               tempDiv.innerHTML = html
               q.content = tempDiv.textContent || tempDiv.innerText || ''
             } else if (q.content) {
-              // 保持现有 content
+              // 保持現有 content
             } else {
               q.content = this.generateContentFromFillBlanks(q)
             }

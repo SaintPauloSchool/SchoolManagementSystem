@@ -12,11 +12,11 @@ sms:
   profile: /usr/local/upload
   # 獲取 ip地址開關
   addressEnabled: false
-  # app交互秘钥
+  # app交互祕鑰
   appSecret: kKhPdvEBDjck1RK7
-  # app交互时间误差范围(毫秒)
+  # app交互時間誤差範圍(毫秒)
   apiTimeRange: 300000
-  # 加密盐值，用于敏感ID加密
+  # 加密鹽值，用於敏感ID加密
   encryption:
     salt: 5nQtaatpcOs9iKsM
 
@@ -94,7 +94,7 @@ pagehelper:
 
 # 防止 XSS 攻擊
 xss:
-  # 过滤开关
+  # 過濾開關
   enabled: true
   # 排除連結（多個用逗號分隔）
   excludes: /system/notice/*
@@ -103,7 +103,7 @@ xss:
 
 # 防止 csrf 攻擊
 csrf:
-  # 过滤开关
+  # 過濾開關
   enabled: false
   # 白名單（多個用逗號分隔）
   whites: /druid

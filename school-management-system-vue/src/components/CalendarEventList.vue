@@ -18,7 +18,7 @@
         </div>
       </template>
 
-      <!-- 搜索栏 -->
+      <!-- 搜索欄 -->
       <el-form :model="searchForm" ref="queryForm" :inline="true" class="search-form">
         <el-form-item label="行事標題">
           <el-input v-model="searchForm.title" placeholder="請輸入行事標題" clearable @keyup.enter="handleSearch" />
@@ -61,13 +61,13 @@
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
+      <!-- 分頁 -->
       <div class="pagination-container" v-if="total > 0">
         <el-pagination v-model:current-page="pagination.currentPage" v-model:page-size="pagination.pageSize" :page-sizes="[10, 20, 50]" :total="total" layout="total, sizes, prev, pager, next" background @size-change="loadEvents" @current-change="loadEvents" />
       </div>
     </el-card>
 
-    <!-- 新增/修改对话框 -->
+    <!-- 新增/修改對話框 -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="行事標題" prop="title">
@@ -115,7 +115,7 @@
       </template>
     </el-dialog>
 
-    <!-- 导入对话框 -->
+    <!-- 導入對話框 -->
     <el-dialog title="導入 Excel" v-model="uploadVisible" width="650px" top="5vh" append-to-body>
       <div class="upload-dialog-content">
         <div class="upload-instruction">

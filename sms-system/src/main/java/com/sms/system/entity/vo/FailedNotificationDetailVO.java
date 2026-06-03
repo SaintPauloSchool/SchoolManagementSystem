@@ -6,35 +6,35 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 失败通知详情VO（包含用户阅读记录和重发失败记录）
+ * 失敗通知詳情VO（包含用戶閱讀記錄和重發失敗記錄）
  */
 public class FailedNotificationDetailVO {
     /** 通知ID */
     private Long notificationId;
 
-    /** 通知标题 */
+    /** 通知標題 */
     private String title;
 
-    /** 发送记录ID */
+    /** 發送記錄ID */
     private Long sendRecordId;
 
-    /** 发送时间 */
+    /** 發送時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime sendTime;
 
-    /** 发送状态 */
+    /** 發送狀態 */
     private String sendStatus;
 
-    /** 应发送总人数 */
+    /** 應發送總人數 */
     private Integer totalCount;
 
-    /** 发送成功人数 */
+    /** 發送成功人數 */
     private Integer successCount;
 
-    /** 发送失败人数 */
+    /** 發送失敗人數 */
     private Integer failCount;
 
-    /** 发送人姓名 */
+    /** 發送人姓名 */
     private String senderName;
 
     private List<ResendFailRecordVO> resendFailRecords;

@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
 
 /**
- * 认证失败处理类 返回未授权
+ * 認證失敗處理類 返回未授權
  */
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint, Serializable {
@@ -24,9 +24,9 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint, Se
             response.setStatus(200);
             response.setContentType("application/json");
             response.setCharacterEncoding("utf-8");
-            response.getWriter().print(JSON.toJSONString(AjaxResult.error(401, "认证失败，无法访问系统资源")));
+            response.getWriter().print(JSON.toJSONString(AjaxResult.error(401, "認證失敗，無法訪問系統資源")));
         } catch (Exception ex) {
-            // 认证失败处理异常，不影响流程
+            // 認證失敗處理異常，不影響流程
         }
     }
 }
