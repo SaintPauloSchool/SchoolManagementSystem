@@ -24,4 +24,9 @@ public interface ISysParentStudentRelationService {
      */
     void syncParentStudentRelationData(Long targetDepartmentId, com.alibaba.fastjson.JSONObject parentJson);
 
+    /**
+     * 全局清理已不在任何部門綁定中的孤立家長學生關係記錄
+     */
+    void deleteOrphanRelations();
+
 }
