@@ -95,6 +95,13 @@ public class WecomSyncHandler {
             parentStudentRelationService.syncParentStudentRelationData(targetDepartmentId, parentJson);
         }
 
+        // 全局清理已不在任何部門綁定中的孤立家長學生關係記錄
+        try {
+            parentStudentRelationService.deleteOrphanRelations();
+        } catch (Exception e) {
+            log.error("全局清理孤立家長學生關係記錄失敗", e);
+        }
+
         if (failCount > 0) {
             return new TaskResult(targetDepartmentIds.size() - failCount, failCount, "共 " + failCount + " 個數據同步失敗，原因: " + firstErrorReason);
         }

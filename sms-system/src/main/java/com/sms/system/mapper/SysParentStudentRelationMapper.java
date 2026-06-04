@@ -46,4 +46,35 @@ public interface SysParentStudentRelationMapper {
      */
     int insertIgnore(SysParentStudentRelation sysParentStudentRelation);
 
+    /**
+     * 批量插入家長學生關係
+     *
+     * @param relations 關係列表
+     * @return 影響行數
+     */
+    int batchInsert(@Param("relations") List<SysParentStudentRelation> relations);
+
+    /**
+     * 更新家長學生關係的可更新欄位
+     *
+     * @param relation 關係實體
+     * @return 影響行數
+     */
+    int updateRelation(SysParentStudentRelation relation);
+
+    /**
+     * 批量刪除家長學生關係
+     *
+     * @param relations 關係列表
+     * @return 影響行數
+     */
+    int deleteBatch(@Param("relations") List<SysParentStudentRelation> relations);
+
+    /**
+     * 全局清理已不在部門綁定中的家長學生關係記錄
+     *
+     * @return 影響行數
+     */
+    int deleteOrphanRelations();
+
 }

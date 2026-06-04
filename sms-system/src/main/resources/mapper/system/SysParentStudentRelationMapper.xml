@@ -73,4 +73,44 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </trim>
     </insert>
 
+    <!-- 批量插入家長學生關係 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO sys_parent_student_relation (
+            parent_user_id, student_user_id, student_name, relation_desc, mobile, external_userid, create_time, update_time
+        ) VALUES
+        <foreach collection="relations" item="item" separator=",">
+            (#{item.parentUserId}, #{item.studentUserId}, #{item.studentName}, #{item.relationDesc}, #{item.mobile}, #{item.externalUserid}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+    </insert>
+
+    <!-- 更新單條關係中的可更新欄位 -->
+    <update id="updateRelation" parameterType="com.sms.system.entity.SysParentStudentRelation">
+        UPDATE sys_parent_student_relation
+        <set>
+            <if test="studentName != null">student_name = #{studentName},</if>
+            <if test="relationDesc != null">relation_desc = #{relationDesc},</if>
+            <if test="mobile != null">mobile = #{mobile},</if>
+            <if test="externalUserid != null">external_userid = #{externalUserid},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        WHERE parent_user_id = #{parentUserId} AND student_user_id = #{studentUserId}
+    </update>
+
+    <!-- 批量刪除關係 -->
+    <delete id="deleteBatch" parameterType="java.util.List">
+        DELETE FROM sys_parent_student_relation
+        WHERE
+        <foreach collection="relations" item="item" separator="OR">
+            (parent_user_id = #{item.parentUserId} AND student_user_id = #{item.studentUserId})
+        </foreach>
+    </delete>
+
+    <!-- 全局清理無任何部門綁定的孤立關係 -->
+    <delete id="deleteOrphanRelations">
+        DELETE FROM sys_parent_student_relation
+        WHERE parent_user_id NOT IN (
+            SELECT DISTINCT parent_user_id FROM sys_department_parent_binding
+        )
+    </delete>
+
 </mapper>
