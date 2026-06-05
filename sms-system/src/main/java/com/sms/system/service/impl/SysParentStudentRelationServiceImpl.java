@@ -42,13 +42,6 @@ public class SysParentStudentRelationServiceImpl implements ISysParentStudentRel
      * @param studentUserId    孩子用戶 ID
      * @param studentName      孩子姓名
      * @param relation         家長關係描述
-     * @p    /**
-     * 創建家長 - 孩子關係記錄
-     *
-     * @param parentUserId     家長用戶 ID
-     * @param studentUserId    孩子用戶 ID
-     * @param studentName      孩子姓名
-     * @param relation         家長關係描述
      * @param mobile           家長手機號
      * @param externalUserid   家長外部 ID
      */
@@ -67,11 +60,12 @@ public class SysParentStudentRelationServiceImpl implements ISysParentStudentRel
 
     /**
      * 同步家長學生關係數據
-     * 由 ParentStudentRelationSyncTask 調用（每日凌晨 0 點 30 分）
+     * 由 WecomSyncHandler 在遍歷班級時調用，僅同步 department_parent_binding，並收集並返回該班級的家長關係對象列表。
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void syncParentStudentRelationData(Long targetDepartmentId, JSONObject parentJson) {
+    public List<SysParentStudentRelation> syncParentStudentRelationData(Long targetDepartmentId, JSONObject parentJson) {
+        List<SysParentStudentRelation> relations = new ArrayList<>();
         // 不存在錯誤編碼則處裡數據
         if (parentJson != null && parentJson.getInteger("errcode") != null && parentJson.getInteger("errcode") == 0) {
             // 獲取家長數據
@@ -88,60 +82,22 @@ public class SysParentStudentRelationServiceImpl implements ISysParentStudentRel
                 }
 
                 // 收集當前同步的家長 ID 列表
-                List<String> currentParentUserIds = new ArrayList<>();
-                // 建立 parentUserId -> childrenArray 的 Map
-                Map<String, JSONArray> parentChildrenMap = new HashMap<>();
-                // 建立 parentUserId -> parentObj 的 Map
-                Map<String, JSONObject> parentInfoMap = new HashMap<>();
+                Set<String> currentParentUserIds = new HashSet<>();
 
                 for (int i = 0; i < parentsArray.size(); i++) {
                     JSONObject parentObj = parentsArray.getJSONObject(i);
                     String parentUserId = parentObj.getString("parent_userid");
-                    if (parentUserId != null) {
-                        currentParentUserIds.add(parentUserId);
-                        parentChildrenMap.put(parentUserId, parentObj.getJSONArray("children"));
-                        parentInfoMap.put(parentUserId, parentObj);
-                    }
-                }
-
-                // 1. 批量查詢這些家長在本地數據庫中的所有關係記錄
-                List<SysParentStudentRelation> dbRelations = new ArrayList<>();
-                if (!currentParentUserIds.isEmpty()) {
-                    dbRelations = sysParentStudentRelationMapper.selectByParentUserIds(currentParentUserIds);
-                }
-
-                // 按 parent_user_id 分組
-                Map<String, List<SysParentStudentRelation>> dbRelationsMap = new HashMap<>();
-                if (dbRelations != null) {
-                    for (SysParentStudentRelation rel : dbRelations) {
-                        dbRelationsMap.computeIfAbsent(rel.getParentUserId(), k -> new ArrayList<>()).add(rel);
-                    }
-                }
-
-                // 用於批量操作的集合
-                List<SysParentStudentRelation> toInsert = new ArrayList<>();
-                List<SysParentStudentRelation> toUpdate = new ArrayList<>();
-                List<SysParentStudentRelation> toDelete = new ArrayList<>();
-
-                // 2. 遍歷當前同步的家長
-                for (String parentUserId : currentParentUserIds) {
-                    JSONObject parentObj = parentInfoMap.get(parentUserId);
                     String mobile = parentObj.getString("mobile");
                     String externalUserid = parentObj.getString("external_userid");
-                    JSONArray childrenArray = parentChildrenMap.get(parentUserId);
+                    if (parentUserId == null) continue;
+
+                    currentParentUserIds.add(parentUserId);
+                    JSONArray childrenArray = parentObj.getJSONArray("children");
 
                     // 處理 departmentParentBinding
                     departmentParentBindingService.processParentChildren(targetDepartmentId, parentUserId, childrenArray, existingBindingMap);
 
-                    // 本地庫中該家長已有的關係
-                    List<SysParentStudentRelation> dbUserRelations = dbRelationsMap.getOrDefault(parentUserId, new ArrayList<>());
-                    Map<String, SysParentStudentRelation> dbUserRelationsByStudent = new HashMap<>();
-                    for (SysParentStudentRelation rel : dbUserRelations) {
-                        dbUserRelationsByStudent.put(rel.getStudentUserId(), rel);
-                    }
-
-                    // WeChat Work 返回 of 該家長的孩子關係
-                    Set<String> wecomStudentIds = new HashSet<>();
+                    // 收集該家長的孩子關係，但不立即進行資料庫增刪改，留待全局同步時處理
                     if (childrenArray != null && !childrenArray.isEmpty()) {
                         for (int j = 0; j < childrenArray.size(); j++) {
                             JSONObject childObj = childrenArray.getJSONObject(j);
@@ -149,71 +105,124 @@ public class SysParentStudentRelationServiceImpl implements ISysParentStudentRel
                             String relationDesc = childObj.getString("relation");
                             String studentName = childObj.getString("name");
                             if (studentUserId == null) continue;
-                            wecomStudentIds.add(studentUserId);
 
-                            SysParentStudentRelation dbRel = dbUserRelationsByStudent.get(studentUserId);
-                            if (dbRel == null) {
-                                // 數據庫中不存在此關係 -> 新增 (不用 insertIgnore 避免空耗自增 ID)
-                                SysParentStudentRelation newRel = buildRelationEntity(parentUserId, studentUserId, studentName, relationDesc, mobile, externalUserid);
-                                toInsert.add(newRel);
-                            } else {
-                                // 數據庫中已存在 -> 檢查是否需要更新
-                                boolean needUpdate = false;
-                                if (isDifferent(dbRel.getStudentName(), studentName)) {
-                                    dbRel.setStudentName(studentName);
-                                    needUpdate = true;
-                                }
-                                if (isDifferent(dbRel.getRelationDesc(), relationDesc)) {
-                                    dbRel.setRelationDesc(relationDesc);
-                                    needUpdate = true;
-                                }
-                                if (isDifferent(dbRel.getMobile(), mobile)) {
-                                    dbRel.setMobile(mobile);
-                                    needUpdate = true;
-                                }
-                                if (isDifferent(dbRel.getExternalUserid(), externalUserid)) {
-                                    dbRel.setExternalUserid(externalUserid);
-                                    needUpdate = true;
-                                }
-                                if (needUpdate) {
-                                    dbRel.setUpdateTime(LocalDateTime.now());
-                                    toUpdate.add(dbRel);
-                                }
-                            }
+                            SysParentStudentRelation rel = buildRelationEntity(parentUserId, studentUserId, studentName, relationDesc, mobile, externalUserid);
+                            relations.add(rel);
                         }
                     }
-
-                    // 找出本地數據庫有，但 WeCom 中已被刪除の關係 -> 刪除
-                    for (SysParentStudentRelation dbRel : dbUserRelations) {
-                        if (!wecomStudentIds.contains(dbRel.getStudentUserId())) {
-                            toDelete.add(dbRel);
-                        }
-                    }
-                }
-
-                // 3. 執行批次與更新操作
-                if (!toInsert.isEmpty()) {
-                    sysParentStudentRelationMapper.batchInsert(toInsert);
-                    logger.info("部門 ID {} 同步：批量新增了 {} 條家長學生關係", targetDepartmentId, toInsert.size());
-                }
-                if (!toUpdate.isEmpty()) {
-                    for (SysParentStudentRelation rel : toUpdate) {
-                        sysParentStudentRelationMapper.updateRelation(rel);
-                    }
-                    logger.info("部門 ID {} 同步：更新了 {} 條家長學生關係", targetDepartmentId, toUpdate.size());
-                }
-                if (!toDelete.isEmpty()) {
-                    sysParentStudentRelationMapper.deleteBatch(toDelete);
-                    logger.info("部門 ID {} 同步：批量刪除了 {} 條過期的家長學生關係", targetDepartmentId, toDelete.size());
                 }
 
                 // 委託給 Service 層刪除不再存在的家長綁定記錄
-                departmentParentBindingService.deleteObsoleteParentBindings(existingBindings, new HashSet<>(currentParentUserIds), targetDepartmentId);
+                departmentParentBindingService.deleteObsoleteParentBindings(existingBindings, currentParentUserIds, targetDepartmentId);
             } else {
                 logger.info("部門 ID {} 的家長列表為空", targetDepartmentId);
             }
         } else {
             logger.error("獲取部門 ID {} 的家長列表失敗：{}", targetDepartmentId, parentJson != null ? parentJson.getString("errmsg") : "返回結果為空");
+        }
+        return relations;
+    }
+
+    /**
+     * 全局批量同步與比對家長學生關係
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void syncAllParentStudentRelations(List<SysParentStudentRelation> wecomRelations, boolean shouldDeleteObsolete) {
+        if (wecomRelations == null) {
+            return;
+        }
+
+        logger.info("開始全局同步家長學生關係，共收到企微關係資料 {} 條，是否執行刪除清理：{}", wecomRelations.size(), shouldDeleteObsolete);
+
+        // 1. 查詢本地數據庫中的所有關係記錄
+        List<SysParentStudentRelation> dbRelations = sysParentStudentRelationMapper.selectAllRelations();
+
+        // 建立本地關係的 Map，key 為 parent_user_id + "_" + student_user_id
+        Map<String, SysParentStudentRelation> dbRelationsMap = new HashMap<>();
+        if (dbRelations != null) {
+            for (SysParentStudentRelation rel : dbRelations) {
+                String key = rel.getParentUserId() + "_" + rel.getStudentUserId();
+                dbRelationsMap.put(key, rel);
+            }
+        }
+
+        List<SysParentStudentRelation> toInsert = new ArrayList<>();
+        List<SysParentStudentRelation> toUpdate = new ArrayList<>();
+
+        // 記錄在 WeCom 中出現的關係 key，用於後續找出需要刪除的記錄
+        Set<String> wecomKeys = new HashSet<>();
+
+        // 2. 比對 WeCom 數據
+        for (SysParentStudentRelation wecomRel : wecomRelations) {
+            String key = wecomRel.getParentUserId() + "_" + wecomRel.getStudentUserId();
+            wecomKeys.add(key);
+
+            SysParentStudentRelation dbRel = dbRelationsMap.get(key);
+            if (dbRel == null) {
+                // 資料庫不存在 -> 新增
+                toInsert.add(wecomRel);
+            } else {
+                // 資料庫存在 -> 檢查更新
+                boolean needUpdate = false;
+                if (isDifferent(dbRel.getStudentName(), wecomRel.getStudentName())) {
+                    dbRel.setStudentName(wecomRel.getStudentName());
+                    needUpdate = true;
+                }
+                if (isDifferent(dbRel.getRelationDesc(), wecomRel.getRelationDesc())) {
+                    dbRel.setRelationDesc(wecomRel.getRelationDesc());
+                    needUpdate = true;
+                }
+                if (isDifferent(dbRel.getMobile(), wecomRel.getMobile())) {
+                    dbRel.setMobile(wecomRel.getMobile());
+                    needUpdate = true;
+                }
+                if (isDifferent(dbRel.getExternalUserid(), wecomRel.getExternalUserid())) {
+                    dbRel.setExternalUserid(wecomRel.getExternalUserid());
+                    needUpdate = true;
+                }
+                if (needUpdate) {
+                    dbRel.setUpdateTime(LocalDateTime.now());
+                    toUpdate.add(dbRel);
+                }
+            }
+        }
+
+        // 3. 找出需要刪除的關係
+        List<SysParentStudentRelation> toDelete = new ArrayList<>();
+        if (shouldDeleteObsolete && dbRelations != null && !wecomRelations.isEmpty()) {
+            for (SysParentStudentRelation dbRel : dbRelations) {
+                String key = dbRel.getParentUserId() + "_" + dbRel.getStudentUserId();
+                if (!wecomKeys.contains(key)) {
+                    toDelete.add(dbRel);
+                }
+            }
+        }
+
+        // 4. 執行批次操作
+        if (!toInsert.isEmpty()) {
+            int batchSize = 1000;
+            for (int i = 0; i < toInsert.size(); i += batchSize) {
+                List<SysParentStudentRelation> subList = toInsert.subList(i, Math.min(i + batchSize, toInsert.size()));
+                sysParentStudentRelationMapper.batchInsert(subList);
+            }
+            logger.info("全局同步：批量新增了 {} 條家長學生關係", toInsert.size());
+        }
+
+        if (!toUpdate.isEmpty()) {
+            for (SysParentStudentRelation rel : toUpdate) {
+                sysParentStudentRelationMapper.updateRelation(rel);
+            }
+            logger.info("全局同步：更新了 {} 條家長學生關係", toUpdate.size());
+        }
+
+        if (shouldDeleteObsolete && !toDelete.isEmpty()) {
+            int batchSize = 1000;
+            for (int i = 0; i < toDelete.size(); i += batchSize) {
+                List<SysParentStudentRelation> subList = toDelete.subList(i, Math.min(i + batchSize, toDelete.size()));
+                sysParentStudentRelationMapper.deleteBatch(subList);
+            }
+            logger.info("全局同步：批量刪除了 {} 條過期的家長學生關係", toDelete.size());
         }
     }
 
@@ -245,6 +254,7 @@ public class SysParentStudentRelationServiceImpl implements ISysParentStudentRel
         relationEntity.setUpdateTime(LocalDateTime.now());
         return relationEntity;
     }
+
     /**
      * 判斷兩個字串是否不同（考慮 null 情況）
      */

@@ -77,4 +77,11 @@ public interface SysParentStudentRelationMapper {
      */
     int deleteOrphanRelations();
 
+    /**
+     * 查詢所有家長學生關係記錄
+     *
+     * @return 關係列表
+     */
+    List<SysParentStudentRelation> selectAllRelations();
+
 }
