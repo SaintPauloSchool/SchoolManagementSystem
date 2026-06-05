@@ -12,9 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.sms.system.entity.SysParentStudentRelation;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 /**
  * 企業微信數據同步處理器
@@ -79,6 +81,9 @@ public class WecomSyncHandler {
         int failCount = 0;
         String firstErrorReason = null;
         
+        // 用於收集和去重全校家長學生關係的 Map，Key 為 parentUserId + "_" + studentUserId
+        Map<String, SysParentStudentRelation> globalRelationsMap = new HashMap<>();
+
         // 遍歷所有班級部門 ID
         for (Long targetDepartmentId : targetDepartmentIds) {
             log.info("開始執行部門 ID {} 的家長學生關係同步", targetDepartmentId);
@@ -92,14 +97,36 @@ public class WecomSyncHandler {
                 }
             }
             
-            parentStudentRelationService.syncParentStudentRelationData(targetDepartmentId, parentJson);
+            List<SysParentStudentRelation> deptRelations = parentStudentRelationService.syncParentStudentRelationData(targetDepartmentId, parentJson);
+            if (deptRelations != null) {
+                for (SysParentStudentRelation rel : deptRelations) {
+                    String key = rel.getParentUserId() + "_" + rel.getStudentUserId();
+                    globalRelationsMap.put(key, rel);
+                }
+            }
+        }
+
+        // 全局進行批量插入、更新與刪除對比
+        // 為了數據安全，只有當沒有班級拉取失敗且企微返回數據不為空時，才允許清理本地多餘/過期的數據；否則只進行新增與更新，不執行刪除。
+        try {
+            boolean shouldDeleteObsolete = (failCount == 0 && !globalRelationsMap.isEmpty());
+            parentStudentRelationService.syncAllParentStudentRelations(new ArrayList<>(globalRelationsMap.values()), shouldDeleteObsolete);
+        } catch (Exception e) {
+            log.error("全局批量同步家長學生關係失敗", e);
+            if (firstErrorReason == null) {
+                firstErrorReason = e.getMessage();
+            }
+            failCount = targetDepartmentIds.size(); // 標記全部失敗或記錄錯誤
         }
 
         // 全局清理已不在任何部門綁定中的孤立家長學生關係記錄
-        try {
-            parentStudentRelationService.deleteOrphanRelations();
-        } catch (Exception e) {
-            log.error("全局清理孤立家長學生關係記錄失敗", e);
+        // 同樣需在完全同步成功且有拉取到資料的前提下才執行，避免誤刪
+        if (failCount == 0 && !globalRelationsMap.isEmpty()) {
+            try {
+                parentStudentRelationService.deleteOrphanRelations();
+            } catch (Exception e) {
+                log.error("全局清理孤立家長學生關係記錄失敗", e);
+            }
         }
 
         if (failCount > 0) {

@@ -110,7 +110,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         DELETE FROM sys_parent_student_relation
         WHERE parent_user_id NOT IN (
             SELECT DISTINCT parent_user_id FROM sys_department_parent_binding
+        ) AND EXISTS (
+            SELECT 1 FROM sys_department_parent_binding LIMIT 1
         )
     </delete>
+
+    <!-- 查詢所有關係記錄 -->
+    <select id="selectAllRelations" resultMap="SysParentStudentRelationResult">
+        SELECT id, parent_user_id, student_user_id, student_name, relation_desc, mobile, external_userid, create_time, update_time
+        FROM sys_parent_student_relation
+    </select>
 
 </mapper>
