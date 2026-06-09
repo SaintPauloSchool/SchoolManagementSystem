@@ -49,29 +49,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </select>
 
-    <insert id="insertIgnore" parameterType="com.sms.system.entity.SysParentStudentRelation" useGeneratedKeys="true" keyProperty="id">
-        INSERT IGNORE INTO sys_parent_student_relation
-        <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="parentUserId != null">parent_user_id,</if>
-            <if test="studentUserId != null">student_user_id,</if>
-            <if test="studentName != null">student_name,</if>
-            <if test="relationDesc != null">relation_desc,</if>
-            <if test="mobile != null">mobile,</if>
-            <if test="externalUserid != null">external_userid,</if>
-            <if test="createTime != null">create_time,</if>
-            <if test="updateTime != null">update_time,</if>
-        </trim>
-        <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="parentUserId != null">#{parentUserId},</if>
-            <if test="studentUserId != null">#{studentUserId},</if>
-            <if test="studentName != null">#{studentName},</if>
-            <if test="relationDesc != null">#{relationDesc},</if>
-            <if test="mobile != null">#{mobile},</if>
-            <if test="externalUserid != null">#{externalUserid},</if>
-            <if test="createTime != null">#{createTime},</if>
-            <if test="updateTime != null">#{updateTime},</if>
-        </trim>
-    </insert>
 
     <!-- 批量插入家長學生關係 -->
     <insert id="batchInsert" parameterType="java.util.List">

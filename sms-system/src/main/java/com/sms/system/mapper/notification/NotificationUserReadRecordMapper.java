@@ -27,13 +27,6 @@ public interface NotificationUserReadRecordMapper {
      */
     List<NotificationUserReadRecord> selectBySendRecordId(Long sendRecordId);
 
-    /**
-     * 根據發送記錄ID查詢發送失敗的閱讀記錄列表（send_status = '0'）
-     *
-     * @param sendRecordId 發送記錄ID
-     * @return 閱讀記錄列表
-     */
-    List<NotificationUserReadRecord> selectFailedBySendRecordId(Long sendRecordId);
 
     /**
      * 根據發送記錄ID查詢發送失敗的閱讀記錄VO列表（直接返回VO，用於分頁）

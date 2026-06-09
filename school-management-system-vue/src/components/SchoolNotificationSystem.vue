@@ -107,6 +107,14 @@
               <el-icon class="nav-icon"><Document /></el-icon>
               <span class="nav-text">定時任務日誌</span>
             </li>
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-4' }"
+              @click="handleMenuSelect('3-4')"
+            >
+              <el-icon class="nav-icon"><User /></el-icon>
+              <span class="nav-text">學生數據匹配</span>
+            </li>
           </ul>
         </div>
         
@@ -199,6 +207,11 @@
           <SysTaskLogList
             v-else-if="activeMenu === '3-3'"
           />
+          
+          <!-- 學生數據匹配 -->
+          <StudentMatch
+            v-else-if="activeMenu === '3-4'"
+          />
         </transition>
       </div>
     </main>
@@ -218,6 +231,7 @@ import HomeSchoolContacts from './HomeSchoolContacts.vue'
 import FailedNotificationList from './FailedNotificationList.vue'
 import CalendarEventList from './CalendarEventList.vue'
 import SysTaskLogList from './SysTaskLogList.vue'
+import StudentMatch from './StudentMatch.vue'
 import request from '@/utils/request'
 
 export default {
@@ -229,7 +243,8 @@ export default {
     HomeSchoolContacts,
     FailedNotificationList,
     CalendarEventList,
-    SysTaskLogList
+    SysTaskLogList,
+    StudentMatch
   },
   data() {
     return {
