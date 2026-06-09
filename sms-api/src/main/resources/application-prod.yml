@@ -50,6 +50,7 @@ wechat:
     corpId: ww04fad852e91fd490
     agentId: 1000033
     secret: I31-B5clKayPf4vNl2bibhL1ia8x4cwIc884xK888Fc
+    studentUpdateSecret: 8eKTrrpvZwHZk3pAvCNaNFsZDKsLTcHAgovPbEmLOro
     noticeBaseUrl: http://tals-wcapp.esp.edu.mo/notice/
     ccNoticeBaseUrl: http://tals-wcapp.esp.edu.mo/school-management-system/
     handbookBaseUrl: http://tals-wcapp.esp.edu.mo/handbook
