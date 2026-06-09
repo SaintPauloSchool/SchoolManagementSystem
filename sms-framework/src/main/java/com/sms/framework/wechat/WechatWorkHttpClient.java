@@ -1,5 +1,6 @@
 package com.sms.framework.wechat;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.common.utils.http.HttpUtils;
 import com.sms.system.entity.TokenCache;
@@ -94,6 +95,12 @@ public class WechatWorkHttpClient {
     private String secret;
 
     /**
+     * 學生修改專用的企業微信 Secret
+     */
+    @Value("${wechat.work.studentUpdateSecret:8eKTrrpvZwHZk3pAvCNaNFsZDKsLTcHAgovPbEmLOro}")
+    private String studentUpdateSecret;
+
+    /**
      * 微信 OAuth 回調的重定向 URI
      */
     @Value("${wechat.work.oauthRedirectUri:https://mo-stu-sys.org-assistant.com/sp-api/wechat/oauth/callback}")
@@ -112,8 +119,26 @@ public class WechatWorkHttpClient {
      * @return 企業微信 Access Token
      */
     public String getAccessToken() {
-        validateBaseConfig();
-        TokenCache cache = tokenCache.get(corpId);
+        return getAccessToken(this.secret);
+    }
+
+    /**
+     * 根據指定的 Secret 獲取有效的 Access Token
+     * 如果緩存中的 Token 仍有效，則直接返回；否則調用微信接口重新獲取並更新緩存。
+     *
+     * @param customSecret 企業微信應用 Secret
+     * @return 企業微信 Access Token
+     */
+    public String getAccessToken(String customSecret) {
+        if (!StringUtils.hasText(corpId)) {
+            throw new IllegalStateException("缺失corpId配置項");
+        }
+        if (!StringUtils.hasText(customSecret)) {
+            throw new IllegalStateException("缺失secret配置項");
+        }
+
+        String cacheKey = corpId + "_" + customSecret;
+        TokenCache cache = tokenCache.get(cacheKey);
 
         // 如果緩存存在且沒有過期，則直接使用緩存的 accessToken
         if (cache != null && !cache.isExpired()) {
@@ -122,7 +147,7 @@ public class WechatWorkHttpClient {
 
         // 雙重檢查鎖 (Double-Checked Locking)，避免併發時多個執行緒同時去微信請求 Token
         synchronized (this) {
-            cache = tokenCache.get(corpId);
+            cache = tokenCache.get(cacheKey);
             if (cache != null && !cache.isExpired()) {
                 return cache.getAccessToken();
             }
@@ -130,9 +155,9 @@ public class WechatWorkHttpClient {
             try {
                 // 構造請求 URL
                 String url = accessTokenUrl.replace("{corpId}", corpId)
-                    .replace("{corpSecret}", secret);
+                    .replace("{corpSecret}", customSecret);
 
-                log.info("請求微信獲取access token");
+                log.info("請求微信獲取access token，用途為: {}", customSecret.equals(this.secret) ? "默認通訊錄權限" : "學生更名權限");
                 String response = HttpUtils.sendGet(url);
                 JSONObject jsonObject = JSONObject.parseObject(response);
 
@@ -147,7 +172,7 @@ public class WechatWorkHttpClient {
                     
                     // token 有效期為 expiresIn 秒，我們減去 300 秒作為緩衝，避免在邊界點發生 Token 失效
                     long expireTimeMs = System.currentTimeMillis() + (expiresIn - 300L) * 1000L;
-                    tokenCache.put(corpId, new TokenCache(accessToken, expireTimeMs));
+                    tokenCache.put(cacheKey, new TokenCache(accessToken, expireTimeMs));
                     
                     log.info("微信access token已刷新");
                     return accessToken;
@@ -326,10 +351,13 @@ public class WechatWorkHttpClient {
      * @param students 學生資訊陣列
      * @return 微信接口調用結果 (JSONObject)
      */
-    public JSONObject batchUpdateStudent(com.alibaba.fastjson.JSONArray students) {
+    public JSONObject batchUpdateStudent(JSONArray students) {
         try {
-            validateBaseConfig();
-            String accessToken = getAccessToken();
+            if (!StringUtils.hasText(corpId)) {
+                throw new IllegalStateException("缺失corpId配置項");
+            }
+            String targetSecret = StringUtils.hasText(studentUpdateSecret) ? studentUpdateSecret : secret;
+            String accessToken = getAccessToken(targetSecret);
             String url = schoolUpdateStudentUrl.replace("{accessToken}", accessToken);
             
             JSONObject payload = new JSONObject();
@@ -342,6 +370,7 @@ public class WechatWorkHttpClient {
             throw new RuntimeException("批量更新學生失敗: " + e.getMessage(), e);
         }
     }
+
 
     /**
      * 構建 WeChat OAuth 授權 URL
