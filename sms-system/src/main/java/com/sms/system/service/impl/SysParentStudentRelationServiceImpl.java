@@ -35,28 +35,6 @@ public class SysParentStudentRelationServiceImpl implements ISysParentStudentRel
     @Autowired
     private ISysDepartmentParentBindingService departmentParentBindingService;
 
-    /**
-     * 創建家長 - 孩子關係記錄
-     *
-     * @param parentUserId     家長用戶 ID
-     * @param studentUserId    孩子用戶 ID
-     * @param studentName      孩子姓名
-     * @param relation         家長關係描述
-     * @param mobile           家長手機號
-     * @param externalUserid   家長外部 ID
-     */
-    @Override
-    @Transactional
-    public void createAndSaveParentStudentRelation(String parentUserId, String studentUserId, String studentName,
-                                                   String relation, String mobile, String externalUserid) {
-        // 創建家長學生關係實體
-        SysParentStudentRelation relationEntity = buildRelationEntity(parentUserId, studentUserId, studentName, relation, mobile, externalUserid);
-        // 插入
-        int result = sysParentStudentRelationMapper.insertIgnore(relationEntity);
-        if (result > 0) {
-            logger.info("創建並保存家長學生關係記錄，家長: {}, 學生: {}", parentUserId, studentUserId);
-        }
-    }
 
     /**
      * 同步家長學生關係數據

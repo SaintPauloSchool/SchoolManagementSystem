@@ -23,6 +23,7 @@
         <swagger.version>3.0.0</swagger.version>
         <pagehelper.boot.version>1.4.7</pagehelper.boot.version>
         <fastjson.version>1.2.83</fastjson.version>
+        <opencc4j.version>1.8.0</opencc4j.version>
         <oshi.version>6.8.3</oshi.version>
         <commons.io.version>2.19.0</commons.io.version>
         <poi.version>4.1.2</poi.version>
@@ -150,6 +151,12 @@
                 <groupId>com.alibaba</groupId>
                 <artifactId>fastjson</artifactId>
                 <version>${fastjson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.houbb</groupId>
+                <artifactId>opencc4j</artifactId>
+                <version>${opencc4j.version}</version>
             </dependency>
 
             <dependency>
