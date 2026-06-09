@@ -70,6 +70,12 @@ public class WechatWorkHttpClient {
     private String schoolParentListUrl;
 
     /**
+     * 批量更新學生 API
+     */
+    @Value("${wechat.work.api.schoolUpdateStudentUrl:https://qyapi.weixin.qq.com/cgi-bin/school/user/batch_update_student?access_token={accessToken}}")
+    private String schoolUpdateStudentUrl;
+
+    /**
      * 企業微信 CropId
      */
     @Value("${wechat.work.corpId:ww04fad852e91fd490}")
@@ -312,6 +318,28 @@ public class WechatWorkHttpClient {
         } catch (Exception e) {
             log.error("獲取家校通訊錄家長列表失敗", e);
             throw new RuntimeException("獲取家校通訊錄家長列表失敗: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 批量更新學校通訊錄學生資訊
+     * @param students 學生資訊陣列
+     * @return 微信接口調用結果 (JSONObject)
+     */
+    public JSONObject batchUpdateStudent(com.alibaba.fastjson.JSONArray students) {
+        try {
+            validateBaseConfig();
+            String accessToken = getAccessToken();
+            String url = schoolUpdateStudentUrl.replace("{accessToken}", accessToken);
+            
+            JSONObject payload = new JSONObject();
+            payload.put("students", students);
+            
+            String response = HttpUtils.sendPost(url, payload.toJSONString(), MediaType.APPLICATION_JSON_VALUE);
+            return JSONObject.parseObject(response);
+        } catch (Exception e) {
+            log.error("批量更新學生失敗", e);
+            throw new RuntimeException("批量更新學生失敗: " + e.getMessage(), e);
         }
     }
 

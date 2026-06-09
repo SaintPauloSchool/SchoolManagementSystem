@@ -12,12 +12,12 @@
     <artifactId>sms-system</artifactId>
 
     <description>
-        system系�?模�?
+        system核心模組
     </description>
 
     <dependencies>
 
-        <!-- ?�用工具-->
+        <!-- 通用工具-->
         <dependency>
             <groupId>com.sms</groupId>
             <artifactId>sms-common</artifactId>
@@ -30,9 +30,12 @@
             <version>3.4.2</version>
         </dependency>
 
+        <!-- 簡繁轉換工具 -->
+        <dependency>
+            <groupId>com.github.houbb</groupId>
+            <artifactId>opencc4j</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>
-
-
-
