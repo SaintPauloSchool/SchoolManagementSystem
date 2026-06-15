@@ -313,7 +313,7 @@
     </div>
 
     <!-- 操作按鈕 -->
-    <div v-if="detailType !== 'ccToMe'" class="section-card action-card">
+    <div class="section-card action-card">
       <div class="section-header">
         <div class="section-icon action-icon">
           <el-icon :size="16"><Operation /></el-icon>
