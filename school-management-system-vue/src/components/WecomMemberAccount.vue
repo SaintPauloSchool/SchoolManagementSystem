@@ -340,7 +340,7 @@ export default {
       if (data.isLeaf) {
         this.selectedMember = data
         this.selectedMemberDeptName = this.findDeptPath(node)
-        this.loadAccountInfo(data.id)
+        this.loadAccountInfo(data.staffUserId || data.id)
       } else {
         // 點擊了部門，清空選中狀態與右側面板
         this.selectedMember = null
@@ -439,7 +439,7 @@ export default {
         this.submitLoading = true
         try {
           const payload = {
-            userid: this.selectedMember.id,
+            userid: this.selectedMember.staffUserId || this.selectedMember.id,
             username: this.form.username,
             status: this.form.status,
             password: this.form.password || ''
@@ -455,7 +455,7 @@ export default {
             ElNotification({ title: '儲存成功', message: response.msg || '儲存帳號資訊成功', type: 'success', duration: 4000 })
             this.closeDialog()
             // 重新載入帳號詳情
-            this.loadAccountInfo(this.selectedMember.id)
+            this.loadAccountInfo(this.selectedMember.staffUserId || this.selectedMember.id)
           } else {
             ElNotification({ title: '儲存失敗', message: response.msg || '儲存帳號資訊失敗', type: 'error', duration: 4000 })
           }
