@@ -1,6 +1,8 @@
 # 開發環境配置
 sms:
   profile: /usr/local/upload
+  # 學生相冊存放路徑
+  photoPath: C:/StudentPhotos
   #profile: C:/uploadPath
 
 spring:

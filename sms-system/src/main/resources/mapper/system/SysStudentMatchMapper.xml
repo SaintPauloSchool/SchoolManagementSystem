@@ -10,9 +10,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="adid" column="adid"/>
         <result property="studentNameLocal" column="student_name_local"/>
         <result property="classNameLocal" column="class_name_local"/>
+        <result property="classNum" column="class_num"/>
         <result property="idEnglishName" column="id_english_name"/>
         <result property="englishFirstName" column="english_first_name"/>
         <result property="englishLastName" column="english_last_name"/>
+        <result property="studentIdNum" column="student_id_num"/>
+        <result property="studentAlbumName" column="student_album_name"/>
         <result property="studentUserIdWecom" column="student_user_id_wecom"/>
         <result property="studentNameWecom" column="student_name_wecom"/>
         <result property="matchStatus" column="match_status"/>
@@ -31,9 +34,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectSysStudentMatchVo">
-        select id, student_profile_num, adid, student_name_local, class_name_local, id_english_name, 
-               english_first_name, english_last_name, student_user_id_wecom, student_name_wecom, 
-               match_status, sync_status, error_msg, create_time, update_time
+        select id, student_profile_num, adid, student_name_local, class_name_local, class_num, id_english_name, 
+               english_first_name, english_last_name, student_id_num, student_album_name, student_user_id_wecom, 
+               student_name_wecom, match_status, sync_status, error_msg, create_time, update_time
         from sys_student_match
     </sql>
 
@@ -72,9 +75,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="adid != null">adid = #{adid},</if>
             <if test="studentNameLocal != null">student_name_local = #{studentNameLocal},</if>
             <if test="classNameLocal != null">class_name_local = #{classNameLocal},</if>
+            <if test="classNum != null">class_num = #{classNum},</if>
             <if test="idEnglishName != null">id_english_name = #{idEnglishName},</if>
             <if test="englishFirstName != null">english_first_name = #{englishFirstName},</if>
             <if test="englishLastName != null">english_last_name = #{englishLastName},</if>
+            <if test="studentIdNum != null">student_id_num = #{studentIdNum},</if>
+            <if test="studentAlbumName != null">student_album_name = #{studentAlbumName},</if>
             <if test="studentUserIdWecom != null">student_user_id_wecom = #{studentUserIdWecom},</if>
             <if test="studentNameWecom != null">student_name_wecom = #{studentNameWecom},</if>
             <if test="matchStatus != null">match_status = #{matchStatus},</if>
@@ -88,14 +94,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 批量 Upsert 導入數據 -->
     <insert id="batchInsertOrUpdate">
         INSERT INTO sys_student_match (
-            student_profile_num, adid, student_name_local, class_name_local, id_english_name, 
-            english_first_name, english_last_name, student_user_id_wecom, student_name_wecom, 
-            match_status, sync_status, error_msg, create_time
+            student_profile_num, adid, student_name_local, class_name_local, class_num, id_english_name, 
+            english_first_name, english_last_name, student_id_num, student_album_name, student_user_id_wecom, 
+            student_name_wecom, match_status, sync_status, error_msg, create_time
         ) VALUES 
         <foreach collection="list" item="item" separator=",">
             (
-                #{item.studentProfileNum}, #{item.adid}, #{item.studentNameLocal}, #{item.classNameLocal}, #{item.idEnglishName},
-                #{item.englishFirstName}, #{item.englishLastName}, #{item.studentUserIdWecom}, #{item.studentNameWecom},
+                #{item.studentProfileNum}, #{item.adid}, #{item.studentNameLocal}, #{item.classNameLocal}, #{item.classNum}, #{item.idEnglishName},
+                #{item.englishFirstName}, #{item.englishLastName}, #{item.studentIdNum}, #{item.studentAlbumName}, #{item.studentUserIdWecom}, #{item.studentNameWecom},
                 #{item.matchStatus}, #{item.syncStatus}, #{item.errorMsg}, SYSDATE()
             )
         </foreach>
@@ -103,9 +109,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             adid = VALUES(adid),
             student_name_local = VALUES(student_name_local),
             class_name_local = VALUES(class_name_local),
+            class_num = VALUES(class_num),
             id_english_name = VALUES(id_english_name),
             english_first_name = VALUES(english_first_name),
             english_last_name = VALUES(english_last_name),
+            student_id_num = VALUES(student_id_num),
+            student_album_name = VALUES(student_album_name),
             student_user_id_wecom = IF(sync_status = '1', student_user_id_wecom, VALUES(student_user_id_wecom)),
             student_name_wecom = IF(sync_status = '1', student_name_wecom, VALUES(student_name_wecom)),
             match_status = IF(sync_status = '1', match_status, VALUES(match_status)),
@@ -177,4 +186,29 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         SET student_name = #{studentName}, update_time = SYSDATE()
         WHERE student_user_id = #{studentUserId}
     </update>
+    
+    <!-- 批量刪除 -->
+    <delete id="deleteSysStudentMatchByIds">
+        delete from sys_student_match where id in
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 清除單個匹配狀態 -->
+    <update id="clearStudentMatch" parameterType="Long">
+        update sys_student_match
+        set student_user_id_wecom = null,
+            student_name_wecom = null,
+            match_status = '0',
+            sync_status = '0',
+            error_msg = null,
+            update_time = sysdate()
+        where id = #{id}
+    </update>
+
+    <!-- 清空所有數據 -->
+    <delete id="deleteAllSysStudentMatch">
+        delete from sys_student_match
+    </delete>
 </mapper>

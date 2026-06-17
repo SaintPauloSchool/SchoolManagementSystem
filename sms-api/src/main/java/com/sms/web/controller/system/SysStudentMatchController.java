@@ -171,4 +171,56 @@ public class SysStudentMatchController extends BaseController {
         }
         sysStudentMatchService.downloadTemplate(response);
     }
+
+    /**
+     * 批量刪除學生數據匹配
+     */
+    @Log(title = "批量刪除學生數據匹配", businessType = BusinessType.DELETE)
+    @PostMapping("/delete")
+    public AjaxResult delete(@RequestBody Map<String, Object> params) {
+        if (isNotAdmin()) {
+            return AjaxResult.error("無權限訪問");
+        }
+        List<?> rawIds = (List<?>) params.get("matchIds");
+        if (rawIds == null || rawIds.isEmpty()) {
+            return AjaxResult.error("請選擇要刪除的數據！");
+        }
+        List<Long> ids = new ArrayList<>();
+        for (Object id : rawIds) {
+            ids.add(Long.valueOf(id.toString()));
+        }
+        int rows = sysStudentMatchService.deleteSysStudentMatchByIds(ids);
+        return rows > 0 ? AjaxResult.success("刪除成功") : AjaxResult.error("刪除失敗");
+    }
+
+    /**
+     * 清除手動/自動匹配關係
+     */
+    @Log(title = "清除學生匹配關係", businessType = BusinessType.UPDATE)
+    @PostMapping("/clear")
+    public AjaxResult clear(@RequestBody Map<String, Object> params) {
+        if (isNotAdmin()) {
+            return AjaxResult.error("無權限訪問");
+        }
+        Long matchId = params.get("matchId") != null ? Long.valueOf(params.get("matchId").toString()) : null;
+        if (matchId == null) {
+            return AjaxResult.error("參數錯誤，請確認 matchId 是否為空");
+        }
+        
+        boolean success = sysStudentMatchService.clearMatch(matchId);
+        return success ? AjaxResult.success("清除匹配成功") : AjaxResult.error("清除匹配失敗，數據不存在");
+    }
+
+    /**
+     * 清空所有對照數據
+     */
+    @Log(title = "清空所有對照數據", businessType = BusinessType.CLEAN)
+    @PostMapping("/clearAll")
+    public AjaxResult clearAll() {
+        if (isNotAdmin()) {
+            return AjaxResult.error("無權限訪問");
+        }
+        sysStudentMatchService.deleteAllSysStudentMatch();
+        return AjaxResult.success("清空成功");
+    }
 }

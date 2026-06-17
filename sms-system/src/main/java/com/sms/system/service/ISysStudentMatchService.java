@@ -59,4 +59,15 @@ public interface ISysStudentMatchService {
 
     /** 同步/匹配數據 (本地數據比對匹配) */
     String syncData(String operName);
+
+    /** 批量刪除學生數據匹配 */
+    int deleteSysStudentMatchByIds(List<Long> ids);
+
+    /** 清除單個匹配狀態 */
+    boolean clearMatch(Long matchId);
+
+    /**
+     * 清空所有對照數據
+     */
+    void deleteAllSysStudentMatch();
 }

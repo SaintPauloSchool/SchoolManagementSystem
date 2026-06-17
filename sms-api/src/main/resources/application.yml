@@ -10,6 +10,8 @@ sms:
   demoEnabled: true
   # 文件路徑 （默認）
   profile: /usr/local/upload
+  # 學生相冊存放路徑
+  photoPath: /usr/local/upload/student_photos
   # 獲取 ip地址開關
   addressEnabled: false
   # app交互祕鑰

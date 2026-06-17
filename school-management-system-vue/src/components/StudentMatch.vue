@@ -25,10 +25,26 @@
             <el-button 
               type="primary" 
               :icon="Promotion" 
-              :disabled="multipleSelection.length === 0"
+              :disabled="multipleSelection.filter(x => x.studentUserIdWecom && x.syncStatus !== '1').length === 0"
               @click="handleBatchSync"
             >
-              同步至企業微信 (已選 {{ multipleSelection.length }} 筆)
+              同步至企業微信 (已選可同步 {{ multipleSelection.filter(x => x.studentUserIdWecom && x.syncStatus !== '1').length }} 筆)
+            </el-button>
+            <el-button 
+              type="danger" 
+              :icon="Delete" 
+              :disabled="multipleSelection.length === 0"
+              @click="handleBatchDelete"
+            >
+              批量刪除 (已選 {{ multipleSelection.length }} 筆)
+            </el-button>
+            <el-button 
+              type="danger" 
+              plain
+              :icon="Delete" 
+              @click="handleClearAll"
+            >
+              清空對照數據
             </el-button>
           </div>
         </div>
@@ -83,11 +99,34 @@
         empty-text="暫無對照數據，請先點擊上方導入 Excel"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" align="center" :selectable="canSelectRow" />
+        <el-table-column type="selection" width="55" align="center" />
         <el-table-column prop="studentProfileNum" label="個人編號" min-width="160" align="center" show-overflow-tooltip />
+        <el-table-column label="相片" width="80" align="center">
+          <template #default="scope">
+            <el-image
+              v-if="scope.row.studentAlbumName"
+              style="width: 40px; height: 40px; border-radius: 4px;"
+              :src="getPhotoUrl(scope.row.classNameLocal, scope.row.studentAlbumName)"
+              :preview-src-list="[getPhotoUrl(scope.row.classNameLocal, scope.row.studentAlbumName)]"
+              :initial-index="0"
+              fit="cover"
+              loading="lazy"
+              preview-teleported
+            >
+              <template #error>
+                <div class="image-slot" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; background: #f5f7fa; color: #a8abb2;">
+                  <el-icon><Picture /></el-icon>
+                </div>
+              </template>
+            </el-image>
+            <span v-else class="text-placeholder">-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="adid" label="帳號" min-width="100" align="center" show-overflow-tooltip />
         <el-table-column prop="studentNameLocal" label="Excel 姓名" min-width="110" align="center" />
         <el-table-column prop="classNameLocal" label="Excel 班級" min-width="90" align="center" />
+        <el-table-column prop="classNum" label="班號" min-width="90" align="center" />
+        <el-table-column prop="studentIdNum" label="學生證編號" min-width="130" align="center" show-overflow-tooltip />
         <el-table-column prop="idEnglishName" label="身份證英文名" min-width="150" show-overflow-tooltip />
         <el-table-column prop="englishFirstName" label="英文名" min-width="110" show-overflow-tooltip />
         <el-table-column prop="englishLastName" label="英文姓" min-width="100" show-overflow-tooltip />
@@ -121,18 +160,37 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="130" align="center" fixed="right">
+        <el-table-column label="操作" width="300" align="center" fixed="right">
           <template #default="scope">
-            <el-button 
-              v-if="scope.row.syncStatus !== '1' && (scope.row.matchStatus === '0' || scope.row.matchStatus === '2')"
-              size="small" 
-              type="primary" 
-              @click="handleManualMatch(scope.row)"
-            >
-              手動匹配
-            </el-button>
-            <span v-else-if="scope.row.syncStatus === '1'" class="text-success">已同步</span>
-            <span v-else class="text-placeholder">-</span>
+            <div class="action-buttons">
+              <el-button 
+                size="small" 
+                type="info" 
+                :icon="Document"
+                @click="handleViewDetail(scope.row)"
+              >
+                詳情
+              </el-button>
+              <el-button 
+                v-if="scope.row.syncStatus !== '1'"
+                size="small" 
+                type="primary" 
+                :icon="Edit"
+                @click="handleManualMatch(scope.row)"
+              >
+                手動匹配
+              </el-button>
+              <el-button 
+                v-if="scope.row.syncStatus !== '1' && (scope.row.matchStatus === '1' || scope.row.matchStatus === '2')"
+                size="small" 
+                type="danger" 
+                :icon="Delete"
+                @click="handleClearMatch(scope.row)"
+              >
+                清除匹配
+              </el-button>
+              <span v-if="scope.row.syncStatus === '1'" class="text-success">已同步</span>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -175,6 +233,7 @@
             <li><strong>第一行：</strong> 說明行（系統會自動跳過）。</li>
             <li><strong>第二行：</strong> 表頭行（系統自動跳過），<strong>數據必須從第三行開始</strong>。</li>
             <li><strong>必填欄位：</strong> <code>IDName</code> (中文姓名) 與 <code>ClassSection</code> (班級簡寫) 為必填項。</li>
+            <li><strong>班號與學生證編號：</strong> <code>ClassNum</code> (班號) 與 <code>DsejStudentID</code> (學生證編號) 可選填。導入時系統會自動去除學生證編號中的減號 <code>-</code>，用於自動匹配，並會與個人編號、帳號、班級、班號及姓名等自動拼接生成 <strong>學生相冊名</strong>。</li>
             <li><strong>系統匹配：</strong> 導入後數據為未匹配狀態。在勾選行點擊「同步至企業微信」時，系統將自動比對班級與姓名並執行同步更名。</li>
           </ul>
 
@@ -186,7 +245,12 @@
                   <th>A列 (StudentProfileNumber)</th>
                   <th>B列 (ADID)</th>
                   <th>C列 (ClassSection)</th>
-                  <th>D列 (IDName)</th>
+                  <th>D列 (ClassNum)</th>
+                  <th>E列 (IDName)</th>
+                  <th>F列 (IDEnglishName)</th>
+                  <th>G列 (EnglishFirstName)</th>
+                  <th>H列 (EnglishLastName)</th>
+                  <th>I列 (DsejStudentID)</th>
                 </tr>
               </thead>
               <tbody>
@@ -195,14 +259,24 @@
                   <td>StudentProfileNumber</td>
                   <td>ADID</td>
                   <td>ClassSection</td>
+                  <td>ClassNum</td>
                   <td>IDName</td>
+                  <td>IDEnglishName</td>
+                  <td>EnglishFirstName</td>
+                  <td>EnglishLastName</td>
+                  <td>DsejStudentID</td>
                 </tr>
                 <tr>
                   <td class="row-num">3</td>
                   <td>95339</td>
                   <td>s95339</td>
                   <td>K1E</td>
+                  <td>10</td>
                   <td>張三</td>
+                  <td>Cheong Sam</td>
+                  <td>Sam</td>
+                  <td>Cheong</td>
+                  <td>1653086-1</td>
                 </tr>
               </tbody>
             </table>
@@ -257,7 +331,10 @@
       <el-table :data="unmatchedList" v-loading="unmatchedLoading" max-height="400" empty-text="沒有未匹配的數據">
         <el-table-column prop="studentProfileNum" label="個人編號" width="120" align="center" />
         <el-table-column prop="studentNameLocal" label="Excel 姓名" width="150" align="center" />
-        <el-table-column prop="classNameLocal" label="Excel 班級" width="120" align="center" />
+        <el-table-column prop="classNameLocal" label="Excel 班級" width="100" align="center" />
+        <el-table-column prop="classNum" label="班號" width="90" align="center" />
+        <el-table-column prop="studentIdNum" label="學生證編號" width="130" align="center" />
+        <el-table-column prop="studentAlbumName" label="學生相冊名" width="220" align="center" show-overflow-tooltip />
         <el-table-column prop="idEnglishName" label="英文名" show-overflow-tooltip />
         <el-table-column label="操作" width="150" align="center" fixed="right">
           <template #default="scope">
@@ -362,22 +439,85 @@
         />
       </div>
     </el-dialog>
+
+    <!-- 學生對照數據詳情對話框 -->
+    <el-dialog title="學生對照數據詳情" v-model="detailVisible" width="1000px" append-to-body destroy-on-close>
+      <el-row :gutter="20" align="middle">
+        <el-col :span="6" style="text-align: center;">
+          <el-image
+            v-if="detailForm.studentAlbumName"
+            style="width: 190px; height: 253px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"
+            :src="getPhotoUrl(detailForm.classNameLocal, detailForm.studentAlbumName)"
+            :preview-src-list="[getPhotoUrl(detailForm.classNameLocal, detailForm.studentAlbumName)]"
+            fit="cover"
+            preview-teleported
+          >
+            <template #error>
+              <div class="image-slot" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 253px; background: #f5f7fa; color: #909399; border-radius: 8px; border: 1px dashed #dcdfe6;">
+                <el-icon :size="40"><Picture /></el-icon>
+                <span style="font-size: 12px; margin-top: 8px;">暫無相片</span>
+              </div>
+            </template>
+          </el-image>
+          <div v-else style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 190px; height: 253px; background: #f5f7fa; color: #909399; border-radius: 8px; border: 1px dashed #dcdfe6; margin: 0 auto;">
+            <el-icon :size="40"><Picture /></el-icon>
+            <span style="font-size: 12px; margin-top: 8px;">暫無相片</span>
+          </div>
+        </el-col>
+        <el-col :span="18">
+          <el-descriptions :column="2" border size="default">
+            <el-descriptions-item label="個人編號" :span="2">{{ detailForm.studentProfileNum || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="帳號">{{ detailForm.adid || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="學生證編號">{{ detailForm.studentIdNum || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="Excel 姓名">{{ detailForm.studentNameLocal || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="Excel 班級">{{ detailForm.classNameLocal || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="班號">{{ detailForm.classNum || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="身份證英文名">{{ detailForm.idEnglishName || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="英文名">{{ detailForm.englishFirstName || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="英文姓">{{ detailForm.englishLastName || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="企微姓名">{{ detailForm.studentNameWecom || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="企微 UserID">{{ detailForm.studentUserIdWecom || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="匹配狀態">
+              <el-tag :type="getMatchStatusTag(detailForm.matchStatus)">
+                {{ getMatchStatusText(detailForm.matchStatus) }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="同步狀態">
+              <el-tag :type="getSyncStatusTag(detailForm.syncStatus)">
+                {{ getSyncStatusText(detailForm.syncStatus) }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="同步錯誤原因" :span="2" v-if="detailForm.syncStatus === '2'">
+              <span style="color: #ef4444;">{{ detailForm.errorMsg || '未知錯誤' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="創建時間">{{ formatTime(detailForm.createTime) }}</el-descriptions-item>
+            <el-descriptions-item label="更新時間">{{ formatTime(detailForm.updateTime) }}</el-descriptions-item>
+          </el-descriptions>
+        </el-col>
+      </el-row>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="detailVisible = false">關 閉</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { User, Upload, Warning, Promotion, Search, Refresh, UploadFilled, Download, InfoFilled, Edit } from '@element-plus/icons-vue'
+import { User, Upload, Warning, Promotion, Search, Refresh, UploadFilled, Download, InfoFilled, Edit, Delete, Picture, Document } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { ElMessageBox, ElNotification } from 'element-plus'
+import { API_BASE_PATH } from '@/utils/deployment'
 
 export default {
   name: 'StudentMatch',
   components: {
-    User, Upload, Warning, Promotion, Search, Refresh, UploadFilled, Download, InfoFilled
+    User, Upload, Warning, Promotion, Search, Refresh, UploadFilled, Download, InfoFilled, Delete, Picture, Document
   },
   data() {
     return {
-      Upload, Warning, Promotion, Search, Refresh, Download,
+      Upload, Warning, Promotion, Search, Refresh, Download, Delete, Document,
       loading: false,
       syncingData: false,
       matchList: [],
@@ -427,7 +567,10 @@ export default {
         pageNum: 1,
         pageSize: 10
       },
-      bindingId: null
+      bindingId: null,
+      // 詳情彈窗
+      detailVisible: false,
+      detailForm: {}
     }
   },
   mounted() {
@@ -644,7 +787,7 @@ export default {
     handleManualMatch(row) {
       this.currentMatchingRow = row
       this.candidatesQuery = {
-        queryName: row.studentNameLocal, // 預填 Excel 的姓名以便快捷搜尋
+        queryName: '', // 手動匹配時不默認加上企微姓名查詢
         queryMobile: '',
         queryClass: row.classNameLocal // 預填 Excel 班級鎖定同班學生
       }
@@ -709,6 +852,44 @@ export default {
       }
     },
 
+    async handleClearMatch(row) {
+      try {
+        await ElMessageBox.confirm(
+          `確認要清除學生【${row.studentNameLocal}】的匹配關係嗎？`,
+          '清除匹配確認',
+          {
+            confirmButtonText: '確定清除',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        )
+        
+        this.loading = true
+        const res = await request({
+          url: '/system/student/match/clear',
+          method: 'post',
+          data: {
+            matchId: row.id
+          }
+        })
+        if (res.code === 200 || res.code === 0) {
+          ElNotification({
+            title: '清除匹配成功',
+            message: '匹配關係已成功清除',
+            type: 'success',
+            duration: 3000
+          })
+          this.loadMatchList()
+        }
+      } catch (e) {
+        if (e !== 'cancel') {
+          console.error(e)
+        }
+      } finally {
+        this.loading = false
+      }
+    },
+
     // 確定匹配並批量同步更名至企微
     handleBatchSync() {
       if (this.multipleSelection.length === 0) return
@@ -749,6 +930,106 @@ export default {
           this.loading = false
         }
       }).catch(() => {})
+    },
+
+    // 批量刪除選中的數據
+    handleBatchDelete() {
+      if (this.multipleSelection.length === 0) return
+      
+      ElMessageBox.confirm(
+        `確認要刪除選中的 ${this.multipleSelection.length} 筆學生對照數據嗎？<br/><small style="color: #ef4444;">注：此操作只會刪除本對照表中的數據，不會刪除企業微信或本地的學生關係數據。</small>`, 
+        '批量刪除確認', 
+        {
+          confirmButtonText: '確定刪除',
+          cancelButtonText: '取消',
+          type: 'warning',
+          dangerouslyUseHTMLString: true
+        }
+      ).then(async () => {
+        this.loading = true
+        const ids = this.multipleSelection.map(x => x.id)
+        try {
+          const res = await request({
+            url: '/system/student/match/delete',
+            method: 'post',
+            data: {
+              matchIds: ids
+            }
+          })
+          if (res.code === 200 || res.code === 0) {
+            ElNotification({ 
+              title: '刪除成功', 
+              message: res.msg || `成功刪除 ${ids.length} 筆數據`, 
+              type: 'success', 
+              duration: 3000
+            })
+            this.multipleSelection = []
+            this.loadMatchList()
+          }
+        } catch (e) {
+          console.error(e)
+        } finally {
+          this.loading = false
+        }
+      }).catch(() => {})
+    },
+
+    // 清空所有對照數據
+    handleClearAll() {
+      ElMessageBox.confirm(
+        `確認要清空<b>所有</b>學生對照數據嗎？此操作不可恢復！<br/><small style="color: #ef4444;">注：此操作只會清空本對照表中的所有導入數據，不會影響企業微信或本地的學生關係數據。</small>`, 
+        '清空對照數據確認', 
+        {
+          confirmButtonText: '確定清空',
+          cancelButtonText: '取消',
+          type: 'danger',
+          dangerouslyUseHTMLString: true
+        }
+      ).then(async () => {
+        this.loading = true
+        try {
+          const res = await request({
+            url: '/system/student/match/clearAll',
+            method: 'post'
+          })
+          if (res.code === 200 || res.code === 0) {
+            ElNotification({ 
+              title: '清空成功', 
+              message: '所有對照數據已成功清空', 
+              type: 'success', 
+              duration: 3000
+            })
+            this.multipleSelection = []
+            this.loadMatchList()
+          }
+        } catch (e) {
+          console.error(e)
+        } finally {
+          this.loading = false
+        }
+      }).catch(() => {})
+    },
+    // 獲取相片完整網址
+    getPhotoUrl(className, albumName) {
+      if (!className || !albumName) return ''
+      return `${API_BASE_PATH}/studentPhotos/${className}/${albumName}.jpg`
+    },
+    // 查看詳情
+    handleViewDetail(row) {
+      this.detailForm = { ...row }
+      this.detailVisible = true
+    },
+    // 格式化時間
+    formatTime(timeStr) {
+      if (!timeStr) return '暫無資料'
+      try {
+        const date = new Date(timeStr)
+        if (isNaN(date.getTime())) return timeStr
+        const pad = (n) => n.toString().padStart(2, '0')
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+      } catch (e) {
+        return timeStr
+      }
     }
   }
 }
@@ -764,6 +1045,38 @@ export default {
 }
 :deep(.el-button) {
   box-shadow: none !important;
+}
+:deep(.el-table .el-button:hover) {
+  transform: none !important;
+  box-shadow: none !important;
+}
+:deep(.el-button--danger.is-plain) {
+  background: #fef2f2 !important;
+  border: 1px solid #fca5a5 !important;
+  color: #ef4444 !important;
+}
+:deep(.el-button--danger.is-plain:hover) {
+  background: #fee2e2 !important;
+  border: 1px solid #ef4444 !important;
+  color: #dc2626 !important;
+}
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+:deep(.action-buttons .el-button) {
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  padding: 6px 15px !important;
+  border: none !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease !important;
+}
+:deep(.action-buttons .el-button:hover) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 .card-header {
   display: flex;
@@ -784,7 +1097,9 @@ export default {
 }
 .header-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+  justify-content: flex-end;
 }
 .search-form {
   margin-bottom: 15px;
@@ -905,5 +1220,12 @@ export default {
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   margin-bottom: 15px;
+}
+
+/* 詳情彈窗 Descriptions 樣式微調 */
+:deep(.el-descriptions__label) {
+  min-width: 120px;
+  word-break: keep-all !important;
+  white-space: nowrap !important;
 }
 </style>

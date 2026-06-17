@@ -26,6 +26,9 @@ public class SysStudentMatch extends BaseEntity {
     /** 學校準確班級代碼 (來自 Excel) */
     private String classNameLocal;
 
+    /** 班號 (來自 Excel) */
+    private String classNum;
+
     /** 身份證英文名 (來自 Excel) */
     private String idEnglishName;
 
@@ -34,6 +37,12 @@ public class SysStudentMatch extends BaseEntity {
 
     /** 英文姓 (來自 Excel) */
     private String englishLastName;
+
+    /** 學生證編號 (來自 Excel) */
+    private String studentIdNum;
+
+    /** 學生相冊名 */
+    private String studentAlbumName;
 
     /** 匹配到的企微學生 UserID */
     private String studentUserIdWecom;
@@ -56,6 +65,40 @@ public class SysStudentMatch extends BaseEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getClassNum() {
+        return classNum;
+    }
+
+    public void setClassNum(String classNum) {
+        this.classNum = classNum;
+    }
+
+    public String getStudentIdNum() {
+        return studentIdNum;
+    }
+
+    public void setStudentIdNum(String studentIdNum) {
+        this.studentIdNum = studentIdNum;
+    }
+
+    public String getStudentAlbumName() {
+        return studentAlbumName;
+    }
+
+    public void setStudentAlbumName(String studentAlbumName) {
+        this.studentAlbumName = studentAlbumName;
+    }
+
+    /**
+     * 獲取去除了減號的學生證編號 (匹配用)
+     */
+    public String getStudentIdNumClean() {
+        if (studentIdNum == null) {
+            return "";
+        }
+        return studentIdNum.replace("-", "").trim();
     }
 
     public String getStudentProfileNum() {
@@ -162,9 +205,12 @@ public class SysStudentMatch extends BaseEntity {
             .append("adid", getAdid())
             .append("studentNameLocal", getStudentNameLocal())
             .append("classNameLocal", getClassNameLocal())
+            .append("classNum", getClassNum())
             .append("idEnglishName", getIdEnglishName())
             .append("englishFirstName", getEnglishFirstName())
             .append("englishLastName", getEnglishLastName())
+            .append("studentIdNum", getStudentIdNum())
+            .append("studentAlbumName", getStudentAlbumName())
             .append("studentUserIdWecom", getStudentUserIdWecom())
             .append("studentNameWecom", getStudentNameWecom())
             .append("matchStatus", getMatchStatus())

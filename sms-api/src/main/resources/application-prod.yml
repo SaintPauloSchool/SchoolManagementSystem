@@ -1,6 +1,8 @@
 # 伺服器文件上傳配置
 sms:
   profile: /usr/local/upload
+  # 學生相冊存放路徑
+  photoPath: /usr/local/upload/student_photos
 
 # 生產環境配置
 spring:
