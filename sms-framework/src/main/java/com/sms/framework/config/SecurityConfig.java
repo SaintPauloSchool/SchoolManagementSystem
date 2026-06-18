@@ -84,6 +84,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter
             .antMatchers("/common/upload").permitAll()
             // 文件下載不需要 JWT token，亦不受驗簽保護
             .antMatchers("/common/download/**").permitAll()
+            // 學生相冊靜態資源不需要 JWT token 驗證
+            .antMatchers("/studentPhotos/**").permitAll()
             // 其他請求都需要認證
             .anyRequest().authenticated();
 

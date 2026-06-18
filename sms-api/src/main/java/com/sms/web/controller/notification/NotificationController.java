@@ -5,6 +5,7 @@ import com.sms.common.core.controller.BaseController;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.core.page.TableDataInfo;
 import com.sms.common.enums.BusinessType;
+import com.sms.common.exception.ServiceException;
 import com.sms.handler.notification.NotificationPublishHandler;
 import com.sms.system.entity.notification.Notification;
 import com.sms.system.entity.notification.NotificationReceiver;
@@ -137,6 +138,15 @@ public class NotificationController extends BaseController {
         notification.setSenderId(getUserId());
         notification.setSenderName(getUsername());
         notification.setCreateTime(LocalDateTime.now());
+
+        if ("1".equals(notification.getStatus()) && notification.getReceivers() != null
+                && !notification.getReceivers().isEmpty()) {
+            try {
+                notificationReceiverService.resolveReceivers(notification.getReceivers(), true);
+            } catch (ServiceException e) {
+                return AjaxResult.error(e.getMessage());
+            }
+        }
 
         // 1. 保存通知基本信息
         if (notificationService.save(notification)) {

@@ -59,6 +59,10 @@ public class NotificationUserReadRecord implements Serializable {
     @TableField("student_user_id")
     private String studentUserId;
 
+    /** 發送時所屬部門ID */
+    @TableField("department_id")
+    private Long departmentId;
+
     /** 創建時間 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("create_time")
@@ -153,6 +157,14 @@ public class NotificationUserReadRecord implements Serializable {
         this.studentUserId = studentUserId;
     }
 
+    public Long getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Long departmentId) {
+        this.departmentId = departmentId;
+    }
+
     @Override
     public String toString() {
         return "NotificationUserReadRecord{" +
@@ -166,6 +178,7 @@ public class NotificationUserReadRecord implements Serializable {
                 ", replyTime=" + replyTime +
                 ", sendStatus='" + sendStatus + '\'' +
                 ", studentUserId='" + studentUserId + '\'' +
+                ", departmentId=" + departmentId +
                 ", createTime=" + createTime +
                 '}';
     }
