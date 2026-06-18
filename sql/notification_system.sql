@@ -136,6 +136,7 @@ CREATE TABLE notification_user_read_record (
        reply_time          DATETIME        DEFAULT NULL               COMMENT '回覆時間',
        send_status         CHAR(1)         DEFAULT '0'                COMMENT '發送狀態（0發送失敗 1發送成功）',
        student_user_id     VARCHAR(64)     DEFAULT NULL               COMMENT '關聯的學生ID（當接收者是家長時記錄，若發送給學生本身則與userId相同）',
+       department_id       BIGINT(20)      DEFAULT NULL               COMMENT '發送時所屬部門ID',
        create_time         DATETIME                                   COMMENT '創建時間',
        PRIMARY KEY (read_id),
        KEY idx_send_record (send_record_id),

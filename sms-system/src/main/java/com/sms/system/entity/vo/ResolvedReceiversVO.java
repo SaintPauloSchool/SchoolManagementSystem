@@ -3,6 +3,7 @@ package com.sms.system.entity.vo;
 import com.sms.system.entity.SysDepartmentParentBinding;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 解析後的通知接收者結果視圖對象
@@ -21,14 +22,19 @@ public class ResolvedReceiversVO {
     /** 從發送對象中解析出來的精確家長與學生綁定關係 */
     private List<SysDepartmentParentBinding> bindings;
 
+    /** 學生 userId 對應的部門 ID */
+    private Map<String, Long> studentDepartmentIds;
+
     public ResolvedReceiversVO() {
     }
 
-    public ResolvedReceiversVO(List<String> parentUserIds, List<String> studentUserIds, List<String> partyIds, List<SysDepartmentParentBinding> bindings) {
+    public ResolvedReceiversVO(List<String> parentUserIds, List<String> studentUserIds, List<String> partyIds,
+                               List<SysDepartmentParentBinding> bindings, Map<String, Long> studentDepartmentIds) {
         this.parentUserIds = parentUserIds;
         this.studentUserIds = studentUserIds;
         this.partyIds = partyIds;
         this.bindings = bindings;
+        this.studentDepartmentIds = studentDepartmentIds;
     }
 
     public List<String> getParentUserIds() {
@@ -61,5 +67,13 @@ public class ResolvedReceiversVO {
 
     public void setBindings(List<SysDepartmentParentBinding> bindings) {
         this.bindings = bindings;
+    }
+
+    public Map<String, Long> getStudentDepartmentIds() {
+        return studentDepartmentIds;
+    }
+
+    public void setStudentDepartmentIds(Map<String, Long> studentDepartmentIds) {
+        this.studentDepartmentIds = studentDepartmentIds;
     }
 }

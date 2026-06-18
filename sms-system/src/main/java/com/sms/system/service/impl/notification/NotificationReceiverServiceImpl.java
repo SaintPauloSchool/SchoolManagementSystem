@@ -1,5 +1,6 @@
 package com.sms.system.service.impl.notification;
 
+import com.sms.common.exception.ServiceException;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -102,54 +103,62 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
      */
     @Override
     public ResolvedReceiversVO resolveReceivers(List<NotificationReceiver> receivers) {
+        return resolveReceivers(receivers, true);
+    }
+
+    @Override
+    public ResolvedReceiversVO resolveReceivers(List<NotificationReceiver> receivers, boolean strictDepartmentCheck) {
         Set<String> parentUserIds = new HashSet<>();
         Set<String> studentUserIds = new HashSet<>();
         Set<String> partyIds = new HashSet<>(); // 暫時未實現具體部門 ID 的解析，保留擴展性
         List<SysDepartmentParentBinding> bindings = new ArrayList<>();
-        // 用於去重的 Set，key 為 "parentUserId_studentUserId"
+        Map<String, Long> studentDepartmentIds = new HashMap<>();
         Set<String> bindingKeys = new HashSet<>();
 
         if (receivers == null || receivers.isEmpty()) {
             log.warn("notification receivers are empty");
-            return buildResult(parentUserIds, studentUserIds, partyIds, bindings);
+            return buildResult(parentUserIds, studentUserIds, partyIds, bindings, studentDepartmentIds);
         }
 
-        for (NotificationReceiver receiver : receivers) {
-            String receiveType = receiver.getReceiveType();
-            String receiveData = receiver.getReceiveData();
+        try {
+            for (NotificationReceiver receiver : receivers) {
+                String receiveType = receiver.getReceiveType();
+                String receiveData = receiver.getReceiveData();
 
-            if (receiveData == null || receiveData.trim().isEmpty()) {
-                continue;
-            }
+                if (receiveData == null || receiveData.trim().isEmpty()) {
+                    continue;
+                }
 
-            try {
                 JSONArray dataArray = JSON.parseArray(receiveData);
                 if (dataArray == null || dataArray.isEmpty()) {
                     continue;
                 }
 
-                // 遍歷所有數據項進行解析
                 for (int i = 0; i < dataArray.size(); i++) {
                     JSONObject dataItem = dataArray.getJSONObject(i);
-                    parseAndResolveDataItem(receiveType, dataItem, parentUserIds, studentUserIds, bindings, bindingKeys);
+                    parseAndResolveDataItem(receiveType, dataItem, parentUserIds, studentUserIds, bindings,
+                            bindingKeys, studentDepartmentIds, strictDepartmentCheck);
                 }
-            } catch (Exception e) {
-                log.error("failed to resolve notification receivers, data: {}", receiveData, e);
             }
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("failed to resolve notification receivers", e);
+            throw new ServiceException("解析接收對象失敗：" + e.getMessage());
         }
 
-        // 最終去重：確保 bindings 中沒有重複的 parentUserId + studentUserId 組合
+        // 最終去重：以 parentUserId + studentUserId + departmentId 為唯一鍵
         List<SysDepartmentParentBinding> uniqueBindings = new ArrayList<>();
         Set<String> finalBindingKeys = new HashSet<>();
         for (SysDepartmentParentBinding binding : bindings) {
             if (binding.getParentUserId() != null && binding.getStudentUserId() != null) {
-                String key = binding.getParentUserId() + "_" + binding.getStudentUserId();
+                String key = buildBindingKey(binding.getParentUserId(), binding.getStudentUserId(), binding.getDepartmentId());
                 if (!finalBindingKeys.contains(key)) {
                     uniqueBindings.add(binding);
                     finalBindingKeys.add(key);
                 } else {
-                    log.warn("檢測到重複的綁定關係，已移除: parentUserId={}, studentUserId={}", 
-                            binding.getParentUserId(), binding.getStudentUserId());
+                    log.warn("檢測到重複的綁定關係，已移除: parentUserId={}, studentUserId={}, departmentId={}",
+                            binding.getParentUserId(), binding.getStudentUserId(), binding.getDepartmentId());
                 }
             }
         }
@@ -157,143 +166,242 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
         log.info("解析完成 - parentUserIds: {}, studentUserIds: {}, 綁定關係數: {} (去重前: {})",
                 parentUserIds.size(), studentUserIds.size(), uniqueBindings.size(), bindings.size());
 
-        return buildResult(parentUserIds, studentUserIds, partyIds, uniqueBindings);
+        return buildResult(parentUserIds, studentUserIds, partyIds, uniqueBindings, studentDepartmentIds);
     }
 
     /**
      * 解析單個接收者數據元素
      */
-    private void parseAndResolveDataItem(String receiveType, JSONObject dataItem, Set<String> parentUserIds, Set<String> studentUserIds, List<SysDepartmentParentBinding> bindings, Set<String> bindingKeys) {
+    private void parseAndResolveDataItem(String receiveType, JSONObject dataItem, Set<String> parentUserIds,
+                                         Set<String> studentUserIds, List<SysDepartmentParentBinding> bindings,
+                                         Set<String> bindingKeys, Map<String, Long> studentDepartmentIds,
+                                         boolean strictDepartmentCheck) {
         Integer type = dataItem.getInteger("type");
         JSONArray ids = dataItem.getJSONArray("receive_ids");
-        
-        // 兼容不同的字段命名
+
         if (ids == null || ids.isEmpty()) {
             ids = dataItem.getJSONArray("ids");
         }
 
-        // 校驗必填項
         if (type == null || ids == null || ids.isEmpty()) {
             return;
         }
 
         List<Long> idList = ids.toJavaList(Long.class);
+        List<Long> departmentIdList = buildDepartmentIdList(dataItem, idList);
 
-        // 根據接收類型分發到不同的解析處理邏輯
         if (RECEIVE_TYPE_PERSONAL.equals(receiveType)) {
-            resolvePersonalReceivers(type, idList, parentUserIds, studentUserIds, bindings, bindingKeys);
+            resolvePersonalReceivers(type, idList, departmentIdList, parentUserIds, studentUserIds, bindings,
+                    bindingKeys, studentDepartmentIds, strictDepartmentCheck);
         } else if (RECEIVE_TYPE_DEPARTMENT.equals(receiveType)) {
-            resolveDepartmentReceivers(type, idList, parentUserIds, studentUserIds, bindings, bindingKeys);
+            resolveDepartmentReceivers(type, idList, parentUserIds, studentUserIds, bindings, bindingKeys,
+                    studentDepartmentIds);
         }
+    }
+
+    /**
+     * 從 receive_data 中解析與 receive_ids 對齊的 department_ids 列表
+     */
+    private List<Long> buildDepartmentIdList(JSONObject dataItem, List<Long> idList) {
+        if (idList == null || idList.isEmpty()) {
+            return Collections.emptyList();
+        }
+        JSONArray departmentIds = dataItem.getJSONArray("department_ids");
+        if (departmentIds == null || departmentIds.size() != idList.size()) {
+            return new ArrayList<>(Collections.nCopies(idList.size(), null));
+        }
+        List<Long> result = new ArrayList<>(idList.size());
+        for (int i = 0; i < idList.size(); i++) {
+            result.add(departmentIds.getLong(i));
+        }
+        return result;
     }
 
     /**
      * 處理個人維度的接收者（直接根據 ID 查詢）
      */
-    private void resolvePersonalReceivers(Integer type, List<Long> idList, Set<String> parentUserIds, Set<String> studentUserIds, List<SysDepartmentParentBinding> bindings, Set<String> bindingKeys) {
+    private void resolvePersonalReceivers(Integer type, List<Long> idList, List<Long> departmentIdList,
+                                          Set<String> parentUserIds, Set<String> studentUserIds,
+                                          List<SysDepartmentParentBinding> bindings, Set<String> bindingKeys,
+                                          Map<String, Long> studentDepartmentIds, boolean strictDepartmentCheck) {
         if (TARGET_TYPE_WECOM.equals(type)) {
-            resolveParentUserIds(idList, parentUserIds, bindings, bindingKeys);
+            resolveParentUserIds(idList, departmentIdList, parentUserIds, bindings, bindingKeys, strictDepartmentCheck);
         } else if (TARGET_TYPE_CUSTOM.equals(type)) {
-            resolveStudentUserIds(idList, studentUserIds);
+            resolveStudentUserIds(idList, departmentIdList, studentUserIds, studentDepartmentIds);
         }
     }
 
     /**
      * 處理部門維度的接收者（根據部門 ID 查詢下屬成員）
      */
-    private void resolveDepartmentReceivers(Integer type, List<Long> idList, Set<String> parentUserIds, Set<String> studentUserIds, List<SysDepartmentParentBinding> outBindings, Set<String> bindingKeys) {
+    private void resolveDepartmentReceivers(Integer type, List<Long> idList, Set<String> parentUserIds,
+                                            Set<String> studentUserIds, List<SysDepartmentParentBinding> outBindings,
+                                            Set<String> bindingKeys, Map<String, Long> studentDepartmentIds) {
         if (TARGET_TYPE_WECOM.equals(type)) {
             resolveParentUserIdsByDepartment(idList, parentUserIds, outBindings, bindingKeys);
         } else if (TARGET_TYPE_CUSTOM.equals(type)) {
-            resolveStudentUserIdsByDepartment(idList, studentUserIds);
+            resolveStudentUserIdsByDepartment(idList, studentUserIds, studentDepartmentIds);
         }
     }
 
     /**
      * 根據家長學生關係 ID 列表，獲取對應的家長 UserID
      */
-    private void resolveParentUserIds(List<Long> ids, Set<String> parentUserIds, List<SysDepartmentParentBinding> bindings, Set<String> bindingKeys) {
+    private void resolveParentUserIds(List<Long> ids, List<Long> departmentIds, Set<String> parentUserIds,
+                                      List<SysDepartmentParentBinding> bindings, Set<String> bindingKeys,
+                                      boolean strictDepartmentCheck) {
         if (ids == null || ids.isEmpty()) {
             return;
         }
 
-        List<SysParentStudentRelation> relations = parentStudentRelationMapper.selectByIds(ids);
-        if (relations != null) {
-            // 先收集所有學生用戶 ID
-            List<String> studentUserIds = relations.stream()
-                    .map(SysParentStudentRelation::getStudentUserId)
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .collect(Collectors.toList());
+        List<Long> uniqueRelationIds = ids.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList());
+        if (uniqueRelationIds.isEmpty()) {
+            return;
+        }
 
-            // 通過學生用戶 ID 從 sys_department_parent_binding 表查詢對應的綁定關係（包含 department_id）
-            // 修復：使用 Map<String, SysDepartmentParentBinding> 以 parentUserId_studentUserId 為 key，精確匹配
-            Map<String, SysDepartmentParentBinding> parentStudentToBindingMap = new HashMap<>();
-            if (!studentUserIds.isEmpty()) {
-                List<SysDepartmentParentBinding> existingBindings = departmentParentBindingMapper.selectByStudentUserIds(studentUserIds);
-                if (existingBindings != null) {
-                    for (SysDepartmentParentBinding binding : existingBindings) {
-                        if (binding.getStudentUserId() != null && binding.getParentUserId() != null) {
-                            String key = binding.getParentUserId() + "_" + binding.getStudentUserId();
-                            // 如果 Map 中已存在該 key，保留有 department_id 的記錄
-                            if (!parentStudentToBindingMap.containsKey(key) || binding.getDepartmentId() != null) {
-                                parentStudentToBindingMap.put(key, binding);
-                            }
-                        }
-                    }
-                }
-            }
+        List<SysParentStudentRelation> relations = parentStudentRelationMapper.selectByIds(uniqueRelationIds);
+        if (relations == null || relations.isEmpty()) {
+            return;
+        }
 
-            for (SysParentStudentRelation relation : relations) {
-                if (relation.getParentUserId() != null && !relation.getParentUserId().trim().isEmpty()) {
-                    parentUserIds.add(relation.getParentUserId());
-                    
-                    // 提取精確的綁定關係，優先使用 sys_department_parent_binding 表中的數據
-                    String studentUserId = relation.getStudentUserId();
-                    
-                    // 去重檢查：如果已經存在相同的 parentUserId + studentUserId 組合，則跳過
-                    String bindingKey = relation.getParentUserId() + "_" + studentUserId;
-                    if (bindingKeys.contains(bindingKey)) {
-                        log.debug("跳過重複的綁定關係: parentUserId={}, studentUserId={}", relation.getParentUserId(), studentUserId);
-                        continue;
+        Map<Long, SysParentStudentRelation> relationMap = relations.stream()
+                .filter(relation -> relation.getId() != null)
+                .collect(Collectors.toMap(SysParentStudentRelation::getId, relation -> relation, (a, b) -> a));
+
+        List<String> studentUserIds = relations.stream()
+                .map(SysParentStudentRelation::getStudentUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<String, List<SysDepartmentParentBinding>> parentStudentBindingsMap = new HashMap<>();
+        if (!studentUserIds.isEmpty()) {
+            List<SysDepartmentParentBinding> existingBindings = departmentParentBindingMapper.selectByStudentUserIds(studentUserIds);
+            if (existingBindings != null) {
+                for (SysDepartmentParentBinding binding : existingBindings) {
+                    if (binding.getStudentUserId() != null && binding.getParentUserId() != null) {
+                        String key = binding.getParentUserId() + "_" + binding.getStudentUserId();
+                        parentStudentBindingsMap.computeIfAbsent(key, k -> new ArrayList<>()).add(binding);
                     }
-                    
-                    // 使用 parentUserId_studentUserId 組合作為 key 精確查找
-                    SysDepartmentParentBinding existingBinding = parentStudentToBindingMap.get(bindingKey);
-                    
-                    if (existingBinding != null) {
-                        // 如果 sys_department_parent_binding 表中有記錄，直接使用
-                        bindings.add(existingBinding);
-                    } else {
-                        // 如果沒有，則創建一個新的 binding（departmentId 為 null）
-                        SysDepartmentParentBinding binding = new SysDepartmentParentBinding();
-                        binding.setParentUserId(relation.getParentUserId());
-                        binding.setStudentUserId(studentUserId);
-                        binding.setDepartmentId(null);
-                        bindings.add(binding);
-                    }
-                    
-                    // 添加到去重集合
-                    bindingKeys.add(bindingKey);
                 }
             }
         }
+
+        for (int i = 0; i < ids.size(); i++) {
+            Long relationId = ids.get(i);
+            if (relationId == null) {
+                continue;
+            }
+            SysParentStudentRelation relation = relationMap.get(relationId);
+            if (relation == null || relation.getParentUserId() == null || relation.getParentUserId().trim().isEmpty()) {
+                continue;
+            }
+            parentUserIds.add(relation.getParentUserId());
+
+            String studentUserId = relation.getStudentUserId();
+            String relationKey = relation.getParentUserId() + "_" + studentUserId;
+            Long explicitDepartmentId = i < departmentIds.size() ? departmentIds.get(i) : null;
+            SysDepartmentParentBinding resolvedBinding = resolveParentBinding(
+                    relation, explicitDepartmentId, parentStudentBindingsMap.get(relationKey), strictDepartmentCheck);
+            Long departmentId = resolvedBinding != null ? resolvedBinding.getDepartmentId() : null;
+
+            String uniqueKey = buildBindingKey(relation.getParentUserId(), studentUserId, departmentId);
+            if (bindingKeys.contains(uniqueKey)) {
+                log.debug("跳過重複的綁定關係: parentUserId={}, studentUserId={}, departmentId={}",
+                        relation.getParentUserId(), studentUserId, departmentId);
+                continue;
+            }
+
+            if (resolvedBinding != null) {
+                bindings.add(resolvedBinding);
+            } else {
+                SysDepartmentParentBinding binding = new SysDepartmentParentBinding();
+                binding.setParentUserId(relation.getParentUserId());
+                binding.setStudentUserId(studentUserId);
+                binding.setDepartmentId(null);
+                bindings.add(binding);
+            }
+
+            bindingKeys.add(uniqueKey);
+        }
+    }
+
+    /**
+     * 解析家長綁定：優先使用前端傳入的 department_id，其次唯一匹配，否則返回 null
+     */
+    private SysDepartmentParentBinding resolveParentBinding(SysParentStudentRelation relation, Long explicitDepartmentId,
+                                                            List<SysDepartmentParentBinding> candidateBindings,
+                                                            boolean strictDepartmentCheck) {
+        if (explicitDepartmentId != null) {
+            if (candidateBindings != null) {
+                for (SysDepartmentParentBinding binding : candidateBindings) {
+                    if (explicitDepartmentId.equals(binding.getDepartmentId())) {
+                        return binding;
+                    }
+                }
+            }
+            SysDepartmentParentBinding binding = new SysDepartmentParentBinding();
+            binding.setParentUserId(relation.getParentUserId());
+            binding.setStudentUserId(relation.getStudentUserId());
+            binding.setDepartmentId(explicitDepartmentId);
+            return binding;
+        }
+        if (candidateBindings == null || candidateBindings.isEmpty()) {
+            return null;
+        }
+        if (candidateBindings.size() == 1) {
+            return candidateBindings.get(0);
+        }
+        if (!strictDepartmentCheck) {
+            log.warn("家長學生關係存在多個部門綁定且未指定 department_id，已使用第一筆: parentUserId={}, studentUserId={}",
+                    relation.getParentUserId(), relation.getStudentUserId());
+            return candidateBindings.get(0);
+        }
+        throw new ServiceException(String.format(
+                "家長「%s」存在多個班級綁定，請在選人時指定班級後再發送（relationId=%d）",
+                relation.getStudentName() != null ? relation.getStudentName() : relation.getParentUserId(),
+                relation.getId()));
     }
 
     /**
      * 根據成員 ID 列表，獲取對應的學生 UserID
      */
-    private void resolveStudentUserIds(List<Long> ids, Set<String> studentUserIds) {
+    private void resolveStudentUserIds(List<Long> ids, List<Long> departmentIds, Set<String> studentUserIds,
+                                       Map<String, Long> studentDepartmentIds) {
         if (ids == null || ids.isEmpty()) {
             return;
         }
 
-        List<SysSchoolDepartmentMember> members = schoolDepartmentMemberMapper.selectMembersByIds(ids);
-        if (members != null) {
-            for (SysSchoolDepartmentMember member : members) {
-                if (member.getUserid() != null && !member.getUserid().trim().isEmpty()) {
-                    studentUserIds.add(member.getUserid());
-                }
+        List<Long> uniqueMemberIds = ids.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList());
+        if (uniqueMemberIds.isEmpty()) {
+            return;
+        }
+
+        List<SysSchoolDepartmentMember> members = schoolDepartmentMemberMapper.selectMembersByIds(uniqueMemberIds);
+        if (members == null || members.isEmpty()) {
+            return;
+        }
+
+        Map<Long, SysSchoolDepartmentMember> memberMap = members.stream()
+                .filter(member -> member.getId() != null)
+                .collect(Collectors.toMap(SysSchoolDepartmentMember::getId, member -> member, (a, b) -> a));
+
+        for (int i = 0; i < ids.size(); i++) {
+            Long memberId = ids.get(i);
+            if (memberId == null) {
+                continue;
+            }
+            SysSchoolDepartmentMember member = memberMap.get(memberId);
+            if (member == null || member.getUserid() == null || member.getUserid().trim().isEmpty()) {
+                continue;
+            }
+            studentUserIds.add(member.getUserid());
+            Long departmentId = i < departmentIds.size() ? departmentIds.get(i) : null;
+            if (departmentId == null) {
+                departmentId = member.getDepartmentId();
+            }
+            if (departmentId != null) {
+                studentDepartmentIds.put(member.getUserid(), departmentId);
             }
         }
     }
@@ -323,10 +431,11 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
                 if (binding.getParentUserId() != null && !binding.getParentUserId().trim().isEmpty()) {
                     parentUserIds.add(binding.getParentUserId());
                     
-                    // 去重檢查：如果已經存在相同的 parentUserId + studentUserId 組合，則跳過
-                    String bindingKey = binding.getParentUserId() + "_" + binding.getStudentUserId();
+                    // 去重檢查：以 parentUserId + studentUserId + departmentId 為唯一鍵
+                    String bindingKey = buildBindingKey(binding.getParentUserId(), binding.getStudentUserId(), binding.getDepartmentId());
                     if (bindingKeys.contains(bindingKey)) {
-                        log.debug("跳過重複的部門綁定關係: parentUserId={}, studentUserId={}", binding.getParentUserId(), binding.getStudentUserId());
+                        log.debug("跳過重複的部門綁定關係: parentUserId={}, studentUserId={}, departmentId={}",
+                                binding.getParentUserId(), binding.getStudentUserId(), binding.getDepartmentId());
                         continue;
                     }
                     
@@ -421,7 +530,8 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
      * 根據部門 ID 列表，獲取該部門下所有的學生 UserID
      * 注意：需要遞歸查找傳入部門及其所有子孫部門的成員數據
      */
-    private void resolveStudentUserIdsByDepartment(List<Long> departmentIds, Set<String> studentUserIds) {
+    private void resolveStudentUserIdsByDepartment(List<Long> departmentIds, Set<String> studentUserIds,
+                                                   Map<String, Long> studentDepartmentIds) {
         // 如果傳入的部門 ID 列表為空，則返回
         if (departmentIds == null || departmentIds.isEmpty()) {
             return;
@@ -440,8 +550,12 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
         List<SysSchoolDepartmentMember> members = schoolDepartmentMemberMapper.selectMembersByDepartmentIds(allDescendantDepartmentIds);
         if (members != null) {
             for (SysSchoolDepartmentMember member : members) {
-                if (member.getUserid() != null && !member.getUserid().trim().isEmpty()) {
-                    studentUserIds.add(member.getUserid());
+                if (member.getUserid() == null || member.getUserid().trim().isEmpty()) {
+                    continue;
+                }
+                studentUserIds.add(member.getUserid());
+                if (member.getDepartmentId() != null) {
+                    studentDepartmentIds.put(member.getUserid(), member.getDepartmentId());
                 }
             }
         }
@@ -450,12 +564,22 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
     /**
      * 封裝並構建最終的返回結果
      */
-    private ResolvedReceiversVO buildResult(Set<String> parentUserIds, Set<String> studentUserIds, Set<String> partyIds, List<SysDepartmentParentBinding> bindings) {
+    private ResolvedReceiversVO buildResult(Set<String> parentUserIds, Set<String> studentUserIds, Set<String> partyIds,
+                                            List<SysDepartmentParentBinding> bindings,
+                                            Map<String, Long> studentDepartmentIds) {
         return new ResolvedReceiversVO(
                 new ArrayList<>(parentUserIds),
                 new ArrayList<>(studentUserIds),
                 new ArrayList<>(partyIds),
-                bindings
+                bindings,
+                studentDepartmentIds
         );
+    }
+
+    /**
+     * 構建綁定關係唯一鍵（parent + student + department）
+     */
+    private String buildBindingKey(String parentUserId, String studentUserId, Long departmentId) {
+        return parentUserId + "_" + studentUserId + "_" + (departmentId != null ? departmentId : "null");
     }
 }

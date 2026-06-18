@@ -124,12 +124,14 @@ public class NotificationPublishHandler {
      */
     public void publishToWechat(Notification notification, List<NotificationReceiver> receivers) {
         // 1. 解析接收者，提取家長、學生、部門的 ID 列表以及精確的綁定關係
-        ResolvedReceiversVO resolvedReceivers = notificationReceiverService.resolveReceivers(receivers);
+        ResolvedReceiversVO resolvedReceivers = notificationReceiverService.resolveReceivers(receivers, true);
 
         List<String> parentUserIds = nullSafe(resolvedReceivers.getParentUserIds());
         List<String> studentUserIds = nullSafe(resolvedReceivers.getStudentUserIds());
         List<String> partyIds = nullSafe(resolvedReceivers.getPartyIds());
         List<SysDepartmentParentBinding> bindings = nullSafe(resolvedReceivers.getBindings());
+        Map<String, Long> studentDepartmentIds = resolvedReceivers.getStudentDepartmentIds() != null
+                ? resolvedReceivers.getStudentDepartmentIds() : Collections.emptyMap();
 
         // 如果沒有任何接收者，則拋出異常避免無效調用
         if (parentUserIds.isEmpty() && studentUserIds.isEmpty() && partyIds.isEmpty()) {
@@ -150,7 +152,8 @@ public class NotificationPublishHandler {
 
         // 5. 創建用戶閱讀記錄（帶入每個用戶的發送成功狀態）
         List<NotificationUserReadRecord> readRecords = createUserReadRecords(
-                sendRecord.getSendRecordId(), parentUserIds, studentUserIds, sendResult.getSuccessUserIds(), bindings);
+                sendRecord.getSendRecordId(), parentUserIds, studentUserIds, sendResult.getSuccessUserIds(), bindings,
+                studentDepartmentIds);
         notificationUserReadRecordService.batchSave(readRecords);
     }
 
@@ -185,7 +188,7 @@ public class NotificationPublishHandler {
 
         // 1. 查詢並解析原通知的接收者
         List<NotificationReceiver> receivers = notificationReceiverService.selectByNotificationId(originalNotification.getNotificationId());
-        ResolvedReceiversVO resolvedReceivers = notificationReceiverService.resolveReceivers(receivers);
+        ResolvedReceiversVO resolvedReceivers = notificationReceiverService.resolveReceivers(receivers, false);
 
         List<String> parentUserIds = nullSafe(resolvedReceivers.getParentUserIds());
         List<String> studentUserIds = nullSafe(resolvedReceivers.getStudentUserIds());
@@ -995,42 +998,42 @@ public class NotificationPublishHandler {
     private List<NotificationUserReadRecord> createUserReadRecords(Long sendRecordId, List<String> parentUserIds,
                                                                    List<String> studentUserIds,
                                                                    Set<String> successUserIds,
-                                                                   List<SysDepartmentParentBinding> bindings) {
-        int capacity = (parentUserIds != null ? parentUserIds.size() : 0)
-                + (studentUserIds != null ? studentUserIds.size() : 0);
-        List<NotificationUserReadRecord> readRecords = new ArrayList<>(capacity);
+                                                                   List<SysDepartmentParentBinding> bindings,
+                                                                   Map<String, Long> studentDepartmentIds) {
+        List<NotificationUserReadRecord> readRecords = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
+        Set<String> processedBindingKeys = new HashSet<>();
 
-        int initialCapacity = bindings == null ? 16 : (int) (bindings.size() / 0.75f) + 1;
-        Map<String, List<String>> parentToStudentsMap = new HashMap<>(initialCapacity);
-        Set<String> parentStudentKeys = new HashSet<>();
         if (bindings != null) {
             for (SysDepartmentParentBinding binding : bindings) {
-                if (binding.getParentUserId() != null && binding.getStudentUserId() != null) {
-                    String key = binding.getParentUserId() + "_" + binding.getStudentUserId();
-                    if (!parentStudentKeys.contains(key)) {
-                        parentToStudentsMap.computeIfAbsent(binding.getParentUserId(), k -> new ArrayList<>())
-                                .add(binding.getStudentUserId());
-                        parentStudentKeys.add(key);
-                    } else {
-                        log.debug("createUserReadRecords: 跳過重複的綁定關係: parentUserId={}, studentUserId={}",
-                                binding.getParentUserId(), binding.getStudentUserId());
-                    }
+                String parentUserId = binding.getParentUserId();
+                if (parentUserId == null) {
+                    continue;
                 }
+                String key = parentUserId + "_" + binding.getStudentUserId() + "_"
+                        + (binding.getDepartmentId() != null ? binding.getDepartmentId() : "null");
+                if (processedBindingKeys.contains(key)) {
+                    log.debug("createUserReadRecords: 跳過重複的綁定關係: parentUserId={}, studentUserId={}, departmentId={}",
+                            parentUserId, binding.getStudentUserId(), binding.getDepartmentId());
+                    continue;
+                }
+                processedBindingKeys.add(key);
+                boolean sendSuccess = successUserIds.contains(parentUserId);
+                readRecords.add(createReadRecord(sendRecordId, parentUserId, "2", binding.getStudentUserId(),
+                        binding.getDepartmentId(), sendSuccess, now));
             }
         }
 
+        Set<String> parentsWithRecords = readRecords.stream()
+                .filter(r -> "2".equals(r.getUserType()))
+                .map(NotificationUserReadRecord::getUserId)
+                .collect(Collectors.toSet());
+
         if (parentUserIds != null) {
             for (String userId : parentUserIds) {
-                List<String> studentIds = parentToStudentsMap.get(userId);
-                boolean sendSuccess = successUserIds.contains(userId);
-
-                if (studentIds != null && !studentIds.isEmpty()) {
-                    for (String studentUserId : studentIds) {
-                        readRecords.add(createReadRecord(sendRecordId, userId, "2", studentUserId, sendSuccess, now));
-                    }
-                } else {
-                    readRecords.add(createReadRecord(sendRecordId, userId, "2", null, sendSuccess, now));
+                if (!parentsWithRecords.contains(userId)) {
+                    boolean sendSuccess = successUserIds.contains(userId);
+                    readRecords.add(createReadRecord(sendRecordId, userId, "2", null, null, sendSuccess, now));
                 }
             }
         }
@@ -1038,7 +1041,8 @@ public class NotificationPublishHandler {
         if (studentUserIds != null) {
             for (String userId : studentUserIds) {
                 boolean sendSuccess = successUserIds.contains(userId);
-                readRecords.add(createReadRecord(sendRecordId, userId, "1", userId, sendSuccess, now));
+                Long departmentId = studentDepartmentIds != null ? studentDepartmentIds.get(userId) : null;
+                readRecords.add(createReadRecord(sendRecordId, userId, "1", userId, departmentId, sendSuccess, now));
             }
         }
 
@@ -1049,7 +1053,8 @@ public class NotificationPublishHandler {
      * 創建單條閱讀記錄
      */
     private NotificationUserReadRecord createReadRecord(Long sendRecordId, String userId, String userType,
-                                                        String studentUserId, boolean sendSuccess, LocalDateTime createTime) {
+                                                        String studentUserId, Long departmentId,
+                                                        boolean sendSuccess, LocalDateTime createTime) {
         NotificationUserReadRecord record = new NotificationUserReadRecord();
         record.setSendRecordId(sendRecordId);
         record.setUserId(userId);
@@ -1058,6 +1063,7 @@ public class NotificationPublishHandler {
         record.setReplyStatus("0");
         record.setSendStatus(sendSuccess ? "1" : "0");
         record.setStudentUserId(studentUserId);
+        record.setDepartmentId(departmentId);
         record.setCreateTime(createTime);
         return record;
     }
