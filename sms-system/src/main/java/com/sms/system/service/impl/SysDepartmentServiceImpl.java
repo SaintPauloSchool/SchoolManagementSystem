@@ -385,7 +385,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
                     if (bindingStudentUserId != null && !bindingStudentUserId.equals(relation.getStudentUserId())) {
                         continue;
                     }
-                    SysDepartment node = convertToDepartmentNode(relation);
+                    SysDepartment node = convertToDepartmentNode(relation, classNode.getId());
                     classNode.getChildren().add(node);
                 }
             }
@@ -425,14 +425,16 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
      * 節點名稱格式：學生姓名 - 關係描述（如：張三 - 父親）
      *
      * @param relation 家長學生關係
+     * @param classDepartmentId 所屬家長班級部門 ID
      * @return 部門節點
      */
-    private SysDepartment convertToDepartmentNode(SysParentStudentRelation relation) {
+    private SysDepartment convertToDepartmentNode(SysParentStudentRelation relation, Long classDepartmentId) {
         // 創建部門節點
         SysDepartment node = new SysDepartment();
         node.setId(relation.getId());
         node.setStudentUserId(relation.getStudentUserId());
         node.setParentUserId(relation.getParentUserId());
+        node.setClassDepartmentId(classDepartmentId);
         
         // 構建顯示名稱：學生姓名 - 關係描述
         String studentName = relation.getStudentName() != null ? relation.getStudentName() : "未知";

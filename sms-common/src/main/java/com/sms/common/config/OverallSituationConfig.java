@@ -26,6 +26,9 @@ public class OverallSituationConfig
     /** 上傳路徑 */
     private static String profile;
 
+    /** 學生相冊存放路徑 */
+    private static String photoPath;
+
     /** 獲取地址開關 */
     private static boolean addressEnabled;
 
@@ -77,6 +80,16 @@ public class OverallSituationConfig
     public void setProfile(String profile)
     {
         OverallSituationConfig.profile = profile;
+    }
+
+    public static String getPhotoPath()
+    {
+        return photoPath;
+    }
+
+    public void setPhotoPath(String photoPath)
+    {
+        OverallSituationConfig.photoPath = photoPath;
     }
 
     public static boolean isAddressEnabled()

@@ -149,9 +149,29 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
                 item.setAdid(getMapCellValue(row, headerMap, "ADID"));
                 item.setStudentNameLocal(name);
                 item.setClassNameLocal(className);
+                item.setClassNum(getMapCellValue(row, headerMap, "ClassNum"));
                 item.setIdEnglishName(getMapCellValue(row, headerMap, "IDEnglishName"));
                 item.setEnglishFirstName(getMapCellValue(row, headerMap, "EnglishFirstName"));
                 item.setEnglishLastName(getMapCellValue(row, headerMap, "EnglishLastName"));
+                
+                String rawStudentIdNum = getMapCellValue(row, headerMap, "DsejStudentID");
+                item.setStudentIdNum(rawStudentIdNum);
+                
+                String studentIdNumClean = "";
+                if (rawStudentIdNum != null) {
+                    studentIdNumClean = rawStudentIdNum.replace("-", "").trim();
+                }
+
+                // 拼接學生相冊名
+                StringBuilder sb = new StringBuilder();
+                sb.append(item.getStudentProfileNum() != null ? item.getStudentProfileNum() : "").append("-");
+                sb.append(studentIdNumClean).append("-");
+                sb.append(item.getAdid() != null ? item.getAdid() : "").append("-");
+                sb.append(item.getClassNameLocal() != null ? item.getClassNameLocal() : "").append("-");
+                sb.append(item.getClassNum() != null ? item.getClassNum() : "").append("-");
+                sb.append(item.getStudentNameLocal() != null ? item.getStudentNameLocal() : "");
+                item.setStudentAlbumName(sb.toString());
+                
                 item.setMatchStatus("0");
                 item.setSyncStatus("0");
                 item.setCreateBy(operName);
@@ -242,18 +262,31 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
             }
             String excelNameTraditional = ZhConverterUtil.toTraditional(excelName);
 
-            Optional<SysWecomStudentVO> matchedOpt = wecomStudents.stream().filter(wecomStu -> {
-                String wecomClass = wecomStu.getClassCodeWecom();
-                String wecomName = wecomStu.getStudentName();
-                if (wecomClass == null || wecomName == null) {
-                    return false;
-                }
-                if (!wecomClass.trim().equalsIgnoreCase(excelClass)) {
-                    return false;
-                }
-                String wecomNameTraditional = ZhConverterUtil.toTraditional(wecomName.trim());
-                return wecomNameTraditional.equals(excelNameTraditional);
-            }).findFirst();
+            // 1. 優先使用學生證編號（無 -）進行精確匹配 (對比企微的 student_user_id)
+            Optional<SysWecomStudentVO> matchedOpt = Optional.empty();
+            String studentIdClean = item.getStudentIdNumClean() != null ? item.getStudentIdNumClean().trim() : "";
+            if (!studentIdClean.isEmpty()) {
+                matchedOpt = wecomStudents.stream().filter(wecomStu -> {
+                    String wecomUserId = wecomStu.getStudentUserId();
+                    return wecomUserId != null && wecomUserId.trim().equalsIgnoreCase(studentIdClean);
+                }).findFirst();
+            }
+
+            // 2. 降級：若無學生證編號或未匹配到，使用原有的班級+姓名比對
+            if (!matchedOpt.isPresent()) {
+                matchedOpt = wecomStudents.stream().filter(wecomStu -> {
+                    String wecomClass = wecomStu.getClassCodeWecom();
+                    String wecomName = wecomStu.getStudentName();
+                    if (wecomClass == null || wecomName == null) {
+                        return false;
+                    }
+                    if (!wecomClass.trim().equalsIgnoreCase(excelClass)) {
+                        return false;
+                    }
+                    String wecomNameTraditional = ZhConverterUtil.toTraditional(wecomName.trim());
+                    return wecomNameTraditional.equals(excelNameTraditional);
+                }).findFirst();
+            }
 
             if (matchedOpt.isPresent()) {
                 SysWecomStudentVO wecomStu = matchedOpt.get();
@@ -340,11 +373,11 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
             org.apache.poi.ss.usermodel.Cell tipCell = row1.createCell(0);
             tipCell.setCellValue(tipText);
             tipCell.setCellStyle(tipStyle);
-            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 6));
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 8));
             
             // 表頭
             org.apache.poi.ss.usermodel.Row row2 = sheet.createRow(1);
-            String[] headers = { "StudentProfileNumber", "ADID", "ClassSection", "IDName", "IDEnglishName", "EnglishFirstName", "EnglishLastName" };
+            String[] headers = { "StudentProfileNumber", "ADID", "ClassSection", "ClassNum", "IDName", "IDEnglishName", "EnglishFirstName", "EnglishLastName", "DsejStudentID" };
             for (int i = 0; i < headers.length; i++) {
                 org.apache.poi.ss.usermodel.Cell cell = row2.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -356,10 +389,12 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
             row3.createCell(0).setCellValue("95339");
             row3.createCell(1).setCellValue("s95339");
             row3.createCell(2).setCellValue("K1E");
-            row3.createCell(3).setCellValue("張三");
-            row3.createCell(4).setCellValue("Cheong Sam");
-            row3.createCell(5).setCellValue("Sam");
-            row3.createCell(6).setCellValue("Cheong");
+            row3.createCell(3).setCellValue("10");
+            row3.createCell(4).setCellValue("張三");
+            row3.createCell(5).setCellValue("Cheong Sam");
+            row3.createCell(6).setCellValue("Sam");
+            row3.createCell(7).setCellValue("Cheong");
+            row3.createCell(8).setCellValue("1653086-1");
             
             // 欄寬
             for (int i = 0; i < headers.length; i++) {
@@ -375,6 +410,27 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
             workbook.write(response.getOutputStream());
             response.getOutputStream().flush();
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int deleteSysStudentMatchByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return 0;
+        }
+        return sysStudentMatchMapper.deleteSysStudentMatchByIds(ids);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean clearMatch(Long matchId) {
+        return sysStudentMatchMapper.clearStudentMatch(matchId) > 0;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteAllSysStudentMatch() {
+        sysStudentMatchMapper.deleteAllSysStudentMatch();
     }
 }
 

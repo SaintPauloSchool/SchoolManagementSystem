@@ -52,4 +52,19 @@ public interface SysStudentMatchMapper {
      * 更新企微學生的本地關係表姓名
      */
     int updateWecomStudentName(@Param("studentUserId") String studentUserId, @Param("studentName") String studentName);
+
+    /**
+     * 批量刪除學生數據匹配
+     */
+    int deleteSysStudentMatchByIds(@Param("ids") List<Long> ids);
+
+    /**
+     * 清除單個匹配狀態
+     */
+    int clearStudentMatch(@Param("id") Long id);
+
+    /**
+     * 清空所有對照數據
+     */
+    int deleteAllSysStudentMatch();
 }

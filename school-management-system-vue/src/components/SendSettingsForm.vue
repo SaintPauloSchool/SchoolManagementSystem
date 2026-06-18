@@ -55,7 +55,7 @@
               <div v-if="selectedStudents.length > 0" class="selected-tags">
                 <el-tag
                   v-for="student in selectedStudents"
-                  :key="student.id"
+                  :key="`${student.type || 1}-${student.id}-${student.departmentId}`"
                   closable
                   @close="removeStudent(student)"
                   class="tag-item"
@@ -295,10 +295,16 @@ export default {
                   dataArr.forEach(group => {
                      const ids = group.receive_ids || [];
                      const names = group.receive_names || [];
+                     const departmentIds = group.department_ids || [];
                      const type = group.type || 1;
                      ids.forEach((id, index) => {
-                       const item = { id: id, name: names[index] || '', type: type }
-                       if (!this.selectedStudents.some(s => s.id === id)) {
+                       const item = {
+                         id: id,
+                         name: names[index] || '',
+                         departmentId: departmentIds[index] || null,
+                         type: type
+                       }
+                       if (!this.selectedStudents.some(s => s.id === id && s.departmentId === item.departmentId)) {
                          this.selectedStudents.push(item)
                        }
                      });
@@ -454,6 +460,7 @@ export default {
         if (type1Students.length > 0) {
            studentPayload.push({
                receive_ids: type1Students.map(s => s.id),
+               department_ids: type1Students.map(s => s.departmentId || null),
                type: 1,
                receive_names: type1Students.map(s => s.name)
            });
@@ -461,6 +468,7 @@ export default {
         if (type2Students.length > 0) {
            studentPayload.push({
                receive_ids: type2Students.map(s => s.id),
+               department_ids: type2Students.map(s => s.departmentId || null),
                type: 2,
                receive_names: type2Students.map(s => s.name)
            });
@@ -578,7 +586,11 @@ export default {
     },
 
     removeStudent(student) {
-      const index = this.selectedStudents.findIndex(s => s.id === student.id)
+      const index = this.selectedStudents.findIndex(s =>
+        s.id === student.id
+        && s.departmentId === student.departmentId
+        && (s.type || 1) === (student.type || 1)
+      )
       if (index > -1) {
         this.selectedStudents.splice(index, 1)
       }

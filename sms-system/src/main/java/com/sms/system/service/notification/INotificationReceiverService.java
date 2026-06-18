@@ -33,4 +33,13 @@ public interface INotificationReceiverService {
      * @return 包含 to_parent_userid、to_student_userid、to_party 和 bindings 的 VO 對象
      */
     ResolvedReceiversVO resolveReceivers(List<NotificationReceiver> receivers);
+
+    /**
+     * 解析接收者列表
+     *
+     * @param receivers 原始通告接收者配置列表
+     * @param strictDepartmentCheck 是否嚴格校驗班級（個人發送時多綁定必須帶 department_id）
+     * @return 解析結果
+     */
+    ResolvedReceiversVO resolveReceivers(List<NotificationReceiver> receivers, boolean strictDepartmentCheck);
 }

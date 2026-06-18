@@ -58,6 +58,9 @@ public class SysDepartment implements Serializable {
     /** 是否葉子節點 */
     private Boolean isLeaf;
 
+    /** 葉子節點所屬家長班級部門 ID（非數據庫字段） */
+    private Long classDepartmentId;
+
     /** 子部門（非數據庫字段） */
     private List<SysDepartment> children;
 
@@ -179,6 +182,14 @@ public class SysDepartment implements Serializable {
 
     public void setIsLeaf(Boolean isLeaf) {
         this.isLeaf = isLeaf;
+    }
+
+    public Long getClassDepartmentId() {
+        return classDepartmentId;
+    }
+
+    public void setClassDepartmentId(Long classDepartmentId) {
+        this.classDepartmentId = classDepartmentId;
     }
 
     public List<SysDepartment> getChildren() {

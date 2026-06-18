@@ -47,6 +47,9 @@ public class SysSchoolDepartment implements Serializable {
     /** 是否爲葉子節點（用於樹形選擇器） */
     private Boolean isLeaf;
 
+    /** 葉子節點所屬部門 ID（成員節點使用，非數據庫字段） */
+    private Long classDepartmentId;
+
     public Long getId() {
         return id;
     }
@@ -133,6 +136,14 @@ public class SysSchoolDepartment implements Serializable {
 
     public void setIsLeaf(Boolean isLeaf) {
         this.isLeaf = isLeaf;
+    }
+
+    public Long getClassDepartmentId() {
+        return classDepartmentId;
+    }
+
+    public void setClassDepartmentId(Long classDepartmentId) {
+        this.classDepartmentId = classDepartmentId;
     }
 
     @Override

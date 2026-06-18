@@ -100,7 +100,7 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
         node.setId(-member.getId());
         node.setName(member.getName());
         node.setIsLeaf(true);
-        // 可選保留其他必要字段...
+        node.setClassDepartmentId(member.getDepartmentId());
         return node;
     }
 

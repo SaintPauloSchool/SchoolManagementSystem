@@ -4,13 +4,13 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.system.entity.SysDepartment;
-import com.sms.system.entity.SysDepartmentParentBinding;
 import com.sms.system.entity.SysParentStudentRelation;
+import com.sms.system.entity.SysSchoolDepartment;
 import com.sms.system.entity.notification.*;
 import com.sms.system.entity.vo.QuestionItemVO;
 import com.sms.system.mapper.SysDepartmentMapper;
-import com.sms.system.mapper.SysDepartmentParentBindingMapper;
 import com.sms.system.mapper.SysParentStudentRelationMapper;
+import com.sms.system.mapper.SysSchoolDepartmentMapper;
 import com.sms.system.mapper.notification.*;
 import com.sms.system.service.notification.INotificationExportService;
 import org.apache.poi.ss.usermodel.*;
@@ -62,10 +62,10 @@ public class NotificationExportServiceImpl implements INotificationExportService
     private SysParentStudentRelationMapper parentStudentRelationMapper;
 
     @Autowired
-    private SysDepartmentParentBindingMapper departmentParentBindingMapper;
+    private SysDepartmentMapper departmentMapper;
 
     @Autowired
-    private SysDepartmentMapper departmentMapper;
+    private SysSchoolDepartmentMapper schoolDepartmentMapper;
 
     @Value("${sp.profile:}")
     private String spProfile;
@@ -537,30 +537,28 @@ public class NotificationExportServiceImpl implements INotificationExportService
             }
         }
 
-        // 查詢部門綁定關係（使用家長ID和學生ID組合查詢）
-        Map<String, String> departmentMap = new HashMap<>();
-        if (!allParentUserIds.isEmpty() && !allStudentUserIds.isEmpty()) {
-            // 查詢所有班級部門
-            List<SysDepartment> allDepartments = departmentMapper.selectAll();
-            Map<Long, String> deptIdNameMap = allDepartments.stream()
-                    .collect(Collectors.toMap(SysDepartment::getId, SysDepartment::getName, (d1, d2) -> d1));
-
-            // 根據班級ID查詢家長綁定關係（使用家長ID和學生ID組合）
-            List<Long> deptIds = allDepartments.stream()
-                    .filter(d -> d.getType() != null && d.getType() == 1) // type=1是班級
-                    .map(SysDepartment::getId)
-                    .collect(Collectors.toList());
-
-            if (!deptIds.isEmpty()) {
-                List<SysDepartmentParentBinding> bindings = departmentParentBindingMapper.selectByParentAndStudentUserIds(
-                        allParentUserIds, allStudentUserIds);
-                for (SysDepartmentParentBinding binding : bindings) {
-                    String deptName = deptIdNameMap.get(binding.getDepartmentId());
-                    if (deptName != null) {
-                        // 使用組合鍵存儲
-                        String key = binding.getParentUserId() + "_" + binding.getStudentUserId();
-                        departmentMap.put(key, deptName);
-                    }
+        Map<Long, String> deptIdNameMap = new HashMap<>();
+        List<SysDepartment> allDepartments = departmentMapper.selectAll();
+        if (allDepartments != null) {
+            for (SysDepartment department : allDepartments) {
+                if (department.getId() != null) {
+                    deptIdNameMap.put(department.getId(), department.getName());
+                }
+            }
+        }
+        List<SysSchoolDepartment> schoolDepartmentsType1 = schoolDepartmentMapper.selectAll(1);
+        if (schoolDepartmentsType1 != null) {
+            for (SysSchoolDepartment department : schoolDepartmentsType1) {
+                if (department.getId() != null) {
+                    deptIdNameMap.putIfAbsent(department.getId(), department.getName());
+                }
+            }
+        }
+        List<SysSchoolDepartment> schoolDepartmentsType2 = schoolDepartmentMapper.selectAll(2);
+        if (schoolDepartmentsType2 != null) {
+            for (SysSchoolDepartment department : schoolDepartmentsType2) {
+                if (department.getId() != null) {
+                    deptIdNameMap.putIfAbsent(department.getId(), department.getName());
                 }
             }
         }
@@ -591,8 +589,8 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 relationDesc = relation.getRelationDesc() != null ? relation.getRelationDesc() : "";
             }
 
-            // 班級（使用組合鍵查詢）
-            String className = departmentMap.getOrDefault(relationKey, "");
+            // 班級：直接讀取閱讀記錄中的 department_id
+            String className = resolveClassName(record, deptIdNameMap);
             dataRow.createCell(colNum++).setCellValue(className);
 
             // 姓名
@@ -703,6 +701,16 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 }
             }
         }
+    }
+
+    /**
+     * 解析班級名稱
+     */
+    private String resolveClassName(NotificationUserReadRecord record, Map<Long, String> deptIdNameMap) {
+        if (record.getDepartmentId() == null) {
+            return "";
+        }
+        return deptIdNameMap.getOrDefault(record.getDepartmentId(), "");
     }
 
     /**

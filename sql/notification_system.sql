@@ -136,6 +136,7 @@ CREATE TABLE notification_user_read_record (
        reply_time          DATETIME        DEFAULT NULL               COMMENT '回覆時間',
        send_status         CHAR(1)         DEFAULT '0'                COMMENT '發送狀態（0發送失敗 1發送成功）',
        student_user_id     VARCHAR(64)     DEFAULT NULL               COMMENT '關聯的學生ID（當接收者是家長時記錄，若發送給學生本身則與userId相同）',
+       department_id       BIGINT(20)      DEFAULT NULL               COMMENT '發送時所屬部門ID',
        create_time         DATETIME                                   COMMENT '創建時間',
        PRIMARY KEY (read_id),
        KEY idx_send_record (send_record_id),
@@ -475,14 +476,17 @@ CREATE TABLE `sys_task_log` (
 -- ----------------------------
 DROP TABLE IF EXISTS sys_student_match;
 CREATE TABLE IF NOT EXISTS sys_student_match (
-                                                 id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主鍵 ID',
-                                                 student_profile_num VARCHAR(50) DEFAULT NULL COMMENT '學生個人編號',
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主鍵 ID',
+    student_profile_num VARCHAR(50) DEFAULT NULL COMMENT '學生個人編號',
     adid VARCHAR(50) DEFAULT NULL COMMENT '學生帳號',
-    student_name_local VARCHAR(100) NOT NULL COMMENT '學校準確姓名',
-    class_name_local VARCHAR(50) NOT NULL COMMENT '學校準確班級代碼',
+    student_name_local VARCHAR(100) NOT NULL COMMENT '學生姓名',
+    class_name_local VARCHAR(50) NOT NULL COMMENT '班級',
+    class_num VARCHAR(50) DEFAULT NULL COMMENT '班號',
     id_english_name VARCHAR(150) DEFAULT NULL COMMENT '身份證英文名',
     english_first_name VARCHAR(100) DEFAULT NULL COMMENT '英文名',
     english_last_name VARCHAR(100) DEFAULT NULL COMMENT '英文姓',
+    student_id_num VARCHAR(50) DEFAULT NULL COMMENT '學生證編號',
+    student_album_name VARCHAR(255) DEFAULT NULL COMMENT '學生相冊名',
     student_user_id_wecom VARCHAR(64) DEFAULT NULL COMMENT '匹配到的企微學生 UserID',
     student_name_wecom VARCHAR(100) DEFAULT NULL COMMENT '匹配到的企微原始學生姓名',
     match_status CHAR(1) NOT NULL DEFAULT '0' COMMENT '匹配狀態 (0: 未匹配, 1: 自動匹配成功, 2: 手動匹配成功)',
@@ -492,7 +496,6 @@ CREATE TABLE IF NOT EXISTS sys_student_match (
     update_time DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     PRIMARY KEY (id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='學生數據匹配表';
-
 -- ----------------------------
 -- 企微成員登入帳號表
 -- ----------------------------

@@ -46,6 +46,9 @@ public class ResourcesConfig implements WebMvcConfigurer
         /** 本地文件上傳路徑 */
         registry.addResourceHandler(Constants.RESOURCE_PREFIX + "/**").addResourceLocations("file:" + OverallSituationConfig.getProfile() + "/");
 
+        /** 學生相冊靜態資源路徑 */
+        registry.addResourceHandler("/studentPhotos/**").addResourceLocations("file:" + OverallSituationConfig.getPhotoPath() + "/");
+
         /** swagger配置 */
         registry.addResourceHandler("/swagger-ui/**").addResourceLocations("classpath:/META-INF/resources/webjars/springfox-swagger-ui/");
     }
@@ -65,6 +68,7 @@ public class ResourcesConfig implements WebMvcConfigurer
                         "/login",
                         "/captchaImage",
                         "/profile/**",
+                        "/studentPhotos/**",
                         "/favicon.ico",
                         "/common/download/**",
                         "/swagger-ui.html",

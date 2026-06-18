@@ -43,14 +43,14 @@
             :expand-on-click-node="false"
             :check-on-click-node="false"
             :check-strictly="true"
-            node-key="id"
+            node-key="treeKey"
           >
             <template #default="{ node, data }">
               <span class="tree-node">
                 <el-checkbox
                   v-if="data.isLeaf"
-                  :model-value="selectedStudentIds.includes(data.id)"
-                  @change="() => handleLeafNodeClick(data, 'classTree')"
+                  :model-value="isItemSelected(data, 1)"
+                  @change="() => handleLeafNodeClick(data, 1)"
                   class="node-checkbox"
                 />
                 <el-icon v-if="data.type === 5" class="node-icon school-icon"><School /></el-icon>
@@ -84,14 +84,14 @@
             :expand-on-click-node="false"
             :check-on-click-node="false"
             :check-strictly="true"
-            node-key="id"
+            node-key="treeKey"
           >
             <template #default="{ node, data }">
               <span class="tree-node">
                 <el-checkbox
                   v-if="data.isLeaf"
-                  :model-value="selectedStudentIds.includes(data.id)"
-                  @change="() => handleLeafNodeClick(data, 'customTreeRef')"
+                  :model-value="isItemSelected(data, 2)"
+                  @change="() => handleLeafNodeClick(data, 2)"
                   class="node-checkbox"
                 />
                 <el-icon v-if="data.isLeaf" class="node-icon relation-icon"><User /></el-icon>
@@ -114,7 +114,7 @@
           <div v-if="selectedStudentsWithDetails.length > 0" class="selected-list">
             <div
               v-for="student in selectedStudentsWithDetails"
-              :key="student.id"
+              :key="`${student.type}-${student.id}-${student.departmentId}`"
               class="selected-tag"
             >
               <span class="selected-tag-name">{{ student.name }}</span>
@@ -181,7 +181,7 @@ export default {
       activeTab: 'wecom',
       departmentTree: [],
       customTree: [],
-      selectedStudentIds: [],
+      selectedItems: [],
       loading: false,
       customLoading: false
     }
@@ -206,32 +206,7 @@ export default {
       }
     },
     selectedStudentsWithDetails() {
-      const result = this.selectedStudentIds.map(id => {
-        let relation = this.findRelationInTree(id, this.departmentTree)
-        if (relation) {
-          return {
-            id: relation.id,
-            studentUserId: relation.studentUserId,
-            parentUserId: relation.parentUserId,
-            name: relation.name,
-            studentName: relation.name.split('-')[0],
-            parentName: relation.name.split('-')[1],
-            relationDesc: relation.relationDesc,
-            mobile: relation.mobile,
-            type: 1
-          }
-        }
-        relation = this.findRelationInTree(id, this.customTree)
-        if (relation) {
-          return {
-            id: Math.abs(relation.id),
-            name: relation.name,
-            type: 2
-          }
-        }
-        return { id, name: '未知學生', type: 1 }
-      })
-      return result
+      return this.selectedItems
     },
   },
   watch: {
@@ -254,10 +229,10 @@ export default {
            request({ url: '/system/schoolDepartment/treeWithMembers?type=2', method: 'get' })
         ])
         if (response.code === 200 || response.code === 0) {
-          this.departmentTree = response.data || []
+          this.departmentTree = this.annotateTreeKeys(response.data || [])
         }
         if (customResponse.code === 200 || customResponse.code === 0) {
-          this.customTree = customResponse.data || []
+          this.customTree = this.annotateTreeKeys(customResponse.data || [])
         }
       } catch (error) {
         ElNotification({ title: "操作失敗", message: '載入學生通訊錄失敗', type: "error", duration: 4000 })
@@ -271,39 +246,78 @@ export default {
         })
       }
     },
-  
-    initSelectedTree() {
-      let mappedIds = []
-      if (this.selectedStudents && this.selectedStudents.length > 0) {
-        mappedIds = this.selectedStudents.map(student => {
-           return student.type === 2 ? -Math.abs(student.id) : student.id
-        })
+
+    annotateTreeKeys(nodes) {
+      if (!Array.isArray(nodes)) {
+        return []
       }
-      this.selectedStudentIds = mappedIds
-      this.$nextTick(() => {
-        if (this.$refs.classTree) this.$refs.classTree.setCheckedKeys(mappedIds)
-        if (this.$refs.customTreeRef) this.$refs.customTreeRef.setCheckedKeys(mappedIds)
+      nodes.forEach(node => {
+        if (!node) return
+        if (node.isLeaf) {
+          const deptId = node.classDepartmentId != null ? node.classDepartmentId : 'none'
+          node.treeKey = `leaf_${node.id}_${deptId}`
+        } else {
+          node.treeKey = `dept_${node.id}`
+        }
+        if (node.children && node.children.length > 0) {
+          this.annotateTreeKeys(node.children)
+        }
       })
+      return nodes
     },
-  
-    findRelationInTree(id, tree) {
-      for (const node of tree) {
-        // isLeaf=true 的節點是家長學生關係節點
-        if (node.isLeaf && node.id === id) {
-          return node
-        }
-        if (node.children) {
-          const found = this.findRelationInTree(id, node.children)
-          if (found) return found
+
+    initSelectedTree() {
+      this.selectedItems = (this.selectedStudents || []).map(student => ({
+        id: student.id,
+        name: student.name || '',
+        departmentId: student.departmentId || null,
+        studentUserId: student.studentUserId,
+        parentUserId: student.parentUserId,
+        relationDesc: student.relationDesc,
+        mobile: student.mobile,
+        type: student.type === 2 ? 2 : 1
+      }))
+    },
+
+    buildSelectedItem(data, type) {
+      if (type === 1) {
+        const name = data.name || ''
+        const nameParts = name.split('-')
+        return {
+          id: data.id,
+          studentUserId: data.studentUserId,
+          parentUserId: data.parentUserId,
+          name,
+          studentName: nameParts[0] || '',
+          parentName: nameParts[1] || '',
+          relationDesc: data.relationDesc,
+          mobile: data.mobile,
+          departmentId: data.classDepartmentId || null,
+          type: 1
         }
       }
-      return null
+      return {
+        id: Math.abs(data.id),
+        name: data.name || '',
+        departmentId: data.classDepartmentId || null,
+        type: 2
+      }
+    },
+
+    findSelectedIndex(item) {
+      return this.selectedItems.findIndex(selected =>
+        selected.id === item.id
+        && selected.departmentId === item.departmentId
+        && selected.type === item.type
+      )
+    },
+
+    isItemSelected(data, type) {
+      return this.findSelectedIndex(this.buildSelectedItem(data, type)) > -1
     },
 
     handleClose() {
-      if (this.$refs.classTree) this.$refs.classTree.setCheckedKeys([])
-      if (this.$refs.customTreeRef) this.$refs.customTreeRef.setCheckedKeys([])
-      this.selectedStudentIds = []
+      this.selectedItems = []
       this.$emit('update:visible', false)
     },
 
@@ -312,38 +326,26 @@ export default {
       this.handleClose()
     },
 
-    handleLeafNodeClick(data, refName) {
-      if (!data || !data.id) return;
-      const index = this.selectedStudentIds.indexOf(data.id);
+    handleLeafNodeClick(data, type) {
+      if (!data || data.id == null) return
+      const item = this.buildSelectedItem(data, type)
+      const index = this.findSelectedIndex(item)
       if (index > -1) {
-        this.selectedStudentIds = this.selectedStudentIds.filter(id => id !== data.id);
-        this.$nextTick(() => {
-          if (this.$refs[refName]) {
-            this.$refs[refName].setChecked(data, false);
-          }
-        });
+        this.selectedItems.splice(index, 1)
       } else {
-        this.selectedStudentIds.push(data.id);
+        this.selectedItems.push(item)
         this.$nextTick(() => {
-          if (this.$refs[refName]) {
-            this.$refs[refName].setChecked(data, true);
-          }
           if (this.$refs.selectedContainer) {
-            this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
+            this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight
           }
-        });
+        })
       }
     },
 
     removeSelectedStudent(student) {
-      const internalId = student.type === 2 ? -Math.abs(student.id) : student.id
-      const index = this.selectedStudentIds.indexOf(internalId)
+      const index = this.findSelectedIndex(student)
       if (index > -1) {
-        this.selectedStudentIds.splice(index, 1)
-        this.$nextTick(() => {
-          if (this.$refs.classTree) this.$refs.classTree.setChecked(internalId, false)
-          if (this.$refs.customTreeRef) this.$refs.customTreeRef.setChecked(internalId, false)
-        })
+        this.selectedItems.splice(index, 1)
       }
     },
 
