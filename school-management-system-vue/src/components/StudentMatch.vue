@@ -55,7 +55,7 @@
         <el-form-item label="學生姓名">
           <el-input 
             v-model="searchForm.studentNameLocal" 
-            placeholder="請輸入 學生姓名 或 企微學生姓名"
+            placeholder="請輸入學生姓名或企微學生姓名"
             clearable 
             style="width: 220px;"
             @keyup.enter="handleSearch" 
