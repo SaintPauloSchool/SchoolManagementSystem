@@ -55,13 +55,13 @@
         <el-form-item label="學生姓名">
           <el-input 
             v-model="searchForm.studentNameLocal" 
-            placeholder="請輸入 Excel 姓名 或 企微姓名" 
+            placeholder="請輸入 學生姓名 或 企微學生姓名"
             clearable 
             style="width: 220px;"
             @keyup.enter="handleSearch" 
           />
         </el-form-item>
-        <el-form-item label="Excel 班級">
+        <el-form-item label="學生班級">
           <el-input 
             v-model="searchForm.classNameLocal" 
             placeholder="例如 K1E" 
@@ -123,9 +123,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="adid" label="帳號" min-width="100" align="center" show-overflow-tooltip />
-        <el-table-column prop="studentNameLocal" label="Excel 姓名" min-width="110" align="center" />
-        <el-table-column prop="classNameLocal" label="Excel 班級" min-width="90" align="center" />
-        <el-table-column prop="classNum" label="班號" min-width="90" align="center" />
+        <el-table-column prop="studentNameLocal" label="學生姓名" min-width="110" align="center" />
+        <el-table-column prop="classNameLocal" label="學生班級" min-width="90" align="center" />
+        <el-table-column prop="classNum" label="學生班號" min-width="90" align="center" />
         <el-table-column prop="studentIdNum" label="學生證編號" min-width="130" align="center" show-overflow-tooltip />
         <el-table-column prop="idEnglishName" label="身份證英文名" min-width="150" show-overflow-tooltip />
         <el-table-column prop="englishFirstName" label="英文名" min-width="110" show-overflow-tooltip />
@@ -307,13 +307,13 @@
         <el-form-item label="學生姓名">
           <el-input 
             v-model="unmatchedQuery.studentNameLocal" 
-            placeholder="Excel姓名/企微姓名" 
+            placeholder="學生姓名/企微學生姓名"
             clearable 
             style="width: 180px;"
             @keyup.enter="handleUnmatchedSearch" 
           />
         </el-form-item>
-        <el-form-item label="Excel 班級">
+        <el-form-item label="學生班級">
           <el-input 
             v-model="unmatchedQuery.classNameLocal" 
             placeholder="例如 K1E" 
@@ -330,9 +330,9 @@
 
       <el-table :data="unmatchedList" v-loading="unmatchedLoading" max-height="400" empty-text="沒有未匹配的數據">
         <el-table-column prop="studentProfileNum" label="個人編號" width="120" align="center" />
-        <el-table-column prop="studentNameLocal" label="Excel 姓名" width="150" align="center" />
-        <el-table-column prop="classNameLocal" label="Excel 班級" width="100" align="center" />
-        <el-table-column prop="classNum" label="班號" width="90" align="center" />
+        <el-table-column prop="studentNameLocal" label="學生姓名" width="150" align="center" />
+        <el-table-column prop="classNameLocal" label="學生班級" width="100" align="center" />
+        <el-table-column prop="classNum" label="學生班號" width="90" align="center" />
         <el-table-column prop="studentIdNum" label="學生證編號" width="130" align="center" />
         <el-table-column prop="studentAlbumName" label="學生相冊名" width="220" align="center" show-overflow-tooltip />
         <el-table-column prop="idEnglishName" label="英文名" show-overflow-tooltip />
@@ -363,12 +363,12 @@
     <!-- 彈窗二：企微候選學生選擇器 -->
     <el-dialog draggable title="手動綁定 - 選擇企業微信學生" v-model="candidatesVisible" width="800px" append-to-body>
       <div class="candidate-header-info" v-if="currentMatchingRow">
-        待匹配 Excel 學生：<strong>{{ currentMatchingRow.studentNameLocal }}</strong> (班級: {{ currentMatchingRow.classNameLocal }})
+        待匹配學生：<strong>{{ currentMatchingRow.studentNameLocal }}</strong> (班級: {{ currentMatchingRow.classNameLocal }})
       </div>
       
       <!-- 搜索欄 -->
       <el-form :model="candidatesQuery" :inline="true" class="candidates-search-form">
-        <el-form-item label="企微姓名">
+        <el-form-item label="企微學生姓名">
           <el-input 
             v-model="candidatesQuery.queryName" 
             placeholder="支持簡繁體姓名查詢" 
@@ -469,9 +469,9 @@
             <el-descriptions-item label="個人編號" :span="2">{{ detailForm.studentProfileNum || '-' }}</el-descriptions-item>
             <el-descriptions-item label="帳號">{{ detailForm.adid || '-' }}</el-descriptions-item>
             <el-descriptions-item label="學生證編號">{{ detailForm.studentIdNum || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="Excel 姓名">{{ detailForm.studentNameLocal || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="Excel 班級">{{ detailForm.classNameLocal || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="班號">{{ detailForm.classNum || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="學生姓名">{{ detailForm.studentNameLocal || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="學生班級">{{ detailForm.classNameLocal || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="學生班號">{{ detailForm.classNum || '-' }}</el-descriptions-item>
             <el-descriptions-item label="身份證英文名">{{ detailForm.idEnglishName || '-' }}</el-descriptions-item>
             <el-descriptions-item label="英文名">{{ detailForm.englishFirstName || '-' }}</el-descriptions-item>
             <el-descriptions-item label="英文姓">{{ detailForm.englishLastName || '-' }}</el-descriptions-item>
