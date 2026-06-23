@@ -115,14 +115,6 @@
               <el-icon class="nav-icon"><User /></el-icon>
               <span class="nav-text">學生數據匹配</span>
             </li>
-            <li 
-              class="nav-item nav-subitem"
-              :class="{ active: activeMenu === '3-5' }"
-              @click="handleMenuSelect('3-5')"
-            >
-              <el-icon class="nav-icon"><Lock /></el-icon>
-              <span class="nav-text">成員帳號管理</span>
-            </li>
           </ul>
         </div>
         
@@ -220,11 +212,6 @@
           <StudentMatch
             v-else-if="activeMenu === '3-4'"
           />
-          
-          <!-- 成員帳號管理 -->
-          <WecomMemberAccount
-            v-else-if="activeMenu === '3-5'"
-          />
         </transition>
       </div>
     </main>
@@ -236,7 +223,7 @@
 
 <script>
 import { ElNotification } from 'element-plus'
-import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning, Calendar, Lock } from '@element-plus/icons-vue'
+import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning, Calendar } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
 import SchoolDepartment from './SchoolDepartment.vue'
@@ -245,7 +232,6 @@ import FailedNotificationList from './FailedNotificationList.vue'
 import CalendarEventList from './CalendarEventList.vue'
 import SysTaskLogList from './SysTaskLogList.vue'
 import StudentMatch from './StudentMatch.vue'
-import WecomMemberAccount from './WecomMemberAccount.vue'
 import request from '@/utils/request'
 
 export default {
@@ -258,8 +244,7 @@ export default {
     FailedNotificationList,
     CalendarEventList,
     SysTaskLogList,
-    StudentMatch,
-    WecomMemberAccount
+    StudentMatch
   },
   data() {
     return {
@@ -301,8 +286,10 @@ export default {
   },
   methods: {
     getInitialActiveMenu() {
-      // 從 sessionStorage 獲取上次訪問的菜單，如果沒有則默認爲 '1-1'
       const savedMenu = sessionStorage.getItem('activeMenu')
+      if (savedMenu === '3-5') {
+        return '1-1'
+      }
       return savedMenu || '1-1'
     },
     
@@ -370,7 +357,7 @@ export default {
         if (res.code === 200 || res.code === 0) {
           this.isAdmin = res.data === true
           // 若非管理員但目前在系統管理頁，則跳回首頁
-          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2' || this.activeMenu === '3-3' || this.activeMenu === '3-4' || this.activeMenu === '3-5')) {
+          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2' || this.activeMenu === '3-3' || this.activeMenu === '3-4')) {
             this.handleMenuSelect('1-1')
           }
         }

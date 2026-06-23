@@ -53,7 +53,6 @@ wechat:
     agentId: 1000033
     secret: I31-B5clKayPf4vNl2bibhL1ia8x4cwIc884xK888Fc
     studentUpdateSecret: 8eKTrrpvZwHZk3pAvCNaNFsZDKsLTcHAgovPbEmLOro
-    memberAccountPepper: fKf8bX_CG0azo_odDEVP_T15DIL_xNmWtM
     noticeBaseUrl: http://10.32.96.55:8082/notice/
     ccNoticeBaseUrl: http://10.32.96.55:8082/school-management-system/
     handbookBaseUrl: http://10.32.96.55:8082/handbook

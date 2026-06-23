@@ -496,21 +496,3 @@ CREATE TABLE IF NOT EXISTS sys_student_match (
     update_time DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     PRIMARY KEY (id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='學生數據匹配表';
--- ----------------------------
--- 企微成員登入帳號表
--- ----------------------------
-DROP TABLE IF EXISTS wecom_member_account;
-CREATE TABLE `wecom_member_account` (
-    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主鍵 ID',
-    `userid` VARCHAR(100) NOT NULL COMMENT '成員 UserID (唯一)',
-    `username` VARCHAR(100) NOT NULL COMMENT '登入帳號 (唯一)',
-    `password` VARCHAR(100) NOT NULL COMMENT '密碼密文',
-    `salt` VARCHAR(50) NOT NULL COMMENT '安全隨機鹽值',
-    `status` CHAR(1) DEFAULT '0' COMMENT '帳號狀態（0 正常 1 停用）',
-    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
-    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_userid` (`userid`),
-    UNIQUE KEY `uk_username` (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='企微成員登入帳號表';
-
