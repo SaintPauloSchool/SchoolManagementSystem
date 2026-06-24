@@ -42,6 +42,7 @@
             :props="treeProps"
             :expand-on-click-node="false"
             :check-on-click-node="true"
+            check-strictly
             node-key="id"
             show-checkbox
             @check="handleCheckChange"
@@ -76,6 +77,7 @@
             :props="treeProps"
             :expand-on-click-node="false"
             :check-on-click-node="true"
+            check-strictly
             node-key="id"
             show-checkbox
             @check="handleCheckChange"
@@ -269,56 +271,107 @@ export default {
     },
 
     initSelectedTree() {
-      if (this.selectedClasses && this.selectedClasses.length > 0) {
-        const classIds = this.selectedClasses.map(cls => cls.id)
-        if (this.$refs.classTree) this.$refs.classTree.setCheckedKeys(classIds)
-        if (this.$refs.customClassTree) this.$refs.customClassTree.setCheckedKeys(classIds)
-        setTimeout(() => {
-          this.updateSelectedClassIds()
-        }, 50)
+      if (this.selectedClasses?.length > 0) {
+        this.selectedClassIds = this.selectedClasses.map(cls => cls.id)
       } else {
-        if (this.$refs.classTree) this.$refs.classTree.setCheckedKeys([])
-        if (this.$refs.customClassTree) this.$refs.customClassTree.setCheckedKeys([])
         this.selectedClassIds = []
+      }
+      this.syncTreeCheckedKeys()
+    },
+
+    buildTreeCheckedKeys(treeRef, selectedIds) {
+      if (!treeRef || !selectedIds?.length) return []
+      const keys = new Set()
+      for (const id of selectedIds) {
+        keys.add(id)
+        const node = treeRef.getNode(id)
+        if (node?.childNodes?.length) {
+          for (const descId of this.collectDescendantIds(node)) {
+            keys.add(descId)
+          }
+        }
+      }
+      return Array.from(keys)
+    },
+
+    syncTreeCheckedKeys() {
+      if (this.$refs.classTree) {
+        this.$refs.classTree.setCheckedKeys(
+          this.buildTreeCheckedKeys(this.$refs.classTree, this.selectedClassIds)
+        )
+      }
+      if (this.$refs.customClassTree) {
+        this.$refs.customClassTree.setCheckedKeys(
+          this.buildTreeCheckedKeys(this.$refs.customClassTree, this.selectedClassIds)
+        )
       }
     },
 
-    updateSelectedClassIds() {
-      let wecomNodes = []
-      let customNodes = []
-      
-      if (this.$refs.classTree) {
-        wecomNodes = this.$refs.classTree.getCheckedNodes(false, false).filter(nodeData => {
-           let node = this.$refs.classTree.getNode(nodeData.id);
-           if (!node) return false;
-           let parent = node.parent;
-           while(parent && parent.level > 0) {
-              if (parent.checked) return false;
-              parent = parent.parent;
-           }
-           return true;
-        });
+    collectDescendantIds(node) {
+      const ids = []
+      const walk = (treeNode) => {
+        if (!treeNode?.childNodes?.length) return
+        for (const child of treeNode.childNodes) {
+          ids.push(child.data.id)
+          walk(child)
+        }
       }
-      
-      if (this.$refs.customClassTree) {
-        customNodes = this.$refs.customClassTree.getCheckedNodes(false, false).filter(nodeData => {
-           let node = this.$refs.customClassTree.getNode(nodeData.id);
-           if (!node) return false;
-           let parent = node.parent;
-           while(parent && parent.level > 0) {
-              if (parent.checked) return false;
-              parent = parent.parent;
-           }
-           return true;
-        });
+      walk(node)
+      return ids
+    },
+
+    collectAncestorIds(node) {
+      const ids = []
+      let parent = node?.parent
+      while (parent && parent.level > 0) {
+        ids.push(parent.data.id)
+        parent = parent.parent
       }
-      
-      // Merge unique IDs
-      const allIds = new Set([
-        ...wecomNodes.map(n => n.id), 
-        ...customNodes.map(n => n.id)
-      ]);
-      this.selectedClassIds = Array.from(allIds);
+      return ids
+    },
+
+    applyCheckSelection(sourceTree, data, isChecked) {
+      const node = sourceTree.getNode(data.id)
+      if (!node) return
+
+      if (isChecked) {
+        const hasChildren = node.childNodes?.length > 0
+        if (hasChildren) {
+          const descendantIds = new Set(this.collectDescendantIds(node))
+          this.selectedClassIds = this.selectedClassIds.filter(
+            id => id !== data.id && !descendantIds.has(id)
+          )
+          if (!this.selectedClassIds.includes(data.id)) {
+            this.selectedClassIds.push(data.id)
+          }
+        } else {
+          const ancestorIds = new Set(this.collectAncestorIds(node))
+          this.selectedClassIds = this.selectedClassIds.filter(id => !ancestorIds.has(id))
+          if (!this.selectedClassIds.includes(data.id)) {
+            this.selectedClassIds.push(data.id)
+          }
+        }
+        this.syncTreeCheckedKeys()
+        return
+      }
+
+      let parent = node.parent
+      while (parent && parent.level > 0) {
+        if (this.selectedClassIds.includes(parent.data.id)) {
+          ElNotification({
+            title: '提示',
+            message: '已選中上級組織，請先取消上級節點',
+            type: 'warning',
+            duration: 3000
+          })
+          this.syncTreeCheckedKeys()
+          return
+        }
+        parent = parent.parent
+      }
+
+      this.selectedClassIds = this.selectedClassIds.filter(id => id !== data.id)
+      this.syncTreeCheckedKeys()
     },
 
     findClassInTree(id, tree) {
@@ -350,51 +403,23 @@ export default {
       const index = this.selectedClassIds.indexOf(cls.id)
       if (index > -1) {
         this.selectedClassIds.splice(index, 1)
-        // 更新兩邊樹的勾選狀態
-        if (this.$refs.classTree) {
-          this.$refs.classTree.setCheckedKeys(this.selectedClassIds)
-        }
-        if (this.$refs.customClassTree) {
-          this.$refs.customClassTree.setCheckedKeys(this.selectedClassIds)
-        }
+        this.syncTreeCheckedKeys()
       }
     },
 
     handleCheckChange(data, checkInfo) {
-      // 找到事件源樹
-      const sourceTree = this.activeTab === 'wecom' ? this.$refs.classTree : this.$refs.customClassTree;
-      if (!sourceTree) return;
-      
-      const isChecked = checkInfo.checkedKeys.includes(data.id);
-      
-      if (!isChecked) {
-        let node = sourceTree.getNode(data.id);
-        let parent = node ? node.parent : null;
-        let ancestorInSelected = false;
-        while(parent && parent.level > 0) {
-           if (this.selectedClassIds.includes(parent.data.id)) {
-               ancestorInSelected = true;
-               break;
-           }
-           parent = parent.parent;
-        }
-        
-        if (ancestorInSelected) {
-           ElNotification({ title: "提示", message: '已選中上級組織，無法單獨取消子項', type: "warning", duration: 3000 });
-           sourceTree.setCheckedKeys(this.selectedClassIds);
-           return;
-        }
-      }
-      
-      this.updateSelectedClassIds();
-      
-      // 如果是選中操作，自動滾動到底部
+      const sourceTree = this.activeTab === 'wecom' ? this.$refs.classTree : this.$refs.customClassTree
+      if (!sourceTree) return
+
+      const isChecked = checkInfo.checkedKeys.includes(data.id)
+      this.applyCheckSelection(sourceTree, data, isChecked)
+
       if (isChecked) {
         this.$nextTick(() => {
           if (this.$refs.selectedContainer) {
-            this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
+            this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight
           }
-        });
+        })
       }
     }
   }
