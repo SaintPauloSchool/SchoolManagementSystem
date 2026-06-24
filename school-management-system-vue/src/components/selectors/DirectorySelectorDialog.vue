@@ -42,6 +42,7 @@
             :props="treeProps"
             :expand-on-click-node="false"
             :check-on-click-node="true"
+            check-strictly
             node-key="id"
             show-checkbox
             @check="handleCheckChange"
@@ -77,6 +78,7 @@
             :props="treeProps"
             :expand-on-click-node="false"
             :check-on-click-node="true"
+            check-strictly
             node-key="id"
             show-checkbox
             @check="handleCheckChange"
@@ -267,56 +269,107 @@ export default {
     },
 
     initSelectedTree() {
-      if (this.selectedDirectories && this.selectedDirectories.length > 0) {
-        const directoryIds = this.selectedDirectories.map(dir => dir.id)
-        if (this.$refs.treeRef) this.$refs.treeRef.setCheckedKeys(directoryIds)
-        if (this.$refs.customTreeRef) this.$refs.customTreeRef.setCheckedKeys(directoryIds)
-        setTimeout(() => {
-          this.updateSelectedDirectoryIds()
-        }, 50)
+      if (this.selectedDirectories?.length > 0) {
+        this.selectedDirectoryIds = this.selectedDirectories.map(dir => dir.id)
       } else {
-        if (this.$refs.treeRef) this.$refs.treeRef.setCheckedKeys([])
-        if (this.$refs.customTreeRef) this.$refs.customTreeRef.setCheckedKeys([])
         this.selectedDirectoryIds = []
+      }
+      this.syncTreeCheckedKeys()
+    },
+
+    buildTreeCheckedKeys(treeRef, selectedIds) {
+      if (!treeRef || !selectedIds?.length) return []
+      const keys = new Set()
+      for (const id of selectedIds) {
+        keys.add(id)
+        const node = treeRef.getNode(id)
+        if (node?.childNodes?.length) {
+          for (const descId of this.collectDescendantIds(node)) {
+            keys.add(descId)
+          }
+        }
+      }
+      return Array.from(keys)
+    },
+
+    syncTreeCheckedKeys() {
+      if (this.$refs.treeRef) {
+        this.$refs.treeRef.setCheckedKeys(
+          this.buildTreeCheckedKeys(this.$refs.treeRef, this.selectedDirectoryIds)
+        )
+      }
+      if (this.$refs.customTreeRef) {
+        this.$refs.customTreeRef.setCheckedKeys(
+          this.buildTreeCheckedKeys(this.$refs.customTreeRef, this.selectedDirectoryIds)
+        )
       }
     },
 
-    updateSelectedDirectoryIds() {
-      let wecomNodes = []
-      let customNodes = []
-      
-      if (this.$refs.treeRef) {
-        wecomNodes = this.$refs.treeRef.getCheckedNodes(false, false).filter(nodeData => {
-           let node = this.$refs.treeRef.getNode(nodeData.id);
-           if (!node) return false;
-           let parent = node.parent;
-           while(parent && parent.level > 0) {
-              if (parent.checked) return false;
-              parent = parent.parent;
-           }
-           return true;
-        });
+    collectDescendantIds(node) {
+      const ids = []
+      const walk = (treeNode) => {
+        if (!treeNode?.childNodes?.length) return
+        for (const child of treeNode.childNodes) {
+          ids.push(child.data.id)
+          walk(child)
+        }
       }
-      
-      if (this.$refs.customTreeRef) {
-        customNodes = this.$refs.customTreeRef.getCheckedNodes(false, false).filter(nodeData => {
-           let node = this.$refs.customTreeRef.getNode(nodeData.id);
-           if (!node) return false;
-           let parent = node.parent;
-           while(parent && parent.level > 0) {
-              if (parent.checked) return false;
-              parent = parent.parent;
-           }
-           return true;
-        });
+      walk(node)
+      return ids
+    },
+
+    collectAncestorIds(node) {
+      const ids = []
+      let parent = node?.parent
+      while (parent && parent.level > 0) {
+        ids.push(parent.data.id)
+        parent = parent.parent
       }
-      
-      // Merge unique IDs
-      const allIds = new Set([
-        ...wecomNodes.map(n => n.id), 
-        ...customNodes.map(n => n.id)
-      ]);
-      this.selectedDirectoryIds = Array.from(allIds);
+      return ids
+    },
+
+    applyCheckSelection(sourceTree, data, isChecked) {
+      const node = sourceTree.getNode(data.id)
+      if (!node) return
+
+      if (isChecked) {
+        const hasChildren = node.childNodes?.length > 0
+        if (hasChildren) {
+          const descendantIds = new Set(this.collectDescendantIds(node))
+          this.selectedDirectoryIds = this.selectedDirectoryIds.filter(
+            id => id !== data.id && !descendantIds.has(id)
+          )
+          if (!this.selectedDirectoryIds.includes(data.id)) {
+            this.selectedDirectoryIds.push(data.id)
+          }
+        } else {
+          const ancestorIds = new Set(this.collectAncestorIds(node))
+          this.selectedDirectoryIds = this.selectedDirectoryIds.filter(id => !ancestorIds.has(id))
+          if (!this.selectedDirectoryIds.includes(data.id)) {
+            this.selectedDirectoryIds.push(data.id)
+          }
+        }
+        this.syncTreeCheckedKeys()
+        return
+      }
+
+      let parent = node.parent
+      while (parent && parent.level > 0) {
+        if (this.selectedDirectoryIds.includes(parent.data.id)) {
+          ElNotification({
+            title: '提示',
+            message: '已選中上級組織，請先取消上級節點',
+            type: 'warning',
+            duration: 3000
+          })
+          this.syncTreeCheckedKeys()
+          return
+        }
+        parent = parent.parent
+      }
+
+      this.selectedDirectoryIds = this.selectedDirectoryIds.filter(id => id !== data.id)
+      this.syncTreeCheckedKeys()
     },
 
     findDirectoryInTree(id, tree) {
@@ -333,40 +386,18 @@ export default {
     },
 
     handleCheckChange(data, checkInfo) {
-      // 找到事件源樹
-      const sourceTree = this.activeTab === 'wecom' ? this.$refs.treeRef : this.$refs.customTreeRef;
-      if (!sourceTree) return;
-      
-      const isChecked = checkInfo.checkedKeys.includes(data.id);
-      
-      if (!isChecked) {
-        let node = sourceTree.getNode(data.id);
-        let parent = node ? node.parent : null;
-        let ancestorInSelected = false;
-        while(parent && parent.level > 0) {
-           if (this.selectedDirectoryIds.includes(parent.data.id)) {
-               ancestorInSelected = true;
-               break;
-           }
-           parent = parent.parent;
-        }
-        
-        if (ancestorInSelected) {
-           ElNotification({ title: "提示", message: '已選中上級組織，無法單獨取消子項', type: "warning", duration: 3000 });
-           sourceTree.setCheckedKeys(this.selectedDirectoryIds);
-           return;
-        }
-      }
-      
-      this.updateSelectedDirectoryIds();
-      
-      // 如果是選中操作，自動滾動到底部
+      const sourceTree = this.activeTab === 'wecom' ? this.$refs.treeRef : this.$refs.customTreeRef
+      if (!sourceTree) return
+
+      const isChecked = checkInfo.checkedKeys.includes(data.id)
+      this.applyCheckSelection(sourceTree, data, isChecked)
+
       if (isChecked) {
         this.$nextTick(() => {
           if (this.$refs.selectedContainer) {
-            this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight;
+            this.$refs.selectedContainer.scrollTop = this.$refs.selectedContainer.scrollHeight
           }
-        });
+        })
       }
     },
 
@@ -374,13 +405,7 @@ export default {
       const index = this.selectedDirectoryIds.indexOf(dir.id)
       if (index > -1) {
         this.selectedDirectoryIds.splice(index, 1)
-        // 更新兩邊樹的勾選狀態
-        if (this.$refs.treeRef) {
-          this.$refs.treeRef.setCheckedKeys(this.selectedDirectoryIds)
-        }
-        if (this.$refs.customTreeRef) {
-          this.$refs.customTreeRef.setCheckedKeys(this.selectedDirectoryIds)
-        }
+        this.syncTreeCheckedKeys()
       }
     },
 

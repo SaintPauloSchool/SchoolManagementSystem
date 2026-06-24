@@ -3,19 +3,31 @@
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sms.system.mapper.SysStudentMatchMapper">
-    
+
+    <resultMap type="com.sms.system.entity.vo.SysStudentMatchVO" id="SysStudentMatchVOResult">
+        <result property="id" column="id"/>
+        <result property="studentProfileNum" column="student_profile_num"/>
+        <result property="studentUserIdWecom" column="student_user_id_wecom"/>
+        <result property="studentNameWecom" column="student_name_wecom"/>
+        <result property="matchStatus" column="match_status"/>
+        <result property="syncStatus" column="sync_status"/>
+        <result property="errorMsg" column="error_msg"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="studentId" column="student_id"/>
+        <result property="inSchool" column="in_school"/>
+        <result property="schoolYear" column="school_year"/>
+        <result property="studentProfileNumber" column="student_profile_number"/>
+        <result property="adid" column="adid"/>
+        <result property="classSection" column="class_section"/>
+        <result property="classNum" column="class_num"/>
+        <result property="idName" column="id_name"/>
+        <result property="dsejStudentId" column="dsej_student_id"/>
+    </resultMap>
+
     <resultMap type="com.sms.system.entity.SysStudentMatch" id="SysStudentMatchResult">
         <result property="id" column="id"/>
         <result property="studentProfileNum" column="student_profile_num"/>
-        <result property="adid" column="adid"/>
-        <result property="studentNameLocal" column="student_name_local"/>
-        <result property="classNameLocal" column="class_name_local"/>
-        <result property="classNum" column="class_num"/>
-        <result property="idEnglishName" column="id_english_name"/>
-        <result property="englishFirstName" column="english_first_name"/>
-        <result property="englishLastName" column="english_last_name"/>
-        <result property="studentIdNum" column="student_id_num"/>
-        <result property="studentAlbumName" column="student_album_name"/>
         <result property="studentUserIdWecom" column="student_user_id_wecom"/>
         <result property="studentNameWecom" column="student_name_wecom"/>
         <result property="matchStatus" column="match_status"/>
@@ -33,54 +45,98 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="classCodeWecom" column="class_code_wecom"/>
     </resultMap>
 
-    <sql id="selectSysStudentMatchVo">
-        select id, student_profile_num, adid, student_name_local, class_name_local, class_num, id_english_name, 
-               english_first_name, english_last_name, student_id_num, student_album_name, student_user_id_wecom, 
-               student_name_wecom, match_status, sync_status, error_msg, create_time, update_time
-        from sys_student_match
+    <sql id="studentInfoFrom">
+        FROM ${studentProfilesDatabase}.student_info si
+        LEFT JOIN sys_student_match m
+            ON CAST(m.student_profile_num AS UNSIGNED) = si.student_profile_number
     </sql>
 
-    <!-- 分頁與條件篩選列表 -->
-    <select id="selectSysStudentMatchList" parameterType="com.sms.system.entity.SysStudentMatch" resultMap="SysStudentMatchResult">
-        <include refid="selectSysStudentMatchVo"/>
+    <sql id="studentInfoJoinOnMatch">
+        LEFT JOIN ${studentProfilesDatabase}.student_info si
+            ON si.student_profile_number = CAST(m.student_profile_num AS UNSIGNED)
+    </sql>
+
+    <sql id="selectStudentMatchListVo">
+        select m.id,
+               COALESCE(
+                   m.student_profile_num,
+                   si.student_profile_number
+               ) as student_profile_num,
+               m.student_user_id_wecom, m.student_name_wecom,
+               COALESCE(m.match_status, '0') as match_status,
+               COALESCE(m.sync_status, '0') as sync_status,
+               m.error_msg, m.create_time, m.update_time,
+               si.student_id, si.in_school, si.school_year, si.student_profile_number,
+               si.adid, si.class_section, si.class_num, si.id_name, si.dsej_student_id
+        <include refid="studentInfoFrom"/>
+    </sql>
+
+    <sql id="selectSysStudentMatchVo">
+        select m.id, m.student_profile_num, m.student_user_id_wecom, m.student_name_wecom,
+               m.match_status, m.sync_status, m.error_msg, m.create_time, m.update_time,
+               si.student_id, si.in_school, si.school_year, si.student_profile_number,
+               si.adid, si.class_section, si.class_num, si.id_name, si.dsej_student_id
+        from sys_student_match m
+        <include refid="studentInfoJoinOnMatch"/>
+    </sql>
+
+    <select id="selectSysStudentMatchList" resultMap="SysStudentMatchVOResult">
+        <include refid="selectStudentMatchListVo"/>
         <where>
-            <if test="studentNameLocal != null and studentNameLocal != ''">
-                and (student_name_local like concat('%', #{studentNameLocal}, '%') 
-                     or student_name_wecom like concat('%', #{studentNameLocal}, '%'))
+            si.student_profile_number IS NOT NULL
+            <if test="query != null and query.idNameQuery != null and query.idNameQuery != ''">
+                and (
+                    si.id_name COLLATE utf8mb4_unicode_ci like concat('%', #{query.idNameQuery}, '%')
+                    or m.student_name_wecom COLLATE utf8mb4_unicode_ci like concat('%', #{query.idNameQuery}, '%')
+                )
             </if>
-            <if test="classNameLocal != null and classNameLocal != ''">
-                and class_name_local like concat('%', #{classNameLocal}, '%')
+            <if test="query != null and query.classSectionQuery != null and query.classSectionQuery != ''">
+                and si.class_section COLLATE utf8mb4_unicode_ci like concat('%', #{query.classSectionQuery}, '%')
             </if>
-            <if test="matchStatus != null and matchStatus != ''">
-                and match_status = #{matchStatus}
+            <if test="query != null and query.matchStatus != null and query.matchStatus == '0'">
+                and (m.match_status IS NULL OR m.match_status = '0')
             </if>
-            <if test="syncStatus != null and syncStatus != ''">
-                and sync_status = #{syncStatus}
+            <if test="query != null and query.matchStatus != null and query.matchStatus != '' and query.matchStatus != '0'">
+                and m.match_status = #{query.matchStatus}
+            </if>
+            <if test="query != null and query.syncStatus != null and query.syncStatus == '0'">
+                and (m.sync_status IS NULL OR m.sync_status = '0')
+            </if>
+            <if test="query != null and query.syncStatus != null and query.syncStatus != '' and query.syncStatus != '0'">
+                and m.sync_status = #{query.syncStatus}
             </if>
         </where>
-        order by create_time desc, id desc
+        order by si.class_section, si.class_num, si.id_name, si.student_profile_number
     </select>
 
-    <!-- 根據 ID 查詢 -->
-    <select id="selectSysStudentMatchById" parameterType="Long" resultMap="SysStudentMatchResult">
+    <select id="selectStudentMatchVOById" resultMap="SysStudentMatchVOResult">
         <include refid="selectSysStudentMatchVo"/>
+        where m.id = #{id}
+    </select>
+
+    <select id="selectMatchById" resultMap="SysStudentMatchResult">
+        select id, student_profile_num, student_user_id_wecom, student_name_wecom,
+               match_status, sync_status, error_msg, create_time, update_time
+        from sys_student_match
         where id = #{id}
     </select>
 
-    <!-- 修改 -->
+    <select id="selectMatchIdByProfileNum" resultType="Long">
+        select id
+        from sys_student_match
+        where CAST(student_profile_num AS UNSIGNED) = CAST(#{studentProfileNum} AS UNSIGNED)
+        limit 1
+    </select>
+
+    <insert id="insertMatchRecord">
+        insert into sys_student_match (student_profile_num, match_status, sync_status, create_time)
+        values (#{studentProfileNum}, '0', '0', sysdate())
+    </insert>
+
     <update id="updateSysStudentMatch" parameterType="com.sms.system.entity.SysStudentMatch">
         update sys_student_match
         <trim prefix="SET" suffixOverrides=",">
             <if test="studentProfileNum != null">student_profile_num = #{studentProfileNum},</if>
-            <if test="adid != null">adid = #{adid},</if>
-            <if test="studentNameLocal != null">student_name_local = #{studentNameLocal},</if>
-            <if test="classNameLocal != null">class_name_local = #{classNameLocal},</if>
-            <if test="classNum != null">class_num = #{classNum},</if>
-            <if test="idEnglishName != null">id_english_name = #{idEnglishName},</if>
-            <if test="englishFirstName != null">english_first_name = #{englishFirstName},</if>
-            <if test="englishLastName != null">english_last_name = #{englishLastName},</if>
-            <if test="studentIdNum != null">student_id_num = #{studentIdNum},</if>
-            <if test="studentAlbumName != null">student_album_name = #{studentAlbumName},</if>
             <if test="studentUserIdWecom != null">student_user_id_wecom = #{studentUserIdWecom},</if>
             <if test="studentNameWecom != null">student_name_wecom = #{studentNameWecom},</if>
             <if test="matchStatus != null">match_status = #{matchStatus},</if>
@@ -91,55 +147,26 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{id}
     </update>
 
-    <!-- 批量 Upsert 導入數據 -->
-    <insert id="batchInsertOrUpdate">
-        INSERT INTO sys_student_match (
-            student_profile_num, adid, student_name_local, class_name_local, class_num, id_english_name, 
-            english_first_name, english_last_name, student_id_num, student_album_name, student_user_id_wecom, 
-            student_name_wecom, match_status, sync_status, error_msg, create_time
-        ) VALUES 
-        <foreach collection="list" item="item" separator=",">
-            (
-                #{item.studentProfileNum}, #{item.adid}, #{item.studentNameLocal}, #{item.classNameLocal}, #{item.classNum}, #{item.idEnglishName},
-                #{item.englishFirstName}, #{item.englishLastName}, #{item.studentIdNum}, #{item.studentAlbumName}, #{item.studentUserIdWecom}, #{item.studentNameWecom},
-                #{item.matchStatus}, #{item.syncStatus}, #{item.errorMsg}, SYSDATE()
+    <select id="selectUnmatchedList" resultMap="SysStudentMatchVOResult">
+        <include refid="selectStudentMatchListVo"/>
+        where si.student_profile_number IS NOT NULL
+          and (m.match_status IS NULL OR m.match_status = '0')
+        <if test="query != null and query.idNameQuery != null and query.idNameQuery != ''">
+            and (
+                si.id_name COLLATE utf8mb4_unicode_ci like concat('%', #{query.idNameQuery}, '%')
+                or m.student_name_wecom COLLATE utf8mb4_unicode_ci like concat('%', #{query.idNameQuery}, '%')
             )
-        </foreach>
-        ON DUPLICATE KEY UPDATE
-            adid = VALUES(adid),
-            student_name_local = VALUES(student_name_local),
-            class_name_local = VALUES(class_name_local),
-            class_num = VALUES(class_num),
-            id_english_name = VALUES(id_english_name),
-            english_first_name = VALUES(english_first_name),
-            english_last_name = VALUES(english_last_name),
-            student_id_num = VALUES(student_id_num),
-            student_album_name = VALUES(student_album_name),
-            student_user_id_wecom = IF(sync_status = '1', student_user_id_wecom, VALUES(student_user_id_wecom)),
-            student_name_wecom = IF(sync_status = '1', student_name_wecom, VALUES(student_name_wecom)),
-            match_status = IF(sync_status = '1', match_status, VALUES(match_status)),
-            update_time = SYSDATE()
-    </insert>
-
-    <!-- 查詢未匹配的 Excel 數據 -->
-    <select id="selectUnmatchedList" parameterType="com.sms.system.entity.SysStudentMatch" resultMap="SysStudentMatchResult">
-        <include refid="selectSysStudentMatchVo"/>
-        where match_status = '0'
-        <if test="studentNameLocal != null and studentNameLocal != ''">
-            and (student_name_local like concat('%', #{studentNameLocal}, '%') 
-                 or student_name_wecom like concat('%', #{studentNameLocal}, '%'))
         </if>
-        <if test="classNameLocal != null and classNameLocal != ''">
-            and class_name_local like concat('%', #{classNameLocal}, '%')
+        <if test="query != null and query.classSectionQuery != null and query.classSectionQuery != ''">
+            and si.class_section COLLATE utf8mb4_unicode_ci like concat('%', #{query.classSectionQuery}, '%')
         </if>
-        order by id desc
+        order by si.class_section, si.class_num, si.id_name, si.student_profile_number
     </select>
 
-    <!-- 查詢待選取的企微學生候選人 -->
     <select id="selectWecomCandidates" resultMap="SysWecomStudentVOResult">
-        SELECT DISTINCT 
-            r.student_user_id AS student_user_id, 
-            r.student_name AS student_name, 
+        SELECT DISTINCT
+            r.student_user_id AS student_user_id,
+            r.student_name AS student_name,
             r.mobile AS mobile,
             r.relation_desc AS relation_desc,
             cs.class_section_sp AS class_code_wecom
@@ -148,8 +175,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         LEFT JOIN sys_department d ON b.department_id = d.id
         LEFT JOIN class_section cs ON d.name = cs.class_section_dsedj COLLATE utf8mb4_unicode_ci
         WHERE r.student_user_id NOT IN (
-            SELECT DISTINCT student_user_id_wecom 
-            FROM sys_student_match 
+            SELECT DISTINCT student_user_id_wecom
+            FROM sys_student_match
             WHERE student_user_id_wecom IS NOT NULL
         )
         <if test="queryNameTraditional != null and queryNameTraditional != ''">
@@ -167,7 +194,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         ORDER BY r.student_name ASC
     </select>
 
-    <!-- 獲取本地關係表中所有與班級相關聯的企微學生列表，用於班級+姓名自動匹配 -->
     <select id="selectWecomStudentInfoList" resultMap="SysWecomStudentVOResult">
         SELECT DISTINCT
             r.student_user_id AS student_user_id,
@@ -178,16 +204,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         INNER JOIN sys_department d ON b.department_id = d.id
         INNER JOIN class_section cs ON d.name = cs.class_section_dsedj COLLATE utf8mb4_unicode_ci
     </select>
-    
 
-    <!-- 更新企微學生的本地關係表姓名 -->
     <update id="updateWecomStudentName">
         UPDATE sys_parent_student_relation
         SET student_name = #{studentName}, update_time = SYSDATE()
         WHERE student_user_id = #{studentUserId}
     </update>
-    
-    <!-- 批量刪除 -->
+
     <delete id="deleteSysStudentMatchByIds">
         delete from sys_student_match where id in
         <foreach item="id" collection="ids" open="(" separator="," close=")">
@@ -195,7 +218,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </delete>
 
-    <!-- 清除單個匹配狀態 -->
     <update id="clearStudentMatch" parameterType="Long">
         update sys_student_match
         set student_user_id_wecom = null,
@@ -206,9 +228,4 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             update_time = sysdate()
         where id = #{id}
     </update>
-
-    <!-- 清空所有數據 -->
-    <delete id="deleteAllSysStudentMatch">
-        delete from sys_student_match
-    </delete>
 </mapper>
