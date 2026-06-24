@@ -37,10 +37,10 @@ public class SysDepartment implements Serializable {
     /** 是否畢業：1-是，0-否 */
     private Boolean isGraduated;
 
-    /** 是否開啓班級羣：1-是，0-否 */
+    /** 是否開啓班級群：1-是，0-否 */
     private Boolean openGroupChat;
 
-    /** 班級羣 id */
+    /** 班級群 id */
     private String groupChatId;
 
     /** 家長用戶 ID（type=10 時使用） */

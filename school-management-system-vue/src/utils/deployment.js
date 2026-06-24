@@ -23,8 +23,3 @@ export function normalizeProfileUrl(url) {
 
   return result
 }
-
-export function withAppBase(path = '') {
-  const normalizedPath = path.replace(/^\/+/, '')
-  return `${APP_BASE_PATH}${normalizedPath}`
-}

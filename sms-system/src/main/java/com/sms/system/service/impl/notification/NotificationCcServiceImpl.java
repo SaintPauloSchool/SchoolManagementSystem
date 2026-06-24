@@ -4,7 +4,10 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.system.entity.WecomSchoolDepartmentMember;
 import com.sms.system.entity.SysSchoolDepartmentMember;
+import com.sms.system.entity.dto.NotificationCcSaveDTO;
 import com.sms.system.entity.notification.NotificationCc;
+import com.sms.system.entity.vo.NotificationCcVO;
+import com.sms.common.utils.bean.BeanCopyUtils;
 import com.sms.system.mapper.WecomSchoolDepartmentMemberMapper;
 import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
 import com.sms.system.mapper.notification.NotificationCcMapper;
@@ -15,8 +18,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.time.LocalDateTime;
 
 /**
  * 通知抄送對象 Service 業務層處理
@@ -49,18 +54,17 @@ public class NotificationCcServiceImpl implements INotificationCcService {
      * @return 抄送對象集合
      */
     @Override
-    public List<NotificationCc> selectByNotificationId(Long notificationId) {
-        return notificationCcMapper.selectByNotificationId(notificationId);
+    public List<NotificationCcVO> selectByNotificationId(Long notificationId) {
+        return BeanCopyUtils.copyList(notificationCcMapper.selectByNotificationId(notificationId), NotificationCcVO.class);
     }
-    
-    /**
-     * 新增抄送對象
-     *
-     * @param cc 抄送對象
-     * @return 結果
-     */
+
     @Override
-    public int save(NotificationCc cc) {
+    @Transactional(rollbackFor = Exception.class)
+    public int save(NotificationCcSaveDTO notificationCcSaveDTO) {
+        NotificationCc cc = BeanCopyUtils.copy(notificationCcSaveDTO, NotificationCc.class);
+        if (cc.getCreateTime() == null) {
+            cc.setCreateTime(LocalDateTime.now());
+        }
         return notificationCcMapper.insert(cc);
     }
 

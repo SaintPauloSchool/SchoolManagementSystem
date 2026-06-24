@@ -8,10 +8,7 @@ import com.sms.common.utils.StringUtils;
  * 操作消息提醒
  *
  */
-public class
-
-
-AjaxResult extends HashMap<String, Object>
+public class AjaxResult extends HashMap<String, Object>
 {
     private static final long serialVersionUID = 1L;
 
@@ -196,6 +193,18 @@ AjaxResult extends HashMap<String, Object>
     public static AjaxResult error(String msg, Object data)
     {
         return new AjaxResult(Type.ERROR, msg, data);
+    }
+
+    /**
+     * 根據操作結果返回消息
+     *
+     * @param success 是否成功
+     * @param message 提示內容
+     * @return 操作結果
+     */
+    public static AjaxResult from(boolean success, String message)
+    {
+        return success ? AjaxResult.success(message) : AjaxResult.error(message);
     }
 
     /**

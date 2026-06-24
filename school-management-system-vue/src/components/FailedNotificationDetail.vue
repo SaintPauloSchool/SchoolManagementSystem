@@ -52,41 +52,41 @@
         <el-table
           :data="failedReadRecords"
           v-loading="failedReadLoading"
-          style="width: 100%"
+          class="full-width-table"
           empty-text="暫無數據"
         >
-          <el-table-column prop="userId" label="用戶ID" width="150" show-overflow-tooltip />
-          <el-table-column label="用戶類型" width="100" align="center">
+          <el-table-column prop="userId" label="用戶企微ID" min-width="180" show-overflow-tooltip />
+          <el-table-column label="用戶類型" min-width="100" align="center">
             <template #default="scope">
               <el-tag size="small">{{ getUserTypeText(scope.row.userType) }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="studentUserId" label="關聯學生ID" width="150" show-overflow-tooltip />
-          <el-table-column prop="studentName" label="學生名字" width="120" align="center">
+          <el-table-column prop="studentUserId" label="關聯學生企微ID" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="studentName" label="學生名字" min-width="120" align="center">
             <template #default="scope">
               {{ scope.row.studentName || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="relation" label="關係" width="100" align="center">
+          <el-table-column prop="relation" label="關係" min-width="100" align="center">
             <template #default="scope">
               {{ scope.row.relation || '-' }}
             </template>
           </el-table-column>
-          <el-table-column label="是否已讀" width="100" align="center">
+          <el-table-column label="是否已讀" min-width="100" align="center">
             <template #default="scope">
               <el-tag :type="scope.row.isRead === '1' ? 'success' : 'info'" size="small">
                 {{ scope.row.isRead === '1' ? '已讀' : '未讀' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="回覆狀態" width="100" align="center">
+          <el-table-column label="回覆狀態" min-width="100" align="center">
             <template #default="scope">
               <el-tag :type="scope.row.replyStatus === '1' ? 'success' : 'warning'" size="small">
                 {{ scope.row.replyStatus === '1' ? '已回覆' : '未回覆' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="創建時間" width="160" align="center" />
+          <el-table-column prop="createTime" label="創建時間" min-width="160" align="center" />
         </el-table>
 
         <!-- 分頁組件 -->
@@ -118,32 +118,32 @@
         <el-table
           :data="resendFailRecords"
           v-loading="resendFailLoading"
-          style="width: 100%"
+          class="full-width-table"
           empty-text="暫無數據"
         >
-          <el-table-column prop="userId" label="用戶ID" width="150" show-overflow-tooltip />
-          <el-table-column label="用戶類型" width="100" align="center">
+          <el-table-column prop="userId" label="用戶企微ID" min-width="180" show-overflow-tooltip />
+          <el-table-column label="用戶類型" min-width="100" align="center">
             <template #default="scope">
               <el-tag size="small">{{ getUserTypeText(scope.row.userType) }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="studentUserId" label="關聯學生ID" width="150" show-overflow-tooltip />
-          <el-table-column prop="studentName" label="學生名字" width="120" align="center">
+          <el-table-column prop="studentUserId" label="關聯學生企微ID" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="studentName" label="學生名字" min-width="120" align="center">
             <template #default="scope">
               {{ scope.row.studentName || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="relation" label="關係" width="100" align="center">
+          <el-table-column prop="relation" label="關係" min-width="100" align="center">
             <template #default="scope">
               {{ scope.row.relation || '-' }}
             </template>
           </el-table-column>
-          <el-table-column label="失敗次數" width="100" align="center">
+          <el-table-column label="失敗次數" min-width="100" align="center">
             <template #default="scope">
               <el-tag type="danger" size="small">{{ scope.row.failCount }} 次</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="狀態" width="100" align="center">
+          <el-table-column label="狀態" min-width="100" align="center">
             <template #default="scope">
               <el-tag :type="scope.row.status === '1' ? 'info' : 'warning'" size="small">
                 {{ scope.row.status === '1' ? '已放棄' : '待重發' }}
@@ -177,7 +177,7 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="updateTime" label="最後更新時間" width="160" align="center" />
+          <el-table-column prop="updateTime" label="最後更新時間" min-width="160" align="center" />
         </el-table>
 
         <!-- 分頁組件 -->
@@ -385,6 +385,15 @@ export default {
 
 .info-card {
   border-radius: 8px;
+}
+
+.full-width-table {
+  width: 100%;
+}
+
+.full-width-table :deep(.el-table__header),
+.full-width-table :deep(.el-table__body) {
+  width: 100% !important;
 }
 
 .card-header {

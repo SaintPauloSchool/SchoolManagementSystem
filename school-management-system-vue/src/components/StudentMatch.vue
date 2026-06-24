@@ -714,7 +714,7 @@ export default {
           if (res.code === 200 || res.code === 0) {
             ElNotification({ 
               title: '同步執行完畢', 
-              message: res.msg || '選中學生的更名操作已同步至企業微信', 
+              message: res.msg || res.data?.message || '選中學生的更名操作已同步至企業微信', 
               type: 'success', 
               duration: 5000,
               dangerouslyUseHTMLString: true 

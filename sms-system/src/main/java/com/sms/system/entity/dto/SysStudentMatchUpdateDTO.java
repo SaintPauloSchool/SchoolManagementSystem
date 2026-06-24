@@ -1,34 +1,21 @@
-package com.sms.system.entity;
+package com.sms.system.entity.dto;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-import com.sms.common.core.domain.BaseEntity;
+import java.io.Serializable;
 
 /**
- * 學生數據匹配實體類 sys_student_match
+ * 更新學生匹配記錄請求
  */
-public class SysStudentMatch extends BaseEntity {
+public class SysStudentMatchUpdateDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long id;
-
-    /** 學生個人編號（關聯 student_profiles.student_info.student_profile_number） */
     private String studentProfileNum;
-
-    /** 匹配到的企微學生 UserID */
     private String studentUserIdWecom;
-
-    /** 匹配到的企微原始學生姓名 */
     private String studentNameWecom;
-
-    /** 匹配狀態 (0: 未匹配, 1: 自動匹配成功, 2: 手動匹配成功) */
     private String matchStatus;
-
-    /** 企微同步狀態 (0: 未同步, 1: 同步成功, 2: 同步失敗) */
     private String syncStatus;
-
-    /** 同步失敗的具體原因 */
     private String errorMsg;
+    private String updateBy;
 
     public Long getId() {
         return id;
@@ -86,18 +73,11 @@ public class SysStudentMatch extends BaseEntity {
         this.errorMsg = errorMsg;
     }
 
-    @Override
-    public String toString() {
-        return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
-            .append("id", getId())
-            .append("studentProfileNum", getStudentProfileNum())
-            .append("studentUserIdWecom", getStudentUserIdWecom())
-            .append("studentNameWecom", getStudentNameWecom())
-            .append("matchStatus", getMatchStatus())
-            .append("syncStatus", getSyncStatus())
-            .append("errorMsg", getErrorMsg())
-            .append("createTime", getCreateTime())
-            .append("updateTime", getUpdateTime())
-            .toString();
+    public String getUpdateBy() {
+        return updateBy;
+    }
+
+    public void setUpdateBy(String updateBy) {
+        this.updateBy = updateBy;
     }
 }

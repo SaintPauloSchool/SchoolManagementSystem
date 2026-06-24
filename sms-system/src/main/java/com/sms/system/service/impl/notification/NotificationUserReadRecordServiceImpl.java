@@ -9,6 +9,7 @@ import com.sms.system.mapper.notification.NotificationUserReadRecordMapper;
 import com.sms.system.service.notification.INotificationUserReadRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,6 +34,7 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
      * @return 結果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int batchSave(List<NotificationUserReadRecord> readRecords) {
         if (readRecords == null || readRecords.isEmpty()) {
             return 0;
@@ -163,16 +165,16 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
     /**
      * 更新閱讀記錄的發送狀態
      *
-     * @param readId 閱讀記錄ID
+     * @param readId     閱讀記錄ID
      * @param sendStatus 發送狀態
-     * @return 結果
      */
     @Override
-    public int updateSendStatus(Long readId, String sendStatus) {
+    @Transactional(rollbackFor = Exception.class)
+    public void updateSendStatus(Long readId, String sendStatus) {
         // 由於沒有提供 updateById，我們可以創建一個新的 record 更新它
         NotificationUserReadRecord record = new NotificationUserReadRecord();
         record.setReadId(readId);
         record.setSendStatus(sendStatus);
-        return notificationUserReadRecordMapper.updateById(record);
+        notificationUserReadRecordMapper.updateById(record);
     }
 }

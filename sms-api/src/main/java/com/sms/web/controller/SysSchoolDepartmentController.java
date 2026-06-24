@@ -1,10 +1,15 @@
 package com.sms.web.controller;
 
-import com.sms.common.annotation.Anonymous;
+import com.sms.common.annotation.Log;
 import com.sms.common.core.controller.BaseController;
 import com.sms.common.core.domain.AjaxResult;
-import com.sms.system.entity.SysSchoolDepartment;
-import com.sms.system.entity.SysSchoolDepartmentMember;
+import com.sms.common.enums.BusinessType;
+import com.sms.system.entity.dto.SysSchoolDepartmentMemberBatchSaveDTO;
+import com.sms.system.entity.dto.SysSchoolDepartmentMemberQueryDTO;
+import com.sms.system.entity.dto.SysSchoolDepartmentQueryDTO;
+import com.sms.system.entity.dto.SysSchoolDepartmentSaveDTO;
+import com.sms.system.entity.vo.SysSchoolDepartmentMemberVO;
+import com.sms.system.entity.vo.SysSchoolDepartmentVO;
 import com.sms.system.service.ISysSchoolDepartmentMemberService;
 import com.sms.system.service.ISysSchoolDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,37 +34,41 @@ public class SysSchoolDepartmentController extends BaseController {
     /**
      * 獲取學校部門樹形結構
      */
-    @Anonymous
+    @Log(title = "查詢學校部門樹", businessType = BusinessType.SELECT)
     @GetMapping("/tree")
     public AjaxResult tree(@RequestParam(required = false, defaultValue = "1") Integer type) {
-        List<SysSchoolDepartment> tree = sysSchoolDepartmentService.getSysSchoolDepartmentTree(type);
-        return AjaxResult.success(tree);
+        SysSchoolDepartmentQueryDTO sysSchoolDepartmentQueryDTO = new SysSchoolDepartmentQueryDTO();
+        sysSchoolDepartmentQueryDTO.setType(type);
+        List<SysSchoolDepartmentVO> sysSchoolDepartmentTree = sysSchoolDepartmentService.getSysSchoolDepartmentTree(sysSchoolDepartmentQueryDTO.getType());
+        return AjaxResult.success(sysSchoolDepartmentTree);
     }
 
     /**
      * 獲取學校部門樹形結構（包含人員節點）
      */
-    @Anonymous
+    @Log(title = "查詢學校部門樹（含成員）", businessType = BusinessType.SELECT)
     @GetMapping("/treeWithMembers")
     public AjaxResult treeWithMembers(@RequestParam(required = false, defaultValue = "1") Integer type) {
-        List<SysSchoolDepartment> tree = sysSchoolDepartmentService.getSysSchoolDepartmentTreeWithMembers(type);
-        return AjaxResult.success(tree);
+        SysSchoolDepartmentQueryDTO sysSchoolDepartmentQueryDTO = new SysSchoolDepartmentQueryDTO();
+        sysSchoolDepartmentQueryDTO.setType(type);
+        List<SysSchoolDepartmentVO> sysSchoolDepartmentTree = sysSchoolDepartmentService.getSysSchoolDepartmentTreeWithMembers(sysSchoolDepartmentQueryDTO.getType());
+        return AjaxResult.success(sysSchoolDepartmentTree);
     }
 
     /**
      * 批量查詢多個部門的成員列表
      */
-    @Anonymous
+    @Log(title = "批量查詢部門成員", businessType = BusinessType.SELECT)
     @PostMapping("/members")
-    public AjaxResult getMembersByDepartments(@RequestBody List<Long> departmentIds) {
-        List<SysSchoolDepartmentMember> members = sysSchoolDepartmentMemberService.getMembersByDepartmentIds(departmentIds);
-        return AjaxResult.success(members);
+    public AjaxResult getMembersByDepartments(@RequestBody SysSchoolDepartmentMemberQueryDTO sysSchoolDepartmentMemberQueryDTO) {
+        List<SysSchoolDepartmentMemberVO> sysSchoolDepartmentMemberList = sysSchoolDepartmentMemberService.getMembersByDepartmentIds(sysSchoolDepartmentMemberQueryDTO);
+        return AjaxResult.success(sysSchoolDepartmentMemberList);
     }
 
     /**
      * 根據 ID 刪除部門成員
      */
-    @Anonymous
+    @Log(title = "刪除學校部門成員", businessType = BusinessType.DELETE)
     @DeleteMapping("/member/{id}")
     public AjaxResult deleteMember(@PathVariable Long id) {
         int result = sysSchoolDepartmentMemberService.deleteMemberById(id);
@@ -73,7 +82,7 @@ public class SysSchoolDepartmentController extends BaseController {
     /**
      * 根據 ID 刪除部門
      */
-    @Anonymous
+    @Log(title = "刪除學校部門", businessType = BusinessType.DELETE)
     @DeleteMapping("/{id}")
     public AjaxResult deleteDepartment(@PathVariable Long id) {
         int result = sysSchoolDepartmentService.deleteSysSchoolDepartmentById(id);
@@ -87,22 +96,17 @@ public class SysSchoolDepartmentController extends BaseController {
     /**
      * 批量添加部門成員
      */
-    @Anonymous
+    @Log(title = "批量添加學校部門成員", businessType = BusinessType.INSERT)
     @PostMapping("/members/batch")
-    public AjaxResult batchAddMembers(@RequestBody List<SysSchoolDepartmentMember> members,
-                                      @RequestParam(required = false, defaultValue = "1") Integer type) {
-        if (members == null || members.isEmpty()) {
+    public AjaxResult batchAddMembers(@RequestBody SysSchoolDepartmentMemberBatchSaveDTO sysSchoolDepartmentMemberBatchSaveDTO) {
+        if (sysSchoolDepartmentMemberBatchSaveDTO == null || sysSchoolDepartmentMemberBatchSaveDTO.getMembers() == null || sysSchoolDepartmentMemberBatchSaveDTO.getMembers().isEmpty()) {
             return AjaxResult.error("成員列表不能為空");
         }
-        
-        // 為每個成員設置 type
-        for (SysSchoolDepartmentMember member : members) {
-            if (member.getType() == null) {
-                member.setType(type);
-            }
+        if (sysSchoolDepartmentMemberBatchSaveDTO.getType() == null) {
+            sysSchoolDepartmentMemberBatchSaveDTO.setType(1);
         }
-        
-        int result = sysSchoolDepartmentMemberService.batchAddMembers(members);
+
+        int result = sysSchoolDepartmentMemberService.batchAddMembers(sysSchoolDepartmentMemberBatchSaveDTO);
         if (result > 0) {
             return AjaxResult.success("添加 " + result + " 名成員成功");
         } else {
@@ -113,15 +117,13 @@ public class SysSchoolDepartmentController extends BaseController {
     /**
      * 新增部門
      */
-    @Anonymous
+    @Log(title = "新增學校部門", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult addDepartment(@RequestBody SysSchoolDepartment department,
-                                    @RequestParam(required = false, defaultValue = "1") Integer type) {
-        // 設置默認 type
-        if (department.getType() == null) {
-            department.setType(type);
+    public AjaxResult addDepartment(@RequestBody SysSchoolDepartmentSaveDTO sysSchoolDepartmentSaveDTO) {
+        if (sysSchoolDepartmentSaveDTO.getType() == null) {
+            sysSchoolDepartmentSaveDTO.setType(1);
         }
-        int result = sysSchoolDepartmentService.insertSysSchoolDepartment(department);
+        int result = sysSchoolDepartmentService.insertSysSchoolDepartment(sysSchoolDepartmentSaveDTO);
         if (result > 0) {
             return AjaxResult.success("新增成功");
         } else {
@@ -132,10 +134,10 @@ public class SysSchoolDepartmentController extends BaseController {
     /**
      * 修改部門
      */
-    @Anonymous
+    @Log(title = "修改學校部門", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult editDepartment(@RequestBody SysSchoolDepartment department) {
-        int result = sysSchoolDepartmentService.updateSysSchoolDepartment(department);
+    public AjaxResult editDepartment(@RequestBody SysSchoolDepartmentSaveDTO sysSchoolDepartmentSaveDTO) {
+        int result = sysSchoolDepartmentService.updateSysSchoolDepartment(sysSchoolDepartmentSaveDTO);
         if (result > 0) {
             return AjaxResult.success("修改成功");
         } else {

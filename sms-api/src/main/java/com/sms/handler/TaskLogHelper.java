@@ -1,6 +1,6 @@
 package com.sms.handler;
 
-import com.sms.system.entity.SysTaskLog;
+import com.sms.system.entity.dto.SysTaskLogInsertDTO;
 import com.sms.system.entity.task.TaskResult;
 import com.sms.system.service.ISysTaskLogService;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ public class TaskLogHelper {
     public void executeAndLog(String taskName, String beanName, String methodName, Callable<TaskResult> task) {
         Date startTime = new Date();
         long start = System.currentTimeMillis();
-        String status = "0"; // 0-成功, 1-失敗, 2-部分失敗
+        String status = "0";
         String failReason = null;
         int successCount = 0;
         int failCount = 0;
@@ -45,18 +45,18 @@ public class TaskLogHelper {
                 successCount = result.getSuccessCount();
                 failCount = result.getFailCount();
                 failReason = result.getMessage();
-                
+
                 if (failCount > 0 && successCount > 0) {
-                    status = "2"; // 部分失敗
+                    status = "2";
                 } else if (failCount > 0 && successCount == 0) {
-                    status = "1"; // 全部失敗
+                    status = "1";
                 } else {
-                    status = "0"; // 全部成功
+                    status = "0";
                 }
             }
             log.info("定時任務: {} 執行結束, 狀態: {}, 成功: {}, 失敗: {}", taskName, status, successCount, failCount);
         } catch (Exception e) {
-            status = "1"; // 1-失敗
+            status = "1";
             failReason = getExceptionMessage(e);
             log.error("定時任務: {} 執行失敗: {}", taskName, failReason, e);
         } finally {
@@ -65,39 +65,33 @@ public class TaskLogHelper {
         }
     }
 
-    /**
-     * 保存日誌
-     */
-    private void saveLog(String taskName, String beanName, String methodName, String status, String failReason, 
+    private void saveLog(String taskName, String beanName, String methodName, String status, String failReason,
                          int successCount, int failCount, Date executionTime, long duration) {
         try {
-            SysTaskLog taskLog = new SysTaskLog();
-            taskLog.setTaskName(taskName);
-            taskLog.setBeanName(beanName);
-            taskLog.setMethodName(methodName);
-            taskLog.setStatus(status);
-            
+            SysTaskLogInsertDTO sysTaskLogInsertDTO = new SysTaskLogInsertDTO();
+            sysTaskLogInsertDTO.setTaskName(taskName);
+            sysTaskLogInsertDTO.setBeanName(beanName);
+            sysTaskLogInsertDTO.setMethodName(methodName);
+            sysTaskLogInsertDTO.setStatus(status);
+
             if ("0".equals(status)) {
-                taskLog.setIsProcessed("1");
+                sysTaskLogInsertDTO.setIsProcessed("1");
             } else {
-                taskLog.setIsProcessed("0");
+                sysTaskLogInsertDTO.setIsProcessed("0");
             }
-            
-            taskLog.setFailReason(failReason);
-            taskLog.setSuccessCount(successCount);
-            taskLog.setFailCount(failCount);
-            taskLog.setExecutionTime(executionTime);
-            taskLog.setDuration(duration);
-            
-            sysTaskLogService.insertTaskLog(taskLog);
+
+            sysTaskLogInsertDTO.setFailReason(failReason);
+            sysTaskLogInsertDTO.setSuccessCount(successCount);
+            sysTaskLogInsertDTO.setFailCount(failCount);
+            sysTaskLogInsertDTO.setExecutionTime(executionTime);
+            sysTaskLogInsertDTO.setDuration(duration);
+
+            sysTaskLogService.insertTaskLog(sysTaskLogInsertDTO);
         } catch (Exception e) {
             log.error("保存定時任務日誌失敗", e);
         }
     }
 
-    /**
-     * 獲取異常訊息（限制長度避免欄位溢出）
-     */
     private String getExceptionMessage(Exception e) {
         String msg = e.getMessage() != null ? e.getMessage() : e.toString();
         if (msg.length() > 1900) {

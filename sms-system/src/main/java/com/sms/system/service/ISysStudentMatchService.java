@@ -1,63 +1,74 @@
 package com.sms.system.service;
 
-import com.sms.system.entity.query.SysStudentMatchQuery;
+import com.sms.system.entity.dto.SysStudentMatchBindDTO;
+import com.sms.system.entity.dto.SysStudentMatchClearDTO;
+import com.sms.system.entity.dto.SysStudentMatchDTO;
+import com.sms.system.entity.dto.SysStudentMatchDeleteDTO;
+import com.sms.system.entity.dto.SysStudentMatchDeptQueryDTO;
+import com.sms.system.entity.dto.SysStudentMatchSyncDataDTO;
+import com.sms.system.entity.dto.SysStudentMatchSyncDTO;
+import com.sms.system.entity.dto.SysStudentMatchSyncRecordDTO;
+import com.sms.system.entity.dto.SysWecomStudentDTO;
+import com.sms.system.entity.vo.SysStudentMatchDeptMapVO;
+import com.sms.system.entity.vo.SysStudentMatchOperationResultVO;
 import com.sms.system.entity.vo.SysStudentMatchVO;
 import com.sms.system.entity.vo.SysWecomStudentVO;
+
 import java.util.List;
-import java.util.Map;
 
 /**
  * 學生數據匹配 業務層介面
+ * <p>入參：DTO；出參：VO</p>
  */
 public interface ISysStudentMatchService {
 
     /**
-     * 查詢學生數據匹配列表（學籍資料來自 student_profiles.student_info）
+     * 查詢學生匹配列表
      */
-    List<SysStudentMatchVO> selectSysStudentMatchList(SysStudentMatchQuery query);
+    List<SysStudentMatchVO> selectSysStudentMatchList(SysStudentMatchDTO studentMatchDTO);
 
     /**
-     * 查詢未匹配的學籍數據列表
+     * 查詢未匹配學生列表
      */
-    List<SysStudentMatchVO> selectUnmatchedList(SysStudentMatchQuery query);
+    List<SysStudentMatchVO> selectUnmatchedList(SysStudentMatchDTO studentMatchDTO);
 
     /**
-     * 獲取待手動匹配的企業微信學生候選名單
+     * 查詢企微學生候選列表
      */
-    List<SysWecomStudentVO> selectWecomCandidates(String queryName, String queryMobile, String queryClass);
+    List<SysWecomStudentVO> selectWecomCandidates(SysWecomStudentDTO wecomStudentDTO);
 
     /**
-     * 手動綁定學生匹配關係
+     * 手動綁定學生匹配
      */
-    boolean bindStudent(Long matchId, String studentProfileNum, String studentUserIdWecom);
+    SysStudentMatchOperationResultVO bindStudent(SysStudentMatchBindDTO studentMatchBindDTO);
 
     /**
-     * 根據 matchId 列表取出待同步記錄（已匹配且未同步成功）
+     * 查詢待同步的匹配記錄列表
      */
-    List<SysStudentMatchVO> getPendingListForSync(List<Long> matchIds);
+    List<SysStudentMatchVO> getPendingListForSync(SysStudentMatchSyncDTO studentMatchSyncDTO);
 
     /**
-     * 查詢指定學生的企微班級部門 ID 映射
+     * 查詢學生所屬部門映射
      */
-    Map<String, List<Long>> getStudentDeptMap(List<String> studentUserIds);
+    SysStudentMatchDeptMapVO getStudentDeptMap(SysStudentMatchDeptQueryDTO sysStudentMatchDeptQueryDTO);
 
     /**
-     * 保存單筆同步結果至資料庫
+     * 保存單條同步結果
      */
-    void saveOneSyncResult(SysStudentMatchVO match, String syncStatus, String errorMsg, String operName);
+    void saveOneSyncResult(SysStudentMatchSyncRecordDTO syncRecordDTO);
 
     /**
-     * 同步/匹配數據（學籍資料與企微學生自動比對）
+     * 同步對照數據（自動比對綁定）
      */
-    String syncData(String operName);
+    SysStudentMatchOperationResultVO syncData(SysStudentMatchSyncDataDTO syncDataDTO);
 
     /**
      * 批量刪除學生匹配記錄
      */
-    int deleteSysStudentMatchByIds(List<Long> ids);
+    SysStudentMatchOperationResultVO deleteSysStudentMatchByIds(SysStudentMatchDeleteDTO studentMatchDeleteDTO);
 
     /**
-     * 清除單個匹配狀態
+     * 清除學生匹配關係
      */
-    boolean clearMatch(Long matchId, String studentProfileNum);
+    SysStudentMatchOperationResultVO clearMatch(SysStudentMatchClearDTO studentMatchClearDTO);
 }

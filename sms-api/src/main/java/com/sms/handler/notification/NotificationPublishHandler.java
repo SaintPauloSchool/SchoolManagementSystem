@@ -5,12 +5,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.sms.common.utils.security.Md5Utils;
 import com.sms.framework.wechat.WechatWorkHttpClient;
 import com.sms.system.entity.task.TaskResult;
+import com.sms.system.entity.dto.NotificationQueryDTO;
 import com.sms.system.entity.notification.*;
 import com.sms.system.entity.vo.ResolvedReceiversVO;
 import com.sms.system.entity.vo.ParentStudentMessageInfo;
 import com.sms.system.entity.vo.UnrepliedStudentVO;
 import com.sms.system.entity.vo.BatchReceiversVO;
+import com.sms.system.entity.vo.NotificationVO;
 import com.sms.system.service.notification.*;
+import com.sms.common.utils.bean.BeanCopyUtils;
 import com.sms.system.entity.SysDepartmentParentBinding;
 import com.sms.system.service.INotificationMessageService;
 import com.sms.system.service.ISysDepartmentParentBindingService;
@@ -44,10 +47,6 @@ public class NotificationPublishHandler {
     private static final int PARTY_BATCH_SIZE = 100;
     // 防重複發送校驗時間（秒）
     private static final int DUPLICATE_CHECK_INTERVAL = 1800;
-    // 發送狀態常量
-    private static final String SEND_STATUS_SUCCESS = "2";
-    private static final String SEND_STATUS_FAIL = "3";
-    private static final String SEND_STATUS_PARTIAL = "4";
     // 線程安全的日期格式化器
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -68,9 +67,6 @@ public class NotificationPublishHandler {
      */
     @Value("${wechat.work.handbookBaseUrl:http://10.32.96.55:8080/handbook}")
     private String handbookBaseUrl;
-
-    @Value("${wechat.work.corpId:ww04fad852e91fd490}")
-    private String corpId;
 
     @Value("${wechat.work.agentId:1000033}")
     private Integer agentId;
@@ -94,10 +90,10 @@ public class NotificationPublishHandler {
     private INotificationUserReadRecordService notificationUserReadRecordService;
 
     @Autowired
-    private INotificationReminderRecordService notificationReminderRecordService;
+    private INotificationService notificationService;
 
     @Autowired
-    private INotificationService notificationService;
+    private INotificationPublishRecordService notificationPublishRecordService;
 
     @Autowired
     private INotificationResendFailRecordService notificationResendFailRecordService;
@@ -114,6 +110,26 @@ public class NotificationPublishHandler {
     // =========================================================================
     // A. Public 入口方法 (Public API)
     // =========================================================================
+
+    /**
+     * 保存後發佈通知（從數據庫加載實體後推送）
+     */
+    public void publishAfterSave(Long notificationId) {
+        Notification notification = loadNotificationEntity(notificationId);
+        List<NotificationReceiver> receivers = loadReceivers(notificationId);
+        publishToWechat(notification, receivers);
+        sendCcNotifications(notification);
+    }
+
+    /**
+     * 發送撤回通知（通過通知 ID）
+     */
+    public void sendRecallNotification(Long notificationId) {
+        Notification notification = loadNotificationEntity(notificationId);
+        if (notification != null) {
+            sendRecallNotification(notification);
+        }
+    }
 
     /**
      * 將通告發佈到微信（家校通信/外部聯繫人消息）
@@ -146,15 +162,9 @@ public class NotificationPublishHandler {
         SendResult sendResult = sendInBatchesWithPersonalization(notification, parentUserIds, studentUserIds, partyIds,
                 messageInfos);
 
-        // 4. 創建發送記錄（包含成功/失敗統計）
-        NotificationSendRecord sendRecord = createSendRecord(notification, studentUserIds, sendResult, bindings);
-        notificationSendRecordService.save(sendRecord);
-
-        // 5. 創建用戶閱讀記錄（帶入每個用戶的發送成功狀態）
-        List<NotificationUserReadRecord> readRecords = createUserReadRecords(
-                sendRecord.getSendRecordId(), parentUserIds, studentUserIds, sendResult.getSuccessUserIds(), bindings,
-                studentDepartmentIds);
-        notificationUserReadRecordService.batchSave(readRecords);
+        // 4-5. 持久化發送記錄與閱讀記錄
+        notificationPublishRecordService.savePublishRecords(
+                notification, studentUserIds, sendResult, bindings, parentUserIds, studentDepartmentIds);
     }
 
     /**
@@ -187,7 +197,7 @@ public class NotificationPublishHandler {
         }
 
         // 1. 查詢並解析原通知的接收者
-        List<NotificationReceiver> receivers = notificationReceiverService.selectByNotificationId(originalNotification.getNotificationId());
+        List<NotificationReceiver> receivers = loadReceivers(originalNotification.getNotificationId());
         ResolvedReceiversVO resolvedReceivers = notificationReceiverService.resolveReceivers(receivers, false);
 
         List<String> parentUserIds = nullSafe(resolvedReceivers.getParentUserIds());
@@ -226,7 +236,7 @@ public class NotificationPublishHandler {
         Map<String, Object> result = new HashMap<>();
 
         // 1. 查詢原始通知
-        Notification notification = notificationService.selectNotificationById(notificationId);
+        Notification notification = loadNotificationEntity(notificationId);
         if (notification == null) {
             throw new IllegalStateException("未找到通知信息");
         }
@@ -324,9 +334,7 @@ public class NotificationPublishHandler {
         }
 
         // 7. 批量保存提醒記錄
-        if (!reminderRecords.isEmpty()) {
-            notificationReminderRecordService.batchSave(reminderRecords);
-        }
+        notificationPublishRecordService.saveReminderRecords(reminderRecords);
 
         // 8. 構建返回結果
         result.put("success", true);
@@ -361,7 +369,7 @@ public class NotificationPublishHandler {
         Map<String, Object> result = new HashMap<>();
 
         // 1. 查詢原始通知
-        Notification notification = notificationService.selectNotificationById(notificationId);
+        Notification notification = loadNotificationEntity(notificationId);
         if (notification == null) {
             throw new IllegalStateException("未找到通知信息");
         }
@@ -405,51 +413,31 @@ public class NotificationPublishHandler {
             }
         }
 
-        // 6. 重新發送並更新每條閱讀記錄 of send_status
+        // 6. 重新發送
         Set<String> overallSuccessUserIds = new HashSet<>();
-        // 保存所有失敗用戶的失敗原因
         Map<String, String> allFailedUserReasons = new HashMap<>();
 
         // 重新發送家長消息
         if (!failedParentIds.isEmpty()) {
             SendResult parentResult = sendInBatches(notification, failedParentIds, Collections.emptyList(),
                     Collections.emptyList());
-            updateReadRecords(failedRecords, "2", parentResult.getSuccessUserIds());
             overallSuccessUserIds.addAll(parentResult.getSuccessUserIds());
-            if (parentResult.getFailedUserReasons() != null)
+            if (parentResult.getFailedUserReasons() != null) {
                 allFailedUserReasons.putAll(parentResult.getFailedUserReasons());
+            }
         }
 
         // 重新發送學生消息
         if (!failedStudentIds.isEmpty()) {
             SendResult studentResult = sendInBatches(notification, Collections.emptyList(), failedStudentIds,
                     Collections.emptyList());
-            updateReadRecords(failedRecords, "1", studentResult.getSuccessUserIds());
             overallSuccessUserIds.addAll(studentResult.getSuccessUserIds());
-            if (studentResult.getFailedUserReasons() != null)
+            if (studentResult.getFailedUserReasons() != null) {
                 allFailedUserReasons.putAll(studentResult.getFailedUserReasons());
-        }
-
-        // 如果是自動重發， 記錄自動重發的失敗信息
-        if (isAutoTask) {
-            for (NotificationUserReadRecord record : failedRecords) {
-                if (!overallSuccessUserIds.contains(record.getUserId())) {
-                    NotificationResendFailRecord failRecord = new NotificationResendFailRecord();
-                    failRecord.setNotificationId(notificationId);
-                    failRecord.setSendRecordId(sendRecord.getSendRecordId());
-                    failRecord.setUserId(record.getUserId());
-                    failRecord.setUserType(record.getUserType());
-                    failRecord.setStudentUserId(record.getStudentUserId());
-                    String reason = allFailedUserReasons.getOrDefault(record.getUserId(), "未知原因");
-                    failRecord.setFailReason1("自動重發失敗");
-                    failRecord.setFailMessage1(reason);
-                    notificationResendFailRecordService.saveOrUpdate(failRecord);
-                }
             }
         }
 
-        // 7. 以學生爲維度統計成功/失敗數（與 createSendRecord 邏輯一致）
-        // 建立 studentUserId -> 該學生下所有 userId 集合
+        // 7. 以學生爲維度統計成功/失敗數
         Map<String, Set<String>> studentToUsersMap = new HashMap<>();
         for (NotificationUserReadRecord record : failedRecords) {
             String studentId = record.getStudentUserId();
@@ -469,15 +457,17 @@ public class NotificationPublishHandler {
                     break;
                 }
             }
-            if (anySuccess)
+            if (anySuccess) {
                 successCount++;
-            else
+            } else {
                 failCount++;
+            }
         }
 
-        // 8. 更新發送記錄的統計信息（以學生爲維度）
-        NotificationSendRecord updateRecord = buildSendRecordUpdate(sendRecord, successCount);
-        notificationSendRecordService.update(updateRecord);
+        // 8. 持久化重發結果
+        notificationPublishRecordService.saveResendRecords(
+                notificationId, sendRecord, failedRecords, overallSuccessUserIds,
+                allFailedUserReasons, isAutoTask, successCount);
 
         // 9. 構建返回結果
         result.put("resendCount", studentToUsersMap.size());
@@ -562,12 +552,13 @@ public class NotificationPublishHandler {
     public TaskResult remindAllPendingNotifications() {
         log.info("開始執行定時提示家長回復通知任務");
 
-        Notification queryParam = new Notification();
-        queryParam.setStatus("1"); // 1-已發布
+        NotificationQueryDTO queryParam = new NotificationQueryDTO();
+        queryParam.setStatus("1");
         queryParam.setReminderTime(LocalDateTime.now());
-        List<Notification> notificationList = notificationService.selectNotificationList(queryParam);
+        List<Notification> notificationList = BeanCopyUtils.copyList(
+                notificationService.selectNotificationList(queryParam), Notification.class);
 
-        if (notificationList == null || notificationList.isEmpty()) {
+        if (notificationList.isEmpty()) {
             log.info("今日無需提醒回復的通知，任務結束");
             return TaskResult.success(0, 0, "無通知需提醒");
         }
@@ -913,161 +904,6 @@ public class NotificationPublishHandler {
                 + "👉 請點擊以下連接查看詳情：\n" + noticeUrl;
     }
 
-    /**
-     * 創建發送記錄
-     */
-    private NotificationSendRecord createSendRecord(Notification notification,
-                                                    List<String> studentUserIds,
-                                                    SendResult sendResult,
-                                                    List<SysDepartmentParentBinding> bindings) {
-        NotificationSendRecord sendRecord = new NotificationSendRecord();
-        sendRecord.setNotificationId(notification.getNotificationId());
-        sendRecord.setSenderId(notification.getSenderId());
-        sendRecord.setSenderName(notification.getSenderName());
-        sendRecord.setSendTime(LocalDateTime.now());
-
-        int initialCapacity = bindings == null ? 16 : (int) (bindings.size() / 0.75f) + 1;
-        Map<String, Set<String>> studentParentMap = new HashMap<>(initialCapacity);
-        if (bindings != null) {
-            for (SysDepartmentParentBinding binding : bindings) {
-                String studentId = binding.getStudentUserId();
-                String parentId = binding.getParentUserId();
-                if (studentId != null && parentId != null) {
-                    studentParentMap.computeIfAbsent(studentId, k -> new HashSet<>()).add(parentId);
-                }
-            }
-        }
-
-        Set<String> allTargetStudents = new HashSet<>(studentParentMap.keySet());
-        Set<String> studentUserIdsSet = Collections.emptySet();
-        if (studentUserIds != null && !studentUserIds.isEmpty()) {
-            studentUserIdsSet = new HashSet<>(studentUserIds);
-            allTargetStudents.addAll(studentUserIdsSet);
-        }
-
-        int totalCount = allTargetStudents.size();
-        int successCount = 0;
-        int failCount = 0;
-
-        Set<String> successUserIds = sendResult.getSuccessUserIds();
-
-        for (String studentId : allTargetStudents) {
-            boolean isSuccess = false;
-
-            if (studentUserIdsSet.contains(studentId) && successUserIds.contains(studentId)) {
-                isSuccess = true;
-            } else {
-                Set<String> parents = studentParentMap.get(studentId);
-                if (parents != null) {
-                    for (String pId : parents) {
-                        if (successUserIds.contains(pId)) {
-                            isSuccess = true;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (isSuccess) {
-                successCount++;
-            } else {
-                failCount++;
-            }
-        }
-
-        sendRecord.setTotalCount(totalCount);
-        sendRecord.setSuccessCount(successCount);
-        sendRecord.setFailCount(failCount);
-
-        if (failCount == 0 && totalCount > 0) {
-            sendRecord.setSendStatus(SEND_STATUS_SUCCESS);
-        } else if (successCount == 0 && totalCount > 0) {
-            sendRecord.setSendStatus(SEND_STATUS_FAIL);
-        } else {
-            sendRecord.setSendStatus(SEND_STATUS_PARTIAL);
-        }
-
-        sendRecord.setCreateTime(LocalDateTime.now());
-
-        return sendRecord;
-    }
-
-    /**
-     * 創建用戶閱讀記錄列表
-     */
-    private List<NotificationUserReadRecord> createUserReadRecords(Long sendRecordId, List<String> parentUserIds,
-                                                                   List<String> studentUserIds,
-                                                                   Set<String> successUserIds,
-                                                                   List<SysDepartmentParentBinding> bindings,
-                                                                   Map<String, Long> studentDepartmentIds) {
-        List<NotificationUserReadRecord> readRecords = new ArrayList<>();
-        LocalDateTime now = LocalDateTime.now();
-        Set<String> processedBindingKeys = new HashSet<>();
-
-        if (bindings != null) {
-            for (SysDepartmentParentBinding binding : bindings) {
-                String parentUserId = binding.getParentUserId();
-                if (parentUserId == null) {
-                    continue;
-                }
-                String key = parentUserId + "_" + binding.getStudentUserId() + "_"
-                        + (binding.getDepartmentId() != null ? binding.getDepartmentId() : "null");
-                if (processedBindingKeys.contains(key)) {
-                    log.debug("createUserReadRecords: 跳過重複的綁定關係: parentUserId={}, studentUserId={}, departmentId={}",
-                            parentUserId, binding.getStudentUserId(), binding.getDepartmentId());
-                    continue;
-                }
-                processedBindingKeys.add(key);
-                boolean sendSuccess = successUserIds.contains(parentUserId);
-                readRecords.add(createReadRecord(sendRecordId, parentUserId, "2", binding.getStudentUserId(),
-                        binding.getDepartmentId(), sendSuccess, now));
-            }
-        }
-
-        Set<String> parentsWithRecords = readRecords.stream()
-                .filter(r -> "2".equals(r.getUserType()))
-                .map(NotificationUserReadRecord::getUserId)
-                .collect(Collectors.toSet());
-
-        if (parentUserIds != null) {
-            for (String userId : parentUserIds) {
-                if (!parentsWithRecords.contains(userId)) {
-                    boolean sendSuccess = successUserIds.contains(userId);
-                    readRecords.add(createReadRecord(sendRecordId, userId, "2", null, null, sendSuccess, now));
-                }
-            }
-        }
-
-        if (studentUserIds != null) {
-            for (String userId : studentUserIds) {
-                boolean sendSuccess = successUserIds.contains(userId);
-                Long departmentId = studentDepartmentIds != null ? studentDepartmentIds.get(userId) : null;
-                readRecords.add(createReadRecord(sendRecordId, userId, "1", userId, departmentId, sendSuccess, now));
-            }
-        }
-
-        return readRecords;
-    }
-
-    /**
-     * 創建單條閱讀記錄
-     */
-    private NotificationUserReadRecord createReadRecord(Long sendRecordId, String userId, String userType,
-                                                        String studentUserId, Long departmentId,
-                                                        boolean sendSuccess, LocalDateTime createTime) {
-        NotificationUserReadRecord record = new NotificationUserReadRecord();
-        record.setSendRecordId(sendRecordId);
-        record.setUserId(userId);
-        record.setUserType(userType);
-        record.setIsRead("0");
-        record.setReplyStatus("0");
-        record.setSendStatus(sendSuccess ? "1" : "0");
-        record.setStudentUserId(studentUserId);
-        record.setDepartmentId(departmentId);
-        record.setCreateTime(createTime);
-        return record;
-    }
-
     // =========================================================================
     // C. Private 撤回與抄送細節 (Private Recall & CC Flow Helpers)
     // =========================================================================
@@ -1079,8 +915,8 @@ public class NotificationPublishHandler {
         Set<String> allUserIds = new HashSet<>();
 
         // 1. 查詢該通知的抄送對象
-        List<NotificationCc> ccs = notificationCcService.selectByNotificationId(notificationId);
-        if (ccs != null && !ccs.isEmpty()) {
+        List<NotificationCc> ccs = loadCcs(notificationId);
+        if (!ccs.isEmpty()) {
             allUserIds.addAll(notificationCcService.resolveCcUserIds(ccs));
         }
 
@@ -1321,47 +1157,6 @@ public class NotificationPublishHandler {
     }
 
     // =========================================================================
-    // E. Private 重發細節 (Private Resend Helpers)
-    // =========================================================================
-
-    /**
-     * 批量更新閱讀記錄的發送狀態
-     */
-    private void updateReadRecords(List<NotificationUserReadRecord> records,
-                                   String userType, Set<String> successUserIds) {
-        for (NotificationUserReadRecord record : records) {
-            if (userType.equals(record.getUserType())) {
-                String newStatus = successUserIds.contains(record.getUserId()) ? "1" : "0";
-                notificationUserReadRecordService.updateSendStatus(record.getReadId(), newStatus);
-            }
-        }
-    }
-
-    /**
-     * 構建發送記錄更新對象
-     */
-    private NotificationSendRecord buildSendRecordUpdate(NotificationSendRecord sendRecord, int successDelta) {
-        int newSuccessCount = (sendRecord.getSuccessCount() != null ? sendRecord.getSuccessCount() : 0) + successDelta;
-        int newFailCount = (sendRecord.getFailCount() != null ? sendRecord.getFailCount() : 0) - successDelta;
-        if (newFailCount < 0)
-            newFailCount = 0;
-
-        NotificationSendRecord updateRecord = new NotificationSendRecord();
-        updateRecord.setSendRecordId(sendRecord.getSendRecordId());
-        updateRecord.setSuccessCount(newSuccessCount);
-        updateRecord.setFailCount(newFailCount);
-        if (newFailCount == 0) {
-            updateRecord.setSendStatus(SEND_STATUS_SUCCESS);
-        } else if (newSuccessCount == 0) {
-            updateRecord.setSendStatus(SEND_STATUS_FAIL);
-        } else {
-            updateRecord.setSendStatus(SEND_STATUS_PARTIAL);
-        }
-        updateRecord.setUpdateTime(LocalDateTime.now());
-        return updateRecord;
-    }
-
-    // =========================================================================
     // F. Private 通用工具 (Private General Helpers)
     // =========================================================================
 
@@ -1422,5 +1217,19 @@ public class NotificationPublishHandler {
      */
     private <T> List<T> nullSafe(List<T> list) {
         return list != null ? list : Collections.emptyList();
+    }
+
+    private Notification loadNotificationEntity(Long notificationId) {
+        NotificationVO vo = notificationService.selectNotificationById(notificationId);
+        return BeanCopyUtils.copy(vo, Notification.class);
+    }
+
+    private List<NotificationReceiver> loadReceivers(Long notificationId) {
+        return BeanCopyUtils.copyList(notificationReceiverService.selectByNotificationId(notificationId),
+                NotificationReceiver.class);
+    }
+
+    private List<NotificationCc> loadCcs(Long notificationId) {
+        return BeanCopyUtils.copyList(notificationCcService.selectByNotificationId(notificationId), NotificationCc.class);
     }
 }

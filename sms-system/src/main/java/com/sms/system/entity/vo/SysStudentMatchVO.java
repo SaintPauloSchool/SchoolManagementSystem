@@ -174,27 +174,4 @@ public class SysStudentMatchVO implements Serializable {
     public void setDsejStudentId(String dsejStudentId) {
         this.dsejStudentId = dsejStudentId;
     }
-
-    /** 用於企微同步更名的學生姓名 */
-    public String getSyncTargetName() {
-        return idName != null && !idName.trim().isEmpty() ? idName.trim() : "";
-    }
-
-    /** 獲取去除減號的 DSEJ 學生證編號（匹配用） */
-    public String getDsejStudentIdClean() {
-        if (dsejStudentId == null) {
-            return "";
-        }
-        return dsejStudentId.replace("-", "").trim();
-    }
-
-    public String resolveProfileNum() {
-        if (studentProfileNum != null && !studentProfileNum.trim().isEmpty()) {
-            return studentProfileNum.trim();
-        }
-        if (studentProfileNumber != null) {
-            return String.valueOf(studentProfileNumber);
-        }
-        return null;
-    }
 }

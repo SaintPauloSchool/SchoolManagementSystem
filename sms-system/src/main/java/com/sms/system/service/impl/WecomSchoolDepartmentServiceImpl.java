@@ -2,8 +2,10 @@ package com.sms.system.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.sms.common.utils.bean.BeanCopyUtils;
 import com.sms.system.entity.WecomSchoolDepartment;
 import com.sms.system.entity.WecomSchoolDepartmentMember;
+import com.sms.system.entity.vo.WecomSchoolDepartmentVO;
 import com.sms.system.mapper.WecomSchoolDepartmentMapper;
 import com.sms.system.mapper.WecomSchoolDepartmentMemberMapper;
 import com.sms.system.service.IWecomSchoolDepartmentService;
@@ -36,18 +38,20 @@ public class WecomSchoolDepartmentServiceImpl implements IWecomSchoolDepartmentS
      * 獲取學校部門樹形結構（帶成員）
      */
     @Override
-    public List<WecomSchoolDepartment> getWecomSchoolDepartmentTreeWithMembers() {
+    public List<WecomSchoolDepartmentVO> getWecomSchoolDepartmentTreeWithMembers() {
         List<WecomSchoolDepartment> rootNodes = buildDepartmentTree();
         loadMembersForDepartments(rootNodes);
-        return rootNodes;
+        return BeanCopyUtils.copyTree(rootNodes, WecomSchoolDepartmentVO.class,
+                WecomSchoolDepartment::getChildren, WecomSchoolDepartmentVO::setChildren);
     }
 
     /**
      * 獲取學校部門樹形結構（僅部門，不含人員）
      */
     @Override
-    public List<WecomSchoolDepartment> getWecomSchoolDepartmentTree() {
-        return buildDepartmentTree();
+    public List<WecomSchoolDepartmentVO> getWecomSchoolDepartmentTree() {
+        return BeanCopyUtils.copyTree(buildDepartmentTree(), WecomSchoolDepartmentVO.class,
+                WecomSchoolDepartment::getChildren, WecomSchoolDepartmentVO::setChildren);
     }
 
     /**

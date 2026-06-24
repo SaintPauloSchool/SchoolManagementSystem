@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.sms.common.constant.Constants;
+import com.sms.common.annotation.Log;
 import com.sms.common.core.domain.AjaxResult;
+import com.sms.common.enums.BusinessType;
 import com.sms.common.exception.file.FileSizeLimitExceededException;
-import com.sms.common.exception.file.InvalidExtensionException;
 import com.sms.common.utils.file.FileUploadUtils;
 
 /**
@@ -26,6 +26,7 @@ public class CommonController
     /**
      * 通用上傳請求
      */
+    @Log(title = "文件上傳", businessType = BusinessType.INSERT)
     @PostMapping("/upload")
     public AjaxResult uploadFile(@RequestParam("file") MultipartFile file) throws Exception
     {
@@ -37,14 +38,10 @@ public class CommonController
             data.put("url", fileName);
             return AjaxResult.success(data);
         }
-        catch (FileSizeLimitExceededException e)
+        catch (FileSizeLimitExceededException | IOException e)
         {
             return AjaxResult.error(e.getMessage());
-        } catch (IOException e)
-        {
-            return AjaxResult.error(e.getMessage());
-        }
-        catch (Exception e)
+        } catch (Exception e)
         {
             return AjaxResult.error("上傳失敗：" + e.getMessage());
         }
