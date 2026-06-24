@@ -3,7 +3,7 @@ package com.sms.handler.system;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.framework.wechat.WechatWorkHttpClient;
-import com.sms.system.entity.SysStudentMatch;
+import com.sms.system.entity.vo.SysStudentMatchVO;
 import com.sms.system.service.ISysStudentMatchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,11 +49,10 @@ public class StudentMatchHandler {
         }
 
         // 1. 從 DB 取出待同步記錄
-        List<SysStudentMatch> pendingList = sysStudentMatchService.getPendingListForSync(matchIds);
-        
-        // 過濾掉未匹配 (studentUserIdWecom 為空) 的記錄
-        List<SysStudentMatch> validList = new ArrayList<>();
-        for (SysStudentMatch m : pendingList) {
+        List<SysStudentMatchVO> pendingList = sysStudentMatchService.getPendingListForSync(matchIds);
+
+        List<SysStudentMatchVO> validList = new ArrayList<>();
+        for (SysStudentMatchVO m : pendingList) {
             if (m.getStudentUserIdWecom() != null && !m.getStudentUserIdWecom().trim().isEmpty()) {
                 validList.add(m);
             }
@@ -68,7 +67,7 @@ public class StudentMatchHandler {
 
         // 2. 批量查詢學生的企微班級部門 ID（用於 payload 保護，防止更名覆蓋班級）
         List<String> studentUserIds = new ArrayList<>();
-        for (SysStudentMatch m : validList) {
+        for (SysStudentMatchVO m : validList) {
             studentUserIds.add(m.getStudentUserIdWecom());
         }
         Map<String, List<Long>> studentDeptsMap = sysStudentMatchService.getStudentDeptMap(studentUserIds);
@@ -79,14 +78,13 @@ public class StudentMatchHandler {
 
         // 3. 分批（每批 100 筆）調用企微接口
         for (int i = 0; i < validList.size(); i += BATCH_LIMIT) {
-            List<SysStudentMatch> subList = validList.subList(i, Math.min(i + BATCH_LIMIT, validList.size()));
+            List<SysStudentMatchVO> subList = validList.subList(i, Math.min(i + BATCH_LIMIT, validList.size()));
 
-            // 構建企微請求 payload
             JSONArray studentsArray = new JSONArray();
-            for (SysStudentMatch matchItem : subList) {
+            for (SysStudentMatchVO matchItem : subList) {
                 JSONObject stuObj = new JSONObject();
                 stuObj.put("student_userid", matchItem.getStudentUserIdWecom());
-                stuObj.put("name", matchItem.getStudentNameLocal());
+                stuObj.put("name", matchItem.getSyncTargetName());
 
                 // 攜帶原有班級 ID，防止更名操作意外覆蓋並踢出學生的班級
                 JSONArray depts = new JSONArray();
@@ -115,7 +113,7 @@ public class StudentMatchHandler {
                         }
                     }
 
-                    for (SysStudentMatch matchItem : subList) {
+                    for (SysStudentMatchVO matchItem : subList) {
                         JSONObject rObj = statusMap.get(matchItem.getStudentUserIdWecom());
                         if (rObj != null && rObj.getInteger("errcode") == 0) {
                             sysStudentMatchService.saveOneSyncResult(matchItem, "1", null, operName);
@@ -124,13 +122,13 @@ public class StudentMatchHandler {
                             String errmsg = rObj != null ? rObj.getString("errmsg") : "企業微信同步無回傳狀態";
                             sysStudentMatchService.saveOneSyncResult(matchItem, "2", errmsg, operName);
                             totalFail++;
-                            errorSummary.append("<br/>").append(matchItem.getStudentNameLocal()).append("：").append(errmsg);
+                            errorSummary.append("<br/>").append(matchItem.getSyncTargetName()).append("：").append(errmsg);
                         }
                     }
                 } else {
                     // 整批 API 調用失敗
                     String globalErrMsg = wecomResponse != null ? wecomResponse.getString("errmsg") : "企業微信接口未回傳有效內容";
-                    for (SysStudentMatch matchItem : subList) {
+                    for (SysStudentMatchVO matchItem : subList) {
                         sysStudentMatchService.saveOneSyncResult(matchItem, "2", globalErrMsg, operName);
                         totalFail++;
                     }
@@ -138,7 +136,7 @@ public class StudentMatchHandler {
                 }
             } catch (Exception ex) {
                 log.error("調用企微更名接口拋出異常", ex);
-                for (SysStudentMatch matchItem : subList) {
+                for (SysStudentMatchVO matchItem : subList) {
                     sysStudentMatchService.saveOneSyncResult(matchItem, "2", "系統錯誤：" + ex.getMessage(), operName);
                     totalFail++;
                 }

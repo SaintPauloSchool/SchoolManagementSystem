@@ -113,7 +113,7 @@
               @click="handleMenuSelect('3-4')"
             >
               <el-icon class="nav-icon"><User /></el-icon>
-              <span class="nav-text">學生數據匹配</span>
+              <span class="nav-text">學生信息管理</span>
             </li>
           </ul>
         </div>
@@ -208,7 +208,7 @@
             v-else-if="activeMenu === '3-3'"
           />
           
-          <!-- 學生數據匹配 -->
+          <!-- 學生信息管理 -->
           <StudentMatch
             v-else-if="activeMenu === '3-4'"
           />

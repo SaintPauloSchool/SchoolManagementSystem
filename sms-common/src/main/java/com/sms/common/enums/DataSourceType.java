@@ -14,5 +14,10 @@ public enum DataSourceType
     /**
      * 從庫
      */
-    SLAVE
+    SLAVE,
+
+    /**
+     * 學籍庫 student_profiles
+     */
+    STUDENT_PROFILES
 }
