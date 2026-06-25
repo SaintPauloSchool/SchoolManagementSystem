@@ -212,6 +212,48 @@ export default {
     this.initFileList()
   },
   methods: {
+    /** 合併 el-upload 回傳列表與本地 fileList，保留已上傳文件的 _originalUrl 等自定義欄位 */
+    mergeFileList(incomingList) {
+      const existingByUid = new Map(
+        (this.fileList || []).filter(f => f.uid != null).map(f => [f.uid, f])
+      )
+      return (incomingList || [])
+        .filter(f => f.status !== 'removed')
+        .map(f => {
+          const existing = existingByUid.get(f.uid)
+          return {
+            ...f,
+            name: existing?.name || f.name || f.raw?.name,
+            url: existing?.url || f.url,
+            status: existing?.status === 'success' ? 'success' : f.status,
+            _originalUrl: existing?._originalUrl || f._originalUrl
+          }
+        })
+    },
+
+    /** 將已成功上傳的附件同步到 localFormData.attachmentUrls */
+    syncAttachmentUrls() {
+      this.localFormData.attachmentUrls = this.fileList
+        .filter(f => f._originalUrl || f.status === 'success')
+        .map(f => ({
+          name: f.name || f.raw?.name || '附件',
+          url: f._originalUrl || this.toStorageUrl(f.url)
+        }))
+        .filter(f => f.url)
+    },
+
+    /** 將帶 /sms-api 前綴的顯示 URL 還原為存儲用路徑 */
+    toStorageUrl(url) {
+      if (!url || typeof url !== 'string') {
+        return url
+      }
+      const profilePrefix = `${API_BASE_PATH}/profile`
+      if (url.startsWith(profilePrefix)) {
+        return url.replace(profilePrefix, '/profile')
+      }
+      return url
+    },
+
     initFileList() {
       if (this.localFormData.attachmentUrls && this.localFormData.attachmentUrls.length > 0) {
         try {
@@ -221,28 +263,18 @@ export default {
             
           // 確保始終根據最新的 urls 重新構建 fileList
           this.fileList = urls.map((item, index) => {
-            if (typeof item === 'string') {
-               // 舊資料：字串陣列
-               return {
-                 name: decodeURIComponent(item.substring(item.lastIndexOf('/') + 1)) || `附件${index + 1}`,
-                 url: normalizeProfileUrl(item),
-                 _originalUrl: item // 保存原始URL
-               }
-            } else {
-               // 新資料：物件陣列 { name: '...', url: '...' }
-               const originalUrl = item._originalUrl || item.url
-               return {
-                 name: item.name || `附件${index + 1}`,
-                 url: normalizeProfileUrl(originalUrl),
-                 _originalUrl: originalUrl // 保存原始URL
-              }
+            const originalUrl = typeof item === 'string' ? item : (item._originalUrl || item.url)
+            const name = typeof item === 'string'
+              ? decodeURIComponent(item.substring(item.lastIndexOf('/') + 1)) || `附件${index + 1}`
+              : (item.name || `附件${index + 1}`)
+            return {
+              uid: `init-${index}-${originalUrl}`,
+              name,
+              url: normalizeProfileUrl(originalUrl),
+              status: 'success',
+              _originalUrl: originalUrl
             }
           })
-          // 更新 localFormData 中的 attachmentUrls，確保使用統一格式
-          this.localFormData.attachmentUrls = this.fileList.map(file => ({
-            name: file.name,
-            url: file._originalUrl
-          }))
         } catch (e) {
           console.error('初始化文件列表失敗:', e)
           this.fileList = []
@@ -274,7 +306,11 @@ export default {
     goToNext() {
       this.$refs.formRef.validate((valid) => {
         if (valid) {
+          this.syncAttachmentUrls()
           Object.assign(this.formData, this.localFormData)
+          this.formData.attachmentUrls = JSON.parse(
+            JSON.stringify(this.localFormData.attachmentUrls || [])
+          )
           this.$emit('next')
         } else {
           ElNotification({ title: '請完善資訊', message: '請先完善基本信息再進行下一步', type: 'warning', duration: 3000 })
@@ -301,26 +337,20 @@ export default {
         // 前端顯示用的URL（帶 /sms-api 前綴）
         const displayUrl = normalizeProfileUrl(originalUrl)
         
-        // 更新 fileList 中的對應文件
-        // 替換整個數組以觸發響應式更新
-        this.fileList = this.fileList.map(f => {
+        this.fileList = this.mergeFileList(fileList).map(f => {
           if (f.uid === file.uid) {
             return {
               ...f,
               url: displayUrl,
               status: 'success',
-              name: f.name.startsWith('附件') ? file.name : f.name,
-              _originalUrl: originalUrl // 保存原始URL用於存儲
+              name: file.name,
+              _originalUrl: originalUrl
             }
           }
           return f
         })
 
-        // 更新附件URL列表
-        this.localFormData.attachmentUrls = this.fileList.filter(f => f._originalUrl).map(f => ({
-          name: f.name,
-          url: f._originalUrl
-        }))
+        this.syncAttachmentUrls()
         
         ElNotification({ title: '上傳成功', message: '附件已成功上傳', type: 'success', duration: 3000 })
       } else {
@@ -346,35 +376,19 @@ export default {
     },
 
     handleChange(file, fileList) {
-      // 保留原始文件名，不要用 Element Plus 的默認名稱
-      this.fileList = fileList.filter(f => f.status !== 'removed').map(f => {
-        // 如果是新添加的文件且名字是默認的，使用原始文件名
-        if (!f.name || f.name === file.name && f.raw && f.raw.name) {
-          f.name = f.raw.name
-        }
-        return f
-      })
+      this.fileList = this.mergeFileList(fileList)
     },
 
     handleUploadRemove(file) {
-      // 使用 _originalUrl 進行匹配，確保正確刪除
-      const index = this.localFormData.attachmentUrls.findIndex(item => {
-        const itemUrl = typeof item === 'string' ? item : (item._originalUrl || item.url)
-        const fileOriginalUrl = file._originalUrl || file.url
-        return itemUrl === fileOriginalUrl
-      })
-      if (index > -1) {
-        this.localFormData.attachmentUrls.splice(index, 1)
-      }
-      
       const fileIndex = this.fileList.findIndex(item => {
         const itemOriginalUrl = item._originalUrl || item.url
         const fileOriginalUrl = file._originalUrl || file.url
-        return itemOriginalUrl === fileOriginalUrl
+        return itemOriginalUrl === fileOriginalUrl || item.uid === file.uid
       })
       if (fileIndex > -1) {
         this.fileList.splice(fileIndex, 1)
       }
+      this.syncAttachmentUrls()
     },
 
     addFormQuestion() {
