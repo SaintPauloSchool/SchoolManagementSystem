@@ -193,7 +193,7 @@
               :props="wecomTreeProps"
               :expand-on-click-node="false"
               :check-on-click-node="false"
-              node-key="id"
+              node-key="treeKey"
               show-checkbox
               @check="handleWecomCheckChange"
             >
@@ -223,7 +223,7 @@
             <div v-else class="member-tags">
               <el-tag
                 v-for="(member, index) in selectedWecomMembers"
-                :key="member.id"
+                :key="member.treeKey || member.id"
                 closable
                 :disable-transitions="true"
                 @close="removeWecomMember(index)"
@@ -712,7 +712,7 @@ export default {
         })
         
         if (response.code === 200 || response.code === 0) {
-          this.wecomDepartmentTree = response.data || []
+          this.wecomDepartmentTree = this.annotateWecomTree(response.data || [])
         } else {
           ElNotification({ title: "操作失敗", message: '加載成員數據失敗', type: "error", duration: 4000 })
         }
@@ -724,11 +724,31 @@ export default {
       }
     },
     
-    handleWecomCheckChange(data, checked) {
-      const checkedNodes = this.$refs.wecomTree.getCheckedNodes()
-      // 過濾出葉子節點（人員），並將 parentUserId 映射爲 userid
-      this.selectedWecomMembers = checkedNodes.filter(node => node.isLeaf === true).map(node => ({
+    annotateWecomTree(nodes) {
+      if (!Array.isArray(nodes)) {
+        return []
+      }
+      nodes.forEach(node => {
+        if (!node) return
+        if (node.isLeaf) {
+          const deptId = node.classDepartmentId != null ? node.classDepartmentId : 'none'
+          node.treeKey = `leaf_${node.id}_${deptId}`
+        } else {
+          node.treeKey = `dept_${node.id}`
+        }
+        if (node.children && node.children.length > 0) {
+          this.annotateWecomTree(node.children)
+        }
+      })
+      return nodes
+    },
+
+    handleWecomCheckChange() {
+      const checkedNodes = this.$refs.wecomTree.getCheckedNodes(true)
+      // 葉子節點：parentUserId=家長 userid，studentUserId=學生 userid（來自 treeWithParents）
+      this.selectedWecomMembers = checkedNodes.map(node => ({
         id: node.id,
+        treeKey: node.treeKey,
         userid: node.parentUserId || '',
         studentUserId: node.studentUserId || '',
         name: node.name,
@@ -740,7 +760,7 @@ export default {
       this.selectedWecomMembers.splice(index, 1)
       
       if (this.$refs.wecomTree) {
-        this.$refs.wecomTree.setCheckedKeys(this.selectedWecomMembers.map(m => m.id))
+        this.$refs.wecomTree.setCheckedKeys(this.selectedWecomMembers.map(m => m.treeKey))
       }
     },
     
