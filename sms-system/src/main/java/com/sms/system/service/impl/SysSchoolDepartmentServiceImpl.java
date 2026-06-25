@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Collator;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,12 @@ import java.util.stream.Collectors;
  */
 @Service
 public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentService {
+
+    private static final Collator NAME_COLLATOR = Collator.getInstance(Locale.TRADITIONAL_CHINESE);
+
+    static {
+        NAME_COLLATOR.setStrength(Collator.PRIMARY);
+    }
 
     @Autowired
     private SysSchoolDepartmentMapper schoolDepartmentMapper;
@@ -88,6 +95,8 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
             }
         }
 
+        sortDepartmentTreeByName(rootNodes);
+
         return BeanCopyUtils.copyTree(rootNodes, SysSchoolDepartmentVO.class,
                 SysSchoolDepartment::getChildren, SysSchoolDepartmentVO::setChildren);
     }
@@ -110,6 +119,21 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
         node.setIsLeaf(true);
         node.setClassDepartmentId(member.getDepartmentId());
         return node;
+    }
+
+    private void sortDepartmentTreeByName(List<SysSchoolDepartment> nodes) {
+        if (nodes == null || nodes.isEmpty()) {
+            return;
+        }
+        nodes.sort(Comparator.comparing(
+                dept -> dept.getName() != null ? dept.getName() : "",
+                NAME_COLLATOR
+        ));
+        for (SysSchoolDepartment node : nodes) {
+            if (node.getChildren() != null && !node.getChildren().isEmpty()) {
+                sortDepartmentTreeByName(node.getChildren());
+            }
+        }
     }
 
     /**

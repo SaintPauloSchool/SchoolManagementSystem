@@ -16,15 +16,15 @@
     <!-- 表單內容 -->
     <div class="form-wrapper">
       <transition name="slide" mode="out-in">
-        <div :key="currentStep" class="step-content">
+        <div class="step-content">
           <BasicInfoForm 
-            v-if="currentStep === 0"
+            v-show="currentStep === 0"
             ref="basicFormRef"
             :form-data="formData"
             @next="handleNext"
           />
           <SendSettingsForm
-            v-else
+            v-if="currentStep === 1"
             ref="sendFormRef"
             :form-data="formData"
             :submitting="submitting"
