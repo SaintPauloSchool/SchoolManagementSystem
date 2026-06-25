@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="school-department-container">
     <div class="layout-content">
       <!-- 左側部門樹 -->
@@ -463,7 +463,7 @@ export default {
         const response = await request({
           url: '/system/schoolDepartment/members',
           method: 'post',
-          data: departmentIds
+          data: { departmentIds }
         })
         
         if (response.code === 200 || response.code === 0) {
@@ -763,20 +763,20 @@ export default {
       }
       
       try {
-        console.log('選中的成員:', this.selectedWecomMembers)
         const membersToAdd = this.selectedWecomMembers.map(member => ({
           userid: member.userid,
           name: member.name,
           departmentId: this.currentDepartment.id,
-          openUserid: member.openUserid || '',
-          type: 2
+          openUserid: member.openUserid || ''
         }))
-        console.log('準備提交的成員數據:', membersToAdd)
-        
+
         const response = await request({
-          url: '/system/schoolDepartment/members/batch?type=2',
+          url: '/system/schoolDepartment/members/batch',
           method: 'post',
-          data: membersToAdd
+          data: {
+            members: membersToAdd,
+            type: 2
+          }
         })
         
         if (response.code === 200 || response.code === 0) {

@@ -1,11 +1,11 @@
-package com.sms.system.entity.query;
+package com.sms.system.entity.dto;
 
 import java.io.Serializable;
 
 /**
  * 學生數據匹配列表查詢條件
  */
-public class SysStudentMatchQuery implements Serializable {
+public class SysStudentMatchDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /** 姓名（對應 student_info.id_name / 企微姓名） */

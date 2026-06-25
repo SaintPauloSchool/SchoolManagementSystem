@@ -462,7 +462,7 @@ export default {
       request({
         url: '/system/schoolDepartment/members',
         method: 'post',
-        data: departmentIds
+        data: { departmentIds }
       }).then(response => {
         if (response.code === 200 || response.code === 0) {
           const members = response.data || []
@@ -758,14 +758,16 @@ export default {
           userid: member.staffUserId || member.userid,
           name: member.name,
           departmentId: this.currentDepartment.id,
-          openUserid: member.openUserid || '',
-          type: 1
+          openUserid: member.openUserid || ''
         }))
         
         const response = await request({
           url: '/system/schoolDepartment/members/batch',
           method: 'post',
-          data: membersToAdd
+          data: {
+            members: membersToAdd,
+            type: 1
+          }
         })
         
         if (response.code === 200 || response.code === 0) {

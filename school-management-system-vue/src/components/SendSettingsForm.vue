@@ -103,8 +103,8 @@
             </div>
           </el-form-item>
 
-          <!-- 抄送教職工羣組 -->
-          <el-form-item label="抄送教職工羣組">
+          <!-- 抄送教職工群組 -->
+          <el-form-item label="抄送教職工群組">
             <div class="selection-item">
               <el-button 
                 type="primary" 

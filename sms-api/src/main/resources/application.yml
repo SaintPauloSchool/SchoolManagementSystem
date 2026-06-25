@@ -22,6 +22,14 @@ sms:
   encryption:
     salt: 5nQtaatpcOs9iKsM
 
+# 學籍系統學生照片（由後端代理，前端不直接訪問；改地址只需改配置並重啟服務，無需改代碼）
+# 可用環境變量覆蓋：STUDENT_INFO_PHOTO_URL_TEMPLATE
+student-info:
+  photo:
+    url-template: http://tals-stuinfo.esp.edu.mo:5222/api/v1/resources/students/{studentProfileNumber}/photo
+    connect-timeout-ms: 5000
+    read-timeout-ms: 10000
+
 # 開發環境配置
 server:
   # 服務器的 HTTP 端口，默認為 80

@@ -131,7 +131,7 @@
 </template>
 
 <script>
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox, ElNotification } from 'element-plus'
 import { Search, Refresh, VideoPlay } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
@@ -247,17 +247,32 @@ export default {
           });
           
           if (response.code === 200 || response.code === 0) {
-            ElMessage.success(response.msg || '觸發成功');
+            ElNotification({
+              title: '觸發成功',
+              message: response.msg || '任務已手動觸發執行',
+              type: 'success',
+              duration: 3000
+            })
             // 延遲一下刷新列表，等待任務執行完畢產生紀錄
             setTimeout(() => {
               this.getList();
             }, 1000);
           } else {
-            ElMessage.error(response.msg || '觸發失敗');
+            ElNotification({
+              title: '觸發失敗',
+              message: response.msg || '任務觸發失敗',
+              type: 'error',
+              duration: 4000
+            })
           }
         } catch (error) {
-          console.error('執行任務失敗', error);
-          ElMessage.error('執行失敗');
+          console.error('執行任務失敗', error)
+          ElNotification({
+            title: '執行失敗',
+            message: '任務執行發生錯誤，請稍後再試',
+            type: 'error',
+            duration: 4000
+          })
         } finally {
           this.isExecuting = false;
         }
@@ -268,7 +283,6 @@ export default {
 
     /** 修改處理狀態 */
     async handleStatusChange(row) {
-      let text = row.isProcessed === "1" ? "已處理" : "未處理";
       try {
         const response = await request({
           url: '/system/taskLog',
@@ -279,15 +293,30 @@ export default {
           }
         });
         if (response.code === 200 || response.code === 0) {
-          ElMessage.success("修改為" + text + "成功");
+          ElNotification({
+            title: '修改成功',
+            message: row.isProcessed === '1' ? '已成功標記為已處理' : '已成功標記為未處理',
+            type: 'success',
+            duration: 3000
+          })
         } else {
           row.isProcessed = row.isProcessed === "0" ? "1" : "0";
-          ElMessage.error(response.msg || "修改失敗");
+          ElNotification({
+            title: '修改失敗',
+            message: response.msg || '狀態修改失敗',
+            type: 'error',
+            duration: 4000
+          })
         }
       } catch (error) {
         row.isProcessed = row.isProcessed === "0" ? "1" : "0";
         console.error('修改狀態失敗', error);
-        ElMessage.error("修改失敗");
+        ElNotification({
+          title: '修改失敗',
+          message: '狀態修改發生錯誤，請稍後再試',
+          type: 'error',
+          duration: 4000
+        })
       }
     }
   }

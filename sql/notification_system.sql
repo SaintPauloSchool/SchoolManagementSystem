@@ -235,8 +235,8 @@ CREATE TABLE sys_department (
     standard_grade      INT             DEFAULT NULL                    COMMENT '標準年級',
     order_num           INT             DEFAULT '0'                     COMMENT '排序值',
     is_graduated        TINYINT(1)      DEFAULT '0'                     COMMENT '是否畢業：1-是，0-否',
-    open_group_chat     TINYINT(1)      DEFAULT '0'                     COMMENT '是否開啟班級羣：1-是，0-否',
-    group_chat_id       VARCHAR(255)    DEFAULT NULL                    COMMENT '班級羣 id',
+    open_group_chat     TINYINT(1)      DEFAULT '0'                     COMMENT '是否開啟班級群：1-是，0-否',
+    group_chat_id       VARCHAR(255)    DEFAULT NULL                    COMMENT '班級群 id',
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='部門表';
 
@@ -487,4 +487,4 @@ CREATE TABLE IF NOT EXISTS sys_student_match (
     update_time DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     PRIMARY KEY (id),
     UNIQUE KEY uk_student_profile_num (student_profile_num)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='學生數據匹配表';
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生數據匹配表';

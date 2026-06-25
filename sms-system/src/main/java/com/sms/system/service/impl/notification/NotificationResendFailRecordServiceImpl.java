@@ -5,6 +5,7 @@ import com.sms.system.mapper.notification.NotificationResendFailRecordMapper;
 import com.sms.system.service.notification.INotificationResendFailRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -21,6 +22,7 @@ public class NotificationResendFailRecordServiceImpl implements INotificationRes
     private NotificationResendFailRecordMapper notificationResendFailRecordMapper;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void saveOrUpdate(NotificationResendFailRecord record) {
         // 判斷是否已存在
         NotificationResendFailRecord existingRecord = notificationResendFailRecordMapper

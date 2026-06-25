@@ -29,6 +29,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <where>  
             <if test="taskName != null and taskName != ''"> and task_name like concat('%', #{taskName}, '%')</if>
             <if test="status != null and status != ''"> and status = #{status}</if>
+            <if test="isProcessed != null and isProcessed != ''"> and is_processed = #{isProcessed}</if>
             <if test="beginTime != null and beginTime != ''"><!-- 開始時間檢索 -->
                 and execution_time &gt;= #{beginTime}
             </if>
@@ -73,6 +74,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update sys_task_log
         <trim prefix="SET" suffixOverrides=",">
             <if test="isProcessed != null and isProcessed != ''">is_processed = #{isProcessed},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="failReason != null">fail_reason = #{failReason},</if>
         </trim>
         where log_id = #{logId}
     </update>

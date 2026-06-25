@@ -1,6 +1,7 @@
 package com.sms.system.mapper;
 
 import com.sms.system.entity.SysParentStudentRelation;
+import com.sms.system.entity.vo.SysParentStudentRelationVO;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -76,5 +77,10 @@ public interface SysParentStudentRelationMapper {
      * @return 關係列表
      */
     List<SysParentStudentRelation> selectAllRelations();
+
+    /**
+     * 查詢家長學生關係列表（關聯部門與班級代碼）
+     */
+    List<SysParentStudentRelationVO> selectParentStudentRelationWithClassList();
 
 }

@@ -1,7 +1,6 @@
 package com.sms.system.mapper;
 
 import com.sms.system.entity.CalendarEvent;
-import com.sms.system.entity.vo.CalendarEventVO;
 import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
@@ -17,7 +16,7 @@ public interface CalendarEventMapper {
     /**
      * 查詢行事曆列表
      */
-    List<CalendarEvent> selectCalendarEventList(CalendarEventVO eventVO);
+    List<CalendarEvent> selectCalendarEventList(CalendarEvent calendarEvent);
 
     /**
      * 新增行事曆事件

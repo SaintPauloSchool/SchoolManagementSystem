@@ -1,6 +1,7 @@
 package com.sms.system.service;
 
-import com.sms.system.entity.SysSchoolDepartment;
+import com.sms.system.entity.dto.SysSchoolDepartmentSaveDTO;
+import com.sms.system.entity.vo.SysSchoolDepartmentVO;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public interface ISysSchoolDepartmentService {
      * @param type 部門類型（1 學校部門 2 家校通訊錄）
      * @return 部門樹形結構
      */
-    List<SysSchoolDepartment> getSysSchoolDepartmentTree(Integer type);
+    List<SysSchoolDepartmentVO> getSysSchoolDepartmentTree(Integer type);
 
     /**
      * 獲取學校部門樹形結構（包含人員作爲葉子節點）
@@ -24,7 +25,7 @@ public interface ISysSchoolDepartmentService {
      * @param type 部門類型（1 學校部門 2 家校通訊錄）
      * @return 部門樹形結構，人員作爲負ID的葉節點
      */
-    List<SysSchoolDepartment> getSysSchoolDepartmentTreeWithMembers(Integer type);
+    List<SysSchoolDepartmentVO> getSysSchoolDepartmentTreeWithMembers(Integer type);
 
     /**
      * 根據 ID 刪除學校部門
@@ -38,17 +39,17 @@ public interface ISysSchoolDepartmentService {
     /**
      * 新增部門
      *
-     * @param department 部門信息
+     * @param sysSchoolDepartmentSaveDTO 部門信息
      * @return 結果
      */
-    int insertSysSchoolDepartment(SysSchoolDepartment department);
+    int insertSysSchoolDepartment(SysSchoolDepartmentSaveDTO sysSchoolDepartmentSaveDTO);
 
     /**
      * 修改部門
      *
-     * @param department 部門信息
+     * @param sysSchoolDepartmentSaveDTO 部門信息
      * @return 結果
      */
-    int updateSysSchoolDepartment(SysSchoolDepartment department);
+    int updateSysSchoolDepartment(SysSchoolDepartmentSaveDTO sysSchoolDepartmentSaveDTO);
 
 }

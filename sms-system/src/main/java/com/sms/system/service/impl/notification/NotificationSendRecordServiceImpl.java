@@ -6,6 +6,7 @@ import com.sms.system.mapper.notification.NotificationSendRecordMapper;
 import com.sms.system.service.notification.INotificationSendRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class NotificationSendRecordServiceImpl implements INotificationSendRecor
      * @return 結果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int save(NotificationSendRecord sendRecord) {
         return notificationSendRecordMapper.insert(sendRecord);
     }
@@ -67,6 +69,7 @@ public class NotificationSendRecordServiceImpl implements INotificationSendRecor
      * @return 結果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int update(NotificationSendRecord sendRecord) {
         return notificationSendRecordMapper.updateById(sendRecord);
     }

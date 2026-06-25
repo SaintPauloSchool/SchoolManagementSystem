@@ -593,7 +593,7 @@ export default {
 
     getReceiveTypeText(type) {
       const typeMap = {
-        '1': '班級羣組',
+        '1': '班級群組',
         '2': '個別學生/家長'
       }
       return typeMap[type] || '未知'
@@ -602,7 +602,7 @@ export default {
     getCcTypeText(type) {
       const typeMap = {
         '1': '個別教職工',
-        '2': '教職工羣組'
+        '2': '教職工群組'
       }
       return typeMap[type] || '未知'
     },
@@ -773,29 +773,17 @@ export default {
         }).then(response => {
           loading.close()
 
-          // 調試日誌：查看實際接收到的響應
-          console.log('=== 完整響應對象 ===', response)
-          console.log('response.code:', response.code)
-          console.log('response.data:', response.data)
-
-          // 根據響應碼顯示不同類型的消息
           if (response.code === 200) {
-            // 成功
             const result = response.data
-            console.log('result對象:', result)
             ElNotification({ title: "操作成功", message: result.message || '提醒通知發送成功', type: "success", duration: 3000 })
-            console.log('提醒結果:', result)
           } else if (response.code === 402) {
-            // 全部失敗
             ElNotification({ title: "操作失敗", message: response.msg || '微信發送失敗', type: "error", duration: 4000 })
             console.error('微信發送失敗:', response.msg)
           } else {
-            // 其他錯誤
             ElNotification({ title: "操作失敗", message: response.msg || '提醒通知發送失敗', type: "error", duration: 4000 })
           }
         }).catch(error => {
           loading.close()
-          console.error('=== 捕獲的錯誤 ===', error)
           ElNotification({ title: "操作失敗", message: '提醒通知發送失敗: ' + (error.message || '未知錯誤'), type: "error", duration: 4000 })
         })
       }).catch(() => {
@@ -821,12 +809,10 @@ export default {
           method: 'post'
         }).then(response => {
           loading.close()
-          console.log('=== 重發失敗通知響應 ===', response)
 
           if (response.code === 200) {
             const result = response.data
             ElNotification({ title: "操作成功", message: result.message || '重新發送成功', type: "success", duration: 3000 })
-            console.log('重發結果:', result)
           } else if (response.code === 402) {
             ElNotification({ title: "操作失敗", message: response.msg || '重新發送失敗', type: "error", duration: 4000 })
           } else {
@@ -834,7 +820,6 @@ export default {
           }
         }).catch(error => {
           loading.close()
-          console.error('=== 重發失敗通知錯誤 ===', error)
           ElNotification({ title: "操作失敗", message: '重新發送失敗: ' + (error.message || '未知錯誤'), type: "error", duration: 4000 })
         })
       }).catch(() => {

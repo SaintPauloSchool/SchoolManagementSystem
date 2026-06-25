@@ -1,19 +1,24 @@
 package com.sms.web.controller.system;
 
+import com.sms.common.annotation.Log;
 import com.sms.common.core.controller.BaseController;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.core.page.TableDataInfo;
-import com.sms.system.entity.SysTaskLog;
+import com.sms.common.enums.BusinessType;
+import com.sms.system.entity.dto.SysTaskExecuteDTO;
+import com.sms.system.entity.dto.SysTaskLogQueryDTO;
+import com.sms.system.entity.dto.SysTaskLogUpdateDTO;
+import com.sms.system.entity.vo.SysTaskLogVO;
 import com.sms.system.service.ISysTaskLogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 定時任務執行日誌 Controller
@@ -30,45 +35,38 @@ public class SysTaskLogController extends BaseController {
     @Autowired
     private ApplicationContext applicationContext;
 
-    /**
-     * 查詢定時任務日誌列表
-     */
+    @Log(title = "查詢定時任務日誌", businessType = BusinessType.SELECT)
     @GetMapping("/list")
-    public TableDataInfo list(SysTaskLog sysTaskLog) {
+    public TableDataInfo list(SysTaskLogQueryDTO sysTaskLogQueryDTO) {
         startPage();
-        List<SysTaskLog> list = sysTaskLogService.selectTaskLogList(sysTaskLog);
-        return getDataTable(list);
+        List<SysTaskLogVO> sysTaskLogList = sysTaskLogService.selectTaskLogList(sysTaskLogQueryDTO);
+        return getDataTable(sysTaskLogList);
     }
 
-    /**
-     * 手動執行定時任務
-     */
+    @Log(title = "手動執行定時任務", businessType = BusinessType.OTHER)
     @PostMapping("/execute")
-    public AjaxResult executeTask(@RequestBody Map<String, String> params) {
-        String beanName = params.get("beanName");
-        String methodName = params.get("methodName");
+    public AjaxResult executeTask(@RequestBody SysTaskExecuteDTO sysTaskExecuteDTO) {
+        String beanName = sysTaskExecuteDTO.getBeanName();
+        String methodName = sysTaskExecuteDTO.getMethodName();
 
         if (beanName == null || methodName == null) {
             return AjaxResult.error("參數錯誤：beanName 或 methodName 不能為空");
         }
 
         try {
-            // 從 Spring 容器獲取 Bean
             Object bean = applicationContext.getBean(beanName);
 
-            if (bean == null) {
-                return AjaxResult.error("找不到對應的處理器: " + beanName);
-            }
-
-            // 反射獲取方法（這裡假設任務方法都沒有參數）
             Method method = bean.getClass().getDeclaredMethod(methodName);
             method.setAccessible(true);
-            
+
             log.info("手動執行任務開始 - Bean: {}, Method: {}", beanName, methodName);
 
             method.invoke(bean);
-            
+
             return AjaxResult.success("任務觸發成功，請稍後查看日誌");
+        } catch (NoSuchBeanDefinitionException e) {
+            log.error("手動執行任務失敗，找不到 Bean: {}", beanName, e);
+            return AjaxResult.error("找不到對應的處理器: " + beanName);
         } catch (NoSuchMethodException e) {
             log.error("手動執行任務失敗，找不到方法", e);
             return AjaxResult.error("找不到對應的方法: " + methodName);
@@ -78,11 +76,9 @@ public class SysTaskLogController extends BaseController {
         }
     }
 
-    /**
-     * 修改任務日誌狀態
-     */
+    @Log(title = "修改定時任務日誌", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult edit(@RequestBody SysTaskLog sysTaskLog) {
-        return toAjax(sysTaskLogService.updateTaskLog(sysTaskLog));
+    public AjaxResult edit(@RequestBody SysTaskLogUpdateDTO sysTaskLogUpdateDTO) {
+        return toAjax(sysTaskLogService.updateTaskLog(sysTaskLogUpdateDTO));
     }
 }

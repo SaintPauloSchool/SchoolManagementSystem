@@ -84,11 +84,16 @@
         v-loading="loading" 
         :data="matchList" 
         style="width: 100%" 
-        :row-style="{ height: '56px' }"
+        :row-style="{ height: '60px' }"
         empty-text="暫無學籍數據"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
+        <el-table-column label="照片" width="72" align="center">
+          <template #default="scope">
+            <StudentPhoto :profile-number="resolveProfileNumber(scope.row)" :size="44" />
+          </template>
+        </el-table-column>
         <el-table-column prop="studentProfileNumber" label="學生個人編號" min-width="180" align="center" class-name="profile-number-cell" />
         <el-table-column prop="inSchool" label="在校" width="80" align="center">
           <template #default="scope">
@@ -151,15 +156,6 @@
               >
                 手動匹配
               </el-button>
-              <el-button 
-                v-if="scope.row.syncStatus !== '1' && (scope.row.matchStatus === '1' || scope.row.matchStatus === '2')"
-                size="small" 
-                type="danger" 
-                :icon="Delete"
-                @click="handleClearMatch(scope.row)"
-              >
-                清除匹配
-              </el-button>
               <span v-if="scope.row.syncStatus === '1'" class="text-success">已同步</span>
             </div>
           </template>
@@ -182,7 +178,7 @@
     </el-card>
 
     <!-- 彈窗一：未匹配學籍數據列表 -->
-    <el-dialog draggable title="未匹配學籍數據" v-model="unmatchedVisible" width="850px" append-to-body>
+    <el-dialog draggable title="未匹配學籍數據" v-model="unmatchedVisible" width="1100px" top="5vh" append-to-body>
       <!-- 搜索欄 -->
       <el-form :model="unmatchedQuery" :inline="true" class="unmatched-search-form" style="margin-bottom: 15px; padding: 10px 14px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
         <el-form-item label="學生姓名">
@@ -209,7 +205,7 @@
         </el-form-item>
       </el-form>
 
-      <el-table :data="unmatchedList" v-loading="unmatchedLoading" max-height="400" empty-text="沒有未匹配的數據">
+      <el-table :data="unmatchedList" v-loading="unmatchedLoading" max-height="520" empty-text="沒有未匹配的數據">
         <el-table-column prop="studentProfileNumber" label="學生個人編號" min-width="180" align="center" class-name="profile-number-cell" />
         <el-table-column prop="idName" label="姓名" width="120" align="center" />
         <el-table-column prop="classSection" label="班級" width="90" align="center" />
@@ -241,87 +237,110 @@
     </el-dialog>
 
     <!-- 彈窗二：企微候選學生選擇器 -->
-    <el-dialog draggable title="手動綁定 - 選擇企業微信學生" v-model="candidatesVisible" width="800px" append-to-body>
-      <div class="candidate-header-info" v-if="currentMatchingRow">
-        待匹配學生：<strong>{{ currentMatchingRow.idName || '-' }}</strong> (班級: {{ currentMatchingRow.classSection || '-' }})
-      </div>
-      
-      <!-- 搜索欄 -->
-      <el-form :model="candidatesQuery" :inline="true" class="candidates-search-form">
-        <el-form-item label="企微學生姓名">
-          <el-input 
-            v-model="candidatesQuery.queryName" 
-            placeholder="支持簡繁體姓名查詢" 
-            clearable 
-            style="width: 180px;"
-            @keyup.enter="handleCandidatesSearch" 
-          />
-        </el-form-item>
-        <el-form-item label="家長手機號">
-          <el-input 
-            v-model="candidatesQuery.queryMobile" 
-            placeholder="家長聯絡手機" 
-            clearable 
-            style="width: 160px;"
-            @keyup.enter="handleCandidatesSearch" 
-          />
-        </el-form-item>
-        <el-form-item label="企微班級">
-          <el-input 
-            v-model="candidatesQuery.queryClass" 
-            placeholder="例如 F6F" 
-            clearable 
-            style="width: 120px;"
-            @keyup.enter="handleCandidatesSearch" 
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleCandidatesSearch">搜索</el-button>
-        </el-form-item>
-      </el-form>
+    <el-dialog
+      title="手動綁定 - 選擇企業微信學生"
+      v-model="candidatesVisible"
+      width="1200px"
+      top="5vh"
+      append-to-body
+      :close-on-click-modal="false"
+      @opened="onCandidatesDialogOpened"
+    >
+      <div class="candidates-dialog-body">
+        <div class="candidate-header-info" v-if="currentMatchingRow">
+          待匹配學生：<strong>{{ currentMatchingRow.idName || '-' }}</strong>
+          （班級：{{ currentMatchingRow.classSection || '-' }}）
+        </div>
 
-      <!-- 候選學生列表 -->
-      <el-table :data="candidatesList" v-loading="candidatesLoading" max-height="350" empty-text="未找到匹配的企微學生">
-        <el-table-column prop="studentName" label="企微學生姓名" width="150" align="center" />
-        <el-table-column prop="classCodeWecom" label="企微班級代碼" width="150" align="center">
-          <template #default="scope">
-            <span v-if="scope.row.classCodeWecom">{{ scope.row.classCodeWecom }}</span>
-            <span v-else class="text-placeholder">未對照班級</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="mobile" label="家長手機號" width="180" align="center" />
-        <el-table-column prop="relationDesc" label="家長關係" width="120" align="center" />
-        <el-table-column label="操作" align="center" fixed="right">
-          <template #default="scope">
-            <el-button 
-              size="small" 
-              type="success" 
-              :loading="bindingId === scope.row.studentUserId"
-              @click="submitBind(scope.row)"
-            >
-              確認綁定
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+        <el-form :model="candidatesQuery" :inline="true" class="candidates-search-form search-form">
+          <el-form-item label="企微學生姓名">
+            <el-input
+              v-model="candidatesQuery.queryName"
+              placeholder="支持簡繁體姓名查詢"
+              clearable
+              style="width: 200px;"
+              @keyup.enter="handleCandidatesSearch"
+            />
+          </el-form-item>
+          <el-form-item label="家長手機號">
+            <el-input
+              v-model="candidatesQuery.queryMobile"
+              placeholder="家長聯絡手機"
+              clearable
+              style="width: 180px;"
+              @keyup.enter="handleCandidatesSearch"
+            />
+          </el-form-item>
+          <el-form-item label="企微班級">
+            <el-input
+              v-model="candidatesQuery.queryClass"
+              placeholder="例如 F6F"
+              clearable
+              style="width: 120px;"
+              @keyup.enter="handleCandidatesSearch"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :icon="Search" @click="handleCandidatesSearch">搜索</el-button>
+            <el-button :icon="Refresh" @click="resetCandidatesSearch">重置</el-button>
+          </el-form-item>
+        </el-form>
 
-      <!-- 分頁 -->
-      <div class="pagination-container" v-if="candidatesTotal > 0" style="margin-top: 15px; display: flex; justify-content: flex-end;">
-        <el-pagination 
-          v-model:current-page="candidatesPagination.pageNum" 
-          v-model:page-size="candidatesPagination.pageSize" 
-          :page-sizes="[10, 20, 50]" 
-          :total="candidatesTotal" 
-          layout="total, sizes, prev, pager, next" 
-          background 
-          @size-change="loadCandidates" 
-          @current-change="loadCandidates" 
-        />
+        <div class="candidates-table-panel" v-loading="candidatesLoading">
+          <el-table
+            :data="candidatesList"
+            border
+            stripe
+            height="460"
+            style="width: 100%"
+            :row-style="{ height: '48px' }"
+            empty-text="未找到未匹配的企微學生，可嘗試清空班級或姓名條件後重新搜索"
+          >
+            <el-table-column prop="studentName" label="企微學生姓名" min-width="150" align="center" show-overflow-tooltip />
+            <el-table-column prop="classCodeWecom" label="企微班級代碼" min-width="120" align="center">
+              <template #default="scope">
+                <span v-if="scope.row.classCodeWecom">{{ scope.row.classCodeWecom }}</span>
+                <span v-else class="text-placeholder">未對照班級</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="mobile" label="家長手機號" min-width="160" align="center" show-overflow-tooltip />
+            <el-table-column prop="relationDesc" label="家長關係" min-width="100" align="center" show-overflow-tooltip />
+            <el-table-column label="操作" width="120" align="center">
+              <template #default="scope">
+                <el-button
+                  size="small"
+                  type="success"
+                  :loading="bindingId === scope.row.studentUserId"
+                  @click="submitBind(scope.row)"
+                >
+                  確認綁定
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <div class="candidates-pagination">
+            <el-pagination
+              v-model:current-page="candidatesPagination.pageNum"
+              v-model:page-size="candidatesPagination.pageSize"
+              :page-sizes="[10, 20, 50]"
+              :total="candidatesTotal"
+              layout="total, sizes, prev, pager, next"
+              background
+              @size-change="loadCandidates"
+              @current-change="loadCandidates"
+            />
+          </div>
+        </div>
       </div>
     </el-dialog>
 
     <!-- 學生對照數據詳情對話框 -->
     <el-dialog title="學生對照數據詳情" v-model="detailVisible" width="900px" append-to-body destroy-on-close>
+      <div class="detail-photo-wrap" v-if="resolveProfileNumber(detailForm)">
+        <StudentPhoto :profile-number="resolveProfileNumber(detailForm)" :size="120" />
+        <div class="detail-photo-name">{{ detailForm.idName || '-' }}</div>
+      </div>
       <el-descriptions :column="2" border size="default">
         <el-descriptions-item label="學生個人編號">{{ detailForm.studentProfileNumber || detailForm.studentProfileNum || '-' }}</el-descriptions-item>
         <el-descriptions-item label="在校">{{ formatInSchool(detailForm.inSchool) }}</el-descriptions-item>
@@ -359,11 +378,12 @@
 import { User, Warning, Promotion, Search, Refresh, InfoFilled, Edit, Delete, Document } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { ElMessageBox, ElNotification } from 'element-plus'
+import StudentPhoto from '@/components/StudentPhoto.vue'
 
 export default {
   name: 'StudentMatch',
   components: {
-    User, Warning, Promotion, Search, Refresh, InfoFilled, Delete, Document
+    User, Warning, Promotion, Search, Refresh, InfoFilled, Delete, Document, StudentPhoto
   },
   data() {
     return {
@@ -431,6 +451,19 @@ export default {
     }
   },
   methods: {
+    resolveProfileNumber(row) {
+      if (!row) {
+        return ''
+      }
+      if (row.studentProfileNumber !== null && row.studentProfileNumber !== undefined && row.studentProfileNumber !== '') {
+        return String(row.studentProfileNumber)
+      }
+      if (row.studentProfileNum !== null && row.studentProfileNum !== undefined && row.studentProfileNum !== '') {
+        return String(row.studentProfileNum)
+      }
+      return ''
+    },
+
     // 查詢主列表
     async loadMatchList() {
       this.loading = true
@@ -582,16 +615,28 @@ export default {
     handleManualMatch(row) {
       this.currentMatchingRow = row
       this.candidatesQuery = {
-        queryName: '', // 手動匹配時不默認加上企微姓名查詢
+        queryName: '',
         queryMobile: '',
-        queryClass: row.classSection
+        queryClass: ''
       }
       this.candidatesPagination.pageNum = 1
       this.candidatesList = []
+      this.candidatesTotal = 0
       this.candidatesVisible = true
+    },
+    onCandidatesDialogOpened() {
       this.loadCandidates()
     },
     handleCandidatesSearch() {
+      this.candidatesPagination.pageNum = 1
+      this.loadCandidates()
+    },
+    resetCandidatesSearch() {
+      this.candidatesQuery = {
+        queryName: '',
+        queryMobile: '',
+        queryClass: ''
+      }
       this.candidatesPagination.pageNum = 1
       this.loadCandidates()
     },
@@ -612,9 +657,22 @@ export default {
         if (res.code === 200 || res.code === 0) {
           this.candidatesList = res.rows || []
           this.candidatesTotal = res.total || 0
+        } else {
+          ElNotification({
+            title: '查詢失敗',
+            message: res.msg || '獲取企微學生候選列表失敗',
+            type: 'error',
+            duration: 4000
+          })
         }
       } catch (e) {
         console.error(e)
+        ElNotification({
+          title: '查詢出錯',
+          message: e?.response?.data?.msg || e?.message || '獲取企微學生候選列表失敗，請稍後再試',
+          type: 'error',
+          duration: 4000
+        })
       } finally {
         this.candidatesLoading = false
       }
@@ -648,45 +706,6 @@ export default {
       }
     },
 
-    async handleClearMatch(row) {
-      try {
-        await ElMessageBox.confirm(
-          `確認要清除學生【${row.idName || row.studentProfileNum}】的匹配關係嗎？`,
-          '清除匹配確認',
-          {
-            confirmButtonText: '確定清除',
-            cancelButtonText: '取消',
-            type: 'warning'
-          }
-        )
-        
-        this.loading = true
-        const res = await request({
-          url: '/system/student/match/clear',
-          method: 'post',
-          data: {
-            matchId: row.id || null,
-            studentProfileNum: row.studentProfileNumber || row.studentProfileNum
-          }
-        })
-        if (res.code === 200 || res.code === 0) {
-          ElNotification({
-            title: '清除匹配成功',
-            message: '匹配關係已成功清除',
-            type: 'success',
-            duration: 3000
-          })
-          this.loadMatchList()
-        }
-      } catch (e) {
-        if (e !== 'cancel') {
-          console.error(e)
-        }
-      } finally {
-        this.loading = false
-      }
-    },
-
     // 確定匹配並批量同步更名至企微
     handleBatchSync() {
       if (this.syncableSelection.length === 0) return
@@ -714,7 +733,7 @@ export default {
           if (res.code === 200 || res.code === 0) {
             ElNotification({ 
               title: '同步執行完畢', 
-              message: res.msg || '選中學生的更名操作已同步至企業微信', 
+              message: res.msg || res.data?.message || '選中學生的更名操作已同步至企業微信', 
               type: 'success', 
               duration: 5000,
               dangerouslyUseHTMLString: true 
@@ -884,24 +903,80 @@ export default {
 }
 
 /* 候選學生對話方塊 */
+.candidates-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .candidate-header-info {
   background-color: #eff6ff;
   border: 1px solid #bfdbfe;
   color: #1e40af;
   padding: 10px 14px;
-  border-radius: 6px;
-  margin-bottom: 15px;
+  border-radius: 8px;
   font-size: 14px;
 }
+
 .candidates-search-form {
-  padding: 10px 14px;
-  background-color: #f8fafc;
+  margin-bottom: 0;
+  flex-wrap: nowrap;
+}
+
+.candidates-search-form :deep(.el-form-item) {
+  margin-bottom: 0;
+  margin-right: 12px;
+}
+
+.candidates-search-form :deep(.el-form-item__content) {
+  flex-wrap: nowrap;
+}
+
+.candidates-table-panel {
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  margin-bottom: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+  min-height: 520px;
+}
+
+.candidates-table-panel :deep(.el-table) {
+  border: none;
+}
+
+.candidates-table-panel :deep(.el-table__inner-wrapper::before) {
+  display: none;
+}
+
+.candidates-pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 52px;
+  padding: 10px 16px;
+  border-top: 1px solid #ebeef5;
+  background-color: #fafafa;
 }
 
 /* 詳情彈窗 Descriptions 樣式微調 */
+.detail-photo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.detail-photo-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
 :deep(.el-descriptions__label) {
   min-width: 120px;
   word-break: keep-all !important;
