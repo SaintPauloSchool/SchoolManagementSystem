@@ -487,4 +487,4 @@ CREATE TABLE IF NOT EXISTS sys_student_match (
     update_time DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     PRIMARY KEY (id),
     UNIQUE KEY uk_student_profile_num (student_profile_num)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='學生數據匹配表';
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生數據匹配表';

@@ -16,6 +16,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
+    <resultMap type="com.sms.system.entity.vo.SysParentStudentRelationVO" id="SysParentStudentRelationVOResult">
+        <result property="studentUserId" column="student_user_id"/>
+        <result property="studentName" column="student_name"/>
+        <result property="mobile" column="mobile"/>
+        <result property="relationDesc" column="relation_desc"/>
+        <result property="classCodeWecom" column="class_code_wecom"/>
+    </resultMap>
+
     <!-- 批量查詢家長學生關係 -->
     <select id="selectByParentUserIds" resultMap="SysParentStudentRelationResult">
         SELECT id, parent_user_id, student_user_id, student_name, relation_desc, mobile, external_userid, create_time, update_time
@@ -96,6 +104,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectAllRelations" resultMap="SysParentStudentRelationResult">
         SELECT id, parent_user_id, student_user_id, student_name, relation_desc, mobile, external_userid, create_time, update_time
         FROM sys_parent_student_relation
+    </select>
+
+    <select id="selectParentStudentRelationWithClassList" resultMap="SysParentStudentRelationVOResult">
+        SELECT DISTINCT
+            r.student_user_id AS student_user_id,
+            r.student_name AS student_name,
+            r.mobile AS mobile,
+            r.relation_desc AS relation_desc,
+            cs.class_section_sp AS class_code_wecom
+        FROM sys_parent_student_relation r
+        INNER JOIN sys_department_parent_binding b ON r.student_user_id = b.student_user_id
+        INNER JOIN sys_department d ON b.department_id = d.id
+        INNER JOIN class_section cs ON d.name = cs.class_section_dsedj
+        ORDER BY r.student_name ASC
     </select>
 
 </mapper>

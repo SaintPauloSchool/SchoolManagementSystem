@@ -1,18 +1,17 @@
 package com.sms.system.service;
 
 import com.sms.system.entity.dto.SysStudentMatchBindDTO;
-import com.sms.system.entity.dto.SysStudentMatchClearDTO;
 import com.sms.system.entity.dto.SysStudentMatchDTO;
 import com.sms.system.entity.dto.SysStudentMatchDeleteDTO;
 import com.sms.system.entity.dto.SysStudentMatchDeptQueryDTO;
 import com.sms.system.entity.dto.SysStudentMatchSyncDataDTO;
 import com.sms.system.entity.dto.SysStudentMatchSyncDTO;
 import com.sms.system.entity.dto.SysStudentMatchSyncRecordDTO;
+import com.sms.common.core.page.TableDataInfo;
 import com.sms.system.entity.dto.SysWecomStudentDTO;
 import com.sms.system.entity.vo.SysStudentMatchDeptMapVO;
 import com.sms.system.entity.vo.SysStudentMatchOperationResultVO;
 import com.sms.system.entity.vo.SysStudentMatchVO;
-import com.sms.system.entity.vo.SysWecomStudentVO;
 
 import java.util.List;
 
@@ -33,9 +32,9 @@ public interface ISysStudentMatchService {
     List<SysStudentMatchVO> selectUnmatchedList(SysStudentMatchDTO studentMatchDTO);
 
     /**
-     * 查詢企微學生候選列表
+     * 查詢企微學生候選列表（業務層篩選與分頁）
      */
-    List<SysWecomStudentVO> selectWecomCandidates(SysWecomStudentDTO wecomStudentDTO);
+    TableDataInfo selectWecomCandidates(SysWecomStudentDTO wecomStudentDTO);
 
     /**
      * 手動綁定學生匹配
@@ -66,9 +65,4 @@ public interface ISysStudentMatchService {
      * 批量刪除學生匹配記錄
      */
     SysStudentMatchOperationResultVO deleteSysStudentMatchByIds(SysStudentMatchDeleteDTO studentMatchDeleteDTO);
-
-    /**
-     * 清除學生匹配關係
-     */
-    SysStudentMatchOperationResultVO clearMatch(SysStudentMatchClearDTO studentMatchClearDTO);
 }

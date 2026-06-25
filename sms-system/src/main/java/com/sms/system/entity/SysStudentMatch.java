@@ -1,21 +1,26 @@
-package com.sms.system.entity.dto;
+package com.sms.system.entity;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
- * 更新學生匹配記錄請求
+ * 學生數據匹配表 sys_student_match
+ * <p>僅保存已匹配成功的記錄，未匹配學籍資料來自 student_profiles 庫。</p>
  */
-public class SysStudentMatchUpdateDTO implements Serializable {
+public class SysStudentMatch implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long id;
     private String studentProfileNum;
     private String studentUserIdWecom;
     private String studentNameWecom;
+    /** 匹配狀態 (0: 未匹配, 1: 自動匹配, 2: 手動匹配) */
     private String matchStatus;
+    /** 企微同步狀態 (0: 未同步, 1: 成功, 2: 失敗) */
     private String syncStatus;
     private String errorMsg;
-    private String updateBy;
+    private Date createTime;
+    private Date updateTime;
 
     public Long getId() {
         return id;
@@ -73,11 +78,19 @@ public class SysStudentMatchUpdateDTO implements Serializable {
         this.errorMsg = errorMsg;
     }
 
-    public String getUpdateBy() {
-        return updateBy;
+    public Date getCreateTime() {
+        return createTime;
     }
 
-    public void setUpdateBy(String updateBy) {
-        this.updateBy = updateBy;
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public Date getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
     }
 }

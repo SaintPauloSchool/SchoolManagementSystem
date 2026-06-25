@@ -3,39 +3,25 @@ package com.sms.system.entity.vo;
 import java.io.Serializable;
 
 /**
- * 企業微信學生信息 VO
- *
+ * 家長學生關係 VO（含關聯班級代碼）
  */
-public class SysWecomStudentVO implements Serializable {
+public class SysParentStudentRelationVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 學生用戶ID (企微)
-     */
+    /** 學生用戶 ID（企微） */
     private String studentUserId;
 
-    /**
-     * 學生姓名 (企微)
-     */
+    /** 學生姓名（企微） */
     private String studentName;
 
-    /**
-     * 家長手機號
-     */
+    /** 家長手機號 */
     private String mobile;
 
-    /**
-     * 家長關係
-     */
+    /** 家長關係 */
     private String relationDesc;
 
-    /**
-     * 班級代碼 (企微對照)
-     */
+    /** 班級代碼（關聯 class_section） */
     private String classCodeWecom;
-
-    public SysWecomStudentVO() {
-    }
 
     public String getStudentUserId() {
         return studentUserId;
@@ -79,7 +65,7 @@ public class SysWecomStudentVO implements Serializable {
 
     @Override
     public String toString() {
-        return "SysWecomStudentVO{" +
+        return "SysParentStudentRelationVO{" +
                 "studentUserId='" + studentUserId + '\'' +
                 ", studentName='" + studentName + '\'' +
                 ", mobile='" + mobile + '\'' +

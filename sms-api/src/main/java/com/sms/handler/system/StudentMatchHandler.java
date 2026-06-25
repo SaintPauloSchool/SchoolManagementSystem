@@ -20,13 +20,14 @@ import java.util.*;
 
 /**
  * 學生姓名同步處理器
- * 負責調用企業微信 batch_update_student API，並協調 Service 更新本地資料庫
+ * <p>負責調用企業微信 batch_update_student API，將學籍姓名同步至企微，並協調 Service 更新本地匹配記錄。</p>
  */
 @Component
 public class StudentMatchHandler {
 
     private static final Logger log = LoggerFactory.getLogger(StudentMatchHandler.class);
 
+    /** 企微 batch_update_student 單次請求學生數量上限 */
     private static final int BATCH_LIMIT = 100;
 
     @Autowired
@@ -35,6 +36,13 @@ public class StudentMatchHandler {
     @Autowired
     private ISysStudentMatchService sysStudentMatchService;
 
+    /**
+     * 批量同步學生姓名至企業微信
+     * <p>流程：篩選待同步記錄 → 查詢部門映射 → 分批調用企微 API → 逐條寫入同步結果</p>
+     *
+     * @param studentMatchSyncDTO 含 matchIds、operName
+     * @return 成功/失敗筆數及彙總訊息
+     */
     public SysStudentMatchSyncResultVO syncStudentNames(SysStudentMatchSyncDTO studentMatchSyncDTO) {
         SysStudentMatchSyncResultVO resultVO = new SysStudentMatchSyncResultVO();
 
@@ -89,9 +97,7 @@ public class StudentMatchHandler {
                 JSONArray depts = new JSONArray();
                 List<Long> deptIds = studentDeptsMap.get(matchItem.getStudentUserIdWecom());
                 if (deptIds != null) {
-                    for (Long deptId : deptIds) {
-                        depts.add(deptId);
-                    }
+                    depts.addAll(deptIds);
                 }
                 stuObj.put("department", depts);
 
@@ -154,6 +160,14 @@ public class StudentMatchHandler {
         return resultVO;
     }
 
+    /**
+     * 將單條同步結果委託 Service 持久化
+     *
+     * @param matchVO    匹配記錄
+     * @param syncStatus 同步狀態（1 成功，2 失敗）
+     * @param errorMsg   失敗時的錯誤訊息
+     * @param operName   操作人
+     */
     private void saveSyncResult(SysStudentMatchVO matchVO, String syncStatus, String errorMsg, String operName) {
         SysStudentMatchSyncRecordDTO syncRecordDTO = new SysStudentMatchSyncRecordDTO();
         syncRecordDTO.setMatchId(matchVO.getId());
@@ -165,6 +179,7 @@ public class StudentMatchHandler {
         sysStudentMatchService.saveOneSyncResult(syncRecordDTO);
     }
 
+    /** 取得同步至企微的目標姓名（學籍 idName） */
     private String getSyncTargetName(SysStudentMatchVO matchVO) {
         if (matchVO == null || !StringUtils.hasText(matchVO.getIdName())) {
             return "";

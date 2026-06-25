@@ -1,7 +1,7 @@
 package com.sms.web.controller.system;
 
 import com.sms.common.annotation.Log;
-import com.sms.common.core.controller.BaseController;
+import com.sms.web.controller.base.AdminBaseController;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.core.page.TableDataInfo;
 import com.sms.common.enums.BusinessType;
@@ -10,7 +10,6 @@ import com.sms.system.entity.dto.CalendarEventQueryDTO;
 import com.sms.system.entity.dto.CalendarEventSaveDTO;
 import com.sms.system.entity.vo.CalendarEventVO;
 import com.sms.system.service.ICalendarEventService;
-import com.sms.system.service.ISysAdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,17 +20,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/system/calendarEvent")
-public class CalendarEventController extends BaseController {
+public class CalendarEventController extends AdminBaseController {
 
     @Autowired
     private ICalendarEventService calendarEventService;
-
-    @Autowired
-    private ISysAdminService sysAdminService;
-
-    private boolean isNotAdmin() {
-        return sysAdminService.isNotAdmin(getOpenUserId());
-    }
 
     @Log(title = "查詢行事曆事件列表", businessType = BusinessType.SELECT)
     @GetMapping("/list")
