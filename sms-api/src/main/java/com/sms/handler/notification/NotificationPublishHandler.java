@@ -18,6 +18,7 @@ import com.sms.system.entity.SysDepartmentParentBinding;
 import com.sms.system.service.INotificationMessageService;
 import com.sms.system.service.ISysDepartmentParentBindingService;
 import com.sms.system.mapper.SysAdminMapper;
+import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +107,9 @@ public class NotificationPublishHandler {
 
     @Autowired
     private SysAdminMapper sysAdminMapper;
+
+    @Autowired
+    private SysSchoolDepartmentMemberMapper schoolDepartmentMemberMapper;
 
     // =========================================================================
     // A. Public 入口方法 (Public API)
@@ -402,15 +406,26 @@ public class NotificationPublishHandler {
 
         log.info("開始重新發送失敗通知，共 {} 條失敗記錄", failedRecords.size());
 
-        // 5. 按用戶類型分組失敗記錄
-        List<String> failedParentIds = new ArrayList<>();
-        List<String> failedStudentIds = new ArrayList<>();
+        // 5. 按用戶類型分組失敗記錄（自定義家校成員舊數據可能被誤標為學生，需改走家長通道）
+        Set<String> customHomeSchoolParentUserids = resolveCustomHomeSchoolParentUserids(failedRecords);
+        Set<String> failedParentIdSet = new LinkedHashSet<>();
+        Set<String> failedStudentIdSet = new LinkedHashSet<>();
         for (NotificationUserReadRecord record : failedRecords) {
-            if ("2".equals(record.getUserType())) {
-                failedParentIds.add(record.getUserId());
-            } else if ("1".equals(record.getUserType())) {
-                failedStudentIds.add(record.getUserId());
+            if (record.getUserId() == null || record.getUserId().trim().isEmpty()) {
+                continue;
             }
+            String userId = record.getUserId().trim();
+            if ("2".equals(record.getUserType()) || customHomeSchoolParentUserids.contains(userId)) {
+                failedParentIdSet.add(userId);
+            } else if ("1".equals(record.getUserType())) {
+                failedStudentIdSet.add(userId);
+            }
+        }
+        List<String> failedParentIds = new ArrayList<>(failedParentIdSet);
+        List<String> failedStudentIds = new ArrayList<>(failedStudentIdSet);
+
+        if (!customHomeSchoolParentUserids.isEmpty()) {
+            log.info("重發時識別到 {} 個自定義家校成員改走家長通道", customHomeSchoolParentUserids.size());
         }
 
         // 6. 重新發送
@@ -487,6 +502,27 @@ public class NotificationPublishHandler {
         }
 
         return result;
+    }
+
+    /**
+     * 識別被誤標為學生的自定義家校通訊錄家長（舊發送記錄 userType=1）
+     */
+    private Set<String> resolveCustomHomeSchoolParentUserids(List<NotificationUserReadRecord> failedRecords) {
+        List<String> candidateUserids = failedRecords.stream()
+                .filter(record -> "1".equals(record.getUserType()))
+                .map(NotificationUserReadRecord::getUserId)
+                .filter(userId -> userId != null && !userId.trim().isEmpty())
+                .map(String::trim)
+                .distinct()
+                .collect(Collectors.toList());
+        if (candidateUserids.isEmpty()) {
+            return Collections.emptySet();
+        }
+        List<String> matchedUserids = schoolDepartmentMemberMapper.selectHomeSchoolUseridsByUserids(candidateUserids);
+        if (matchedUserids == null || matchedUserids.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(matchedUserids);
     }
 
     /**

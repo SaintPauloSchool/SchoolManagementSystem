@@ -78,7 +78,7 @@ public class NotificationPublishRecordServiceImpl implements INotificationPublis
                                    List<String> parentUserIds,
                                    Map<String, Long> studentDepartmentIds) {
         // 根據發送結果構建發送記錄
-        NotificationSendRecord sendRecord = buildSendRecord(notification, studentUserIds, sendResult, bindings);
+        NotificationSendRecord sendRecord = buildSendRecord(notification, studentUserIds, parentUserIds, sendResult, bindings);
         notificationSendRecordService.save(sendRecord);
 
         // 構建用戶閱讀記錄列表
@@ -141,6 +141,7 @@ public class NotificationPublishRecordServiceImpl implements INotificationPublis
      */
     private NotificationSendRecord buildSendRecord(Notification notification,
                                                      List<String> studentUserIds,
+                                                     List<String> parentUserIds,
                                                      SendResult sendResult,
                                                      List<SysDepartmentParentBinding> bindings) {
         NotificationSendRecord sendRecord = new NotificationSendRecord();
@@ -169,30 +170,43 @@ public class NotificationPublishRecordServiceImpl implements INotificationPublis
             allTargetStudents.addAll(studentUserIdsSet);
         }
 
-        int totalCount = allTargetStudents.size();
+        int totalCount;
         int successCount = 0;
         int failCount = 0;
-        Set<String> successUserIds = sendResult.getSuccessUserIds();
+        Set<String> successUserIds = sendResult.getSuccessUserIds() != null
+                ? sendResult.getSuccessUserIds() : Collections.emptySet();
 
-        for (String studentId : allTargetStudents) {
-            boolean isSuccess = false;
-            if (studentUserIdsSet.contains(studentId) && successUserIds.contains(studentId)) {
-                isSuccess = true;
-            } else {
-                Set<String> parents = studentParentMap.get(studentId);
-                if (parents != null) {
-                    for (String pId : parents) {
-                        if (successUserIds.contains(pId)) {
-                            isSuccess = true;
-                            break;
+        if (allTargetStudents.isEmpty() && parentUserIds != null && !parentUserIds.isEmpty()) {
+            totalCount = parentUserIds.size();
+            for (String parentId : parentUserIds) {
+                if (successUserIds.contains(parentId)) {
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+            }
+        } else {
+            totalCount = allTargetStudents.size();
+            for (String studentId : allTargetStudents) {
+                boolean isSuccess = false;
+                if (studentUserIdsSet.contains(studentId) && successUserIds.contains(studentId)) {
+                    isSuccess = true;
+                } else {
+                    Set<String> parents = studentParentMap.get(studentId);
+                    if (parents != null) {
+                        for (String pId : parents) {
+                            if (successUserIds.contains(pId)) {
+                                isSuccess = true;
+                                break;
+                            }
                         }
                     }
                 }
-            }
-            if (isSuccess) {
-                successCount++;
-            } else {
-                failCount++;
+                if (isSuccess) {
+                    successCount++;
+                } else {
+                    failCount++;
+                }
             }
         }
 
@@ -257,7 +271,8 @@ public class NotificationPublishRecordServiceImpl implements INotificationPublis
             for (String userId : parentUserIds) {
                 if (!parentsWithRecords.contains(userId)) {
                     boolean sendSuccess = successUserIds.contains(userId);
-                    readRecords.add(createReadRecord(sendRecordId, userId, "2", null, null, sendSuccess, now));
+                    Long departmentId = studentDepartmentIds != null ? studentDepartmentIds.get(userId) : null;
+                    readRecords.add(createReadRecord(sendRecordId, userId, "2", null, departmentId, sendSuccess, now));
                 }
             }
         }
