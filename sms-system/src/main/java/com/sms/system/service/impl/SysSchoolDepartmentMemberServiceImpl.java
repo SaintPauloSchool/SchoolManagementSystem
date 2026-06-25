@@ -1,5 +1,7 @@
 package com.sms.system.service.impl;
 
+import com.sms.common.exception.ServiceException;
+import com.sms.common.utils.bean.BeanCopyUtils;
 import com.sms.system.entity.SysSchoolDepartmentMember;
 import com.sms.system.entity.dto.SysSchoolDepartmentMemberBatchSaveDTO;
 import com.sms.system.entity.dto.SysSchoolDepartmentMemberQueryDTO;
@@ -7,10 +9,10 @@ import com.sms.system.entity.dto.SysSchoolDepartmentMemberSaveDTO;
 import com.sms.system.entity.vo.SysSchoolDepartmentMemberVO;
 import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
 import com.sms.system.service.ISysSchoolDepartmentMemberService;
-import com.sms.common.utils.bean.BeanCopyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,6 +72,13 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
         Integer defaultType = sysSchoolDepartmentMemberBatchSaveDTO.getType() != null ? sysSchoolDepartmentMemberBatchSaveDTO.getType() : 1;
         List<SysSchoolDepartmentMember> sysSchoolDepartmentMemberList = new ArrayList<>();
         for (SysSchoolDepartmentMemberSaveDTO sysSchoolDepartmentMemberSaveDTO : sysSchoolDepartmentMemberBatchSaveDTO.getMembers()) {
+            if (Integer.valueOf(2).equals(defaultType)
+                    && !StringUtils.hasText(sysSchoolDepartmentMemberSaveDTO.getStudentUserId())) {
+                String memberName = sysSchoolDepartmentMemberSaveDTO.getName();
+                throw new ServiceException(String.format(
+                        "自定義家校成員必須關聯學生：%s",
+                        StringUtils.hasText(memberName) ? memberName : sysSchoolDepartmentMemberSaveDTO.getUserid()));
+            }
             SysSchoolDepartmentMember sysSchoolDepartmentMember = BeanCopyUtils.copy(sysSchoolDepartmentMemberSaveDTO, SysSchoolDepartmentMember.class);
             sysSchoolDepartmentMember.setType(defaultType);
             sysSchoolDepartmentMemberList.add(sysSchoolDepartmentMember);

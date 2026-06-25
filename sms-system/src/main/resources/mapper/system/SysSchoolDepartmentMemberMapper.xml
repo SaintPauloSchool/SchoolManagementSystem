@@ -11,13 +11,14 @@
         <result property="departmentId" column="department_id"/>
         <result property="openUserid" column="open_userid"/>
         <result property="type" column="type"/>
+        <result property="studentUserId" column="student_user_id"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
     <!-- 批量查詢多個部門的成員 -->
     <select id="selectMembersByDepartmentIds" resultMap="SysSchoolDepartmentMemberResult">
-        SELECT id, userid, name, department_id, open_userid, type, create_time, update_time
+        SELECT id, userid, name, department_id, open_userid, type, student_user_id, create_time, update_time
         FROM sys_school_department_member
         WHERE department_id IN
         <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
@@ -50,7 +51,7 @@
 
     <!-- 批量插入部門成員 -->
     <insert id="batchInsertMembers">
-        INSERT INTO sys_school_department_member (userid, name, department_id, open_userid, type, create_time, update_time)
+        INSERT INTO sys_school_department_member (userid, name, department_id, open_userid, type, student_user_id, create_time, update_time)
         VALUES
         <foreach collection="members" item="member" separator=",">
             (
@@ -59,6 +60,7 @@
                 #{member.departmentId},
                 #{member.openUserid},
                 #{member.type},
+                #{member.studentUserId},
                 #{member.createTime},
                 #{member.updateTime}
             )

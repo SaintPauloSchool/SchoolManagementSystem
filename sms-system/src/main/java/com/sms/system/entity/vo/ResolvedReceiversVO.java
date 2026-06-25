@@ -4,6 +4,7 @@ import com.sms.system.entity.SysDepartmentParentBinding;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 
 /**
  * 解析後的通知接收者結果視圖對象
@@ -25,16 +26,26 @@ public class ResolvedReceiversVO {
     /** 學生 userId 對應的部門 ID */
     private Map<String, Long> studentDepartmentIds;
 
+    /** 自定義家校成員：家長 userId → 學生 userId */
+    private Map<String, String> parentStudentUserIds;
+
     public ResolvedReceiversVO() {
     }
 
     public ResolvedReceiversVO(List<String> parentUserIds, List<String> studentUserIds, List<String> partyIds,
-                               List<SysDepartmentParentBinding> bindings, Map<String, Long> studentDepartmentIds) {
+                               List<SysDepartmentParentBinding> bindings, Map<String, Long> studentDepartmentIds,
+                               Map<String, String> parentStudentUserIds) {
         this.parentUserIds = parentUserIds;
         this.studentUserIds = studentUserIds;
         this.partyIds = partyIds;
         this.bindings = bindings;
         this.studentDepartmentIds = studentDepartmentIds;
+        this.parentStudentUserIds = parentStudentUserIds;
+    }
+
+    public ResolvedReceiversVO(List<String> parentUserIds, List<String> studentUserIds, List<String> partyIds,
+                               List<SysDepartmentParentBinding> bindings, Map<String, Long> studentDepartmentIds) {
+        this(parentUserIds, studentUserIds, partyIds, bindings, studentDepartmentIds, Collections.emptyMap());
     }
 
     public List<String> getParentUserIds() {
@@ -75,5 +86,13 @@ public class ResolvedReceiversVO {
 
     public void setStudentDepartmentIds(Map<String, Long> studentDepartmentIds) {
         this.studentDepartmentIds = studentDepartmentIds;
+    }
+
+    public Map<String, String> getParentStudentUserIds() {
+        return parentStudentUserIds;
+    }
+
+    public void setParentStudentUserIds(Map<String, String> parentStudentUserIds) {
+        this.parentStudentUserIds = parentStudentUserIds;
     }
 }

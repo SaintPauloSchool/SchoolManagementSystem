@@ -22,6 +22,7 @@ public class SysSchoolDepartmentVO implements Serializable {
     private List<SysSchoolDepartmentVO> children;
     private Boolean isLeaf;
     private Long classDepartmentId;
+    private String studentUserId;
 
     public Long getId() {
         return id;
@@ -117,5 +118,13 @@ public class SysSchoolDepartmentVO implements Serializable {
 
     public void setClassDepartmentId(Long classDepartmentId) {
         this.classDepartmentId = classDepartmentId;
+    }
+
+    public String getStudentUserId() {
+        return studentUserId;
+    }
+
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
     }
 }

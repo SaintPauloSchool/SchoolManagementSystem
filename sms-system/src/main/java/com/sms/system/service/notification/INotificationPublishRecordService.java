@@ -25,7 +25,8 @@ public interface INotificationPublishRecordService {
                             SendResult sendResult,
                             List<SysDepartmentParentBinding> bindings,
                             List<String> parentUserIds,
-                            Map<String, Long> studentDepartmentIds);
+                            Map<String, Long> studentDepartmentIds,
+                            Map<String, String> parentStudentUserIds);
 
     /**
      * 批量保存提醒記錄
