@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -70,6 +71,7 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
         }
 
         Integer defaultType = sysSchoolDepartmentMemberBatchSaveDTO.getType() != null ? sysSchoolDepartmentMemberBatchSaveDTO.getType() : 1;
+        LocalDateTime now = LocalDateTime.now();
         List<SysSchoolDepartmentMember> sysSchoolDepartmentMemberList = new ArrayList<>();
         for (SysSchoolDepartmentMemberSaveDTO sysSchoolDepartmentMemberSaveDTO : sysSchoolDepartmentMemberBatchSaveDTO.getMembers()) {
             if (Integer.valueOf(2).equals(defaultType)
@@ -80,41 +82,38 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
                         StringUtils.hasText(memberName) ? memberName : sysSchoolDepartmentMemberSaveDTO.getUserid()));
             }
             SysSchoolDepartmentMember sysSchoolDepartmentMember = BeanCopyUtils.copy(sysSchoolDepartmentMemberSaveDTO, SysSchoolDepartmentMember.class);
+            if (StringUtils.hasText(sysSchoolDepartmentMemberSaveDTO.getStudentUserId())) {
+                sysSchoolDepartmentMember.setStudentUserId(sysSchoolDepartmentMemberSaveDTO.getStudentUserId().trim());
+            }
             sysSchoolDepartmentMember.setType(defaultType);
+            sysSchoolDepartmentMember.setCreateTime(now);
+            sysSchoolDepartmentMember.setUpdateTime(now);
             sysSchoolDepartmentMemberList.add(sysSchoolDepartmentMember);
         }
         
-        // 1. 獲取本次要添加人員所涉及的所有部門 ID
         List<Long> departmentIds = sysSchoolDepartmentMemberList.stream()
                 .map(SysSchoolDepartmentMember::getDepartmentId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
 
-        // 2. 查出這些部門下已經存在的人員
         List<SysSchoolDepartmentMember> existingMembers = memberMapper.selectMembersByDepartmentIds(departmentIds);
 
-        // 3. 過濾掉已經在該部門存在的人員
         List<SysSchoolDepartmentMember> toInsert = sysSchoolDepartmentMemberList.stream()
                 .filter(m -> existingMembers.stream().noneMatch(exist -> 
                         exist.getDepartmentId().equals(m.getDepartmentId()) && 
                         exist.getUserid().equals(m.getUserid())
                 ))
-                // 順便做個去重，防止前端傳來的 members 列表裏有重複對象
                 .collect(Collectors.collectingAndThen(
                         Collectors.toCollection(() -> new TreeSet<>(
                                 Comparator.comparing(m -> m.getDepartmentId() + "_" + m.getUserid())
                         )), ArrayList::new));
 
-        // 4. 如果全都被過濾掉了（說明想加的人都已經在了），直接返回成功數量，不報錯
         if (toInsert.isEmpty()) {
             return sysSchoolDepartmentMemberList.size();
         }
 
-        // 5. 插入過濾後的真實增量人員
         memberMapper.batchInsertMembers(toInsert);
-        
-        // 外部可能依賴返回值判斷是否成功，所以統一回傳原數組大小，製造"全部成功加入"(包括已存在的)的假象
         return sysSchoolDepartmentMemberList.size();
     }
 
