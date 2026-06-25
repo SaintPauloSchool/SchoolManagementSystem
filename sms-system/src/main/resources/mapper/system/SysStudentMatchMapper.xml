@@ -25,26 +25,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="dsejStudentId" column="dsej_student_id"/>
     </resultMap>
 
-    <resultMap type="com.sms.system.entity.SysStudentMatch" id="SysStudentMatchResult">
-        <result property="id" column="id"/>
-        <result property="studentProfileNum" column="student_profile_num"/>
-        <result property="studentUserIdWecom" column="student_user_id_wecom"/>
-        <result property="studentNameWecom" column="student_name_wecom"/>
-        <result property="matchStatus" column="match_status"/>
-        <result property="syncStatus" column="sync_status"/>
-        <result property="errorMsg" column="error_msg"/>
-        <result property="createTime" column="create_time"/>
-        <result property="updateTime" column="update_time"/>
-    </resultMap>
-
-    <resultMap type="com.sms.system.entity.vo.SysWecomStudentVO" id="SysWecomStudentVOResult">
-        <result property="studentUserId" column="student_user_id"/>
-        <result property="studentName" column="student_name"/>
-        <result property="mobile" column="mobile"/>
-        <result property="relationDesc" column="relation_desc"/>
-        <result property="classCodeWecom" column="class_code_wecom"/>
-    </resultMap>
-
     <sql id="studentInfoFrom">
         FROM ${studentProfilesDatabase}.student_info si
         LEFT JOIN sys_student_match m
@@ -84,26 +64,26 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectStudentMatchListVo"/>
         <where>
             si.student_profile_number IS NOT NULL
-            <if test="query != null and query.idNameQuery != null and query.idNameQuery != ''">
+            <if test="studentMatchDTO != null and studentMatchDTO.idNameQuery != null and studentMatchDTO.idNameQuery != ''">
                 and (
-                    si.id_name COLLATE utf8mb4_unicode_ci like concat('%', #{query.idNameQuery}, '%')
-                    or m.student_name_wecom COLLATE utf8mb4_unicode_ci like concat('%', #{query.idNameQuery}, '%')
+                    si.id_name like concat('%', #{studentMatchDTO.idNameQuery}, '%')
+                    or m.student_name_wecom like concat('%', #{studentMatchDTO.idNameQuery}, '%')
                 )
             </if>
-            <if test="query != null and query.classSectionQuery != null and query.classSectionQuery != ''">
-                and si.class_section COLLATE utf8mb4_unicode_ci like concat('%', #{query.classSectionQuery}, '%')
+            <if test="studentMatchDTO != null and studentMatchDTO.classSectionQuery != null and studentMatchDTO.classSectionQuery != ''">
+                and si.class_section like concat('%', #{studentMatchDTO.classSectionQuery}, '%')
             </if>
-            <if test="query != null and query.matchStatus != null and query.matchStatus == '0'">
-                and (m.match_status IS NULL OR m.match_status = '0')
+            <if test="studentMatchDTO != null and studentMatchDTO.matchStatus != null and studentMatchDTO.matchStatus == '0'">
+                and m.id IS NULL
             </if>
-            <if test="query != null and query.matchStatus != null and query.matchStatus != '' and query.matchStatus != '0'">
-                and m.match_status = #{query.matchStatus}
+            <if test="studentMatchDTO != null and studentMatchDTO.matchStatus != null and studentMatchDTO.matchStatus != '' and studentMatchDTO.matchStatus != '0'">
+                and m.match_status = #{studentMatchDTO.matchStatus}
             </if>
-            <if test="query != null and query.syncStatus != null and query.syncStatus == '0'">
-                and (m.sync_status IS NULL OR m.sync_status = '0')
+            <if test="studentMatchDTO != null and studentMatchDTO.syncStatus != null and studentMatchDTO.syncStatus == '0'">
+                and (m.id IS NULL OR m.sync_status IS NULL OR m.sync_status = '0')
             </if>
-            <if test="query != null and query.syncStatus != null and query.syncStatus != '' and query.syncStatus != '0'">
-                and m.sync_status = #{query.syncStatus}
+            <if test="studentMatchDTO != null and studentMatchDTO.syncStatus != null and studentMatchDTO.syncStatus != '' and studentMatchDTO.syncStatus != '0'">
+                and m.sync_status = #{studentMatchDTO.syncStatus}
             </if>
         </where>
         order by si.class_section, si.class_num, si.id_name, si.student_profile_number
@@ -111,29 +91,51 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectStudentMatchVOById" resultMap="SysStudentMatchVOResult">
         <include refid="selectSysStudentMatchVo"/>
-        where m.id = #{id}
+        where m.id = #{matchId}
     </select>
 
-    <select id="selectMatchById" resultMap="SysStudentMatchResult">
-        select id, student_profile_num, student_user_id_wecom, student_name_wecom,
-               match_status, sync_status, error_msg, create_time, update_time
+    <select id="countMatchById" resultType="int">
+        select count(1)
         from sys_student_match
-        where id = #{id}
+        where id = #{matchId}
     </select>
 
     <select id="selectMatchIdByProfileNum" resultType="Long">
         select id
         from sys_student_match
-        where CAST(student_profile_num AS UNSIGNED) = CAST(#{studentProfileNum} AS UNSIGNED)
+        where CAST(student_profile_num AS UNSIGNED) = CAST(#{sysStudentMatchProfileNumDTO.studentProfileNum} AS UNSIGNED)
         limit 1
     </select>
 
-    <insert id="insertMatchRecord">
-        insert into sys_student_match (student_profile_num, match_status, sync_status, create_time)
-        values (#{studentProfileNum}, '0', '0', sysdate())
+    <insert id="saveOrUpdateStudentMatch" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_student_match (
+            student_profile_num,
+            student_user_id_wecom,
+            student_name_wecom,
+            match_status,
+            sync_status,
+            error_msg,
+            create_time
+        ) values (
+            #{studentProfileNum},
+            #{studentUserIdWecom},
+            #{studentNameWecom},
+            #{matchStatus},
+            COALESCE(#{syncStatus}, '0'),
+            #{errorMsg},
+            sysdate()
+        )
+        on duplicate key update
+            student_profile_num = values(student_profile_num),
+            student_user_id_wecom = values(student_user_id_wecom),
+            student_name_wecom = values(student_name_wecom),
+            match_status = values(match_status),
+            sync_status = values(sync_status),
+            error_msg = values(error_msg),
+            update_time = sysdate()
     </insert>
 
-    <update id="updateSysStudentMatch" parameterType="com.sms.system.entity.SysStudentMatch">
+    <update id="updateStudentMatch" parameterType="com.sms.system.entity.SysStudentMatch">
         update sys_student_match
         <trim prefix="SET" suffixOverrides=",">
             <if test="studentProfileNum != null">student_profile_num = #{studentProfileNum},</if>
@@ -150,82 +152,49 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectUnmatchedList" resultMap="SysStudentMatchVOResult">
         <include refid="selectStudentMatchListVo"/>
         where si.student_profile_number IS NOT NULL
-          and (m.match_status IS NULL OR m.match_status = '0')
-        <if test="query != null and query.idNameQuery != null and query.idNameQuery != ''">
+          and m.id IS NULL
+        <if test="studentMatchDTO != null and studentMatchDTO.idNameQuery != null and studentMatchDTO.idNameQuery != ''">
             and (
-                si.id_name COLLATE utf8mb4_unicode_ci like concat('%', #{query.idNameQuery}, '%')
-                or m.student_name_wecom COLLATE utf8mb4_unicode_ci like concat('%', #{query.idNameQuery}, '%')
+                si.id_name like concat('%', #{studentMatchDTO.idNameQuery}, '%')
+                or m.student_name_wecom like concat('%', #{studentMatchDTO.idNameQuery}, '%')
             )
         </if>
-        <if test="query != null and query.classSectionQuery != null and query.classSectionQuery != ''">
-            and si.class_section COLLATE utf8mb4_unicode_ci like concat('%', #{query.classSectionQuery}, '%')
+        <if test="studentMatchDTO != null and studentMatchDTO.classSectionQuery != null and studentMatchDTO.classSectionQuery != ''">
+            and si.class_section like concat('%', #{studentMatchDTO.classSectionQuery}, '%')
         </if>
         order by si.class_section, si.class_num, si.id_name, si.student_profile_number
     </select>
 
-    <select id="selectWecomCandidates" resultMap="SysWecomStudentVOResult">
-        SELECT DISTINCT
-            r.student_user_id AS student_user_id,
-            r.student_name AS student_name,
-            r.mobile AS mobile,
-            r.relation_desc AS relation_desc,
-            cs.class_section_sp AS class_code_wecom
-        FROM sys_parent_student_relation r
-        LEFT JOIN sys_department_parent_binding b ON r.student_user_id = b.student_user_id
-        LEFT JOIN sys_department d ON b.department_id = d.id
-        LEFT JOIN class_section cs ON d.name = cs.class_section_dsedj COLLATE utf8mb4_unicode_ci
-        WHERE r.student_user_id NOT IN (
-            SELECT DISTINCT student_user_id_wecom
-            FROM sys_student_match
-            WHERE student_user_id_wecom IS NOT NULL
-        )
-        <if test="queryNameTraditional != null and queryNameTraditional != ''">
-            AND (
-                r.student_name LIKE CONCAT('%', #{queryNameTraditional}, '%')
-                OR r.student_name LIKE CONCAT('%', #{queryNameSimplified}, '%')
-            )
-        </if>
-        <if test="queryMobile != null and queryMobile != ''">
-            AND r.mobile LIKE CONCAT('%', #{queryMobile}, '%')
-        </if>
-        <if test="queryClass != null and queryClass != ''">
-            AND cs.class_section_sp LIKE CONCAT('%', #{queryClass}, '%')
-        </if>
-        ORDER BY r.student_name ASC
-    </select>
-
-    <select id="selectWecomStudentInfoList" resultMap="SysWecomStudentVOResult">
-        SELECT DISTINCT
-            r.student_user_id AS student_user_id,
-            r.student_name AS student_name,
-            cs.class_section_sp AS class_code_wecom
-        FROM sys_parent_student_relation r
-        INNER JOIN sys_department_parent_binding b ON r.student_user_id = b.student_user_id
-        INNER JOIN sys_department d ON b.department_id = d.id
-        INNER JOIN class_section cs ON d.name = cs.class_section_dsedj COLLATE utf8mb4_unicode_ci
+    <select id="selectMatchedWecomUserIds" resultType="java.lang.String">
+        SELECT student_user_id_wecom
+        FROM sys_student_match
+        WHERE student_user_id_wecom IS NOT NULL
     </select>
 
     <update id="updateWecomStudentName">
         UPDATE sys_parent_student_relation
-        SET student_name = #{studentName}, update_time = SYSDATE()
-        WHERE student_user_id = #{studentUserId}
+        SET student_name = #{sysWecomStudentNameUpdateDTO.studentName}, update_time = SYSDATE()
+        WHERE student_user_id = #{sysWecomStudentNameUpdateDTO.studentUserId}
     </update>
 
     <delete id="deleteSysStudentMatchByIds">
         delete from sys_student_match where id in
-        <foreach item="id" collection="ids" open="(" separator="," close=")">
-            #{id}
+        <foreach item="matchId" collection="studentMatchDeleteDTO.matchIds" open="(" separator="," close=")">
+            #{matchId}
         </foreach>
     </delete>
 
-    <update id="clearStudentMatch" parameterType="Long">
-        update sys_student_match
-        set student_user_id_wecom = null,
-            student_name_wecom = null,
-            match_status = '0',
-            sync_status = '0',
-            error_msg = null,
-            update_time = sysdate()
-        where id = #{id}
-    </update>
+    <resultMap type="com.sms.system.entity.vo.SysStudentMatchDeptItemVO" id="SysStudentMatchDeptItemVOResult">
+        <result property="studentUserId" column="student_user_id"/>
+        <result property="departmentId" column="department_id"/>
+    </resultMap>
+
+    <select id="selectStudentDeptBindings" resultMap="SysStudentMatchDeptItemVOResult">
+        select student_user_id, department_id
+        from sys_department_parent_binding
+        where student_user_id in
+        <foreach item="studentUserId" collection="sysStudentMatchDeptQueryDTO.studentUserIds" open="(" separator="," close=")">
+            #{studentUserId}
+        </foreach>
+    </select>
 </mapper>

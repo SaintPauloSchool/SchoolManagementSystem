@@ -1,6 +1,8 @@
 package com.sms.system.service;
 
-import com.sms.system.entity.SysSchoolDepartmentMember;
+import com.sms.system.entity.dto.SysSchoolDepartmentMemberBatchSaveDTO;
+import com.sms.system.entity.dto.SysSchoolDepartmentMemberQueryDTO;
+import com.sms.system.entity.vo.SysSchoolDepartmentMemberVO;
 
 import java.util.List;
 
@@ -13,10 +15,10 @@ public interface ISysSchoolDepartmentMemberService {
     /**
      * 批量查詢多個部門的成員列表
      *
-     * @param departmentIds 部門 ID 列表
+     * @param sysSchoolDepartmentMemberQueryDTO 查詢條件
      * @return 成員列表
      */
-    List<SysSchoolDepartmentMember> getMembersByDepartmentIds(List<Long> departmentIds);
+    List<SysSchoolDepartmentMemberVO> getMembersByDepartmentIds(SysSchoolDepartmentMemberQueryDTO sysSchoolDepartmentMemberQueryDTO);
 
     /**
      * 根據 ID 刪除部門成員
@@ -29,9 +31,9 @@ public interface ISysSchoolDepartmentMemberService {
     /**
      * 批量添加部門成員
      *
-     * @param members 成員列表
+     * @param sysSchoolDepartmentMemberBatchSaveDTO 批量新增請求
      * @return 影響行數
      */
-    int batchAddMembers(List<SysSchoolDepartmentMember> members);
+    int batchAddMembers(SysSchoolDepartmentMemberBatchSaveDTO sysSchoolDepartmentMemberBatchSaveDTO);
 
 }

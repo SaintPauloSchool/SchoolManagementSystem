@@ -5,6 +5,7 @@ import com.sms.system.mapper.notification.NotificationReminderRecordMapper;
 import com.sms.system.service.notification.INotificationReminderRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,6 +25,7 @@ public class NotificationReminderRecordServiceImpl implements INotificationRemin
      * @return 結果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int save(NotificationReminderRecord reminderRecord) {
         return notificationReminderRecordMapper.insert(reminderRecord);
     }
@@ -35,6 +37,7 @@ public class NotificationReminderRecordServiceImpl implements INotificationRemin
      * @return 結果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int batchSave(List<NotificationReminderRecord> list) {
         if (list == null || list.isEmpty()) {
             return 0;

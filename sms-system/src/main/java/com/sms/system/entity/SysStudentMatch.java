@@ -1,34 +1,26 @@
 package com.sms.system.entity;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-import com.sms.common.core.domain.BaseEntity;
+import java.io.Serializable;
+import java.util.Date;
 
 /**
- * 學生數據匹配實體類 sys_student_match
+ * 學生數據匹配表 sys_student_match
+ * <p>僅保存已匹配成功的記錄，未匹配學籍資料來自 student_profiles 庫。</p>
  */
-public class SysStudentMatch extends BaseEntity {
+public class SysStudentMatch implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long id;
-
-    /** 學生個人編號（關聯 student_profiles.student_info.student_profile_number） */
     private String studentProfileNum;
-
-    /** 匹配到的企微學生 UserID */
     private String studentUserIdWecom;
-
-    /** 匹配到的企微原始學生姓名 */
     private String studentNameWecom;
-
-    /** 匹配狀態 (0: 未匹配, 1: 自動匹配成功, 2: 手動匹配成功) */
+    /** 匹配狀態 (0: 未匹配, 1: 自動匹配, 2: 手動匹配) */
     private String matchStatus;
-
-    /** 企微同步狀態 (0: 未同步, 1: 同步成功, 2: 同步失敗) */
+    /** 企微同步狀態 (0: 未同步, 1: 成功, 2: 失敗) */
     private String syncStatus;
-
-    /** 同步失敗的具體原因 */
     private String errorMsg;
+    private Date createTime;
+    private Date updateTime;
 
     public Long getId() {
         return id;
@@ -86,18 +78,19 @@ public class SysStudentMatch extends BaseEntity {
         this.errorMsg = errorMsg;
     }
 
-    @Override
-    public String toString() {
-        return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
-            .append("id", getId())
-            .append("studentProfileNum", getStudentProfileNum())
-            .append("studentUserIdWecom", getStudentUserIdWecom())
-            .append("studentNameWecom", getStudentNameWecom())
-            .append("matchStatus", getMatchStatus())
-            .append("syncStatus", getSyncStatus())
-            .append("errorMsg", getErrorMsg())
-            .append("createTime", getCreateTime())
-            .append("updateTime", getUpdateTime())
-            .toString();
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public Date getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
     }
 }

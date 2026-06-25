@@ -1,10 +1,5 @@
 package com.sms.system.entity.vo;
 
-import com.sms.system.entity.notification.Notification;
-import com.sms.system.entity.notification.NotificationCc;
-import com.sms.system.entity.notification.NotificationQuestion;
-import com.sms.system.entity.notification.NotificationReceiver;
-
 import java.util.List;
 
 /**
@@ -17,16 +12,16 @@ import java.util.List;
 public class NotificationDetailVO {
 
     /** 通知基本信息 */
-    private Notification notification;
+    private NotificationVO notification;
 
     /** 接收對象列表 */
-    private List<NotificationReceiver> receivers;
+    private List<NotificationReceiverVO> receivers;
 
     /** 抄送對象列表 */
-    private List<NotificationCc> ccs;
+    private List<NotificationCcVO> ccs;
 
     /** 問題列表 */
-    private List<NotificationQuestion> questions;
+    private List<NotificationQuestionVO> questions;
 
     /** 發送統計（totalCount, successCount, failCount） */
     private SendStatisticsVO sendStatistics;
@@ -34,25 +29,51 @@ public class NotificationDetailVO {
     /** 閱讀統計（readCount, replyCount） */
     private ReadStatisticsVO readStatistics;
 
-    // -------------------------------------------------------------------------
-    // Getters & Setters
-    // -------------------------------------------------------------------------
+    public NotificationVO getNotification() {
+        return notification;
+    }
 
-    public Notification getNotification() { return notification; }
-    public void setNotification(Notification notification) { this.notification = notification; }
+    public void setNotification(NotificationVO notification) {
+        this.notification = notification;
+    }
 
-    public List<NotificationReceiver> getReceivers() { return receivers; }
-    public void setReceivers(List<NotificationReceiver> receivers) { this.receivers = receivers; }
+    public List<NotificationReceiverVO> getReceivers() {
+        return receivers;
+    }
 
-    public List<NotificationCc> getCcs() { return ccs; }
-    public void setCcs(List<NotificationCc> ccs) { this.ccs = ccs; }
+    public void setReceivers(List<NotificationReceiverVO> receivers) {
+        this.receivers = receivers;
+    }
 
-    public List<NotificationQuestion> getQuestions() { return questions; }
-    public void setQuestions(List<NotificationQuestion> questions) { this.questions = questions; }
+    public List<NotificationCcVO> getCcs() {
+        return ccs;
+    }
 
-    public SendStatisticsVO getSendStatistics() { return sendStatistics; }
-    public void setSendStatistics(SendStatisticsVO sendStatistics) { this.sendStatistics = sendStatistics; }
+    public void setCcs(List<NotificationCcVO> ccs) {
+        this.ccs = ccs;
+    }
 
-    public ReadStatisticsVO getReadStatistics() { return readStatistics; }
-    public void setReadStatistics(ReadStatisticsVO readStatistics) { this.readStatistics = readStatistics; }
+    public List<NotificationQuestionVO> getQuestions() {
+        return questions;
+    }
+
+    public void setQuestions(List<NotificationQuestionVO> questions) {
+        this.questions = questions;
+    }
+
+    public SendStatisticsVO getSendStatistics() {
+        return sendStatistics;
+    }
+
+    public void setSendStatistics(SendStatisticsVO sendStatistics) {
+        this.sendStatistics = sendStatistics;
+    }
+
+    public ReadStatisticsVO getReadStatistics() {
+        return readStatistics;
+    }
+
+    public void setReadStatistics(ReadStatisticsVO readStatistics) {
+        this.readStatistics = readStatistics;
+    }
 }

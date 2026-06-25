@@ -8,23 +8,27 @@ import com.sms.system.entity.SysDepartment;
 import com.sms.system.entity.SysDepartmentParentBinding;
 import com.sms.system.entity.SysParentStudentRelation;
 import com.sms.system.entity.SysSchoolDepartmentMember;
+import com.sms.system.entity.dto.NotificationReceiverSaveDTO;
 import com.sms.system.entity.notification.NotificationReceiver;
+import com.sms.system.entity.vo.NotificationReceiverVO;
 import com.sms.system.entity.vo.ResolvedReceiversVO;
 import com.sms.system.mapper.SysDepartmentMapper;
 import com.sms.system.mapper.SysDepartmentParentBindingMapper;
 import com.sms.system.mapper.SysParentStudentRelationMapper;
-import com.sms.system.mapper.SysSchoolDepartmentMapper;
 import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
 import com.sms.system.mapper.notification.NotificationReceiverMapper;
 import com.sms.system.service.impl.SysSchoolDepartmentServiceImpl;
 import com.sms.system.service.notification.INotificationReceiverService;
+import com.sms.common.utils.bean.BeanCopyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 
 /**
  * 通知接收對象 Service 業務層處理
@@ -80,30 +84,19 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
      * @return 接收對象集合
      */
     @Override
-    public List<NotificationReceiver> selectByNotificationId(Long notificationId) {
-        return notificationReceiverMapper.selectByNotificationId(notificationId);
-    }
-    
-    /**
-     * 新增接收對象
-     *
-     * @param receiver 接收對象
-     * @return 結果
-     */
-    @Override
-    public int save(NotificationReceiver receiver) {
-        return notificationReceiverMapper.insert(receiver);
+    public List<NotificationReceiverVO> selectByNotificationId(Long notificationId) {
+        return BeanCopyUtils.copyList(notificationReceiverMapper.selectByNotificationId(notificationId),
+                NotificationReceiverVO.class);
     }
 
-    /**
-     * 解析接收者列表，將其轉換為企業微信可識別的 userid 集合
-     *
-     * @param receivers 原始通告接收者配置列表
-     * @return 包含 to_parent_userid、to_student_userid、to_party 的 Map 集合
-     */
     @Override
-    public ResolvedReceiversVO resolveReceivers(List<NotificationReceiver> receivers) {
-        return resolveReceivers(receivers, true);
+    @Transactional(rollbackFor = Exception.class)
+    public int save(NotificationReceiverSaveDTO notificationReceiverSaveDTO) {
+        NotificationReceiver receiver = BeanCopyUtils.copy(notificationReceiverSaveDTO, NotificationReceiver.class);
+        if (receiver.getCreateTime() == null) {
+            receiver.setCreateTime(LocalDateTime.now());
+        }
+        return notificationReceiverMapper.insert(receiver);
     }
 
     @Override

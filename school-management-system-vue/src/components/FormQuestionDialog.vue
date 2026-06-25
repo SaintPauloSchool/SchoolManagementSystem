@@ -247,7 +247,7 @@
             </div>
 
             <!-- 題目列表 -->
-            <div class="questionnaire-body">
+            <div class="questionnaire-body" ref="questionnaireBodyRef">
               <!-- 邏輯模式：結構化列表 -->
               <div v-if="viewMode === 'preview'" class="preview-flowchart-container">
                 <!-- SVG 流程線層 -->
@@ -345,6 +345,7 @@
                 <div
                   v-for="(question, index) in questionList"
                   :key="question.id"
+                  :id="'question-card-' + question.id"
                   class="question-card"
                   :class="{ 'active': selectedQuestionId === question.id }"
                   @click="selectQuestion(question.id)"
@@ -1426,8 +1427,26 @@ export default {
       
       this.questionList.push(question)
       this.selectedQuestionId = question.id
-      
+      this.scrollToQuestion(question.id)
+
       ElNotification({ title: '題目已添加', message: '新題目已成功添加', type: 'success', duration: 2000 })
+    },
+
+    scrollToQuestion(questionId) {
+      this.$nextTick(() => {
+        const container = this.$refs.questionnaireBodyRef
+        const card = document.getElementById(`question-card-${questionId}`)
+        if (!container || !card) {
+          return
+        }
+        const containerRect = container.getBoundingClientRect()
+        const cardRect = card.getBoundingClientRect()
+        const offset = cardRect.top - containerRect.top + container.scrollTop - 16
+        container.scrollTo({
+          top: Math.max(0, offset),
+          behavior: 'smooth'
+        })
+      })
     },
 
     getDefaultOptions(type) {
@@ -2208,6 +2227,10 @@ export default {
 }
 
 .dialog-main.preview-mode .center-panel {
+  align-items: stretch;
+}
+
+.dialog-main.preview-mode .questionnaire-preview {
   width: 100%;
   max-width: 100%;
 }
@@ -2230,9 +2253,9 @@ export default {
 
 /* 左側面板 */
 .left-panel {
-  width: 360px;
-  flex-shrink: 0;
-  min-width: 340px; /* 設置最小寬度防止過度壓縮 */
+  width: 280px;
+  flex: 0 0 280px;
+  min-width: 260px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -2397,15 +2420,17 @@ export default {
 
 /* 中間面板 */
 .center-panel {
-  flex: 1;
-  min-width: 0; /* 允許 flex 子項縮小到內容以下 */
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* 防止溢出 */
+  overflow: hidden;
 }
 
 .questionnaire-preview {
   flex: 1;
+  width: 100%;
+  max-width: none;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
@@ -3286,9 +3311,9 @@ export default {
 
 /* 右側面板 */
 .right-panel {
-  width: 340px;
-  flex-shrink: 0;
-  min-width: 300px; /* 設置最小寬度防止過度壓縮 */
+  width: 300px;
+  flex: 0 0 300px;
+  min-width: 280px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
@@ -4442,13 +4467,15 @@ export default {
 /* 響應式設計 */
 @media (max-width: 1400px) {
   .left-panel {
-    width: 280px;
-    min-width: 260px;
+    width: 260px;
+    flex-basis: 260px;
+    min-width: 240px;
   }
 
   .right-panel {
-    width: 300px;
-    min-width: 280px;
+    width: 280px;
+    flex-basis: 280px;
+    min-width: 260px;
   }
 }
 
@@ -4466,7 +4493,7 @@ export default {
   }
 
   .center-panel {
-    min-height: 400px; /* 確保中間區域有足夠高度 */
+    min-height: 400px;
   }
   
   .type-grid {

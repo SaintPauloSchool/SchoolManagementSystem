@@ -1,9 +1,13 @@
 package com.sms.system.service.impl;
 
 import com.sms.system.entity.CalendarEvent;
+import com.sms.system.entity.dto.CalendarEventDeleteDTO;
+import com.sms.system.entity.dto.CalendarEventQueryDTO;
+import com.sms.system.entity.dto.CalendarEventSaveDTO;
 import com.sms.system.entity.vo.CalendarEventVO;
 import com.sms.system.mapper.CalendarEventMapper;
 import com.sms.system.service.ICalendarEventService;
+import com.sms.common.utils.bean.BeanCopyUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
@@ -29,38 +33,54 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
     private CalendarEventMapper calendarEventMapper;
 
     @Override
-    public CalendarEvent selectCalendarEventByEventId(Long eventId) {
-        return calendarEventMapper.selectCalendarEventByEventId(eventId);
+    public CalendarEventVO selectCalendarEventByEventId(Long eventId) {
+        CalendarEvent entity = calendarEventMapper.selectCalendarEventByEventId(eventId);
+        return BeanCopyUtils.copy(entity, CalendarEventVO.class);
     }
 
     @Override
-    public List<CalendarEvent> selectCalendarEventList(CalendarEventVO eventVO) {
-        return calendarEventMapper.selectCalendarEventList(eventVO);
+    public List<CalendarEventVO> selectCalendarEventList(CalendarEventQueryDTO calendarEventQueryDTO) {
+        CalendarEvent calendarEventQuery = BeanCopyUtils.copy(calendarEventQueryDTO, CalendarEvent.class);
+        List<CalendarEvent> calendarEventList = calendarEventMapper.selectCalendarEventList(calendarEventQuery);
+        return BeanCopyUtils.copyPageList(calendarEventList, CalendarEventVO.class);
     }
 
     @Override
-    public int insertCalendarEvent(CalendarEvent calendarEvent) {
+    @Transactional(rollbackFor = Exception.class)
+    public int insertCalendarEvent(CalendarEventSaveDTO calendarEventSaveDTO, String createBy) {
+        CalendarEvent calendarEvent = BeanCopyUtils.copy(calendarEventSaveDTO, CalendarEvent.class);
+        calendarEvent.setCreateBy(createBy);
         calendarEvent.setCreateTime(LocalDateTime.now());
         return calendarEventMapper.insertCalendarEvent(calendarEvent);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int insertCalendarEventBatch(List<CalendarEvent> calendarEvents) {
+    public int insertCalendarEventBatch(List<CalendarEventSaveDTO> calendarEventSaveDTOList, String createBy) {
         LocalDateTime now = LocalDateTime.now();
-        calendarEvents.forEach(e -> e.setCreateTime(now));
-        return calendarEventMapper.insertCalendarEventBatch(calendarEvents);
+        List<CalendarEvent> calendarEventList = new ArrayList<>(calendarEventSaveDTOList.size());
+        for (CalendarEventSaveDTO calendarEventSaveDTO : calendarEventSaveDTOList) {
+            CalendarEvent calendarEvent = BeanCopyUtils.copy(calendarEventSaveDTO, CalendarEvent.class);
+            calendarEvent.setCreateBy(createBy);
+            calendarEvent.setCreateTime(now);
+            calendarEventList.add(calendarEvent);
+        }
+        return calendarEventMapper.insertCalendarEventBatch(calendarEventList);
     }
 
     @Override
-    public int updateCalendarEvent(CalendarEvent calendarEvent) {
+    @Transactional(rollbackFor = Exception.class)
+    public int updateCalendarEvent(CalendarEventSaveDTO calendarEventSaveDTO, String updateBy) {
+        CalendarEvent calendarEvent = BeanCopyUtils.copy(calendarEventSaveDTO, CalendarEvent.class);
+        calendarEvent.setUpdateBy(updateBy);
         calendarEvent.setUpdateTime(LocalDateTime.now());
         return calendarEventMapper.updateCalendarEvent(calendarEvent);
     }
 
     @Override
-    public int deleteCalendarEventByEventIds(Long[] eventIds) {
-        return calendarEventMapper.deleteCalendarEventByEventIds(eventIds);
+    @Transactional(rollbackFor = Exception.class)
+    public int deleteCalendarEventByEventIds(CalendarEventDeleteDTO calendarEventDeleteDTO) {
+        return calendarEventMapper.deleteCalendarEventByEventIds(calendarEventDeleteDTO.getEventIds());
     }
 
     @Override
@@ -75,7 +95,6 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
             Sheet sheet = workbook.getSheetAt(0);
             List<CalendarEvent> eventList = new ArrayList<>();
 
-            // 第一行是說明行，第二行是表頭，從第三行開始讀取 (index 2)
             for (int i = 2; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null) {
@@ -84,8 +103,7 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
 
                 try {
                     CalendarEvent event = new CalendarEvent();
-                    
-                    // 1. 事件日期
+
                     Cell dateCell = row.getCell(0);
                     if (dateCell != null) {
                         if (dateCell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(dateCell)) {
@@ -98,7 +116,6 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
                         }
                     }
 
-                    // 2. 事件標題
                     Cell titleCell = row.getCell(1);
                     if (titleCell != null) {
                         event.setTitle(getCellValueAsString(titleCell));
@@ -110,10 +127,9 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
                         continue;
                     }
 
-                    // 3. 對象類型 (0: 全校, 1: 幼稚園, 2: 小學, 3: 中學)
                     Cell typeCell = row.getCell(2);
                     String typeStr = getCellValueAsString(typeCell);
-                    int targetType = 0; // 默認全校
+                    int targetType = 0;
                     if (typeStr != null) {
                         typeStr = typeStr.trim();
                         if (typeStr.contains("幼稚園") || typeStr.equalsIgnoreCase("K")) {
@@ -128,7 +144,6 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
                     }
                     event.setTargetType(targetType);
 
-                    // 4. 備註
                     Cell remarkCell = row.getCell(3);
                     if (remarkCell != null) {
                         event.setRemark(getCellValueAsString(remarkCell));
@@ -136,7 +151,7 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
 
                     event.setCreateBy(operName);
                     event.setCreateTime(LocalDateTime.now());
-                    
+
                     eventList.add(event);
                     successNum++;
                 } catch (Exception e) {
@@ -186,7 +201,6 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
             XSSFSheet sheet = workbook.createSheet("行事曆模版");
 
-            // ── 第一行示範說明樣式（合併儲存格、淺藍底、斜體、自動換行）──
             XSSFCellStyle tipStyle = workbook.createCellStyle();
             tipStyle.setFillForegroundColor(IndexedColors.LIGHT_CORNFLOWER_BLUE.getIndex());
             tipStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -199,7 +213,6 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
             tipFont.setColor(IndexedColors.DARK_BLUE.getIndex());
             tipStyle.setFont(tipFont);
 
-            // ── 表頭樣式（灰色背景、粗體、居中，無邊框）──
             XSSFCellStyle headerStyle = workbook.createCellStyle();
             headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -210,7 +223,6 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
             headerFont.setFontHeightInPoints((short) 11);
             headerStyle.setFont(headerFont);
 
-            // ── 第一行：說明行（合併 A1:D1，多行文字說明）──
             String tipText =
                 "第一行 (Row 1)：說明行（系統自動跳過）。\n" +
                 "第二行 (Row 2)：表頭行（系統自動跳過），數據從第三行開始填寫。\n" +
@@ -225,7 +237,6 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
             tipCell.setCellStyle(tipStyle);
             sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
 
-            // ── 第二行：表頭 ──
             Row headerRow = sheet.createRow(1);
             headerRow.setHeightInPoints(24);
             String[] headers = {"日期 (必填 格式YYYY-MM-DD)", "標題 (必填)", "學部 (選填)", "備註 (選填)"};
@@ -235,7 +246,6 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
                 cell.setCellStyle(headerStyle);
             }
 
-            // ── 「學部」欄位下拉驗證（C列，從第三行即 index 2 起）──
             DataValidationHelper dvHelper = sheet.getDataValidationHelper();
             DataValidationConstraint dvConstraint = dvHelper.createExplicitListConstraint(
                     new String[]{"全校", "幼稚園", "小學", "中學"});
@@ -246,16 +256,13 @@ public class CalendarEventServiceImpl implements ICalendarEventService {
             dataValidation.createErrorBox("輸入錯誤", "學部請從下拉選單中選擇：全校 / 幼稚園 / 小學 / 中學");
             sheet.addValidationData(dataValidation);
 
-            // ── 設定欄位寬度 ──
-            sheet.setColumnWidth(0, 7500);  // 日期（加長）
-            sheet.setColumnWidth(1, 7000);  // 標題
-            sheet.setColumnWidth(2, 4000);  // 學部
-            sheet.setColumnWidth(3, 7000);  // 備註
+            sheet.setColumnWidth(0, 7500);
+            sheet.setColumnWidth(1, 7000);
+            sheet.setColumnWidth(2, 4000);
+            sheet.setColumnWidth(3, 7000);
 
-            // ── 凍結前兩行（說明行 + 表頭） ──
             sheet.createFreezePane(0, 2);
 
-            // ── 輸出 Response ──
             String filename = URLEncoder.encode("行事曆導入模版.xlsx", StandardCharsets.UTF_8.name())
                     .replaceAll("\\+", "%20");
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");

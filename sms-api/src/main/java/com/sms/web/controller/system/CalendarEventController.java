@@ -1,14 +1,15 @@
 package com.sms.web.controller.system;
 
 import com.sms.common.annotation.Log;
-import com.sms.common.core.controller.BaseController;
+import com.sms.web.controller.base.AdminBaseController;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.core.page.TableDataInfo;
 import com.sms.common.enums.BusinessType;
-import com.sms.system.entity.CalendarEvent;
+import com.sms.system.entity.dto.CalendarEventDeleteDTO;
+import com.sms.system.entity.dto.CalendarEventQueryDTO;
+import com.sms.system.entity.dto.CalendarEventSaveDTO;
 import com.sms.system.entity.vo.CalendarEventVO;
 import com.sms.system.service.ICalendarEventService;
-import com.sms.system.service.ISysAdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,37 +20,23 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/system/calendarEvent")
-public class CalendarEventController extends BaseController {
+public class CalendarEventController extends AdminBaseController {
 
     @Autowired
     private ICalendarEventService calendarEventService;
 
-    @Autowired
-    private ISysAdminService sysAdminService;
-
-    /**
-     * 校驗是否「非」管理員
-     */
-    private boolean isNotAdmin() {
-        return sysAdminService.isNotAdmin(getOpenUserId());
-    }
-
-    /**
-     * 查詢行事曆列表
-     */
+    @Log(title = "查詢行事曆事件列表", businessType = BusinessType.SELECT)
     @GetMapping("/list")
-    public TableDataInfo list(CalendarEventVO eventVO) {
+    public TableDataInfo list(CalendarEventQueryDTO calendarEventQueryDTO) {
         if (isNotAdmin()) {
             return getDataTable(new ArrayList<>());
         }
         startPage();
-        List<CalendarEvent> list = calendarEventService.selectCalendarEventList(eventVO);
-        return getDataTable(list);
+        List<CalendarEventVO> calendarEventList = calendarEventService.selectCalendarEventList(calendarEventQueryDTO);
+        return getDataTable(calendarEventList);
     }
 
-    /**
-     * 獲取詳細資訊
-     */
+    @Log(title = "查詢行事曆事件詳情", businessType = BusinessType.SELECT)
     @GetMapping(value = "/{eventId}")
     public AjaxResult getInfo(@PathVariable("eventId") Long eventId) {
         if (isNotAdmin()) {
@@ -58,61 +45,44 @@ public class CalendarEventController extends BaseController {
         return AjaxResult.success(calendarEventService.selectCalendarEventByEventId(eventId));
     }
 
-    /**
-     * 新增行事曆事件
-     */
     @Log(title = "新增行事曆事件", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult add(@RequestBody CalendarEvent calendarEvent) {
+    public AjaxResult add(@RequestBody CalendarEventSaveDTO calendarEventSaveDTO) {
         if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
-        calendarEvent.setCreateBy(getUsername());
-        return toAjax(calendarEventService.insertCalendarEvent(calendarEvent));
+        return toAjax(calendarEventService.insertCalendarEvent(calendarEventSaveDTO, getUsername()));
     }
 
-    /**
-     * 批量新增行事曆事件（日期範圍展開）
-     */
     @Log(title = "行事曆事件-批量新增", businessType = BusinessType.INSERT)
     @PostMapping("/batch")
-    public AjaxResult addBatch(@RequestBody List<CalendarEvent> calendarEvents) {
+    public AjaxResult addBatch(@RequestBody List<CalendarEventSaveDTO> calendarEventSaveDTOList) {
         if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
-        String username = getUsername();
-        calendarEvents.forEach(e -> e.setCreateBy(username));
-        return toAjax(calendarEventService.insertCalendarEventBatch(calendarEvents));
+        return toAjax(calendarEventService.insertCalendarEventBatch(calendarEventSaveDTOList, getUsername()));
     }
 
-    /**
-     * 修改行事曆事件
-     */
     @Log(title = "修改行事曆事件", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult edit(@RequestBody CalendarEvent calendarEvent) {
+    public AjaxResult edit(@RequestBody CalendarEventSaveDTO calendarEventSaveDTO) {
         if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
-        calendarEvent.setUpdateBy(getUsername());
-        return toAjax(calendarEventService.updateCalendarEvent(calendarEvent));
+        return toAjax(calendarEventService.updateCalendarEvent(calendarEventSaveDTO, getUsername()));
     }
 
-    /**
-     * 刪除行事曆事件
-     */
     @Log(title = "刪除行事曆事件", businessType = BusinessType.DELETE)
     @DeleteMapping("/{eventIds}")
     public AjaxResult remove(@PathVariable Long[] eventIds) {
         if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
-        return toAjax(calendarEventService.deleteCalendarEventByEventIds(eventIds));
+        CalendarEventDeleteDTO calendarEventDeleteDTO = new CalendarEventDeleteDTO();
+        calendarEventDeleteDTO.setEventIds(eventIds);
+        return toAjax(calendarEventService.deleteCalendarEventByEventIds(calendarEventDeleteDTO));
     }
 
-    /**
-     * 導入行事曆事件
-     */
     @Log(title = "導入行事曆事件", businessType = BusinessType.IMPORT)
     @PostMapping("/importData")
     public AjaxResult importData(MultipartFile file) throws Exception {
@@ -123,9 +93,7 @@ public class CalendarEventController extends BaseController {
         return AjaxResult.success(message);
     }
 
-    /**
-     * 下載行事曆導入模版
-     */
+    @Log(title = "下載行事曆導入模板", businessType = BusinessType.EXPORT)
     @GetMapping("/importTemplate")
     public void downloadTemplate(HttpServletResponse response) throws Exception {
         if (isNotAdmin()) {

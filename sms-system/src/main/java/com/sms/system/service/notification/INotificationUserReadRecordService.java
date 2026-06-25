@@ -46,9 +46,8 @@ public interface INotificationUserReadRecordService {
     /**
      * 更新閱讀記錄的發送狀態
      *
-     * @param readId 閱讀記錄ID
+     * @param readId     閱讀記錄ID
      * @param sendStatus 發送狀態
-     * @return 結果
      */
-    int updateSendStatus(Long readId, String sendStatus);
+    void updateSendStatus(Long readId, String sendStatus);
 }

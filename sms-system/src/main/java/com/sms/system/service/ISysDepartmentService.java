@@ -1,6 +1,7 @@
 package com.sms.system.service;
 
 import com.sms.system.entity.SysDepartment;
+import com.sms.system.entity.vo.SysDepartmentVO;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public interface ISysDepartmentService {
      * @param openUserId 企業微信 userid（當前登錄用戶）
      * @return 過濾後的學校層級樹形結構
      */
-    List<SysDepartment> getClassTreeByAdmin(String openUserId);
+    List<SysDepartmentVO> getClassTreeByAdmin(String openUserId);
 
     /**
      * 根據管理員權限獲取班級樹形結構（帶家長學生關係）
@@ -26,7 +27,7 @@ public interface ISysDepartmentService {
      * @param openUserId 企業微信 userid（當前登錄用戶）
      * @return 過濾後的帶家長學生關係的樹形結構
      */
-    List<SysDepartment> getClassTreeWithParentsByAdmin(String openUserId);
+    List<SysDepartmentVO> getClassTreeWithParentsByAdmin(String openUserId);
 
     /**
      * 批量保存部門信息

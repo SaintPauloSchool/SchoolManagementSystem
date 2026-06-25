@@ -83,6 +83,7 @@ export default {
 
 <style>
 @import './styles/modern-theme.css';
+@import './styles/selector-dialog.css';
 
 #app {
   height: 100vh;

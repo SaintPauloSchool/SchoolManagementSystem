@@ -113,6 +113,10 @@ service.interceptors.response.use(
     error => {
         console.error('響應錯誤:', error)
 
+        if (error.config?.silentError) {
+            return Promise.reject(error)
+        }
+
         let message = '網絡異常，請稍後重試'
 
         if (error.response) {

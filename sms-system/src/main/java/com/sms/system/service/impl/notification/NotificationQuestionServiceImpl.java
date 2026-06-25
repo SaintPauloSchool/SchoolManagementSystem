@@ -1,16 +1,20 @@
 package com.sms.system.service.impl.notification;
 
-import com.sms.system.mapper.notification.NotificationQuestionMapper;
+import com.sms.system.entity.dto.NotificationQuestionSaveDTO;
 import com.sms.system.entity.notification.NotificationQuestion;
+import com.sms.system.entity.vo.NotificationQuestionVO;
+import com.sms.system.mapper.notification.NotificationQuestionMapper;
 import com.sms.system.service.notification.INotificationQuestionService;
+import com.sms.common.utils.bean.BeanCopyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * 通知問題 Service 業務層處理
- *
  */
 @Service
 public class NotificationQuestionServiceImpl implements INotificationQuestionService {
@@ -18,25 +22,19 @@ public class NotificationQuestionServiceImpl implements INotificationQuestionSer
     @Autowired
     private NotificationQuestionMapper notificationQuestionMapper;
 
-    /**
-     * 根據通知 ID 查詢問題列表
-     *
-     * @param notificationId 通知 ID
-     * @return 問題集合
-     */
     @Override
-    public List<NotificationQuestion> selectByNotificationId(Long notificationId) {
-        return notificationQuestionMapper.selectByNotificationId(notificationId);
+    public List<NotificationQuestionVO> selectByNotificationId(Long notificationId) {
+        return BeanCopyUtils.copyList(notificationQuestionMapper.selectByNotificationId(notificationId),
+                NotificationQuestionVO.class);
     }
-    
-    /**
-     * 新增問題
-     *
-     * @param question 問題
-     * @return 結果
-     */
+
     @Override
-    public int save(NotificationQuestion question) {
+    @Transactional(rollbackFor = Exception.class)
+    public int save(NotificationQuestionSaveDTO notificationQuestionSaveDTO) {
+        NotificationQuestion question = BeanCopyUtils.copy(notificationQuestionSaveDTO, NotificationQuestion.class);
+        if (question.getCreateTime() == null) {
+            question.setCreateTime(LocalDateTime.now());
+        }
         return notificationQuestionMapper.insert(question);
     }
 }

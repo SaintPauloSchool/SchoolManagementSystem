@@ -1,12 +1,16 @@
 package com.sms.system.service.impl;
 
+import com.sms.common.utils.bean.BeanCopyUtils;
 import com.sms.system.entity.SysSchoolDepartment;
 import com.sms.system.entity.SysSchoolDepartmentMember;
+import com.sms.system.entity.dto.SysSchoolDepartmentSaveDTO;
+import com.sms.system.entity.vo.SysSchoolDepartmentVO;
 import com.sms.system.mapper.SysSchoolDepartmentMapper;
 import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
 import com.sms.system.service.ISysSchoolDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,15 +32,16 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
      * 獲取學校部門樹形結構（僅部門，不含人員）
      */
     @Override
-    public List<SysSchoolDepartment> getSysSchoolDepartmentTree(Integer type) {
-        return buildDepartmentTree(type);
+    public List<SysSchoolDepartmentVO> getSysSchoolDepartmentTree(Integer type) {
+        return BeanCopyUtils.copyTree(buildDepartmentTree(type), SysSchoolDepartmentVO.class,
+                SysSchoolDepartment::getChildren, SysSchoolDepartmentVO::setChildren);
     }
 
     /**
      * 獲取學校部門樹形結構（包含人員作爲葉子節點）
      */
     @Override
-    public List<SysSchoolDepartment> getSysSchoolDepartmentTreeWithMembers(Integer type) {
+    public List<SysSchoolDepartmentVO> getSysSchoolDepartmentTreeWithMembers(Integer type) {
         // 1. 獲取基礎部門樹
         List<SysSchoolDepartment> rootNodes = buildDepartmentTree(type);
         if (rootNodes == null || rootNodes.isEmpty()) {
@@ -53,13 +58,15 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
                 .collect(Collectors.toList());
 
         if (departmentIds.isEmpty()) {
-            return rootNodes;
+            return BeanCopyUtils.copyTree(rootNodes, SysSchoolDepartmentVO.class,
+                    SysSchoolDepartment::getChildren, SysSchoolDepartmentVO::setChildren);
         }
 
         // 3. 批量查詢所有部門成員
         List<SysSchoolDepartmentMember> members = schoolDepartmentMemberMapper.selectMembersByDepartmentIds(departmentIds);
         if (members == null || members.isEmpty()) {
-            return rootNodes;
+            return BeanCopyUtils.copyTree(rootNodes, SysSchoolDepartmentVO.class,
+                    SysSchoolDepartment::getChildren, SysSchoolDepartmentVO::setChildren);
         }
 
         // 4. 按部門分組
@@ -81,7 +88,8 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
             }
         }
 
-        return rootNodes;
+        return BeanCopyUtils.copyTree(rootNodes, SysSchoolDepartmentVO.class,
+                SysSchoolDepartment::getChildren, SysSchoolDepartmentVO::setChildren);
     }
 
     private void collectAllDepartments(List<SysSchoolDepartment> nodes, List<SysSchoolDepartment> allDepartments) {
@@ -168,6 +176,7 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
      * 同時刪除該部門下的所有子部門和成員
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int deleteSysSchoolDepartmentById(Long id) {
         // 1. 先查詢目標部門，取得它的 type
         SysSchoolDepartment targetDept = schoolDepartmentMapper.selectById(id);
@@ -204,16 +213,20 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
      * 新增部門
      */
     @Override
-    public int insertSysSchoolDepartment(SysSchoolDepartment department) {
-        return schoolDepartmentMapper.insertDepartment(department);
+    @Transactional(rollbackFor = Exception.class)
+    public int insertSysSchoolDepartment(SysSchoolDepartmentSaveDTO sysSchoolDepartmentSaveDTO) {
+        SysSchoolDepartment sysSchoolDepartment = BeanCopyUtils.copy(sysSchoolDepartmentSaveDTO, SysSchoolDepartment.class);
+        return schoolDepartmentMapper.insertDepartment(sysSchoolDepartment);
     }
 
     /**
      * 修改部門
      */
     @Override
-    public int updateSysSchoolDepartment(SysSchoolDepartment department) {
-        return schoolDepartmentMapper.updateDepartment(department);
+    @Transactional(rollbackFor = Exception.class)
+    public int updateSysSchoolDepartment(SysSchoolDepartmentSaveDTO sysSchoolDepartmentSaveDTO) {
+        SysSchoolDepartment sysSchoolDepartment = BeanCopyUtils.copy(sysSchoolDepartmentSaveDTO, SysSchoolDepartment.class);
+        return schoolDepartmentMapper.updateDepartment(sysSchoolDepartment);
     }
 
     /**

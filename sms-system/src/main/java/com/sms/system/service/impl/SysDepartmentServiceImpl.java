@@ -2,6 +2,7 @@ package com.sms.system.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.sms.common.utils.bean.BeanCopyUtils;
 import com.sms.system.entity.SysDepartment;
 import com.sms.system.entity.SysDepartmentAdmin;
 import com.sms.system.entity.SysDepartmentParentBinding;
@@ -10,6 +11,7 @@ import com.sms.system.mapper.SysDepartmentAdminMapper;
 import com.sms.system.mapper.SysDepartmentMapper;
 import com.sms.system.mapper.SysDepartmentParentBindingMapper;
 import com.sms.system.mapper.SysParentStudentRelationMapper;
+import com.sms.system.entity.vo.SysDepartmentVO;
 import com.sms.system.service.ISysDepartmentAdminService;
 import com.sms.system.service.ISysDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +61,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
      * @return 過濾後的樹形結構
      */
     @Override
-    public List<SysDepartment> getClassTreeByAdmin(String openUserId) {
+    public List<SysDepartmentVO> getClassTreeByAdmin(String openUserId) {
         // 1. 獲取用戶管理的部門 ID 集合
         Set<Long> adminDeptIds = getAdminDepartmentIds(openUserId);
 
@@ -72,7 +74,8 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
         List<SysDepartment> fullTree = getClassTree();
 
         // 3. 剪枝：只保留有權限的子樹
-        return filterTree(fullTree, adminDeptIds);
+        return BeanCopyUtils.copyTree(filterTree(fullTree, adminDeptIds), SysDepartmentVO.class,
+                SysDepartment::getChildren, SysDepartmentVO::setChildren);
     }
 
     /**
@@ -82,7 +85,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
      * @return 過濾後的帶家長學生關係的樹形結構
      */
     @Override
-    public List<SysDepartment> getClassTreeWithParentsByAdmin(String openUserId) {
+    public List<SysDepartmentVO> getClassTreeWithParentsByAdmin(String openUserId) {
         // 1. 獲取用戶管理的部門 ID 集合
         Set<Long> adminDeptIds = getAdminDepartmentIds(openUserId);
 
@@ -94,7 +97,8 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
         List<SysDepartment> fullTree = getClassTreeWithParents();
 
         // 3. 剪枝
-        return filterTree(fullTree, adminDeptIds);
+        return BeanCopyUtils.copyTree(filterTree(fullTree, adminDeptIds), SysDepartmentVO.class,
+                SysDepartment::getChildren, SysDepartmentVO::setChildren);
     }
 
     /**
@@ -448,6 +452,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void batchSaveDepartments(List<SysDepartment> departments) {
         if (departments != null && !departments.isEmpty()) {
             departmentMapper.batchInsertDepartments(departments);
