@@ -220,7 +220,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
         if (TARGET_TYPE_WECOM.equals(type)) {
             resolveParentUserIds(idList, departmentIdList, parentUserIds, bindings, bindingKeys, strictDepartmentCheck);
         } else if (TARGET_TYPE_CUSTOM.equals(type)) {
-            resolveStudentUserIds(idList, departmentIdList, studentUserIds, studentDepartmentIds);
+            resolveCustomMemberParentUserIds(idList, departmentIdList, parentUserIds, studentDepartmentIds);
         }
     }
 
@@ -233,7 +233,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
         if (TARGET_TYPE_WECOM.equals(type)) {
             resolveParentUserIdsByDepartment(idList, parentUserIds, outBindings, bindingKeys);
         } else if (TARGET_TYPE_CUSTOM.equals(type)) {
-            resolveStudentUserIdsByDepartment(idList, studentUserIds, studentDepartmentIds);
+            resolveCustomMemberParentUserIdsByDepartment(idList, parentUserIds, studentDepartmentIds);
         }
     }
 
@@ -357,10 +357,11 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
     }
 
     /**
-     * 根據成員 ID 列表，獲取對應的學生 UserID
+     * 根據自定義家校通訊錄成員 ID 列表，獲取對應的家長 UserID
+     * <p>sys_school_department_member.userid 存的是企微家長 ID，應走 to_parent_userid 發送。</p>
      */
-    private void resolveStudentUserIds(List<Long> ids, List<Long> departmentIds, Set<String> studentUserIds,
-                                       Map<String, Long> studentDepartmentIds) {
+    private void resolveCustomMemberParentUserIds(List<Long> ids, List<Long> departmentIds, Set<String> parentUserIds,
+                                                  Map<String, Long> studentDepartmentIds) {
         if (ids == null || ids.isEmpty()) {
             return;
         }
@@ -388,7 +389,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
             if (member == null || member.getUserid() == null || member.getUserid().trim().isEmpty()) {
                 continue;
             }
-            studentUserIds.add(member.getUserid());
+            parentUserIds.add(member.getUserid());
             Long departmentId = i < departmentIds.size() ? departmentIds.get(i) : null;
             if (departmentId == null) {
                 departmentId = member.getDepartmentId();
@@ -520,11 +521,10 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
     }
 
     /**
-     * 根據部門 ID 列表，獲取該部門下所有的學生 UserID
-     * 注意：需要遞歸查找傳入部門及其所有子孫部門的成員數據
+     * 根據自定義家校通訊錄部門 ID 列表，獲取部門下所有成員的家長 UserID
      */
-    private void resolveStudentUserIdsByDepartment(List<Long> departmentIds, Set<String> studentUserIds,
-                                                   Map<String, Long> studentDepartmentIds) {
+    private void resolveCustomMemberParentUserIdsByDepartment(List<Long> departmentIds, Set<String> parentUserIds,
+                                                            Map<String, Long> studentDepartmentIds) {
         // 如果傳入的部門 ID 列表為空，則返回
         if (departmentIds == null || departmentIds.isEmpty()) {
             return;
@@ -533,7 +533,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
         // 1. 遞歸獲取所有子孫部門 ID（包括傳入的部門本身）
         List<Long> allDescendantDepartmentIds = sysSchoolDepartmentService.resolveAllDescendantDepartmentIdsByType(departmentIds, 2);
         
-        log.info("解析部門學生成員 - 輸入部門 IDs: {}, 解析後所有子孫部門 IDs: {}", departmentIds, allDescendantDepartmentIds);
+        log.info("解析自定義家校部門成員 - 輸入部門 IDs: {}, 解析後所有子孫部門 IDs: {}", departmentIds, allDescendantDepartmentIds);
         
         if (allDescendantDepartmentIds.isEmpty()) {
             return;
@@ -546,7 +546,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
                 if (member.getUserid() == null || member.getUserid().trim().isEmpty()) {
                     continue;
                 }
-                studentUserIds.add(member.getUserid());
+                parentUserIds.add(member.getUserid());
                 if (member.getDepartmentId() != null) {
                     studentDepartmentIds.put(member.getUserid(), member.getDepartmentId());
                 }
