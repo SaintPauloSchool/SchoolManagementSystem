@@ -388,6 +388,7 @@ CREATE TABLE sys_school_department_member (
   department_id       BIGINT(20)      NOT NULL                   COMMENT '部門 ID',
   open_userid         VARCHAR(100)    DEFAULT NULL               COMMENT '全局唯一 UserID',
   type                TINYINT(1)      DEFAULT 1                  COMMENT '類型：1-學校部門通訊錄，2-家校通訊錄',
+  student_user_id     VARCHAR(100)    DEFAULT NULL               COMMENT '關聯學生 UserID（家校通訊錄成員）',
   create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP  COMMENT '創建時間',
   update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
   PRIMARY KEY (id)

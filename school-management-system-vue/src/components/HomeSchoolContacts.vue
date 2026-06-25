@@ -730,6 +730,7 @@ export default {
       this.selectedWecomMembers = checkedNodes.filter(node => node.isLeaf === true).map(node => ({
         id: node.id,
         userid: node.parentUserId || '',
+        studentUserId: node.studentUserId || '',
         name: node.name,
         openUserid: node.groupChatId || ''
       }))
@@ -756,6 +757,20 @@ export default {
         ElNotification({ title: "提示", message: '請選擇至少一個成員', type: "warning", duration: 3000 })
         return
       }
+
+      const membersWithoutStudent = this.selectedWecomMembers.filter(
+        member => !member.studentUserId || !member.studentUserId.trim()
+      )
+      if (membersWithoutStudent.length > 0) {
+        const names = membersWithoutStudent.map(m => m.name || m.userid).join('、')
+        ElNotification({
+          title: "無法添加",
+          message: `以下成員缺少學生關聯，請重新選擇：${names}`,
+          type: "warning",
+          duration: 5000
+        })
+        return
+      }
       
       if (!this.currentDepartment || !this.currentDepartment.id) {
         ElNotification({ title: "操作失敗", message: '部門信息異常，請重新選擇', type: "error", duration: 4000 })
@@ -765,6 +780,7 @@ export default {
       try {
         const membersToAdd = this.selectedWecomMembers.map(member => ({
           userid: member.userid,
+          studentUserId: member.studentUserId || '',
           name: member.name,
           departmentId: this.currentDepartment.id,
           openUserid: member.openUserid || ''

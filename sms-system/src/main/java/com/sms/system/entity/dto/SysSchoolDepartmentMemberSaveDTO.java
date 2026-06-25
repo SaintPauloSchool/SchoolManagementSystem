@@ -12,6 +12,7 @@ public class SysSchoolDepartmentMemberSaveDTO implements Serializable {
     private String name;
     private Long departmentId;
     private String openUserid;
+    private String studentUserId;
 
     public String getUserid() {
         return userid;
@@ -43,5 +44,13 @@ public class SysSchoolDepartmentMemberSaveDTO implements Serializable {
 
     public void setOpenUserid(String openUserid) {
         this.openUserid = openUserid;
+    }
+
+    public String getStudentUserId() {
+        return studentUserId;
+    }
+
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
     }
 }

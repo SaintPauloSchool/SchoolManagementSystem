@@ -31,6 +31,9 @@ public class SysSchoolDepartmentMember implements Serializable {
     /** 類型：1-學校部門通訊錄，2-家校通訊錄 */
     private Integer type;
 
+    /** 關聯學生 UserID（家校通訊錄成員，發通知與閱讀記錄關聯用） */
+    private String studentUserId;
+
     /** 創建時間 */
     private LocalDateTime createTime;
 
@@ -85,6 +88,14 @@ public class SysSchoolDepartmentMember implements Serializable {
         this.type = type;
     }
 
+    public String getStudentUserId() {
+        return studentUserId;
+    }
+
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
+    }
+
     public LocalDateTime getCreateTime() {
         return createTime;
     }
@@ -110,6 +121,7 @@ public class SysSchoolDepartmentMember implements Serializable {
             .append("departmentId", getDepartmentId())
             .append("openUserid", getOpenUserid())
             .append("type", getType())
+            .append("studentUserId", getStudentUserId())
             .append("createTime", getCreateTime())
             .append("updateTime", getUpdateTime())
             .toString();

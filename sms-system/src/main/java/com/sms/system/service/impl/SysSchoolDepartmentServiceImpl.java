@@ -118,6 +118,7 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
         node.setName(member.getName());
         node.setIsLeaf(true);
         node.setClassDepartmentId(member.getDepartmentId());
+        node.setStudentUserId(member.getStudentUserId());
         return node;
     }
 

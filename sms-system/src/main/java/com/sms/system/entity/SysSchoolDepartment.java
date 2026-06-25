@@ -50,6 +50,9 @@ public class SysSchoolDepartment implements Serializable {
     /** 葉子節點所屬部門 ID（成員節點使用，非數據庫字段） */
     private Long classDepartmentId;
 
+    /** 關聯學生 UserID（家校成員節點，非數據庫字段） */
+    private String studentUserId;
+
     public Long getId() {
         return id;
     }
@@ -144,6 +147,14 @@ public class SysSchoolDepartment implements Serializable {
 
     public void setClassDepartmentId(Long classDepartmentId) {
         this.classDepartmentId = classDepartmentId;
+    }
+
+    public String getStudentUserId() {
+        return studentUserId;
+    }
+
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
     }
 
     @Override
