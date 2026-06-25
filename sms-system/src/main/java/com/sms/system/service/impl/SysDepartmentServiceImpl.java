@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Collator;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,7 +31,13 @@ import java.util.stream.Collectors;
 @Service
 public class SysDepartmentServiceImpl implements ISysDepartmentService {
 
-    /** 部門類型常量 */
+    /** 部門/聯絡人節點按名稱排序（繁體中文） */
+    private static final Collator NAME_COLLATOR = Collator.getInstance(Locale.TRADITIONAL_CHINESE);
+
+    static {
+        NAME_COLLATOR.setStrength(Collator.PRIMARY);
+    }
+
     private static final int TYPE_CLASS = 1;      // 班級
     private static final int TYPE_GRADE = 2;      // 年級
     private static final int TYPE_SCHOOL_SEGMENT = 3;  // 學段
@@ -246,10 +253,10 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
             return;
         }
 
-        // 對當前層級排序（按名稱字母順序）
+        // 對當前層級排序（按名稱）
         currentLevel.sort(Comparator.comparing(
                 dept -> dept.getName() != null ? dept.getName() : "",
-                String.CASE_INSENSITIVE_ORDER
+                NAME_COLLATOR
         ));
 
         // 下一個層級（type 遞減：5→4→3→2→1）
@@ -393,7 +400,19 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
                     classNode.getChildren().add(node);
                 }
             }
+            sortChildrenByName(classNode);
         }
+    }
+
+    /** 按名稱對節點的子列表排序 */
+    private void sortChildrenByName(SysDepartment node) {
+        if (node == null || node.getChildren() == null || node.getChildren().size() < 2) {
+            return;
+        }
+        node.getChildren().sort(Comparator.comparing(
+                dept -> dept.getName() != null ? dept.getName() : "",
+                NAME_COLLATOR
+        ));
     }
     
     /**
