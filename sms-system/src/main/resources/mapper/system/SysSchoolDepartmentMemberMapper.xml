@@ -65,4 +65,14 @@
         </foreach>
     </insert>
 
+    <select id="selectHomeSchoolUseridsByUserids" resultType="java.lang.String">
+        SELECT DISTINCT userid
+        FROM sys_school_department_member
+        WHERE type = 2
+          AND userid IN
+        <foreach collection="userids" item="userid" open="(" separator="," close=")">
+            #{userid}
+        </foreach>
+    </select>
+
 </mapper>
