@@ -167,7 +167,7 @@ export default {
         { label: '家校通訊錄部門數據同步', value: 'departmentSyncTask|executeTask' },
         { label: '定時提示家長回復通知', value: 'notificationReminderTask|executeTask' },
         { label: '定時重新發送失敗通知', value: 'notificationResendTask|executeTask' },
-        { label: '家長學生關係同步', value: 'parentStudentRelationSyncTask|executeTask' },
+        { label: '家校通訊錄同步', value: 'schoolFamilyContactSyncTask|executeTask' },
         { label: '每日學校通知發送', value: 'schoolNoticeTask|executeTask' },
         { label: '企業微信部門與成員同步', value: 'wecomSchoolDepartmentTask|executeTask' }
       ]

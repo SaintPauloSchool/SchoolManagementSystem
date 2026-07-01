@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sms.system.mapper.SysSchoolFamilyContactMapper">
+    
+    <resultMap type="com.sms.system.entity.SysSchoolFamilyContact" id="SysSchoolFamilyContactResult">
+        <result property="id" column="id"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="parentUserId" column="parent_user_id"/>
+        <result property="studentUserId" column="student_user_id"/>
+        <result property="studentName" column="student_name"/>
+        <result property="relationDesc" column="relation_desc"/>
+        <result property="mobile" column="mobile"/>
+        <result property="externalUserid" column="external_userid"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <resultMap type="com.sms.system.entity.vo.SysSchoolFamilyContactVO" id="SysSchoolFamilyContactVOResult">
+        <result property="studentUserId" column="student_user_id"/>
+        <result property="studentName" column="student_name"/>
+        <result property="mobile" column="mobile"/>
+        <result property="relationDesc" column="relation_desc"/>
+        <result property="classCodeWecom" column="class_code_wecom"/>
+    </resultMap>
+
+    <sql id="selectColumns">
+        id, department_id, parent_user_id, student_user_id, student_name, relation_desc, mobile, external_userid, create_time, update_time
+    </sql>
+
+    <select id="selectByParentUserIds" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+        WHERE parent_user_id IN
+        <foreach collection="parentUserIds" item="parentUserId" open="(" separator="," close=")">
+            #{parentUserId}
+        </foreach>
+    </select>
+
+    <select id="selectByIds" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="selectByParentAndStudentUserIds" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+        WHERE parent_user_id IN
+        <foreach collection="parentUserIds" item="parentUserId" open="(" separator="," close=")">
+            #{parentUserId}
+        </foreach>
+        AND student_user_id IN
+        <foreach collection="studentUserIds" item="studentUserId" open="(" separator="," close=")">
+            #{studentUserId}
+        </foreach>
+    </select>
+
+    <select id="selectByDepartmentId" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+        WHERE department_id = #{departmentId}
+    </select>
+
+    <select id="selectByDepartmentIds" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+        WHERE department_id IN
+        <foreach collection="departmentIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="selectByStudentUserIds" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+        WHERE student_user_id IN
+        <foreach collection="studentUserIds" item="studentUserId" open="(" separator="," close=")">
+            #{studentUserId}
+        </foreach>
+    </select>
+
+    <select id="selectAllParentUserIds" resultType="java.lang.String">
+        SELECT DISTINCT r.parent_user_id
+        FROM sys_school_family_contact r
+        JOIN sys_department d1 ON r.department_id = d1.id
+        JOIN sys_department d2 ON d1.parent_id = d2.id
+        JOIN sys_department d3 ON d2.parent_id = d3.id
+        WHERE d3.type = 3 AND d3.name = '2025' AND d3.parent_id = 2
+          AND d2.type = 2 AND d2.name IN ('P1', 'P2', 'P3', 'P4', 'P5', 'P6')
+          AND d1.type = 1 AND d1.name LIKE '%家長'
+          AND r.parent_user_id IS NOT NULL AND r.parent_user_id != ''
+    </select>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO sys_school_family_contact (
+            department_id, parent_user_id, student_user_id, student_name, relation_desc, mobile, external_userid, create_time, update_time
+        ) VALUES
+        <foreach collection="contacts" item="item" separator=",">
+            (#{item.departmentId}, #{item.parentUserId}, #{item.studentUserId}, #{item.studentName}, #{item.relationDesc}, #{item.mobile}, #{item.externalUserid}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+    </insert>
+
+    <update id="updateContact" parameterType="com.sms.system.entity.SysSchoolFamilyContact">
+        UPDATE sys_school_family_contact
+        <set>
+            <if test="studentName != null">student_name = #{studentName},</if>
+            <if test="relationDesc != null">relation_desc = #{relationDesc},</if>
+            <if test="mobile != null">mobile = #{mobile},</if>
+            <if test="externalUserid != null">external_userid = #{externalUserid},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteBatch" parameterType="java.util.List">
+        DELETE FROM sys_school_family_contact
+        WHERE
+        <foreach collection="contacts" item="item" separator="OR">
+            (parent_user_id = #{item.parentUserId} AND student_user_id = #{item.studentUserId} AND department_id = #{item.departmentId})
+        </foreach>
+    </delete>
+
+    <delete id="deleteBatchByIds">
+        DELETE FROM sys_school_family_contact
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectAllContacts" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+    </select>
+
+    <select id="selectSchoolFamilyContactWithClassList" resultMap="SysSchoolFamilyContactVOResult">
+        SELECT DISTINCT
+            r.student_user_id AS student_user_id,
+            r.student_name AS student_name,
+            r.mobile AS mobile,
+            r.relation_desc AS relation_desc,
+            cs.class_section_sp AS class_code_wecom
+        FROM sys_school_family_contact r
+        INNER JOIN sys_department d ON r.department_id = d.id
+        INNER JOIN class_section cs ON d.name = cs.class_section_dsedj
+        ORDER BY r.student_name ASC
+    </select>
+
+</mapper>

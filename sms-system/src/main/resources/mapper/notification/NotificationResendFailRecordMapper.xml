@@ -86,7 +86,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                r.create_time as createTime,
                r.update_time as updateTime
         from notification_resend_fail_record r
-        left join sys_parent_student_relation ps on r.user_id = ps.parent_user_id and r.student_user_id = ps.student_user_id
+        left join sys_school_family_contact ps on r.user_id = ps.parent_user_id and r.student_user_id = ps.student_user_id
         where r.send_record_id = #{sendRecordId}
     </select>
 

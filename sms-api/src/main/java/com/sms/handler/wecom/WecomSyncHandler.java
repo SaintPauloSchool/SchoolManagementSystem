@@ -6,17 +6,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.sms.framework.wechat.WechatWorkHttpClient;
 import com.sms.system.service.IWecomSchoolDepartmentService;
 import com.sms.system.service.ISysDepartmentService;
-import com.sms.system.service.ISysParentStudentRelationService;
+import com.sms.system.service.ISysSchoolFamilyContactService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.sms.system.entity.SysParentStudentRelation;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.ArrayList;
 
 /**
  * 企業微信數據同步處理器
@@ -38,7 +36,7 @@ public class WecomSyncHandler {
     private ISysDepartmentService departmentService;
 
     @Autowired
-    private ISysParentStudentRelationService parentStudentRelationService;
+    private ISysSchoolFamilyContactService schoolFamilyContactService;
 
     /**
      * 檢查 API 呼叫是否回傳錯誤
@@ -65,12 +63,12 @@ public class WecomSyncHandler {
     }
 
     /**
-     * 同步家長學生關係數據
-     * 由 ParentStudentRelationSyncTask 調用（每日凌晨 0 點 30 分）
+     * 同步家校通訊錄家長聯絡人數據
+     * 由 SchoolFamilyContactSyncTask 調用（每日凌晨 0 點 30 分）
      */
-    public TaskResult syncParentStudentRelations() {
-        log.info("開始同步家長學生關係");
-        // 獲取所有班級部門 ID
+    public TaskResult syncSchoolFamilyContacts() {
+        log.info("開始同步家校通訊錄");
+        // 獲取部門數據
         List<Long> targetDepartmentIds = departmentService.getClassDepartmentId();
         if (targetDepartmentIds == null || targetDepartmentIds.isEmpty()) {
             log.error("未獲取到班級部門 ID，同步任務結束");
@@ -80,60 +78,33 @@ public class WecomSyncHandler {
         log.info("成功獲取到 {} 個目標部門 ID", targetDepartmentIds.size());
         int failCount = 0;
         String firstErrorReason = null;
-        
-        // 用於收集和去重全校家長學生關係的 Map，Key 為 parentUserId + "_" + studentUserId
-        Map<String, SysParentStudentRelation> globalRelationsMap = new HashMap<>();
 
-        // 遍歷所有班級部門 ID
+        //遍歷部門數據
         for (Long targetDepartmentId : targetDepartmentIds) {
-            log.info("開始執行部門 ID {} 的家長學生關係同步", targetDepartmentId);
-            // 呼叫企微家校家長列表api
+            log.info("開始執行部門 ID {} 的家校通訊錄同步", targetDepartmentId);
+            // 獲取家校通訊錄家長列表
             JSONObject parentJson = wechatWorkHttpClient.getSchoolParentList(targetDepartmentId);
-            
+
+            //檢查 API 呼叫是否回傳錯誤
             if (isApiError(parentJson)) {
                 failCount++;
                 if (firstErrorReason == null) {
                     firstErrorReason = parentJson.getString("errmsg");
                 }
+                log.warn("部門 ID {} 拉取家校通訊錄失敗，跳過同步", targetDepartmentId);
+                continue;
             }
-            
-            List<SysParentStudentRelation> deptRelations = parentStudentRelationService.syncParentStudentRelationData(targetDepartmentId, parentJson);
-            if (deptRelations != null) {
-                for (SysParentStudentRelation rel : deptRelations) {
-                    String key = rel.getParentUserId() + "_" + rel.getStudentUserId();
-                    globalRelationsMap.put(key, rel);
-                }
-            }
-        }
 
-        // 全局進行批量插入、更新與刪除對比
-        // 為了數據安全，只有當沒有班級拉取失敗且企微返回數據不為空時，才允許清理本地多餘/過期的數據；否則只進行新增與更新，不執行刪除。
-        try {
-            boolean shouldDeleteObsolete = (failCount == 0 && !globalRelationsMap.isEmpty());
-            parentStudentRelationService.syncAllParentStudentRelations(new ArrayList<>(globalRelationsMap.values()), shouldDeleteObsolete);
-        } catch (Exception e) {
-            log.error("全局批量同步家長學生關係失敗", e);
-            if (firstErrorReason == null) {
-                firstErrorReason = e.getMessage();
-            }
-            failCount = targetDepartmentIds.size(); // 標記全部失敗或記錄錯誤
-        }
-
-        // 全局清理已不在任何部門綁定中的孤立家長學生關係記錄
-        // 同樣需在完全同步成功且有拉取到資料的前提下才執行，避免誤刪
-        if (failCount == 0 && !globalRelationsMap.isEmpty()) {
-            try {
-                parentStudentRelationService.deleteOrphanRelations();
-            } catch (Exception e) {
-                log.error("全局清理孤立家長學生關係記錄失敗", e);
-            }
+            // 同步指定班級部門的企微家校通訊錄聯絡人數據
+            schoolFamilyContactService.syncSchoolFamilyContactData(targetDepartmentId, parentJson);
         }
 
         if (failCount > 0) {
-            return new TaskResult(targetDepartmentIds.size() - failCount, failCount, "共 " + failCount + " 個數據同步失敗，原因: " + firstErrorReason);
+            return new TaskResult(targetDepartmentIds.size() - failCount, failCount,
+                    "共 " + failCount + " 個數據同步失敗，原因: " + firstErrorReason);
         }
 
-        log.info("家長學生關係數據同步完成");
+        log.info("家校通訊錄數據同步完成");
         return TaskResult.success(targetDepartmentIds.size(), 0, "同步成功");
     }
 
@@ -144,29 +115,24 @@ public class WecomSyncHandler {
     public TaskResult syncWecomDepartmentsAndMembers() {
         log.info("開始同步企業微信部門與成員數據");
 
-        // 1. 獲取並同步部門列表
         JSONObject departmentResult = wechatWorkHttpClient.getDepartmentList();
         if (isApiError(departmentResult)) {
             return TaskResult.fail(0, 1, "獲取企業微信部門失敗: " + departmentResult.getString("errmsg"));
         }
-        // 同步部門列表
         wecomSchoolDepartmentService.syncWecomSchoolDepartments(departmentResult);
 
-        // 2. 獲取部門列表的成員並同步寫入
         int memberFailCount = 0;
         String firstMemberErrorReason = null;
-        
+
         if (departmentResult != null && !isApiError(departmentResult)) {
             JSONArray departmentArray = departmentResult.getJSONArray("department");
-            // 遍歷部門列表
             if (departmentArray != null && !departmentArray.isEmpty()) {
                 Map<Long, JSONObject> departmentMembersMap = new HashMap<>();
                 for (int i = 0; i < departmentArray.size(); i++) {
                     JSONObject deptObj = departmentArray.getJSONObject(i);
                     Long deptId = deptObj.getLong("id");
-                    // 獲取部門成員列表api (只呼叫微信 API，無資料庫交互)
                     JSONObject memberResult = wechatWorkHttpClient.getDepartmentMembers(deptId);
-                    
+
                     if (isApiError(memberResult)) {
                         memberFailCount++;
                         if (firstMemberErrorReason == null) {
@@ -176,19 +142,19 @@ public class WecomSyncHandler {
                         departmentMembersMap.put(deptId, memberResult);
                     }
                 }
-                
-                // 一次性大批次寫入與同步資料庫 (徹底杜絕迴圈內 SQL 查詢與寫入)
+
                 if (!departmentMembersMap.isEmpty()) {
                     wecomSchoolDepartmentService.syncWecomSchoolDepartmentMembersBatch(departmentMembersMap);
                 }
             }
         }
-        
-        int totalDepts = departmentResult != null && departmentResult.getJSONArray("department") != null 
+
+        int totalDepts = departmentResult != null && departmentResult.getJSONArray("department") != null
                 ? departmentResult.getJSONArray("department").size() : 0;
-                
+
         if (memberFailCount > 0) {
-            return new TaskResult(totalDepts - memberFailCount, memberFailCount, "共 " + memberFailCount + " 個部門成員同步失敗，原因: " + firstMemberErrorReason);
+            return new TaskResult(totalDepts - memberFailCount, memberFailCount,
+                    "共 " + memberFailCount + " 個部門成員同步失敗，原因: " + firstMemberErrorReason);
         }
 
         log.info("企業微信部門與成員數據同步完成");

@@ -15,7 +15,7 @@ import com.sms.system.entity.vo.NotificationVO;
 import com.sms.system.service.notification.*;
 import com.sms.common.utils.bean.BeanCopyUtils;
 import com.sms.system.service.INotificationMessageService;
-import com.sms.system.service.ISysDepartmentParentBindingService;
+import com.sms.system.service.ISysSchoolFamilyContactService;
 import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +79,7 @@ public class NotificationPublishHandler {
     private INotificationMessageService notificationMessageService;
 
     @Autowired
-    private ISysDepartmentParentBindingService departmentParentBindingService;
+    private ISysSchoolFamilyContactService schoolFamilyContactService;
 
     @Autowired
     private SysSchoolDepartmentMemberMapper schoolDepartmentMemberMapper;
@@ -128,7 +128,7 @@ public class NotificationPublishHandler {
 
         // 2. 企微選人時有 bindings，可生成「班級名 + 學生名」的個性化正文；自定義家校則為空，走批量通用內容
         List<ParentStudentMessageInfo> messageInfos =
-                notificationMessageService.buildMessageInfos(receiversSnapshot.getBindings());
+                notificationMessageService.buildMessageInfos(receiversSnapshot.getRelations());
 
         // 3. 調用企微家校通知 API（有 bindings 逐條個性化發送，否則按家長 userid 批量發送）
         SendResult sendResult = schoolSendHelper.sendWithPersonalization(
@@ -143,7 +143,7 @@ public class NotificationPublishHandler {
                 notification,
                 receiversSnapshot.getStudentUserIds(),
                 sendResult,
-                receiversSnapshot.getBindings(),
+                receiversSnapshot.getRelations(),
                 receiversSnapshot.getParentUserIds(),
                 receiversSnapshot.getStudentDepartmentIds(),
                 receiversSnapshot.getParentStudentUserIds());
@@ -500,7 +500,7 @@ public class NotificationPublishHandler {
     public TaskResult sendDailySchoolNotice() {
         log.info("開始執行學校通知發送任務");
         // 獲取所有家長用戶 ID
-        List<String> allParentUserIds = departmentParentBindingService.getAllParentUserIds();
+        List<String> allParentUserIds = schoolFamilyContactService.getAllParentUserIds();
         if (allParentUserIds == null || allParentUserIds.isEmpty()) {
             log.warn("沒有家長用戶 ID，跳過發送");
             return TaskResult.success(0, 0, "無家長需發送");

@@ -1,6 +1,6 @@
 package com.sms.system.service.notification;
 
-import com.sms.system.entity.SysDepartmentParentBinding;
+import com.sms.system.entity.SysSchoolFamilyContact;
 import com.sms.system.entity.notification.Notification;
 import com.sms.system.entity.notification.NotificationReminderRecord;
 import com.sms.system.entity.notification.NotificationSendRecord;
@@ -23,7 +23,7 @@ public interface INotificationPublishRecordService {
     void savePublishRecords(Notification notification,
                             List<String> studentUserIds,
                             SendResult sendResult,
-                            List<SysDepartmentParentBinding> bindings,
+                            List<SysSchoolFamilyContact> relations,
                             List<String> parentUserIds,
                             Map<String, Long> studentDepartmentIds,
                             Map<String, String> parentStudentUserIds);

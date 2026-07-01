@@ -1,6 +1,6 @@
 package com.sms.system.service.impl.notification;
 
-import com.sms.system.entity.SysDepartmentParentBinding;
+import com.sms.system.entity.SysSchoolFamilyContact;
 import com.sms.system.entity.notification.Notification;
 import com.sms.system.entity.notification.NotificationReminderRecord;
 import com.sms.system.entity.notification.NotificationResendFailRecord;
@@ -87,7 +87,6 @@ public class NotificationPublishRecordServiceImpl implements INotificationPublis
      *
      * @param studentUserIds        直接作為接收目標的學生 userid 列表（當前業務多為空）
      * @param sendResult            企微發送結果，含成功/失敗家長 userid 集合
-     * @param bindings              企微家校選人產生的家長-學生-班級綁定（自定義家校為空）
      * @param parentUserIds         實際發送的家長 userid 列表
      * @param studentDepartmentIds  家長 userid → 自定義部門 ID（用於閱讀記錄 department_id）
      * @param parentStudentUserIds  家長 userid → 學生 userid（僅自定義家校使用；
@@ -98,17 +97,17 @@ public class NotificationPublishRecordServiceImpl implements INotificationPublis
     public void savePublishRecords(Notification notification,
                                    List<String> studentUserIds,
                                    SendResult sendResult,
-                                   List<SysDepartmentParentBinding> bindings,
+                                   List<SysSchoolFamilyContact> relations,
                                    List<String> parentUserIds,
                                    Map<String, Long> studentDepartmentIds,
                                    Map<String, String> parentStudentUserIds) {
         NotificationSendRecord sendRecord = buildSendRecord(
-                notification, studentUserIds, parentUserIds, sendResult, bindings);
+                notification, studentUserIds, parentUserIds, sendResult, relations);
         notificationSendRecordService.save(sendRecord);
 
         List<NotificationUserReadRecord> readRecords = buildUserReadRecords(
                 sendRecord.getSendRecordId(), parentUserIds, studentUserIds,
-                sendResult.getSuccessUserIds(), bindings, studentDepartmentIds, parentStudentUserIds);
+                sendResult.getSuccessUserIds(), relations, studentDepartmentIds, parentStudentUserIds);
         notificationUserReadRecordService.batchSave(readRecords);
     }
 
@@ -171,20 +170,19 @@ public class NotificationPublishRecordServiceImpl implements INotificationPublis
                                                      List<String> studentUserIds,
                                                      List<String> parentUserIds,
                                                      SendResult sendResult,
-                                                     List<SysDepartmentParentBinding> bindings) {
+                                                     List<SysSchoolFamilyContact> relations) {
         NotificationSendRecord sendRecord = new NotificationSendRecord();
         sendRecord.setNotificationId(notification.getNotificationId());
         sendRecord.setSenderId(notification.getSenderId());
         sendRecord.setSenderName(notification.getSenderName());
         sendRecord.setSendTime(LocalDateTime.now());
 
-        // 從 bindings 反推：學生 userid → 關聯家長 userid 集合
-        int initialCapacity = bindings == null ? 16 : (int) (bindings.size() / 0.75f) + 1;
+        int initialCapacity = relations == null ? 16 : (int) (relations.size() / 0.75f) + 1;
         Map<String, Set<String>> studentParentMap = new HashMap<>(initialCapacity);
-        if (bindings != null) {
-            for (SysDepartmentParentBinding binding : bindings) {
-                String studentId = binding.getStudentUserId();
-                String parentId = binding.getParentUserId();
+        if (relations != null) {
+            for (SysSchoolFamilyContact relation : relations) {
+                String studentId = relation.getStudentUserId();
+                String parentId = relation.getParentUserId();
                 if (studentId != null && parentId != null) {
                     studentParentMap.computeIfAbsent(studentId, k -> new HashSet<>()).add(parentId);
                 }
@@ -262,7 +260,6 @@ public class NotificationPublishRecordServiceImpl implements INotificationPublis
      * 構建本次發送對應的全部閱讀記錄。
      * <p>按順序執行三個 append 方法，後續路徑會跳過已寫入的家長，避免重複：</p>
      * <ol>
-     *   <li>{@link #appendBindingReadRecords} — 企微家校（binding 自帶 student_user_id + department_id）</li>
      *   <li>{@link #appendParentReadRecords} — 未被 binding 覆蓋的家長（自定義家校走此路徑）</li>
      *   <li>{@link #appendStudentReadRecords} — 直接發給學生的記錄</li>
      * </ol>
@@ -271,7 +268,7 @@ public class NotificationPublishRecordServiceImpl implements INotificationPublis
                                                                   List<String> parentUserIds,
                                                                   List<String> studentUserIds,
                                                                   Set<String> successUserIds,
-                                                                  List<SysDepartmentParentBinding> bindings,
+                                                                  List<SysSchoolFamilyContact> relations,
                                                                   Map<String, Long> studentDepartmentIds,
                                                                   Map<String, String> parentStudentUserIds) {
         List<NotificationUserReadRecord> readRecords = new ArrayList<>();
@@ -279,7 +276,7 @@ public class NotificationPublishRecordServiceImpl implements INotificationPublis
         // 已寫入閱讀記錄的家長 userid，供後續路徑去重
         Set<String> recordedParentIds = new HashSet<>();
 
-        appendBindingReadRecords(readRecords, sendRecordId, bindings, successUserIds, now, recordedParentIds);
+        appendRelationReadRecords(readRecords, sendRecordId, relations, successUserIds, now, recordedParentIds);
         appendParentReadRecords(readRecords, sendRecordId, parentUserIds, successUserIds,
                 studentDepartmentIds, parentStudentUserIds, now, recordedParentIds);
         appendStudentReadRecords(readRecords, sendRecordId, studentUserIds, successUserIds,
@@ -295,27 +292,27 @@ public class NotificationPublishRecordServiceImpl implements INotificationPublis
      * user_type 固定為家長（2）。
      * </p>
      */
-    private void appendBindingReadRecords(List<NotificationUserReadRecord> readRecords, Long sendRecordId,
-                                          List<SysDepartmentParentBinding> bindings, Set<String> successUserIds,
+    private void appendRelationReadRecords(List<NotificationUserReadRecord> readRecords, Long sendRecordId,
+                                          List<SysSchoolFamilyContact> relations, Set<String> successUserIds,
                                           LocalDateTime now, Set<String> recordedParentIds) {
-        if (bindings == null) {
+        if (relations == null) {
             return;
         }
-        Set<String> processedBindingKeys = new HashSet<>();
-        for (SysDepartmentParentBinding binding : bindings) {
-            String parentUserId = binding.getParentUserId();
+        Set<String> processedRelationKeys = new HashSet<>();
+        for (SysSchoolFamilyContact relation : relations) {
+            String parentUserId = relation.getParentUserId();
             if (parentUserId == null) {
                 continue;
             }
-            String key = parentUserId + "_" + binding.getStudentUserId() + "_"
-                    + (binding.getDepartmentId() != null ? binding.getDepartmentId() : "null");
-            if (!processedBindingKeys.add(key)) {
-                log.debug("buildUserReadRecords: 跳過重複的綁定關係: parentUserId={}, studentUserId={}, departmentId={}",
-                        parentUserId, binding.getStudentUserId(), binding.getDepartmentId());
+            String key = parentUserId + "_" + relation.getStudentUserId() + "_"
+                    + (relation.getDepartmentId() != null ? relation.getDepartmentId() : "null");
+            if (!processedRelationKeys.add(key)) {
+                log.debug("buildUserReadRecords: 跳過重複的關係: parentUserId={}, studentUserId={}, departmentId={}",
+                        parentUserId, relation.getStudentUserId(), relation.getDepartmentId());
                 continue;
             }
             readRecords.add(createReadRecord(sendRecordId, parentUserId, USER_TYPE_PARENT,
-                    binding.getStudentUserId(), binding.getDepartmentId(),
+                    relation.getStudentUserId(), relation.getDepartmentId(),
                     successUserIds.contains(parentUserId), now));
             recordedParentIds.add(parentUserId);
         }
@@ -375,7 +372,7 @@ public class NotificationPublishRecordServiceImpl implements INotificationPublis
      *
      * @param userId         接收人企微 userid（家長或學生）
      * @param userType       1=學生，2=家長
-     * @param studentUserId  關聯學生 userid（供統計頁 JOIN sys_parent_student_relation；家長記錄必填）
+     * @param studentUserId  關聯學生 userid（供統計頁 JOIN sys_school_family_contact；家長記錄必填）
      * @param departmentId   關聯部門/班級 ID
      * @param sendSuccess    本次企微發送是否成功
      */

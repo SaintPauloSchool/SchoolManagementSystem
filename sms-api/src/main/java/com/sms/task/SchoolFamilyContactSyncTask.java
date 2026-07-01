@@ -10,14 +10,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * 家長學生關係同步定時任務
- * 每天凌晨 0 點 30 分執行，所有業務邏輯由 WecomSyncHandler.syncParentStudentRelations() 處理
- */
 @Component
-public class ParentStudentRelationSyncTask {
+public class SchoolFamilyContactSyncTask {
 
-    private static final Logger log = LoggerFactory.getLogger(ParentStudentRelationSyncTask.class);
+    private static final Logger log = LoggerFactory.getLogger(SchoolFamilyContactSyncTask.class);
 
     @Autowired
     private WecomSyncHandler wecomSyncHandler;
@@ -27,24 +23,21 @@ public class ParentStudentRelationSyncTask {
 
     private static final AtomicBoolean isExecuting = new AtomicBoolean(false);
 
-    /**
-     * 每天凌晨 0 點 30 分執行
-     */
     //@Scheduled(cron = "0 30 0 * * ?")
     public void executeTask() {
         if (!isExecuting.compareAndSet(false, true)) {
-            log.info("家長學生關係同步任務已在執行中，跳過本次執行");
+            log.info("家校通訊錄同步任務已在執行中，跳過本次執行");
             return;
         }
         try {
             taskLogHelper.executeAndLog(
-                "家長學生關係同步",
+                "家校通訊錄同步",
                 "wecomSyncHandler",
-                "syncParentStudentRelations",
-                () -> wecomSyncHandler.syncParentStudentRelations()
+                "syncSchoolFamilyContacts",
+                () -> wecomSyncHandler.syncSchoolFamilyContacts()
             );
         } catch (Exception e) {
-            log.error("同步家長學生關係數據失敗", e);
+            log.error("同步家校通訊錄數據失敗", e);
         } finally {
             isExecuting.set(false);
         }

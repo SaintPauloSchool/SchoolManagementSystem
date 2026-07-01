@@ -172,7 +172,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <update id="updateWecomStudentName">
-        UPDATE sys_parent_student_relation
+        UPDATE sys_school_family_contact
         SET student_name = #{sysWecomStudentNameUpdateDTO.studentName}, update_time = SYSDATE()
         WHERE student_user_id = #{sysWecomStudentNameUpdateDTO.studentUserId}
     </update>
@@ -191,7 +191,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectStudentDeptBindings" resultMap="SysStudentMatchDeptItemVOResult">
         select student_user_id, department_id
-        from sys_department_parent_binding
+        from sys_school_family_contact
         where student_user_id in
         <foreach item="studentUserId" collection="sysStudentMatchDeptQueryDTO.studentUserIds" open="(" separator="," close=")">
             #{studentUserId}

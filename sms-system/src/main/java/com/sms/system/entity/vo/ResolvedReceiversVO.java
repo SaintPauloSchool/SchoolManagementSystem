@@ -1,6 +1,6 @@
 package com.sms.system.entity.vo;
 
-import com.sms.system.entity.SysDepartmentParentBinding;
+import com.sms.system.entity.SysSchoolFamilyContact;
 
 import java.util.List;
 import java.util.Map;
@@ -20,8 +20,8 @@ public class ResolvedReceiversVO {
     /** 發送給部門的部門 ID 列表 */
     private List<String> partyIds;
 
-    /** 從發送對象中解析出來的精確家長與學生綁定關係 */
-    private List<SysDepartmentParentBinding> bindings;
+    /** 從發送對象中解析出的精確家長與學生關係（含部門） */
+    private List<SysSchoolFamilyContact> relations;
 
     /** 學生 userId 對應的部門 ID */
     private Map<String, Long> studentDepartmentIds;
@@ -33,19 +33,19 @@ public class ResolvedReceiversVO {
     }
 
     public ResolvedReceiversVO(List<String> parentUserIds, List<String> studentUserIds, List<String> partyIds,
-                               List<SysDepartmentParentBinding> bindings, Map<String, Long> studentDepartmentIds,
+                               List<SysSchoolFamilyContact> relations, Map<String, Long> studentDepartmentIds,
                                Map<String, String> parentStudentUserIds) {
         this.parentUserIds = parentUserIds;
         this.studentUserIds = studentUserIds;
         this.partyIds = partyIds;
-        this.bindings = bindings;
+        this.relations = relations;
         this.studentDepartmentIds = studentDepartmentIds;
         this.parentStudentUserIds = parentStudentUserIds;
     }
 
     public ResolvedReceiversVO(List<String> parentUserIds, List<String> studentUserIds, List<String> partyIds,
-                               List<SysDepartmentParentBinding> bindings, Map<String, Long> studentDepartmentIds) {
-        this(parentUserIds, studentUserIds, partyIds, bindings, studentDepartmentIds, Collections.emptyMap());
+                               List<SysSchoolFamilyContact> relations, Map<String, Long> studentDepartmentIds) {
+        this(parentUserIds, studentUserIds, partyIds, relations, studentDepartmentIds, Collections.emptyMap());
     }
 
     public List<String> getParentUserIds() {
@@ -72,12 +72,12 @@ public class ResolvedReceiversVO {
         this.partyIds = partyIds;
     }
 
-    public List<SysDepartmentParentBinding> getBindings() {
-        return bindings;
+    public List<SysSchoolFamilyContact> getRelations() {
+        return relations;
     }
 
-    public void setBindings(List<SysDepartmentParentBinding> bindings) {
-        this.bindings = bindings;
+    public void setRelations(List<SysSchoolFamilyContact> relations) {
+        this.relations = relations;
     }
 
     public Map<String, Long> getStudentDepartmentIds() {

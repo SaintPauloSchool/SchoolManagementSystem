@@ -4,12 +4,12 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.system.entity.SysDepartment;
-import com.sms.system.entity.SysParentStudentRelation;
+import com.sms.system.entity.SysSchoolFamilyContact;
 import com.sms.system.entity.SysSchoolDepartment;
 import com.sms.system.entity.notification.*;
 import com.sms.system.entity.vo.QuestionItemVO;
 import com.sms.system.mapper.SysDepartmentMapper;
-import com.sms.system.mapper.SysParentStudentRelationMapper;
+import com.sms.system.mapper.SysSchoolFamilyContactMapper;
 import com.sms.system.mapper.SysSchoolDepartmentMapper;
 import com.sms.system.mapper.notification.*;
 import com.sms.system.service.notification.INotificationExportService;
@@ -59,7 +59,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
     private NotificationUserReadRecordMapper notificationUserReadRecordMapper;
 
     @Autowired
-    private SysParentStudentRelationMapper parentStudentRelationMapper;
+    private SysSchoolFamilyContactMapper schoolFamilyContactMapper;
 
     @Autowired
     private SysDepartmentMapper departmentMapper;
@@ -527,11 +527,11 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 .collect(Collectors.toList());
 
         // 使用組合鍵 "parentUserId_studentUserId" 存儲關係
-        Map<String, SysParentStudentRelation> relationMap = new HashMap<>();
+        Map<String, SysSchoolFamilyContact> relationMap = new HashMap<>();
         if (!allParentUserIds.isEmpty() && !allStudentUserIds.isEmpty()) {
-            List<SysParentStudentRelation> relations = parentStudentRelationMapper.selectByParentAndStudentUserIds(
+            List<SysSchoolFamilyContact> relations = schoolFamilyContactMapper.selectByParentAndStudentUserIds(
                     allParentUserIds, allStudentUserIds);
-            for (SysParentStudentRelation relation : relations) {
+            for (SysSchoolFamilyContact relation : relations) {
                 String key = relation.getParentUserId() + "_" + relation.getStudentUserId();
                 relationMap.put(key, relation);
             }
@@ -581,7 +581,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
 
             // 使用組合鍵 "parentUserId_studentUserId" 查詢
             String relationKey = record.getUserId() + "_" + record.getStudentUserId();
-            SysParentStudentRelation relation = relationMap.get(relationKey);
+            SysSchoolFamilyContact relation = relationMap.get(relationKey);
             String studentName = "";
             String relationDesc = "";
             if (relation != null) {

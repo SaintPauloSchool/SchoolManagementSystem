@@ -5,12 +5,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.sms.common.utils.bean.BeanCopyUtils;
 import com.sms.system.entity.SysDepartment;
 import com.sms.system.entity.SysDepartmentAdmin;
-import com.sms.system.entity.SysDepartmentParentBinding;
-import com.sms.system.entity.SysParentStudentRelation;
+import com.sms.system.entity.SysSchoolFamilyContact;
 import com.sms.system.mapper.SysDepartmentAdminMapper;
 import com.sms.system.mapper.SysDepartmentMapper;
-import com.sms.system.mapper.SysDepartmentParentBindingMapper;
-import com.sms.system.mapper.SysParentStudentRelationMapper;
+import com.sms.system.mapper.SysSchoolFamilyContactMapper;
 import com.sms.system.entity.vo.SysDepartmentVO;
 import com.sms.system.service.ISysDepartmentAdminService;
 import com.sms.system.service.ISysDepartmentService;
@@ -51,10 +49,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     private ISysDepartmentAdminService departmentAdminService;
 
     @Autowired
-    private SysDepartmentParentBindingMapper parentBindingMapper;
-
-    @Autowired
-    private SysParentStudentRelationMapper parentStudentRelationMapper;
+    private SysSchoolFamilyContactMapper schoolFamilyContactMapper;
 
     @Autowired
     private SysDepartmentAdminMapper departmentAdminMapper;
@@ -154,7 +149,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
         
         // 2. 爲 type=1 的班級添加家長學生關係數據
         if (!tree.isEmpty()) {
-            loadParentStudentRelations(tree);
+            loadSchoolFamilyContacts(tree);
         }
         
         return tree;
@@ -302,7 +297,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
      *
      * @param nodes 部門節點列表
      */
-    private void loadParentStudentRelations(List<SysDepartment> nodes) {
+    private void loadSchoolFamilyContacts(List<SysDepartment> nodes) {
         if (nodes == null || nodes.isEmpty()) {
             return;
         }
@@ -326,79 +321,31 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
             return;
         }
         
-        // 3. 批量查詢所有班級的家長綁定關係
-        List<SysDepartmentParentBinding> allBindings = parentBindingMapper.selectByDepartmentIds(classIds);
-        
-        if (allBindings == null || allBindings.isEmpty()) {
-            return;
-        }
-        
-        // 4. 按班級 ID 分組
-        Map<Long, List<SysDepartmentParentBinding>> bindingsByClassId = allBindings.stream()
-                .filter(Objects::nonNull)
-                .filter(binding -> binding.getDepartmentId() != null)
-                .collect(Collectors.groupingBy(SysDepartmentParentBinding::getDepartmentId));
-        
-        // 5. 獲取所有不重複的家長用戶 ID
-        List<String> allParentUserIds = allBindings.stream()
-                .filter(Objects::nonNull)
-                .map(SysDepartmentParentBinding::getParentUserId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-        
-        if (allParentUserIds.isEmpty()) {
-            return;
-        }
-        
-        // 6. 批量查詢所有家長學生關係
-        List<SysParentStudentRelation> allRelations = parentStudentRelationMapper.selectByParentUserIds(allParentUserIds);
-        
+        // 3. 批量查詢所有班級的家長學生關係
+        List<SysSchoolFamilyContact> allRelations = schoolFamilyContactMapper.selectByDepartmentIds(classIds);
+
         if (allRelations == null || allRelations.isEmpty()) {
             return;
         }
-        
-        // 7. 按家長用戶 ID 分組，便於快速查找
-        Map<String, List<SysParentStudentRelation>> relationsByParentId = allRelations.stream()
+
+        Map<Long, List<SysSchoolFamilyContact>> relationsByClassId = allRelations.stream()
                 .filter(Objects::nonNull)
-                .filter(relation -> relation.getParentUserId() != null)
-                .collect(Collectors.groupingBy(SysParentStudentRelation::getParentUserId));
-        
-        // 8. 爲每個班級節點設置家長數據
+                .filter(relation -> relation.getDepartmentId() != null)
+                .collect(Collectors.groupingBy(SysSchoolFamilyContact::getDepartmentId));
+
         for (SysDepartment classNode : classNodes) {
-            List<SysDepartmentParentBinding> bindings = bindingsByClassId.get(classNode.getId());
-            if (bindings == null || bindings.isEmpty()) {
+            List<SysSchoolFamilyContact> relations = relationsByClassId.get(classNode.getId());
+            if (relations == null || relations.isEmpty()) {
                 continue;
             }
-            
-            // 初始化 children 列表
+
             if (classNode.getChildren() == null) {
                 classNode.setChildren(new ArrayList<>());
             }
-            
-            // 爲該班級的每個家長添加節點
-            for (SysDepartmentParentBinding binding : bindings) {
-                String parentUserId = binding.getParentUserId();
-                if (parentUserId == null) {
-                    continue;
-                }
-                
-                List<SysParentStudentRelation> relations = relationsByParentId.get(parentUserId);
-                if (relations == null || relations.isEmpty()) {
-                    continue;
-                }
-                
-                // 只添加屬於該班級的學生關係記錄
-                // 當一個家長綁定了多個班級的學生時，需要根據 binding.studentUserId 過濾，
-                // 避免在某班顯示該家長與其他班學生的關係
-                String bindingStudentUserId = binding.getStudentUserId();
-                for (SysParentStudentRelation relation : relations) {
-                    if (bindingStudentUserId != null && !bindingStudentUserId.equals(relation.getStudentUserId())) {
-                        continue;
-                    }
-                    SysDepartment node = convertToDepartmentNode(relation, classNode.getId());
-                    classNode.getChildren().add(node);
-                }
+
+            for (SysSchoolFamilyContact relation : relations) {
+                SysDepartment node = convertToDepartmentNode(relation, classNode.getId());
+                classNode.getChildren().add(node);
             }
             sortChildrenByName(classNode);
         }
@@ -451,7 +398,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
      * @param classDepartmentId 所屬家長班級部門 ID
      * @return 部門節點
      */
-    private SysDepartment convertToDepartmentNode(SysParentStudentRelation relation, Long classDepartmentId) {
+    private SysDepartment convertToDepartmentNode(SysSchoolFamilyContact relation, Long classDepartmentId) {
         // 創建部門節點
         SysDepartment node = new SysDepartment();
         node.setId(relation.getId());

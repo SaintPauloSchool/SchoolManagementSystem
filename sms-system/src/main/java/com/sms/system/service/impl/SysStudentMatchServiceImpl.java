@@ -8,7 +8,7 @@ import com.sms.common.core.page.TableSupport;
 import com.sms.system.entity.SysStudentMatch;
 import com.sms.system.entity.dto.*;
 import com.sms.system.entity.vo.*;
-import com.sms.system.mapper.SysParentStudentRelationMapper;
+import com.sms.system.mapper.SysSchoolFamilyContactMapper;
 import com.sms.system.mapper.SysStudentMatchMapper;
 import com.sms.system.service.ISysStudentMatchService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
     private SysStudentMatchMapper sysStudentMatchMapper;
 
     @Autowired
-    private SysParentStudentRelationMapper parentStudentRelationMapper;
+    private SysSchoolFamilyContactMapper schoolFamilyContactMapper;
 
     @Autowired
     private StudentProfilesProperties studentProfilesProperties;
@@ -107,12 +107,12 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
         prepareWecomNameQuery(query);
 
         Set<String> matchedUserIds = new HashSet<>(sysStudentMatchMapper.selectMatchedWecomUserIds());
-        List<SysParentStudentRelationVO> filtered = dedupeWecomStudents(parentStudentRelationMapper.selectParentStudentRelationWithClassList())
+        List<SysSchoolFamilyContactVO> filtered = dedupeWecomStudents(schoolFamilyContactMapper.selectSchoolFamilyContactWithClassList())
                 .stream()
                 .filter(student -> StringUtils.hasText(student.getStudentUserId()))
                 .filter(student -> !matchedUserIds.contains(student.getStudentUserId()))
                 .filter(student -> matchesWecomCandidate(student, query))
-                .sorted(Comparator.comparing(SysParentStudentRelationVO::getStudentName, Comparator.nullsLast(String::compareToIgnoreCase)))
+                .sorted(Comparator.comparing(SysSchoolFamilyContactVO::getStudentName, Comparator.nullsLast(String::compareToIgnoreCase)))
                 .collect(Collectors.toList());
 
         PageDomain pageDomain = TableSupport.buildPageRequest();
@@ -120,7 +120,7 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
         int pageSize = pageDomain.getPageSize() != null ? pageDomain.getPageSize() : 10;
         int total = filtered.size();
         int fromIndex = Math.max((pageNum - 1) * pageSize, 0);
-        List<SysParentStudentRelationVO> pageRows = fromIndex >= total
+        List<SysSchoolFamilyContactVO> pageRows = fromIndex >= total
                 ? Collections.emptyList()
                 : filtered.subList(fromIndex, Math.min(fromIndex + pageSize, total));
 
@@ -132,12 +132,12 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
     }
 
     /** 按企微 studentUserId 去重，保留首次出現的記錄 */
-    private List<SysParentStudentRelationVO> dedupeWecomStudents(List<SysParentStudentRelationVO> source) {
+    private List<SysSchoolFamilyContactVO> dedupeWecomStudents(List<SysSchoolFamilyContactVO> source) {
         if (source == null || source.isEmpty()) {
             return Collections.emptyList();
         }
-        Map<String, SysParentStudentRelationVO> studentMap = new LinkedHashMap<>();
-        for (SysParentStudentRelationVO item : source) {
+        Map<String, SysSchoolFamilyContactVO> studentMap = new LinkedHashMap<>();
+        for (SysSchoolFamilyContactVO item : source) {
             if (!StringUtils.hasText(item.getStudentUserId())) {
                 continue;
             }
@@ -147,7 +147,7 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
     }
 
     /** 判斷企微候選學生是否符合姓名、手機、班級篩選條件 */
-    private boolean matchesWecomCandidate(SysParentStudentRelationVO student, SysWecomStudentDTO wecomStudentDTO) {
+    private boolean matchesWecomCandidate(SysSchoolFamilyContactVO student, SysWecomStudentDTO wecomStudentDTO) {
         if (!matchesWecomName(student, wecomStudentDTO)) {
             return false;
         }
@@ -169,7 +169,7 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
     }
 
     /** 判斷企微學生姓名是否匹配查詢關鍵字（支持簡繁體） */
-    private boolean matchesWecomName(SysParentStudentRelationVO student, SysWecomStudentDTO wecomStudentDTO) {
+    private boolean matchesWecomName(SysSchoolFamilyContactVO student, SysWecomStudentDTO wecomStudentDTO) {
         if (!StringUtils.hasText(wecomStudentDTO.getQueryNameTraditional())) {
             return true;
         }
@@ -214,9 +214,9 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
         }
 
         String studentUserIdWecom = studentMatchBindDTO.getStudentUserIdWecom().trim();
-        List<SysParentStudentRelationVO> wecomStudents = parentStudentRelationMapper.selectParentStudentRelationWithClassList();
+        List<SysSchoolFamilyContactVO> wecomStudents = schoolFamilyContactMapper.selectSchoolFamilyContactWithClassList();
         String studentNameWecom = studentUserIdWecom;
-        for (SysParentStudentRelationVO wecomStudent : wecomStudents) {
+        for (SysSchoolFamilyContactVO wecomStudent : wecomStudents) {
             if (studentUserIdWecom.equals(wecomStudent.getStudentUserId())) {
                 studentNameWecom = wecomStudent.getStudentName();
                 break;
@@ -324,7 +324,7 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
             return SysStudentMatchOperationResultVO.success("暫無未匹配的學生數據，無需執行數據同步匹配！");
         }
 
-        List<SysParentStudentRelationVO> wecomStudents = parentStudentRelationMapper.selectParentStudentRelationWithClassList();
+        List<SysSchoolFamilyContactVO> wecomStudents = schoolFamilyContactMapper.selectSchoolFamilyContactWithClassList();
         if (wecomStudents == null || wecomStudents.isEmpty()) {
             return SysStudentMatchOperationResultVO.success("本地關係表中未找到企微學生數據，無法執行自動比對！");
         }
@@ -343,7 +343,7 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
             }
             String idNameTraditional = ZhConverterUtil.toTraditional(idName);
 
-            Optional<SysParentStudentRelationVO> matchedOpt = Optional.empty();
+            Optional<SysSchoolFamilyContactVO> matchedOpt = Optional.empty();
             String dsejIdClean = getDsejStudentIdClean(matchVO);
             if (!dsejIdClean.isEmpty()) {
                 matchedOpt = wecomStudents.stream().filter(wecomStudent -> {
@@ -368,7 +368,7 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
             }
 
             if (matchedOpt.isPresent()) {
-                SysParentStudentRelationVO wecomStudent = matchedOpt.get();
+                SysSchoolFamilyContactVO wecomStudent = matchedOpt.get();
                 SysStudentMatch studentMatch = new SysStudentMatch();
                 studentMatch.setStudentProfileNum(profileNum);
                 studentMatch.setStudentUserIdWecom(wecomStudent.getStudentUserId());

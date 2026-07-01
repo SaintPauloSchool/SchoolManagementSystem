@@ -1,6 +1,6 @@
 package com.sms.system.entity.notification.receiver;
 
-import com.sms.system.entity.SysDepartmentParentBinding;
+import com.sms.system.entity.SysSchoolFamilyContact;
 import com.sms.system.entity.vo.ResolvedReceiversVO;
 
 import java.util.Collections;
@@ -15,20 +15,20 @@ public final class ResolvedReceiversSnapshot {
     private final List<String> parentUserIds;
     private final List<String> studentUserIds;
     private final List<String> partyIds;
-    private final List<SysDepartmentParentBinding> bindings;
+    private final List<SysSchoolFamilyContact> relations;
     private final Map<String, Long> studentDepartmentIds;
     private final Map<String, String> parentStudentUserIds;
 
     private ResolvedReceiversSnapshot(List<String> parentUserIds,
                                         List<String> studentUserIds,
                                         List<String> partyIds,
-                                        List<SysDepartmentParentBinding> bindings,
+                                        List<SysSchoolFamilyContact> relations,
                                         Map<String, Long> studentDepartmentIds,
                                         Map<String, String> parentStudentUserIds) {
         this.parentUserIds = parentUserIds;
         this.studentUserIds = studentUserIds;
         this.partyIds = partyIds;
-        this.bindings = bindings;
+        this.relations = relations;
         this.studentDepartmentIds = studentDepartmentIds;
         this.parentStudentUserIds = parentStudentUserIds;
     }
@@ -41,7 +41,7 @@ public final class ResolvedReceiversSnapshot {
                 nullSafeList(resolved.getParentUserIds()),
                 nullSafeList(resolved.getStudentUserIds()),
                 nullSafeList(resolved.getPartyIds()),
-                nullSafeList(resolved.getBindings()),
+                nullSafeList(resolved.getRelations()),
                 resolved.getStudentDepartmentIds() != null
                         ? resolved.getStudentDepartmentIds() : Collections.emptyMap(),
                 resolved.getParentStudentUserIds() != null
@@ -80,8 +80,8 @@ public final class ResolvedReceiversSnapshot {
         return partyIds;
     }
 
-    public List<SysDepartmentParentBinding> getBindings() {
-        return bindings;
+    public List<SysSchoolFamilyContact> getRelations() {
+        return relations;
     }
 
     public Map<String, Long> getStudentDepartmentIds() {

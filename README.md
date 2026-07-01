@@ -78,8 +78,7 @@
 - `user_notification_read` - 用戶閱讀狀態表
 - `notification_answer` - 回答表
 - `sys_department` - 部門表
-- `sys_parent_student_relation` - 家長學生關係表
-- `sys_department_parent_binding` - 部門家長綁定表
+- `sys_school_family_contact` - 家校通訊錄聯絡人表 (School Family Contact)
 - `wecom_school_department` - 企業微信學校部門表
 - `wecom_school_department_member` - 企業微信部門成員表
 - `sys_school_department` - 系統學校部門表
@@ -239,7 +238,7 @@ SchoolManagementSystem/
 │       ├── entity/                         # 實體類
 │       │   ├── notification/              # 通知相關實體
 │       │   ├── SysDepartment.java
-│       │   ├── SysParentStudentRelation.java
+│       │   ├── SysSchoolFamilyContact.java
 │       │   ├── WecomSchoolDepartment.java
 │       │   └── SysSchoolDepartment.java
 │       ├── mapper/                        # Mapper 接口
