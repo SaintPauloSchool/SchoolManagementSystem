@@ -115,6 +115,14 @@
               <el-icon class="nav-icon"><User /></el-icon>
               <span class="nav-text">學生信息管理</span>
             </li>
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-5' }"
+              @click="handleMenuSelect('3-5')"
+            >
+              <el-icon class="nav-icon"><Tools /></el-icon>
+              <span class="nav-text">基本設置</span>
+            </li>
           </ul>
         </div>
         
@@ -212,6 +220,10 @@
           <StudentMatch
             v-else-if="activeMenu === '3-4'"
           />
+
+          <BasicSettings
+            v-else-if="activeMenu === '3-5'"
+          />
         </transition>
       </div>
     </main>
@@ -223,7 +235,7 @@
 
 <script>
 import { ElNotification } from 'element-plus'
-import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning, Calendar } from '@element-plus/icons-vue'
+import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning, Calendar, Tools } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
 import SchoolDepartment from './SchoolDepartment.vue'
@@ -232,6 +244,7 @@ import FailedNotificationList from './FailedNotificationList.vue'
 import CalendarEventList from './CalendarEventList.vue'
 import SysTaskLogList from './SysTaskLogList.vue'
 import StudentMatch from './StudentMatch.vue'
+import BasicSettings from './BasicSettings.vue'
 import request from '@/utils/request'
 
 export default {
@@ -244,7 +257,8 @@ export default {
     FailedNotificationList,
     CalendarEventList,
     SysTaskLogList,
-    StudentMatch
+    StudentMatch,
+    BasicSettings
   },
   data() {
     return {
@@ -357,7 +371,7 @@ export default {
         if (res.code === 200 || res.code === 0) {
           this.isAdmin = res.data === true
           // 若非管理員但目前在系統管理頁，則跳回首頁
-          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2' || this.activeMenu === '3-3' || this.activeMenu === '3-4')) {
+          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2' || this.activeMenu === '3-3' || this.activeMenu === '3-4' || this.activeMenu === '3-5')) {
             this.handleMenuSelect('1-1')
           }
         }

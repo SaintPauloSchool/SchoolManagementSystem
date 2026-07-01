@@ -44,6 +44,11 @@ public interface ISysDepartmentService {
     List<Long> getClassDepartmentId();
 
     /**
+     * 獲取學段樹（僅到 type=3）
+     */
+    List<SysDepartmentVO> getSegmentTree();
+
+    /**
      * 同步企業微信家校通訊錄部門與管理員數據
      * @param departmentJson 微信接口返回的部門 JSON 數據
      */

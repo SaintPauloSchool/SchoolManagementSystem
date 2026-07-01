@@ -236,28 +236,20 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     /**
      * 構建樹形結構並排序（合併了構建和排序邏輯）
      * 從指定類型開始，逐級向下構建，並對每層進行排序
-     *
-     * @param currentLevel 當前層級的部門列表
-     * @param departmentsByType 按類型分組的部門 Map
-     * @param currentType 當前層級類型
      */
-    private void buildAndSortTree(List<SysDepartment> currentLevel, 
+    private void buildAndSortTree(List<SysDepartment> currentLevel,
                                    Map<Integer, List<SysDepartment>> departmentsByType,
                                    Integer currentType) {
         if (currentLevel == null || currentLevel.isEmpty()) {
             return;
         }
 
-        // 對當前層級排序（按名稱）
         currentLevel.sort(Comparator.comparing(
                 dept -> dept.getName() != null ? dept.getName() : "",
                 NAME_COLLATOR
         ));
 
-        // 下一個層級（type 遞減：5→4→3→2→1）
         Integer nextType = currentType - 1;
-        
-        // 如果沒有下一個層級或者下一個層級沒有數據，返回
         if (nextType < TYPE_CLASS || !departmentsByType.containsKey(nextType)) {
             return;
         }
@@ -266,24 +258,21 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
         if (nextLevelDepartments == null) {
             return;
         }
-        
-        // 爲當前層級的每個部門設置子部門
+
         for (SysDepartment currentDept : currentLevel) {
             if (currentDept == null || currentDept.getId() == null) {
                 continue;
             }
-            
+
             long currentId = currentDept.getId();
             List<SysDepartment> children = nextLevelDepartments.stream()
                     .filter(Objects::nonNull)
-                    .filter(dept -> dept.getParentId() != null) 
+                    .filter(dept -> dept.getParentId() != null)
                     .filter(dept -> dept.getParentId().longValue() == currentId)
                     .collect(Collectors.toList());
 
             if (!children.isEmpty()) {
                 currentDept.setChildren(children);
-                
-                // 遞歸處理下一層級
                 if (nextType > TYPE_CLASS) {
                     buildAndSortTree(children, departmentsByType, nextType);
                 }
@@ -494,4 +483,103 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
             }
         }
     }
+
+    /**
+     * 獲取學段樹，供基本設置頁選擇家校通訊錄使用的學段（type=3）。
+     */
+    @Override
+    public List<SysDepartmentVO> getSegmentTree() {
+        return BeanCopyUtils.copyTree(getSegmentTreeInternal(), SysDepartmentVO.class,
+                SysDepartment::getChildren, SysDepartmentVO::setChildren);
+    }
+
+    /**
+     * 從扁平部門列表構建學段樹。
+     * <p>層級：type 5(學校) → type 4(校區) → type 3(學段)，不含年級/班級。
+     * 順序沿用 {@link SysDepartmentMapper#selectAll()} 的 SQL 排序結果。</p>
+     */
+    private List<SysDepartment> getSegmentTreeInternal() {
+        // 獲取部門數據
+        List<SysDepartment> allDepartments = departmentMapper.selectAll();
+        if (allDepartments == null || allDepartments.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 優先以學校為根；若無學校節點則退而從校區開始
+        List<SysDepartment> rootNodes = collectDepartmentsByType(allDepartments, TYPE_SCHOOL);
+        if (rootNodes.isEmpty()) {
+            rootNodes = collectDepartmentsByType(allDepartments, TYPE_CAMPUS);
+            if (!rootNodes.isEmpty()) {
+                buildSegmentTree(rootNodes, allDepartments, TYPE_CAMPUS);
+                return rootNodes;
+            }
+            return Collections.emptyList();
+        }
+
+        buildSegmentTree(rootNodes, allDepartments, TYPE_SCHOOL);
+        return rootNodes;
+    }
+
+    /**
+     * 按 SQL 查詢順序收集指定類型的部門（保持 selectAll 返回的相對順序）。
+     */
+    private List<SysDepartment> collectDepartmentsByType(List<SysDepartment> allDepartments, int type) {
+        List<SysDepartment> result = new ArrayList<>();
+        for (SysDepartment dept : allDepartments) {
+            if (dept != null && dept.getType() != null && dept.getType() == type) {
+                result.add(dept);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 遞歸掛載子節點，構建學段樹。
+     * <p>根據 parent_id 關聯父子，僅展開到 type=3；type=2/1 不會掛載。
+     * 子節點順序與 allDepartments 中的出現順序一致。</p>
+     *
+     * @param currentLevel   當前層節點列表
+     * @param allDepartments 全部部門（已按 SQL 排序）
+     * @param currentType    當前層類型（5=學校，4=校區）
+     */
+    private void buildSegmentTree(List<SysDepartment> currentLevel,
+                                  List<SysDepartment> allDepartments,
+                                  Integer currentType) {
+        if (currentLevel == null || currentLevel.isEmpty()) {
+            return;
+        }
+
+        // 下一層類型：學校(5)→校區(4)→學段(3)
+        Integer nextType = currentType - 1;
+        if (nextType < TYPE_SCHOOL_SEGMENT) {
+            return;
+        }
+
+        for (SysDepartment currentDept : currentLevel) {
+            if (currentDept == null || currentDept.getId() == null) {
+                continue;
+            }
+
+            long currentId = currentDept.getId();
+            // 遍歷全表，按 SQL 順序收集直接子節點
+            List<SysDepartment> children = new ArrayList<>();
+            for (SysDepartment dept : allDepartments) {
+                if (dept == null || dept.getType() == null || !dept.getType().equals(nextType)) {
+                    continue;
+                }
+                if (dept.getParentId() != null && dept.getParentId().longValue() == currentId) {
+                    children.add(dept);
+                }
+            }
+
+            if (!children.isEmpty()) {
+                currentDept.setChildren(children);
+                // 校區下還有學段需繼續展開；學段已是葉節點
+                if (nextType > TYPE_SCHOOL_SEGMENT) {
+                    buildSegmentTree(children, allDepartments, nextType);
+                }
+            }
+        }
+    }
+
 }

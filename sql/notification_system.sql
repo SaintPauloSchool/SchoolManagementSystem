@@ -476,6 +476,25 @@ CREATE TABLE IF NOT EXISTS sys_student_match (
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生數據匹配表';
 -- ----------------------------
+-- 系統公用配置表
+-- ----------------------------
+DROP TABLE IF EXISTS sys_config;
+CREATE TABLE sys_config (
+    id              BIGINT          NOT NULL AUTO_INCREMENT    COMMENT '主鍵 ID',
+    config_key      VARCHAR(100)    NOT NULL                   COMMENT '配置鍵（唯一）',
+    config_name     VARCHAR(200)    NOT NULL                   COMMENT '配置名稱',
+    config_value    TEXT                                       COMMENT '配置值',
+    config_group    VARCHAR(50)     DEFAULT 'default'          COMMENT '配置分組',
+    value_type      VARCHAR(20)     DEFAULT 'string'           COMMENT '值類型：string/number/boolean/json',
+    remark          VARCHAR(500)    DEFAULT NULL               COMMENT '備註',
+    create_by       VARCHAR(64)     DEFAULT ''                 COMMENT '創建者',
+    create_time     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    update_by       VARCHAR(64)     DEFAULT ''                 COMMENT '更新者',
+    update_time     DATETIME        DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_config_key (config_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系統公用配置表';
+-- ----------------------------
 -- 學生考勤記錄表
 -- ----------------------------
 DROP TABLE IF EXISTS student_attendance_record;
