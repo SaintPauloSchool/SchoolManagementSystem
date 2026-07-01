@@ -66,13 +66,6 @@
             <el-option label="手動匹配成功" value="2" />
           </el-select>
         </el-form-item>
-        <el-form-item label="同步狀態">
-          <el-select v-model="searchForm.syncStatus" placeholder="請選擇" style="width: 130px;" clearable>
-            <el-option label="未同步" value="0" />
-            <el-option label="同步成功" value="1" />
-            <el-option label="同步失敗" value="2" />
-          </el-select>
-        </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
           <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
@@ -106,33 +99,10 @@
         <el-table-column prop="classNum" label="班號" min-width="80" align="center" />
         <el-table-column prop="idName" label="姓名" min-width="110" align="center" />
         <el-table-column prop="dsejStudentId" label="學生證編號" min-width="130" align="center" show-overflow-tooltip />
-        <el-table-column prop="studentNameWecom" label="企微姓名" min-width="110" align="center">
-          <template #default="scope">
-            <span v-if="scope.row.studentNameWecom">{{ scope.row.studentNameWecom }}</span>
-            <span v-else class="text-placeholder">-</span>
-          </template>
-        </el-table-column>
         <el-table-column prop="matchStatus" label="匹配狀態" min-width="120" align="center">
           <template #default="scope">
             <el-tag :type="getMatchStatusTag(scope.row.matchStatus)">
               {{ getMatchStatusText(scope.row.matchStatus) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="syncStatus" label="同步狀態" min-width="120" align="center">
-          <template #default="scope">
-            <el-tooltip 
-              v-if="scope.row.syncStatus === '2' && scope.row.errorMsg" 
-              :content="scope.row.errorMsg" 
-              placement="top"
-            >
-              <el-tag :type="getSyncStatusTag(scope.row.syncStatus)" class="clickable-tag">
-                {{ getSyncStatusText(scope.row.syncStatus) }}
-                <el-icon><info-filled /></el-icon>
-              </el-tag>
-            </el-tooltip>
-            <el-tag v-else :type="getSyncStatusTag(scope.row.syncStatus)">
-              {{ getSyncStatusText(scope.row.syncStatus) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -148,7 +118,7 @@
                 詳情
               </el-button>
               <el-button 
-                v-if="scope.row.syncStatus !== '1'"
+                v-if="!scope.row.userId || scope.row.matchStatus === '0'"
                 size="small" 
                 type="primary" 
                 :icon="Edit"
@@ -156,7 +126,6 @@
               >
                 手動匹配
               </el-button>
-              <span v-if="scope.row.syncStatus === '1'" class="text-success">已同步</span>
             </div>
           </template>
         </el-table-column>
@@ -297,6 +266,7 @@
             empty-text="未找到未匹配的企微學生，可嘗試清空班級或姓名條件後重新搜索"
           >
             <el-table-column prop="studentName" label="企微學生姓名" min-width="150" align="center" show-overflow-tooltip />
+            <el-table-column prop="parentUserId" label="家長 user_id" min-width="160" align="center" show-overflow-tooltip />
             <el-table-column prop="classCodeWecom" label="企微班級代碼" min-width="120" align="center">
               <template #default="scope">
                 <span v-if="scope.row.classCodeWecom">{{ scope.row.classCodeWecom }}</span>
@@ -310,7 +280,7 @@
                 <el-button
                   size="small"
                   type="success"
-                  :loading="bindingId === scope.row.studentUserId"
+                  :loading="bindingId === scope.row.parentUserId"
                   @click="submitBind(scope.row)"
                 >
                   確認綁定
@@ -342,7 +312,7 @@
         <div class="detail-photo-name">{{ detailForm.idName || '-' }}</div>
       </div>
       <el-descriptions :column="2" border size="default">
-        <el-descriptions-item label="學生個人編號">{{ detailForm.studentProfileNumber || detailForm.studentProfileNum || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="學生個人編號">{{ detailForm.studentProfileNumber || '-' }}</el-descriptions-item>
         <el-descriptions-item label="在校">{{ formatInSchool(detailForm.inSchool) }}</el-descriptions-item>
         <el-descriptions-item label="學年">{{ detailForm.schoolYear || '-' }}</el-descriptions-item>
         <el-descriptions-item label="帳號">{{ detailForm.adid || '-' }}</el-descriptions-item>
@@ -350,19 +320,11 @@
         <el-descriptions-item label="班號">{{ detailForm.classNum || '-' }}</el-descriptions-item>
         <el-descriptions-item label="姓名">{{ detailForm.idName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="學生證編號">{{ detailForm.dsejStudentId || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="企微姓名">{{ detailForm.studentNameWecom || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="家長 user_id">{{ detailForm.userId || '-' }}</el-descriptions-item>
         <el-descriptions-item label="匹配狀態">
           <el-tag :type="getMatchStatusTag(detailForm.matchStatus)">
             {{ getMatchStatusText(detailForm.matchStatus) }}
           </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="同步狀態">
-          <el-tag :type="getSyncStatusTag(detailForm.syncStatus)">
-            {{ getSyncStatusText(detailForm.syncStatus) }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="同步錯誤原因" :span="2" v-if="detailForm.syncStatus === '2'">
-          <span style="color: #ef4444;">{{ detailForm.errorMsg || '未知錯誤' }}</span>
         </el-descriptions-item>
       </el-descriptions>
       <template #footer>
@@ -399,8 +361,7 @@ export default {
       searchForm: {
         idNameQuery: '',
         classSectionQuery: '',
-        matchStatus: '',
-        syncStatus: ''
+        matchStatus: ''
       },
       multipleSelection: [],
 
@@ -447,7 +408,7 @@ export default {
       return this.multipleSelection.filter(row => row.id)
     },
     syncableSelection() {
-      return this.multipleSelection.filter(row => row.id && row.studentUserIdWecom && row.syncStatus !== '1')
+      return this.multipleSelection.filter(row => row.id && row.userId)
     }
   },
   methods: {
@@ -457,9 +418,6 @@ export default {
       }
       if (row.studentProfileNumber !== null && row.studentProfileNumber !== undefined && row.studentProfileNumber !== '') {
         return String(row.studentProfileNumber)
-      }
-      if (row.studentProfileNum !== null && row.studentProfileNum !== undefined && row.studentProfileNum !== '') {
-        return String(row.studentProfileNum)
       }
       return ''
     },
@@ -476,8 +434,7 @@ export default {
             pageSize: this.pagination.pageSize,
             idNameQuery: this.searchForm.idNameQuery,
             classSectionQuery: this.searchForm.classSectionQuery,
-            matchStatus: this.searchForm.matchStatus,
-            syncStatus: this.searchForm.syncStatus
+            matchStatus: this.searchForm.matchStatus
           }
         })
         if (response.code === 200 || response.code === 0) {
@@ -498,8 +455,7 @@ export default {
       this.searchForm = {
         idNameQuery: '',
         classSectionQuery: '',
-        matchStatus: '',
-        syncStatus: ''
+        matchStatus: ''
       }
       this.handleSearch()
     },
@@ -507,8 +463,7 @@ export default {
       this.multipleSelection = val
     },
     canSelectRow(row) {
-      // 只有已匹配 (自動或手動) 且未同步成功的行才能被勾選進行同步
-      return row.id && row.studentUserIdWecom && row.syncStatus !== '1'
+      return row.id && row.userId
     },
     
     // 狀態展示標籤樣式
@@ -518,14 +473,6 @@ export default {
     },
     getMatchStatusText(status) {
       const map = { '0': '未匹配', '1': '自動匹配成功', '2': '手動匹配成功' }
-      return map[status] || '未知'
-    },
-    getSyncStatusTag(status) {
-      const map = { '0': 'info', '1': 'success', '2': 'danger' }
-      return map[status] || 'info'
-    },
-    getSyncStatusText(status) {
-      const map = { '0': '未同步', '1': '同步成功', '2': '同步失敗' }
       return map[status] || '未知'
     },
 
@@ -678,15 +625,15 @@ export default {
       }
     },
     async submitBind(wecomStudent) {
-      this.bindingId = wecomStudent.studentUserId
+      this.bindingId = wecomStudent.parentUserId
       try {
         const res = await request({
           url: '/system/student/match/bind',
           method: 'post',
           data: {
             matchId: this.currentMatchingRow.id || null,
-            studentProfileNum: this.currentMatchingRow.studentProfileNumber || this.currentMatchingRow.studentProfileNum,
-            studentUserIdWecom: wecomStudent.studentUserId
+            studentId: this.currentMatchingRow.studentId,
+            userId: wecomStudent.parentUserId
           }
         })
         if (res.code === 200 || res.code === 0) {

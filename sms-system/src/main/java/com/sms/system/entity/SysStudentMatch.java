@@ -11,14 +11,12 @@ public class SysStudentMatch implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long id;
-    private String studentProfileNum;
-    private String studentUserIdWecom;
-    private String studentNameWecom;
+    /** 學生 ID（關聯 student_profiles.student_info.student_id） */
+    private String studentId;
+    /** 家校通訊錄家長 user_id（parent_user_id） */
+    private String userId;
     /** 匹配狀態 (0: 未匹配, 1: 自動匹配, 2: 手動匹配) */
     private String matchStatus;
-    /** 企微同步狀態 (0: 未同步, 1: 成功, 2: 失敗) */
-    private String syncStatus;
-    private String errorMsg;
     private Date createTime;
     private Date updateTime;
 
@@ -30,28 +28,20 @@ public class SysStudentMatch implements Serializable {
         this.id = id;
     }
 
-    public String getStudentProfileNum() {
-        return studentProfileNum;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setStudentProfileNum(String studentProfileNum) {
-        this.studentProfileNum = studentProfileNum;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
-    public String getStudentUserIdWecom() {
-        return studentUserIdWecom;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setStudentUserIdWecom(String studentUserIdWecom) {
-        this.studentUserIdWecom = studentUserIdWecom;
-    }
-
-    public String getStudentNameWecom() {
-        return studentNameWecom;
-    }
-
-    public void setStudentNameWecom(String studentNameWecom) {
-        this.studentNameWecom = studentNameWecom;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getMatchStatus() {
@@ -60,22 +50,6 @@ public class SysStudentMatch implements Serializable {
 
     public void setMatchStatus(String matchStatus) {
         this.matchStatus = matchStatus;
-    }
-
-    public String getSyncStatus() {
-        return syncStatus;
-    }
-
-    public void setSyncStatus(String syncStatus) {
-        this.syncStatus = syncStatus;
-    }
-
-    public String getErrorMsg() {
-        return errorMsg;
-    }
-
-    public void setErrorMsg(String errorMsg) {
-        this.errorMsg = errorMsg;
     }
 
     public Date getCreateTime() {

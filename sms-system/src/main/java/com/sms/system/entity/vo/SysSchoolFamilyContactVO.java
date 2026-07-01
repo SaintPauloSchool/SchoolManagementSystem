@@ -8,11 +8,15 @@ import java.io.Serializable;
 public class SysSchoolFamilyContactVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private String parentUserId;
     private String studentUserId;
     private String studentName;
     private String mobile;
     private String relationDesc;
     private String classCodeWecom;
+
+    public String getParentUserId() { return parentUserId; }
+    public void setParentUserId(String parentUserId) { this.parentUserId = parentUserId; }
 
     public String getStudentUserId() { return studentUserId; }
     public void setStudentUserId(String studentUserId) { this.studentUserId = studentUserId; }

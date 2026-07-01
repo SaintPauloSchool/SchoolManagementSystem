@@ -9,8 +9,8 @@ public class SysStudentMatchBindDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long matchId;
-    private String studentProfileNum;
-    private String studentUserIdWecom;
+    private String studentId;
+    private String userId;
 
     public Long getMatchId() {
         return matchId;
@@ -20,19 +20,19 @@ public class SysStudentMatchBindDTO implements Serializable {
         this.matchId = matchId;
     }
 
-    public String getStudentProfileNum() {
-        return studentProfileNum;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setStudentProfileNum(String studentProfileNum) {
-        this.studentProfileNum = studentProfileNum;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
-    public String getStudentUserIdWecom() {
-        return studentUserIdWecom;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setStudentUserIdWecom(String studentUserIdWecom) {
-        this.studentUserIdWecom = studentUserIdWecom;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }

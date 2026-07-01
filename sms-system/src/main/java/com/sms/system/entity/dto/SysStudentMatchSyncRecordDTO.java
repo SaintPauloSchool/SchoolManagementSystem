@@ -3,16 +3,17 @@ package com.sms.system.entity.dto;
 import java.io.Serializable;
 
 /**
- * 單筆同步結果寫入請求
+ * 單筆同步結果寫入請求（同步成功時更新家校通訊錄企微姓名）
  */
 public class SysStudentMatchSyncRecordDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long matchId;
-    private String studentUserIdWecom;
+    private String userId;
+    private String studentUserId;
     private String syncTargetName;
+    /** 1 成功，2 失敗 */
     private String syncStatus;
-    private String errorMsg;
     private String operName;
 
     public Long getMatchId() {
@@ -23,12 +24,20 @@ public class SysStudentMatchSyncRecordDTO implements Serializable {
         this.matchId = matchId;
     }
 
-    public String getStudentUserIdWecom() {
-        return studentUserIdWecom;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setStudentUserIdWecom(String studentUserIdWecom) {
-        this.studentUserIdWecom = studentUserIdWecom;
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getStudentUserId() {
+        return studentUserId;
+    }
+
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
     }
 
     public String getSyncTargetName() {
@@ -45,14 +54,6 @@ public class SysStudentMatchSyncRecordDTO implements Serializable {
 
     public void setSyncStatus(String syncStatus) {
         this.syncStatus = syncStatus;
-    }
-
-    public String getErrorMsg() {
-        return errorMsg;
-    }
-
-    public void setErrorMsg(String errorMsg) {
-        this.errorMsg = errorMsg;
     }
 
     public String getOperName() {

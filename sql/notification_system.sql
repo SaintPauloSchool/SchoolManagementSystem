@@ -467,18 +467,14 @@ CREATE TABLE `sys_task_log` (
 -- ----------------------------
 DROP TABLE IF EXISTS sys_student_match;
 CREATE TABLE IF NOT EXISTS sys_student_match (
-                                                 id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主鍵 ID',
-                                                 student_profile_num VARCHAR(50) NOT NULL COMMENT '學生個人編號（關聯 student_profiles.student_info）',
-    student_user_id_wecom VARCHAR(64) DEFAULT NULL COMMENT '匹配到的企微學生 UserID',
-    student_name_wecom VARCHAR(100) DEFAULT NULL COMMENT '匹配到的企微原始學生姓名',
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主鍵 ID',
+    student_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '學生 ID（關聯 student_profiles.student_info.student_id）',
+    user_id VARCHAR(64) DEFAULT NULL COMMENT '家校通訊錄家長 user_id（parent_user_id）',
     match_status CHAR(1) NOT NULL DEFAULT '0' COMMENT '匹配狀態 (0: 未匹配, 1: 自動匹配成功, 2: 手動匹配成功)',
-    sync_status CHAR(1) NOT NULL DEFAULT '0' COMMENT '企微同步狀態 (0: 未同步, 1: 同步成功, 2: 同步失敗)',
-    error_msg VARCHAR(500) DEFAULT NULL COMMENT '同步失敗的具體原因',
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
     update_time DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_student_profile_num (student_profile_num)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生數據匹配表';
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生數據匹配表';
 -- ----------------------------
 -- 學生考勤記錄表
 -- ----------------------------

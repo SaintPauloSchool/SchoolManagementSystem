@@ -4,7 +4,6 @@ import com.sms.system.entity.SysStudentMatch;
 import com.sms.system.entity.dto.SysStudentMatchDeleteDTO;
 import com.sms.system.entity.dto.SysStudentMatchDeptQueryDTO;
 import com.sms.system.entity.dto.SysStudentMatchDTO;
-import com.sms.system.entity.dto.SysStudentMatchProfileNumDTO;
 import com.sms.system.entity.dto.SysWecomStudentNameUpdateDTO;
 import com.sms.system.entity.vo.SysStudentMatchDeptItemVO;
 import com.sms.system.entity.vo.SysStudentMatchVO;
@@ -48,21 +47,19 @@ public interface SysStudentMatchMapper {
     int countMatchById(@Param("matchId") Long matchId);
 
     /**
-     * 根據學生檔案編號查詢匹配記錄 ID
+     * 根據學生 ID 查詢匹配記錄 ID
      *
-     * @param sysStudentMatchProfileNumDTO 檔案編號查詢條件
      * @return 匹配記錄 ID，不存在則為 null
      */
-    Long selectMatchIdByProfileNum(
-            @Param("sysStudentMatchProfileNumDTO") SysStudentMatchProfileNumDTO sysStudentMatchProfileNumDTO);
+    Long selectMatchIdByStudentId(@Param("studentId") String studentId);
 
     /**
-     * 保存已匹配記錄：不存在則新增，已存在則按 student_profile_num 更新
+     * 保存已匹配記錄：不存在則新增，已存在則按 student_id 更新
      */
     int saveOrUpdateStudentMatch(SysStudentMatch studentMatch);
 
     /**
-     * 按主鍵更新匹配記錄（用於同步結果等局部更新）
+     * 按主鍵更新匹配記錄
      */
     int updateStudentMatch(SysStudentMatch studentMatch);
 
@@ -78,9 +75,9 @@ public interface SysStudentMatchMapper {
             @Param("studentProfilesDatabase") String studentProfilesDatabase);
 
     /**
-     * 查詢已匹配的企微學生 UserID
+     * 查詢已匹配的家長 user_id（parent_user_id）
      */
-    List<String> selectMatchedWecomUserIds();
+    List<String> selectMatchedParentUserIds();
 
     /**
      * 更新企微學生姓名

@@ -20,14 +20,13 @@ import java.util.*;
 
 /**
  * 學生姓名同步處理器
- * <p>負責調用企業微信 batch_update_student API，將學籍姓名同步至企微，並協調 Service 更新本地匹配記錄。</p>
+ * <p>匹配表 user_id 存家長 parent_user_id；同步更名時解析對應的企微 student_user_id 後調用 batch_update_student。</p>
  */
 @Component
 public class StudentMatchHandler {
 
     private static final Logger log = LoggerFactory.getLogger(StudentMatchHandler.class);
 
-    /** 企微 batch_update_student 單次請求學生數量上限 */
     private static final int BATCH_LIMIT = 100;
 
     @Autowired
@@ -36,13 +35,6 @@ public class StudentMatchHandler {
     @Autowired
     private ISysStudentMatchService sysStudentMatchService;
 
-    /**
-     * 批量同步學生姓名至企業微信
-     * <p>流程：篩選待同步記錄 → 查詢部門映射 → 分批調用企微 API → 逐條寫入同步結果</p>
-     *
-     * @param studentMatchSyncDTO 含 matchIds、operName
-     * @return 成功/失敗筆數及彙總訊息
-     */
     public SysStudentMatchSyncResultVO syncStudentNames(SysStudentMatchSyncDTO studentMatchSyncDTO) {
         SysStudentMatchSyncResultVO resultVO = new SysStudentMatchSyncResultVO();
 
@@ -59,24 +51,24 @@ public class StudentMatchHandler {
         List<SysStudentMatchVO> pendingList = sysStudentMatchService.getPendingListForSync(studentMatchSyncDTO);
 
         List<SysStudentMatchVO> validList = new ArrayList<>();
+        Map<Long, String> studentUserIdMap = new HashMap<>();
         for (SysStudentMatchVO matchVO : pendingList) {
-            if (matchVO.getStudentUserIdWecom() != null && !matchVO.getStudentUserIdWecom().trim().isEmpty()) {
+            String studentUserId = sysStudentMatchService.resolveStudentUserIdForMatch(matchVO);
+            if (StringUtils.hasText(studentUserId)) {
                 validList.add(matchVO);
+                studentUserIdMap.put(matchVO.getId(), studentUserId);
             }
         }
 
         if (validList.isEmpty()) {
             resultVO.setSuccessCount(0);
             resultVO.setFailCount(0);
-            resultVO.setMessage("選中的記錄中沒有符合同步條件的項目（必須已匹配且未同步成功）！");
+            resultVO.setMessage("選中的記錄中沒有符合同步條件的項目（必須已匹配且能解析出企微學生 user_id）！");
             return resultVO;
         }
 
         SysStudentMatchDeptQueryDTO sysStudentMatchDeptQueryDTO = new SysStudentMatchDeptQueryDTO();
-        List<String> studentUserIds = new ArrayList<>();
-        for (SysStudentMatchVO matchVO : validList) {
-            studentUserIds.add(matchVO.getStudentUserIdWecom());
-        }
+        List<String> studentUserIds = new ArrayList<>(studentUserIdMap.values());
         sysStudentMatchDeptQueryDTO.setStudentUserIds(studentUserIds);
         SysStudentMatchDeptMapVO deptMapVO = sysStudentMatchService.getStudentDeptMap(sysStudentMatchDeptQueryDTO);
         Map<String, List<Long>> studentDeptsMap = deptMapVO.getStudentDeptMap();
@@ -90,12 +82,13 @@ public class StudentMatchHandler {
 
             JSONArray studentsArray = new JSONArray();
             for (SysStudentMatchVO matchItem : subList) {
+                String studentUserId = studentUserIdMap.get(matchItem.getId());
                 JSONObject stuObj = new JSONObject();
-                stuObj.put("student_userid", matchItem.getStudentUserIdWecom());
+                stuObj.put("student_userid", studentUserId);
                 stuObj.put("name", getSyncTargetName(matchItem));
 
                 JSONArray depts = new JSONArray();
-                List<Long> deptIds = studentDeptsMap.get(matchItem.getStudentUserIdWecom());
+                List<Long> deptIds = studentDeptsMap.get(studentUserId);
                 if (deptIds != null) {
                     depts.addAll(deptIds);
                 }
@@ -118,13 +111,14 @@ public class StudentMatchHandler {
                     }
 
                     for (SysStudentMatchVO matchItem : subList) {
-                        JSONObject resultObj = statusMap.get(matchItem.getStudentUserIdWecom());
+                        String studentUserId = studentUserIdMap.get(matchItem.getId());
+                        JSONObject resultObj = statusMap.get(studentUserId);
                         if (resultObj != null && resultObj.getInteger("errcode") == 0) {
-                            saveSyncResult(matchItem, "1", null, operName);
+                            saveSyncResult(matchItem, studentUserId, "1", operName);
                             totalSuccess++;
                         } else {
                             String errmsg = resultObj != null ? resultObj.getString("errmsg") : "企業微信同步無回傳狀態";
-                            saveSyncResult(matchItem, "2", errmsg, operName);
+                            saveSyncResult(matchItem, studentUserId, "2", operName);
                             totalFail++;
                             errorSummary.append("<br/>")
                                     .append(getSyncTargetName(matchItem))
@@ -135,7 +129,7 @@ public class StudentMatchHandler {
                 } else {
                     String globalErrMsg = wecomResponse != null ? wecomResponse.getString("errmsg") : "企業微信接口未回傳有效內容";
                     for (SysStudentMatchVO matchItem : subList) {
-                        saveSyncResult(matchItem, "2", globalErrMsg, operName);
+                        saveSyncResult(matchItem, studentUserIdMap.get(matchItem.getId()), "2", operName);
                         totalFail++;
                     }
                     errorSummary.append("<br/>分批 API 調用失敗：").append(globalErrMsg);
@@ -143,7 +137,7 @@ public class StudentMatchHandler {
             } catch (Exception ex) {
                 log.error("調用企微更名接口拋出異常", ex);
                 for (SysStudentMatchVO matchItem : subList) {
-                    saveSyncResult(matchItem, "2", "系統錯誤：" + ex.getMessage(), operName);
+                    saveSyncResult(matchItem, studentUserIdMap.get(matchItem.getId()), "2", operName);
                     totalFail++;
                 }
                 errorSummary.append("<br/>分批執行異常：").append(ex.getMessage());
@@ -160,26 +154,17 @@ public class StudentMatchHandler {
         return resultVO;
     }
 
-    /**
-     * 將單條同步結果委託 Service 持久化
-     *
-     * @param matchVO    匹配記錄
-     * @param syncStatus 同步狀態（1 成功，2 失敗）
-     * @param errorMsg   失敗時的錯誤訊息
-     * @param operName   操作人
-     */
-    private void saveSyncResult(SysStudentMatchVO matchVO, String syncStatus, String errorMsg, String operName) {
+    private void saveSyncResult(SysStudentMatchVO matchVO, String studentUserId, String syncStatus, String operName) {
         SysStudentMatchSyncRecordDTO syncRecordDTO = new SysStudentMatchSyncRecordDTO();
         syncRecordDTO.setMatchId(matchVO.getId());
-        syncRecordDTO.setStudentUserIdWecom(matchVO.getStudentUserIdWecom());
+        syncRecordDTO.setUserId(matchVO.getUserId());
+        syncRecordDTO.setStudentUserId(studentUserId);
         syncRecordDTO.setSyncTargetName(getSyncTargetName(matchVO));
         syncRecordDTO.setSyncStatus(syncStatus);
-        syncRecordDTO.setErrorMsg(errorMsg);
         syncRecordDTO.setOperName(operName);
         sysStudentMatchService.saveOneSyncResult(syncRecordDTO);
     }
 
-    /** 取得同步至企微的目標姓名（學籍 idName） */
     private String getSyncTargetName(SysStudentMatchVO matchVO) {
         if (matchVO == null || !StringUtils.hasText(matchVO.getIdName())) {
             return "";

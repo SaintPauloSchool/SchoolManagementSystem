@@ -52,6 +52,11 @@ public interface ISysStudentMatchService {
     SysStudentMatchDeptMapVO getStudentDeptMap(SysStudentMatchDeptQueryDTO sysStudentMatchDeptQueryDTO);
 
     /**
+     * 根據匹配記錄解析企微學生 user_id
+     */
+    String resolveStudentUserIdForMatch(SysStudentMatchVO matchVO);
+
+    /**
      * 保存單條同步結果
      */
     void saveOneSyncResult(SysStudentMatchSyncRecordDTO syncRecordDTO);

@@ -17,6 +17,7 @@
     </resultMap>
 
     <resultMap type="com.sms.system.entity.vo.SysSchoolFamilyContactVO" id="SysSchoolFamilyContactVOResult">
+        <result property="parentUserId" column="parent_user_id"/>
         <result property="studentUserId" column="student_user_id"/>
         <result property="studentName" column="student_name"/>
         <result property="mobile" column="mobile"/>
@@ -139,6 +140,7 @@
 
     <select id="selectSchoolFamilyContactWithClassList" resultMap="SysSchoolFamilyContactVOResult">
         SELECT DISTINCT
+            r.parent_user_id AS parent_user_id,
             r.student_user_id AS student_user_id,
             r.student_name AS student_name,
             r.mobile AS mobile,

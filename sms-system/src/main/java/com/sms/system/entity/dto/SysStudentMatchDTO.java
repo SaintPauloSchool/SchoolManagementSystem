@@ -11,14 +11,11 @@ public class SysStudentMatchDTO implements Serializable {
     /** 姓名（對應 student_info.id_name / 企微姓名） */
     private String idNameQuery;
 
-    /** 班級（對應 student_info.class_section） */
+    /** 班級（對應 student_info.class_section) */
     private String classSectionQuery;
 
     /** 匹配狀態 */
     private String matchStatus;
-
-    /** 同步狀態 */
-    private String syncStatus;
 
     public String getIdNameQuery() {
         return idNameQuery;
@@ -42,13 +39,5 @@ public class SysStudentMatchDTO implements Serializable {
 
     public void setMatchStatus(String matchStatus) {
         this.matchStatus = matchStatus;
-    }
-
-    public String getSyncStatus() {
-        return syncStatus;
-    }
-
-    public void setSyncStatus(String syncStatus) {
-        this.syncStatus = syncStatus;
     }
 }
