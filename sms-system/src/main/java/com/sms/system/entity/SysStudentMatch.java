@@ -15,8 +15,7 @@ public class SysStudentMatch implements Serializable {
     private String studentId;
     /** 家校通訊錄家長 user_id（parent_user_id） */
     private String userId;
-    /** 匹配狀態 (0: 未匹配, 1: 自動匹配, 2: 手動匹配) */
-    private String matchStatus;
+    private Integer matchStatus;
     private Date createTime;
     private Date updateTime;
 
@@ -44,11 +43,11 @@ public class SysStudentMatch implements Serializable {
         this.userId = userId;
     }
 
-    public String getMatchStatus() {
+    public Integer getMatchStatus() {
         return matchStatus;
     }
 
-    public void setMatchStatus(String matchStatus) {
+    public void setMatchStatus(Integer matchStatus) {
         this.matchStatus = matchStatus;
     }
 

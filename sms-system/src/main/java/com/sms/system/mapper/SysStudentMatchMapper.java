@@ -33,8 +33,17 @@ public interface SysStudentMatchMapper {
             @Param("studentProfilesDatabase") String studentProfilesDatabase);
 
     /**
-     * 保存已匹配記錄：不存在則新增，已存在則按 (student_id, user_id) 更新
+     * 批量保存已匹配記錄
      */
-    int saveOrUpdateStudentMatch(SysStudentMatch studentMatch);
+    int batchSaveOrUpdateStudentMatch(@Param("matches") List<SysStudentMatch> matches);
+
+    SysStudentMatch selectStudentMatchById(@Param("id") Long id);
+
+    int countStudentMatchByStudentAndUserExceptId(
+            @Param("studentId") String studentId,
+            @Param("userId") String userId,
+            @Param("excludeId") Long excludeId);
+
+    int updateStudentMatchUserId(SysStudentMatch studentMatch);
 
 }

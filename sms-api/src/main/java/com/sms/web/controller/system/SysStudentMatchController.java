@@ -5,9 +5,10 @@ import com.sms.web.controller.base.AdminBaseController;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.core.page.TableDataInfo;
 import com.sms.common.enums.BusinessType;
-import com.sms.system.entity.dto.SysStudentMatchBindDTO;
+import com.sms.system.entity.dto.SysStudentMatchBatchBindDTO;
 import com.sms.system.entity.dto.SysStudentMatchDTO;
 import com.sms.system.entity.dto.SysStudentMatchSyncDataDTO;
+import com.sms.system.entity.dto.SysStudentMatchUpdateDTO;
 import com.sms.system.entity.dto.SysWecomStudentDTO;
 import com.sms.system.entity.vo.SysSchoolFamilyContactVO;
 import com.sms.system.entity.vo.SysStudentMatchOperationResultVO;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -93,14 +95,23 @@ public class SysStudentMatchController extends AdminBaseController {
     }
 
     @Log(title = "手動綁定學生匹配", businessType = BusinessType.UPDATE)
-    @PostMapping("/bind")
-    public AjaxResult bind(@RequestBody SysStudentMatchBindDTO studentMatchBindDTO) {
+    @PostMapping("/bindBatch")
+    public AjaxResult bindBatch(@RequestBody SysStudentMatchBatchBindDTO batchBindDTO) {
         if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
-        return sysStudentMatchService.bindStudent(studentMatchBindDTO)
-                ? success("綁定成功")
-                : error("綁定失敗");
+        SysStudentMatchOperationResultVO resultVO = sysStudentMatchService.bindStudents(batchBindDTO);
+        return AjaxResult.from(resultVO.isSuccess(), resultVO.getMessage());
+    }
+
+    @Log(title = "更正學生匹配家長信息", businessType = BusinessType.UPDATE)
+    @PutMapping("/update")
+    public AjaxResult update(@RequestBody SysStudentMatchUpdateDTO updateDTO) {
+        if (isNotAdmin()) {
+            return AjaxResult.error("無權限訪問");
+        }
+        SysStudentMatchOperationResultVO resultVO = sysStudentMatchService.updateStudentMatch(updateDTO);
+        return AjaxResult.from(resultVO.isSuccess(), resultVO.getMessage());
     }
 
     @Log(title = "同步對照數據", businessType = BusinessType.UPDATE)

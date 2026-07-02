@@ -21,10 +21,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="dsejStudentId" column="dsej_student_id"/>
     </resultMap>
 
+    <resultMap type="com.sms.system.entity.SysStudentMatch" id="SysStudentMatchResult">
+        <result property="id" column="id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="matchStatus" column="match_status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
     <select id="selectSysStudentMatchList" resultMap="SysStudentMatchVOResult">
         select m.id,
                m.user_id,
-               COALESCE(m.match_status, '0') as match_status,
+               m.match_status,
                m.create_time,
                m.update_time,
                si.student_id,
@@ -47,10 +56,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="studentMatchDTO != null and studentMatchDTO.classSectionQuery != null and studentMatchDTO.classSectionQuery != ''">
                 and si.class_section like concat('%', #{studentMatchDTO.classSectionQuery}, '%')
             </if>
-            <if test="studentMatchDTO != null and studentMatchDTO.matchStatus != null and studentMatchDTO.matchStatus == '0'">
+            <if test="studentMatchDTO != null and studentMatchDTO.matchStatus != null and studentMatchDTO.matchStatus == 0">
                 and m.id is null
             </if>
-            <if test="studentMatchDTO != null and studentMatchDTO.matchStatus != null and studentMatchDTO.matchStatus != '' and studentMatchDTO.matchStatus != '0'">
+            <if test="studentMatchDTO != null and studentMatchDTO.matchStatus != null and studentMatchDTO.matchStatus != 0">
                 and m.match_status = #{studentMatchDTO.matchStatus}
             </if>
         </where>
@@ -59,24 +68,24 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectUnmatchedList" resultMap="SysStudentMatchVOResult">
         select m.id,
-        m.user_id,
-        COALESCE(m.match_status, '0') as match_status,
-        m.create_time,
-        m.update_time,
-        si.student_id,
-        si.in_school,
-        si.school_year,
-        si.student_profile_number,
-        si.adid,
-        si.class_section,
-        si.class_num,
-        si.id_name,
-        si.dsej_student_id
+               m.user_id,
+               m.match_status,
+               m.create_time,
+               m.update_time,
+               si.student_id,
+               si.in_school,
+               si.school_year,
+               si.student_profile_number,
+               si.adid,
+               si.class_section,
+               si.class_num,
+               si.id_name,
+               si.dsej_student_id
         from ${studentProfilesDatabase}.student_info si
         left join sys_student_match m
-        on m.student_id collate utf8mb4_unicode_ci = si.student_id
+            on m.student_id collate utf8mb4_unicode_ci = si.student_id
         where si.student_id is not null
-        and m.id is null
+          and m.id is null
         <if test="studentMatchDTO != null and studentMatchDTO.idNameQuery != null and studentMatchDTO.idNameQuery != ''">
             and si.id_name like concat('%', #{studentMatchDTO.idNameQuery}, '%')
         </if>
@@ -94,23 +103,46 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by si.class_section, si.class_num, si.id_name, si.student_profile_number
     </select>
 
-    <insert id="saveOrUpdateStudentMatch" useGeneratedKeys="true" keyProperty="id">
+    <insert id="batchSaveOrUpdateStudentMatch">
         insert into sys_student_match (
             student_id,
             user_id,
             match_status,
             create_time
-        ) values (
-            #{studentId},
-            #{userId},
-            #{matchStatus},
-            sysdate()
-        )
+        ) values
+        <foreach collection="matches" item="item" separator=",">
+            (
+                #{item.studentId},
+                #{item.userId},
+                #{item.matchStatus},
+                sysdate()
+            )
+        </foreach>
         on duplicate key update
-            student_id = values(student_id),
-            user_id = values(user_id),
             match_status = values(match_status),
             update_time = sysdate()
     </insert>
+
+    <select id="selectStudentMatchById" resultMap="SysStudentMatchResult">
+        select id, student_id, user_id, match_status, create_time, update_time
+        from sys_student_match
+        where id = #{id}
+    </select>
+
+    <select id="countStudentMatchByStudentAndUserExceptId" resultType="int">
+        select count(1)
+        from sys_student_match
+        where student_id = #{studentId}
+          and user_id = #{userId}
+          and id != #{excludeId}
+    </select>
+
+    <update id="updateStudentMatchUserId">
+        update sys_student_match
+        set user_id = #{userId},
+            match_status = #{matchStatus},
+            update_time = sysdate()
+        where id = #{id}
+    </update>
 
 </mapper>

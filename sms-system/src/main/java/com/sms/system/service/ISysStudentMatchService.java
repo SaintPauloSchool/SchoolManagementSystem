@@ -1,8 +1,9 @@
 package com.sms.system.service;
 
-import com.sms.system.entity.dto.SysStudentMatchBindDTO;
+import com.sms.system.entity.dto.SysStudentMatchBatchBindDTO;
 import com.sms.system.entity.dto.SysStudentMatchDTO;
 import com.sms.system.entity.dto.SysStudentMatchSyncDataDTO;
+import com.sms.system.entity.dto.SysStudentMatchUpdateDTO;
 import com.sms.system.entity.dto.SysWecomStudentDTO;
 import com.sms.system.entity.vo.SysSchoolFamilyContactVO;
 import com.sms.system.entity.vo.SysStudentMatchOperationResultVO;
@@ -31,11 +32,14 @@ public interface ISysStudentMatchService {
     List<SysSchoolFamilyContactVO> selectWecomCandidates(SysWecomStudentDTO wecomStudentDTO);
 
     /**
-     * 手動綁定學生匹配
-     *
-     * @return 綁定是否成功
+     * 手動綁定學生匹配（支持單條或多條家長，底層批量寫庫）
      */
-    boolean bindStudent(SysStudentMatchBindDTO studentMatchBindDTO);
+    SysStudentMatchOperationResultVO bindStudents(SysStudentMatchBatchBindDTO batchBindDTO);
+
+    /**
+     * 更正已匹配記錄的家長 user_id（單條更新）
+     */
+    SysStudentMatchOperationResultVO updateStudentMatch(SysStudentMatchUpdateDTO updateDTO);
 
     /**
      * 同步對照數據（自動比對綁定）

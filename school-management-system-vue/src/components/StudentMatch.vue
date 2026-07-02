@@ -7,30 +7,17 @@
             <el-icon><User /></el-icon>
             學生信息管理
           </span>
-          <div class="header-actions">
-            <el-button type="info" :icon="Warning" @click="openUnmatchedDialog">
-              查看未匹配數據
-            </el-button>
-            <el-button 
-              type="warning" 
-              :icon="Refresh" 
-              @click="handleSyncData"
-              :loading="syncingData"
-            >
-              同步數據
-            </el-button>
-          </div>
         </div>
       </template>
 
       <!-- 搜索欄 -->
-      <el-form :model="searchForm" ref="queryForm" :inline="true" class="search-form">
+      <el-form :model="searchForm" ref="queryForm" :inline="true" class="search-form match-search-form">
         <el-form-item label="學生姓名">
           <el-input 
             v-model="searchForm.idNameQuery" 
-            placeholder="請輸入學生姓名"
+            placeholder="請輸入姓名"
             clearable 
-            style="width: 220px;"
+            class="search-input-name"
             @keyup.enter="handleSearch" 
           />
         </el-form-item>
@@ -39,20 +26,28 @@
             v-model="searchForm.classSectionQuery" 
             placeholder="例如 K1E" 
             clearable 
-            style="width: 120px;"
+            class="search-input-class"
             @keyup.enter="handleSearch" 
           />
         </el-form-item>
         <el-form-item label="匹配狀態">
-          <el-select v-model="searchForm.matchStatus" placeholder="請選擇" style="width: 130px;" clearable>
-            <el-option label="未匹配" value="0" />
-            <el-option label="自動匹配成功" value="1" />
-            <el-option label="手動匹配成功" value="2" />
+          <el-select v-model="searchForm.matchStatus" placeholder="請選擇" class="search-input-status" clearable>
+            <el-option label="未匹配" :value="0" />
+            <el-option label="自動匹配成功" :value="1" />
+            <el-option label="手動匹配成功" :value="2" />
           </el-select>
         </el-form-item>
-        <el-form-item>
+        <el-form-item class="search-actions">
           <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
           <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
+          <el-button
+            type="warning"
+            :icon="Refresh"
+            @click="handleSyncData"
+            :loading="syncingData"
+          >
+            同步數據
+          </el-button>
         </el-form-item>
       </el-form>
 
@@ -60,6 +55,7 @@
       <el-table 
         v-loading="loading" 
         :data="matchList" 
+        :row-key="getRowKey"
         style="width: 100%" 
         :row-style="{ height: '60px' }"
         empty-text="暫無學籍數據"
@@ -88,7 +84,13 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="300" align="center" fixed="right">
+        <el-table-column prop="userId" label="家長 user_id" min-width="140" align="center" show-overflow-tooltip>
+          <template #default="scope">
+            <span v-if="scope.row.userId">{{ scope.row.userId }}</span>
+            <span v-else class="text-placeholder">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="280" align="center" fixed="right">
           <template #default="scope">
             <div class="action-buttons">
               <el-button 
@@ -99,13 +101,23 @@
               >
                 詳情
               </el-button>
-              <el-button 
-                size="small" 
-                type="primary" 
+              <el-button
+                v-if="!scope.row.userId"
+                size="small"
+                type="primary"
                 :icon="Edit"
                 @click="handleManualMatch(scope.row)"
               >
-                {{ scope.row.userId ? '添加家長' : '手動匹配' }}
+                手動匹配
+              </el-button>
+              <el-button
+                v-if="isMatched(scope.row)"
+                size="small"
+                type="warning"
+                :icon="Edit"
+                @click="handleUpdateMatch(scope.row)"
+              >
+                更改信息
               </el-button>
             </div>
           </template>
@@ -127,79 +139,24 @@
       </div>
     </el-card>
 
-    <!-- 彈窗一：未匹配學籍數據列表 -->
-    <el-dialog draggable title="未匹配學籍數據" v-model="unmatchedVisible" width="1100px" top="5vh" append-to-body>
-      <!-- 搜索欄 -->
-      <el-form :model="unmatchedQuery" :inline="true" class="unmatched-search-form" style="margin-bottom: 15px; padding: 10px 14px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
-        <el-form-item label="學生姓名">
-          <el-input 
-            v-model="unmatchedQuery.idNameQuery" 
-            placeholder="請輸入學生姓名"
-            clearable 
-            style="width: 180px;"
-            @keyup.enter="handleUnmatchedSearch" 
-          />
-        </el-form-item>
-        <el-form-item label="學生班級">
-          <el-input 
-            v-model="unmatchedQuery.classSectionQuery" 
-            placeholder="例如 K1E" 
-            clearable 
-            style="width: 120px;"
-            @keyup.enter="handleUnmatchedSearch" 
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleUnmatchedSearch">搜索</el-button>
-          <el-button :icon="Refresh" @click="resetUnmatchedSearch">重置</el-button>
-        </el-form-item>
-      </el-form>
-
-      <el-table :data="unmatchedList" v-loading="unmatchedLoading" max-height="520" empty-text="沒有未匹配的數據">
-        <el-table-column prop="studentProfileNumber" label="學生個人編號" min-width="180" align="center" class-name="profile-number-cell" />
-        <el-table-column prop="idName" label="姓名" width="120" align="center" />
-        <el-table-column prop="classSection" label="班級" width="90" align="center" />
-        <el-table-column prop="classNum" label="班號" width="80" align="center" />
-        <el-table-column prop="dsejStudentId" label="學生證編號" width="130" align="center" />
-        <el-table-column prop="adid" label="帳號" width="100" align="center" show-overflow-tooltip />
-        <el-table-column label="操作" width="150" align="center" fixed="right">
-          <template #default="scope">
-            <el-button size="small" type="primary" @click="handleManualMatch(scope.row)">
-              手動匹配
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      
-      <!-- 分頁 -->
-      <div class="pagination-container" v-if="unmatchedTotal > 0" style="margin-top: 15px; display: flex; justify-content: flex-end;">
-        <el-pagination 
-          v-model:current-page="unmatchedPagination.pageNum" 
-          v-model:page-size="unmatchedPagination.pageSize" 
-          :page-sizes="[10, 20, 50]" 
-          :total="unmatchedTotal" 
-          layout="total, sizes, prev, pager, next" 
-          background 
-          @size-change="loadUnmatchedList" 
-          @current-change="loadUnmatchedList" 
-        />
-      </div>
-    </el-dialog>
-
-    <!-- 彈窗二：企微候選學生選擇器 -->
+    <!-- 手動綁定：企微候選家長選擇器 -->
     <el-dialog
-      title="手動綁定 - 選擇企業微信學生"
+      draggable
+      align-center
+      :title="candidatesMode === 'update' ? '更改信息 - 重新選擇家長' : '手動綁定 - 選擇企業微信學生'"
       v-model="candidatesVisible"
       width="1200px"
-      top="5vh"
+      class="candidates-dialog"
       append-to-body
       :close-on-click-modal="false"
       @opened="onCandidatesDialogOpened"
     >
       <div class="candidates-dialog-body">
         <div class="candidate-header-info" v-if="currentMatchingRow">
-          待匹配學生：<strong>{{ currentMatchingRow.idName || '-' }}</strong>
+          學生：<strong>{{ currentMatchingRow.idName || '-' }}</strong>
           （班級：{{ currentMatchingRow.classSection || '-' }}）
+          <span v-if="candidatesMode === 'bind'" class="candidate-header-hint">可多選家長後一次批量綁定</span>
+          <span v-else class="candidate-header-hint">點擊列表中的家長行進行選擇</span>
         </div>
 
         <el-form :model="candidatesQuery" :inline="true" class="candidates-search-form search-form">
@@ -238,16 +195,29 @@
 
         <div class="candidates-table-panel" v-loading="candidatesLoading">
           <el-table
+            ref="candidatesTable"
             :data="candidatesList"
+            row-key="parentUserId"
             border
-            stripe
-            height="460"
+            :stripe="candidatesMode === 'bind'"
+            :height="candidatesTableHeight"
             style="width: 100%"
             :row-style="{ height: '48px' }"
-            empty-text="未找到未匹配的企微學生，可嘗試清空班級或姓名條件後重新搜索"
+            :row-class-name="getCandidateRowClassName"
+            :class="{ 'candidates-table--update': candidatesMode === 'update' }"
+            empty-text="未找到可選家長，可嘗試清空班級或姓名條件後重新搜索"
+            @selection-change="handleCandidatesSelectionChange"
+            @row-click="handleCandidateRowClick"
           >
-            <el-table-column prop="studentName" label="企微學生姓名" min-width="150" align="center" show-overflow-tooltip />
-            <el-table-column prop="parentUserId" label="家長 user_id" min-width="160" align="center" show-overflow-tooltip />
+            <el-table-column v-if="candidatesMode === 'bind'" type="selection" width="55" align="center" />
+            <el-table-column prop="studentName" label="企微學生姓名" min-width="150" align="center" show-overflow-tooltip>
+              <template #default="scope">
+                <span class="candidate-name-cell" :class="{ 'is-selected': isCandidateSelected(scope.row) }">
+                  <el-icon v-if="isCandidateSelected(scope.row)" class="candidate-check-icon"><CircleCheck /></el-icon>
+                  {{ scope.row.studentName }}
+                </span>
+              </template>
+            </el-table-column>
             <el-table-column prop="classCodeWecom" label="企微班級代碼" min-width="120" align="center">
               <template #default="scope">
                 <span v-if="scope.row.classCodeWecom">{{ scope.row.classCodeWecom }}</span>
@@ -256,18 +226,6 @@
             </el-table-column>
             <el-table-column prop="mobile" label="家長手機號" min-width="160" align="center" show-overflow-tooltip />
             <el-table-column prop="relationDesc" label="家長關係" min-width="100" align="center" show-overflow-tooltip />
-            <el-table-column label="操作" width="120" align="center">
-              <template #default="scope">
-                <el-button
-                  size="small"
-                  type="success"
-                  :loading="bindingId === scope.row.parentUserId"
-                  @click="submitBind(scope.row)"
-                >
-                  確認綁定
-                </el-button>
-              </template>
-            </el-table-column>
           </el-table>
 
           <div class="candidates-pagination">
@@ -284,6 +242,29 @@
           </div>
         </div>
       </div>
+      <template #footer>
+        <div class="candidates-dialog-footer">
+          <el-button
+            v-if="candidatesMode === 'bind'"
+            type="primary"
+            :disabled="candidatesSelection.length === 0"
+            :loading="submittingCandidates"
+            @click="submitBatchBind"
+          >
+            批量綁定（已選 {{ candidatesSelection.length }}）
+          </el-button>
+          <el-button
+            v-else
+            type="primary"
+            :disabled="!selectedUpdateCandidate"
+            :loading="submittingCandidates"
+            @click="submitUpdateMatch"
+          >
+            確認更改
+          </el-button>
+          <el-button @click="candidatesVisible = false">完成</el-button>
+        </div>
+      </template>
     </el-dialog>
 
     <!-- 學生對照數據詳情對話框 -->
@@ -318,7 +299,7 @@
 </template>
 
 <script>
-import { User, Warning, Search, Refresh, InfoFilled, Edit, Document } from '@element-plus/icons-vue'
+import { User, Search, Refresh, InfoFilled, Edit, Document, CircleCheck } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import StudentPhoto from '@/components/StudentPhoto.vue'
@@ -326,11 +307,11 @@ import StudentPhoto from '@/components/StudentPhoto.vue'
 export default {
   name: 'StudentMatch',
   components: {
-    User, Warning, Search, Refresh, InfoFilled, Edit, Document, StudentPhoto
+    User, Search, Refresh, InfoFilled, Edit, Document, CircleCheck, StudentPhoto
   },
   data() {
     return {
-      Warning, Search, Refresh, Document,
+      Search, Refresh, Document,
       loading: false,
       syncingData: false,
       matchList: [],
@@ -342,25 +323,12 @@ export default {
       searchForm: {
         idNameQuery: '',
         classSectionQuery: '',
-        matchStatus: ''
+        matchStatus: null
       },
 
-      // 未匹配數據列表 (彈窗一)
-      unmatchedVisible: false,
-      unmatchedLoading: false,
-      unmatchedList: [],
-      unmatchedTotal: 0,
-      unmatchedPagination: {
-        pageNum: 1,
-        pageSize: 10
-      },
-      unmatchedQuery: {
-        idNameQuery: '',
-        classSectionQuery: ''
-      },
-
-      // 企微候選人選擇 (彈窗二)
+      // 企微候選家長選擇
       candidatesVisible: false,
+      candidatesMode: 'bind',
       candidatesLoading: false,
       candidatesList: [],
       currentMatchingRow: null,
@@ -374,10 +342,21 @@ export default {
         pageNum: 1,
         pageSize: 10
       },
-      bindingId: null,
+      candidatesSelection: [],
+      selectedParentUserId: null,
+      submittingCandidates: false,
+      candidatesTableHeight: 200,
       // 詳情彈窗
       detailVisible: false,
       detailForm: {}
+    }
+  },
+  computed: {
+    selectedUpdateCandidate() {
+      if (!this.selectedParentUserId) {
+        return null
+      }
+      return this.candidatesList.find(item => item.parentUserId === this.selectedParentUserId) || this.candidatesSelection[0] || null
     }
   },
   mounted() {
@@ -392,6 +371,12 @@ export default {
         return String(row.studentProfileNumber)
       }
       return ''
+    },
+    getRowKey(row) {
+      if (!row) {
+        return ''
+      }
+      return `${row.studentId || ''}_${row.userId || ''}_${row.id || ''}_${row.studentProfileNumber || ''}`
     },
 
     // 查詢主列表
@@ -427,64 +412,32 @@ export default {
       this.searchForm = {
         idNameQuery: '',
         classSectionQuery: '',
-        matchStatus: ''
+        matchStatus: null
       }
       this.handleSearch()
     },
 
-    // 狀態展示標籤樣式
+    // 狀態展示標籤樣式（matchStatus 為 null 表示未匹配，不入庫）
     getMatchStatusTag(status) {
-      const map = { '0': 'info', '1': 'success', '2': 'warning' }
-      return map[status] || 'info'
+      const code = this.normalizeMatchStatus(status)
+      const map = { 0: 'info', 1: 'success', 2: 'warning' }
+      return map[code] || 'info'
     },
     getMatchStatusText(status) {
-      const map = { '0': '未匹配', '1': '自動匹配成功', '2': '手動匹配成功' }
-      return map[status] || '未知'
+      const code = this.normalizeMatchStatus(status)
+      const map = { 0: '未匹配', 1: '自動匹配成功', 2: '手動匹配成功' }
+      return map[code] || '未匹配'
     },
-
-    // 彈窗一：未匹配學籍數據
-    async openUnmatchedDialog() {
-      this.unmatchedVisible = true
-      this.unmatchedPagination.pageNum = 1
-      this.unmatchedQuery = {
-        idNameQuery: '',
-        classSectionQuery: ''
+    normalizeMatchStatus(status) {
+      if (status === null || status === undefined || status === '') {
+        return 0
       }
-      this.loadUnmatchedList()
+      const num = Number(status)
+      return Number.isNaN(num) ? 0 : num
     },
-    async loadUnmatchedList() {
-      this.unmatchedLoading = true
-      try {
-        const res = await request({
-          url: '/system/student/match/unmatchedList',
-          method: 'get',
-          params: {
-            pageNum: this.unmatchedPagination.pageNum,
-            pageSize: this.unmatchedPagination.pageSize,
-            idNameQuery: this.unmatchedQuery.idNameQuery,
-            classSectionQuery: this.unmatchedQuery.classSectionQuery
-          }
-        })
-        if (res.code === 200 || res.code === 0) {
-          this.unmatchedList = res.rows || []
-          this.unmatchedTotal = res.total || 0
-        }
-      } catch (e) {
-        console.error(e)
-      } finally {
-        this.unmatchedLoading = false
-      }
-    },
-    handleUnmatchedSearch() {
-      this.unmatchedPagination.pageNum = 1
-      this.loadUnmatchedList()
-    },
-    resetUnmatchedSearch() {
-      this.unmatchedQuery = {
-        idNameQuery: '',
-        classSectionQuery: ''
-      }
-      this.handleUnmatchedSearch()
+    isMatched(row) {
+      const code = this.normalizeMatchStatus(row?.matchStatus)
+      return code === 1 || code === 2
     },
 
     // 同步對照數據 (本地匹配)
@@ -524,8 +477,9 @@ export default {
       }
     },
 
-    // 手動匹配 (彈窗二)
+    // 手動匹配
     handleManualMatch(row) {
+      this.candidatesMode = 'bind'
       this.currentMatchingRow = row
       this.candidatesQuery = {
         queryName: '',
@@ -535,10 +489,81 @@ export default {
       this.candidatesPagination.pageNum = 1
       this.candidatesList = []
       this.candidatesTotal = 0
+      this.candidatesSelection = []
+      this.candidatesVisible = true
+    },
+    handleUpdateMatch(row) {
+      if (!row?.id) {
+        ElNotification({
+          title: '無法更改',
+          message: '缺少匹配記錄，無法更正家長信息',
+          type: 'warning',
+          duration: 3000
+        })
+        return
+      }
+      this.candidatesMode = 'update'
+      this.currentMatchingRow = row
+      this.candidatesQuery = {
+        queryName: '',
+        queryMobile: '',
+        queryClass: ''
+      }
+      this.candidatesPagination.pageNum = 1
+      this.candidatesList = []
+      this.candidatesTotal = 0
+      this.candidatesSelection = []
       this.candidatesVisible = true
     },
     onCandidatesDialogOpened() {
+      this.updateCandidatesTableHeight()
       this.loadCandidates()
+    },
+    updateCandidatesTableHeight() {
+      const rowHeight = 48
+      const headerHeight = 44
+      const pageSize = this.candidatesPagination.pageSize || 10
+      const displayRows = Math.max(this.candidatesList.length, pageSize)
+      const idealHeight = headerHeight + displayRows * rowHeight
+      // 彈窗整體約 84vh，扣除固定區後為表格可用高度，確保上下留白
+      const dialogChrome = 320
+      const maxHeight = Math.max(300, Math.floor(window.innerHeight * 0.84 - dialogChrome))
+      this.candidatesTableHeight = Math.min(idealHeight, maxHeight)
+    },
+    handleCandidatesSelectionChange(selection) {
+      if (this.candidatesMode !== 'bind') {
+        return
+      }
+      this.candidatesSelection = selection || []
+    },
+    selectUpdateCandidate(row) {
+      if (!row?.parentUserId) {
+        this.selectedParentUserId = null
+        this.candidatesSelection = []
+        return
+      }
+      this.selectedParentUserId = row.parentUserId
+      this.candidatesSelection = [row]
+    },
+    handleCandidateRowClick(row) {
+      if (this.candidatesMode !== 'update' || !row?.parentUserId) {
+        return
+      }
+      this.selectUpdateCandidate(row)
+    },
+    getCandidateRowClassName({ row }) {
+      if (this.candidatesMode === 'update' && row?.parentUserId === this.selectedParentUserId) {
+        return 'candidate-row-selected'
+      }
+      return ''
+    },
+    isCandidateSelected(row) {
+      return this.candidatesMode === 'update' && row?.parentUserId === this.selectedParentUserId
+    },
+    clearCandidatesSelection() {
+      this.candidatesSelection = []
+      this.selectedParentUserId = null
+      this.$refs.candidatesTable?.clearSelection()
     },
     handleCandidatesSearch() {
       this.candidatesPagination.pageNum = 1
@@ -554,6 +579,9 @@ export default {
       this.loadCandidates()
     },
     async loadCandidates() {
+      if (!this.submittingCandidates) {
+        this.clearCandidatesSelection()
+      }
       this.candidatesLoading = true
       try {
         const res = await request({
@@ -571,6 +599,7 @@ export default {
         if (res.code === 200 || res.code === 0) {
           this.candidatesList = res.rows || []
           this.candidatesTotal = res.total || 0
+          this.updateCandidatesTableHeight()
         } else {
           ElNotification({
             title: '查詢失敗',
@@ -591,31 +620,99 @@ export default {
         this.candidatesLoading = false
       }
     },
-    async submitBind(wecomStudent) {
-      this.bindingId = wecomStudent.parentUserId
+    async submitBatchBind() {
+      if (!this.currentMatchingRow?.studentId || this.candidatesSelection.length === 0) {
+        return
+      }
+
+      const userIds = this.candidatesSelection
+        .map(row => row?.parentUserId)
+        .filter(Boolean)
+
+      this.submittingCandidates = true
       try {
         const res = await request({
-          url: '/system/student/match/bind',
+          url: '/system/student/match/bindBatch',
           method: 'post',
           data: {
             studentId: this.currentMatchingRow.studentId,
-            userId: wecomStudent.parentUserId
+            userIds
           }
         })
+
         if (res.code === 200 || res.code === 0) {
-          ElNotification({ title: '手動匹配成功', message: '匹配綁定已更新', type: 'success', duration: 3000 })
+          ElNotification({
+            title: '批量綁定完成',
+            message: res.msg || `成功綁定 ${userIds.length} 位家長`,
+            type: 'success',
+            duration: 4000
+          })
           this.candidatesVisible = false
-          
-          // 刷新未匹配彈窗中的列表
-          if (this.unmatchedVisible) {
-            this.loadUnmatchedList()
-          }
           this.loadMatchList()
+        } else {
+          ElNotification({
+            title: '綁定失敗',
+            message: res.msg || '所選家長均未能綁定，請稍後再試',
+            type: 'error',
+            duration: 3000
+          })
         }
       } catch (e) {
         console.error(e)
+        ElNotification({
+          title: '綁定出錯',
+          message: e?.response?.data?.msg || e?.message || '批量綁定失敗，請稍後再試',
+          type: 'error',
+          duration: 4000
+        })
       } finally {
-        this.bindingId = null
+        this.submittingCandidates = false
+      }
+    },
+    async submitUpdateMatch() {
+      const selected = this.candidatesSelection[0]
+      if (!this.currentMatchingRow?.id || !selected?.parentUserId) {
+        return
+      }
+
+      this.submittingCandidates = true
+      try {
+        const res = await request({
+          url: '/system/student/match/update',
+          method: 'put',
+          data: {
+            id: this.currentMatchingRow.id,
+            userId: selected.parentUserId
+          }
+        })
+
+        if (res.code === 200 || res.code === 0) {
+          ElNotification({
+            title: '更新成功',
+            message: res.msg || '家長信息已更新',
+            type: 'success',
+            duration: 4000
+          })
+          this.candidatesVisible = false
+          this.loadMatchList()
+        } else {
+          ElNotification({
+            title: '更新失敗',
+            message: res.msg || '更正家長信息失敗，請稍後再試',
+            type: 'error',
+            duration: 3000
+          })
+        }
+      } catch (e) {
+        console.error(e)
+        ElNotification({
+          title: '更新出錯',
+          message: e?.response?.data?.msg || e?.message || '更正家長信息失敗，請稍後再試',
+          type: 'error',
+          duration: 4000
+        })
+      } finally {
+        this.submittingCandidates = false
       }
     },
 
@@ -697,18 +794,45 @@ export default {
   font-size: 20px;
   color: #409eff;
 }
-.header-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
-}
 .search-form {
   margin-bottom: 15px;
   padding: 15px;
   background-color: #f9fbfd;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
+}
+.match-search-form {
+  margin-bottom: 12px;
+  padding: 12px 18px;
+}
+.match-search-form :deep(.el-form-item) {
+  margin-bottom: 0;
+  margin-right: 20px;
+}
+.match-search-form :deep(.el-form-item__label) {
+  padding-right: 8px;
+}
+.match-search-form :deep(.search-input-name) {
+  width: 160px;
+}
+.match-search-form :deep(.search-input-class) {
+  width: 100px;
+}
+.match-search-form :deep(.search-input-status) {
+  width: 148px;
+}
+.match-search-form :deep(.search-input-status .el-select__selected-item),
+.match-search-form :deep(.search-input-status .el-select__selection-text) {
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+}
+.match-search-form :deep(.search-actions) {
+  margin-right: 0;
+  margin-left: 6px;
+}
+.match-search-form :deep(.search-actions .el-button + .el-button) {
+  margin-left: 10px;
 }
 .pagination-container {
   display: flex;
@@ -733,19 +857,61 @@ export default {
 }
 
 /* 候選學生對話方塊 */
+:deep(.candidates-dialog.el-dialog) {
+  margin: 0 auto !important;
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.candidates-dialog .el-dialog__header) {
+  flex-shrink: 0;
+  padding-bottom: 12px;
+}
+
+:deep(.candidates-dialog .el-dialog__body) {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+:deep(.candidates-dialog .el-dialog__footer) {
+  flex-shrink: 0;
+  padding-top: 16px;
+  padding-bottom: 20px;
+  border-top: 1px solid #ebeef5;
+}
+
 .candidates-dialog-body {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
+.candidates-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .candidate-header-info {
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1e40af;
+  margin-bottom: 12px;
   padding: 10px 14px;
-  border-radius: 8px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.candidate-header-hint {
+  margin-left: 8px;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: normal;
 }
 
 .candidates-search-form {
@@ -767,7 +933,40 @@ export default {
   border-radius: 8px;
   overflow: hidden;
   background-color: #fff;
-  min-height: 520px;
+}
+
+.candidates-table--update :deep(.el-table__body tr) {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.candidates-table--update :deep(.el-table__body tr:hover > td.el-table__cell) {
+  background-color: #f8fafc !important;
+}
+
+:deep(.candidate-row-selected > td.el-table__cell) {
+  background-color: #f0f7ff !important;
+}
+
+:deep(.candidate-row-selected > td:first-child) {
+  box-shadow: inset 3px 0 0 #409eff;
+}
+
+.candidate-name-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.candidate-name-cell.is-selected {
+  color: #409eff;
+  font-weight: 500;
+}
+
+.candidate-check-icon {
+  font-size: 16px;
+  color: #67c23a;
 }
 
 .candidates-table-panel :deep(.el-table) {
@@ -782,8 +981,8 @@ export default {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  min-height: 52px;
-  padding: 10px 16px;
+  padding: 10px 12px;
+  margin-top: 4px;
   border-top: 1px solid #ebeef5;
   background-color: #fafafa;
 }

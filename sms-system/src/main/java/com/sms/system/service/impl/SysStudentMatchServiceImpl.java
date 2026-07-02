@@ -3,6 +3,7 @@ package com.sms.system.service.impl;
 import com.github.houbb.opencc4j.util.ZhConverterUtil;
 import com.sms.common.config.StudentProfilesProperties;
 import com.sms.system.entity.SysStudentMatch;
+import com.sms.system.enums.StudentMatchStatus;
 import com.sms.system.entity.dto.*;
 import com.sms.system.entity.vo.*;
 import com.sms.system.mapper.SysSchoolFamilyContactMapper;
@@ -93,30 +94,86 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
     }
 
     /**
-     * 手動綁定學籍與企微家長。
-     *
-     * @param studentMatchBindDTO studentId、userId（parent_user_id）
-     * @return 綁定是否成功
+     * 手動綁定學籍與企微家長（單條或多條，底層批量寫庫）。
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean bindStudent(SysStudentMatchBindDTO studentMatchBindDTO) {
-        if (studentMatchBindDTO == null
-                || !StringUtils.hasText(studentMatchBindDTO.getStudentId())
-                || !StringUtils.hasText(studentMatchBindDTO.getUserId())) {
-            return false;
+    public SysStudentMatchOperationResultVO bindStudents(SysStudentMatchBatchBindDTO batchBindDTO) {
+        if (batchBindDTO == null
+                || !StringUtils.hasText(batchBindDTO.getStudentId())
+                || batchBindDTO.getUserIds() == null
+                || batchBindDTO.getUserIds().isEmpty()) {
+            return SysStudentMatchOperationResultVO.failure("綁定參數無效");
         }
 
-        SysStudentMatch studentMatch = new SysStudentMatch();
-        studentMatch.setStudentId(
-                studentMatchBindDTO.getStudentId().trim()
-        );
-        studentMatch.setUserId(
-                studentMatchBindDTO.getUserId().trim()
-        );
-        studentMatch.setMatchStatus("2");
+        String studentId = batchBindDTO.getStudentId().trim();
+        LinkedHashSet<String> uniqueUserIds = batchBindDTO.getUserIds().stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (uniqueUserIds.isEmpty()) {
+            return SysStudentMatchOperationResultVO.failure("未選擇有效家長");
+        }
 
-        return sysStudentMatchMapper.saveOrUpdateStudentMatch(studentMatch) > 0;
+        List<SysStudentMatch> matches = new ArrayList<>(uniqueUserIds.size());
+        for (String userId : uniqueUserIds) {
+            SysStudentMatch studentMatch = new SysStudentMatch();
+            studentMatch.setStudentId(studentId);
+            studentMatch.setUserId(userId);
+            studentMatch.setMatchStatus(StudentMatchStatus.MANUAL.getCode());
+            matches.add(studentMatch);
+        }
+
+        int affected = batchSaveStudentMatches(matches);
+        if (affected <= 0) {
+            return SysStudentMatchOperationResultVO.failure("綁定失敗");
+        }
+        return SysStudentMatchOperationResultVO.success(
+                String.format("成功綁定 %d 位家長", affected),
+                affected
+        );
+    }
+
+    /**
+     * 更正已匹配記錄的家長 user_id。
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public SysStudentMatchOperationResultVO updateStudentMatch(SysStudentMatchUpdateDTO updateDTO) {
+        if (updateDTO == null || updateDTO.getId() == null || !StringUtils.hasText(updateDTO.getUserId())) {
+            return SysStudentMatchOperationResultVO.failure("更新參數無效");
+        }
+
+        SysStudentMatch existing = sysStudentMatchMapper.selectStudentMatchById(updateDTO.getId());
+        if (existing == null || !StringUtils.hasText(existing.getStudentId())) {
+            return SysStudentMatchOperationResultVO.failure("匹配記錄不存在");
+        }
+        Integer matchStatus = existing.getMatchStatus();
+        if (matchStatus == null
+                || (matchStatus != StudentMatchStatus.AUTO.getCode()
+                && matchStatus != StudentMatchStatus.MANUAL.getCode())) {
+            return SysStudentMatchOperationResultVO.failure("僅支持更正已匹配成功的記錄");
+        }
+
+        String newUserId = updateDTO.getUserId().trim();
+        if (newUserId.equals(existing.getUserId())) {
+            return SysStudentMatchOperationResultVO.failure("新家長與當前綁定相同，無需更新");
+        }
+
+        if (sysStudentMatchMapper.countStudentMatchByStudentAndUserExceptId(
+                existing.getStudentId().trim(), newUserId, existing.getId()) > 0) {
+            return SysStudentMatchOperationResultVO.failure("該家長已綁定此學生，請選擇其他家長");
+        }
+
+        SysStudentMatch toUpdate = new SysStudentMatch();
+        toUpdate.setId(existing.getId());
+        toUpdate.setUserId(newUserId);
+        toUpdate.setMatchStatus(StudentMatchStatus.MANUAL.getCode());
+
+        if (sysStudentMatchMapper.updateStudentMatchUserId(toUpdate) <= 0) {
+            return SysStudentMatchOperationResultVO.failure("更新失敗");
+        }
+        return SysStudentMatchOperationResultVO.success("家長信息已更新", 1);
     }
 
 
@@ -160,7 +217,7 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
         }
 
         // 逐條比對學籍與家校通訊錄：班級 + 姓名一致則為每位家長各寫一條匹配記錄
-        int matchedCount = 0;
+        List<SysStudentMatch> toInsert = new ArrayList<>();
         for (SysStudentMatchVO matchVO : allStudents) {
             String studentId = resolveStudentId(matchVO);
             if (studentId == null) {
@@ -198,17 +255,35 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
                 SysStudentMatch studentMatch = new SysStudentMatch();
                 studentMatch.setStudentId(studentId);
                 studentMatch.setUserId(parentUserId);
-                studentMatch.setMatchStatus("1");
-                if (sysStudentMatchMapper.saveOrUpdateStudentMatch(studentMatch) > 0) {
-                    existingPairKeys.add(pairKey);
-                    matchedCount++;
-                }
+                studentMatch.setMatchStatus(StudentMatchStatus.AUTO.getCode());
+                toInsert.add(studentMatch);
+                existingPairKeys.add(pairKey);
             }
         }
+
+        int matchedCount = batchSaveStudentMatches(toInsert);
 
         return SysStudentMatchOperationResultVO.success(
                 String.format("同步數據對照完成！共成功自動匹配 %d 筆數據", matchedCount),
                 matchedCount);
+    }
+
+    /**
+     * 批量寫入匹配記錄，每批最多 500 條，避免單次 SQL 過大。
+     */
+    private int batchSaveStudentMatches(List<SysStudentMatch> matches) {
+        if (matches == null || matches.isEmpty()) {
+            return 0;
+        }
+        int matchedCount = 0;
+        int batchSize = 500;
+        for (int i = 0; i < matches.size(); i += batchSize) {
+            List<SysStudentMatch> subList = matches.subList(i, Math.min(i + batchSize, matches.size()));
+            if (sysStudentMatchMapper.batchSaveOrUpdateStudentMatch(subList) > 0) {
+                matchedCount += subList.size();
+            }
+        }
+        return matchedCount;
     }
 
     /**

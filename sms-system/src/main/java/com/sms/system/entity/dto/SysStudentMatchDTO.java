@@ -14,8 +14,7 @@ public class SysStudentMatchDTO implements Serializable {
     /** 班級（對應 student_info.class_section) */
     private String classSectionQuery;
 
-    /** 匹配狀態 */
-    private String matchStatus;
+    private Integer matchStatus;
 
     public String getIdNameQuery() {
         return idNameQuery;
@@ -33,11 +32,11 @@ public class SysStudentMatchDTO implements Serializable {
         this.classSectionQuery = classSectionQuery;
     }
 
-    public String getMatchStatus() {
+    public Integer getMatchStatus() {
         return matchStatus;
     }
 
-    public void setMatchStatus(String matchStatus) {
+    public void setMatchStatus(Integer matchStatus) {
         this.matchStatus = matchStatus;
     }
 }
