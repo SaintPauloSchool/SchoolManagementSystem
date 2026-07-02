@@ -1,6 +1,7 @@
 package com.sms.system.mapper;
 
 import com.sms.system.entity.SysSchoolFamilyContact;
+import com.sms.system.entity.dto.SysWecomStudentDTO;
 import com.sms.system.entity.vo.SysSchoolFamilyContactVO;
 import org.apache.ibatis.annotations.Param;
 
@@ -120,6 +121,14 @@ public interface SysSchoolFamilyContactMapper {
      * @return 含班級代碼的聯絡人 VO 列表
      */
     List<SysSchoolFamilyContactVO> selectSchoolFamilyContactWithClassList();
+
+    /**
+     * 查詢企微學生候選列表（含篩選條件，供 PageHelper 分頁）
+     *
+     * @param query 姓名、手機、班級、學籍 studentId 等查詢條件
+     * @return 候選聯絡人 VO 列表
+     */
+    List<SysSchoolFamilyContactVO> selectWecomCandidates(SysWecomStudentDTO query);
 
     /**
      * 按班級部門 ID 查詢已匹配學籍的家校聯絡人。

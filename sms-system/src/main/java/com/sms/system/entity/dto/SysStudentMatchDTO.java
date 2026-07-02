@@ -8,7 +8,7 @@ import java.io.Serializable;
 public class SysStudentMatchDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 姓名（對應 student_info.id_name / 企微姓名） */
+    /** 學生姓名（對應 student_info.id_name） */
     private String idNameQuery;
 
     /** 班級（對應 student_info.class_section) */

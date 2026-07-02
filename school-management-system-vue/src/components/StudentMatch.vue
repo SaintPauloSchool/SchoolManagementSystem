@@ -19,22 +19,6 @@
             >
               同步數據
             </el-button>
-            <el-button 
-              type="primary" 
-              :icon="Promotion" 
-              :disabled="syncableSelection.length === 0"
-              @click="handleBatchSync"
-            >
-              同步至企業微信 (已選可同步 {{ syncableSelection.length }} 筆)
-            </el-button>
-            <el-button 
-              type="danger" 
-              :icon="Delete" 
-              :disabled="deletableSelection.length === 0"
-              @click="handleBatchDelete"
-            >
-              批量刪除匹配記錄 (已選 {{ deletableSelection.length }} 筆)
-            </el-button>
           </div>
         </div>
       </template>
@@ -44,7 +28,7 @@
         <el-form-item label="學生姓名">
           <el-input 
             v-model="searchForm.idNameQuery" 
-            placeholder="請輸入學生姓名或企微學生姓名"
+            placeholder="請輸入學生姓名"
             clearable 
             style="width: 220px;"
             @keyup.enter="handleSearch" 
@@ -79,9 +63,7 @@
         style="width: 100%" 
         :row-style="{ height: '60px' }"
         empty-text="暫無學籍數據"
-        @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" align="center" />
         <el-table-column label="照片" width="72" align="center">
           <template #default="scope">
             <StudentPhoto :profile-number="resolveProfileNumber(scope.row)" :size="44" />
@@ -152,7 +134,7 @@
         <el-form-item label="學生姓名">
           <el-input 
             v-model="unmatchedQuery.idNameQuery" 
-            placeholder="學生姓名/企微學生姓名"
+            placeholder="請輸入學生姓名"
             clearable 
             style="width: 180px;"
             @keyup.enter="handleUnmatchedSearch" 
@@ -336,7 +318,7 @@
 </template>
 
 <script>
-import { User, Warning, Promotion, Search, Refresh, InfoFilled, Edit, Delete, Document } from '@element-plus/icons-vue'
+import { User, Warning, Search, Refresh, InfoFilled, Edit, Document } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import StudentPhoto from '@/components/StudentPhoto.vue'
@@ -344,11 +326,11 @@ import StudentPhoto from '@/components/StudentPhoto.vue'
 export default {
   name: 'StudentMatch',
   components: {
-    User, Warning, Promotion, Search, Refresh, InfoFilled, Delete, Document, StudentPhoto
+    User, Warning, Search, Refresh, InfoFilled, Edit, Document, StudentPhoto
   },
   data() {
     return {
-      Warning, Promotion, Search, Refresh, Delete, Document,
+      Warning, Search, Refresh, Document,
       loading: false,
       syncingData: false,
       matchList: [],
@@ -362,7 +344,6 @@ export default {
         classSectionQuery: '',
         matchStatus: ''
       },
-      multipleSelection: [],
 
       // 未匹配數據列表 (彈窗一)
       unmatchedVisible: false,
@@ -401,14 +382,6 @@ export default {
   },
   mounted() {
     this.loadMatchList()
-  },
-  computed: {
-    deletableSelection() {
-      return this.multipleSelection.filter(row => row.id)
-    },
-    syncableSelection() {
-      return this.multipleSelection.filter(row => row.id && row.userId)
-    }
   },
   methods: {
     resolveProfileNumber(row) {
@@ -458,13 +431,7 @@ export default {
       }
       this.handleSearch()
     },
-    handleSelectionChange(val) {
-      this.multipleSelection = val
-    },
-    canSelectRow(row) {
-      return row.id && row.userId
-    },
-    
+
     // 狀態展示標籤樣式
     getMatchStatusTag(status) {
       const map = { '0': 'info', '1': 'success', '2': 'warning' }
@@ -652,89 +619,6 @@ export default {
       }
     },
 
-    // 確定匹配並批量同步更名至企微
-    handleBatchSync() {
-      if (this.syncableSelection.length === 0) return
-
-      ElMessageBox.confirm(
-        `確認要將選中的 ${this.syncableSelection.length} 筆學生姓名同步更名至企業微信並雙向對齊本地關係表嗎？<br/><small style="color: #ea580c;">注：同步過程中會自動保護學生的原有班級，防止退出班級。</small>`,
-        '批量同步確認', 
-        {
-          confirmButtonText: '開始同步',
-          cancelButtonText: '取消',
-          type: 'warning',
-          dangerouslyUseHTMLString: true
-        }
-      ).then(async () => {
-        this.loading = true
-        const ids = this.syncableSelection.map(x => x.id)
-        try {
-          const res = await request({
-            url: '/system/student/match/sync',
-            method: 'post',
-            data: {
-              matchIds: ids
-            }
-          })
-          if (res.code === 200 || res.code === 0) {
-            ElNotification({ 
-              title: '同步執行完畢', 
-              message: res.msg || res.data?.message || '選中學生的更名操作已同步至企業微信', 
-              type: 'success', 
-              duration: 5000,
-              dangerouslyUseHTMLString: true 
-            })
-            this.loadMatchList()
-          }
-        } catch (e) {
-          console.error(e)
-        } finally {
-          this.loading = false
-        }
-      }).catch(() => {})
-    },
-
-    // 批量刪除選中的數據
-    handleBatchDelete() {
-      if (this.deletableSelection.length === 0) return
-      
-      ElMessageBox.confirm(
-        `確認要刪除選中的 ${this.deletableSelection.length} 筆學生匹配記錄嗎？<br/><small style="color: #ef4444;">注：此操作只會刪除匹配記錄，學籍資料仍從 student_profiles 讀取，不會影響企業微信或本地的學生關係數據。</small>`, 
-        '批量刪除確認', 
-        {
-          confirmButtonText: '確定刪除',
-          cancelButtonText: '取消',
-          type: 'warning',
-          dangerouslyUseHTMLString: true
-        }
-      ).then(async () => {
-        this.loading = true
-        const ids = this.deletableSelection.map(x => x.id)
-        try {
-          const res = await request({
-            url: '/system/student/match/delete',
-            method: 'post',
-            data: {
-              matchIds: ids
-            }
-          })
-          if (res.code === 200 || res.code === 0) {
-            ElNotification({ 
-              title: '刪除成功', 
-              message: res.msg || `成功刪除 ${ids.length} 筆匹配記錄`, 
-              type: 'success', 
-              duration: 3000
-            })
-            this.multipleSelection = []
-            this.loadMatchList()
-          }
-        } catch (e) {
-          console.error(e)
-        } finally {
-          this.loading = false
-        }
-      }).catch(() => {})
-    },
     formatInSchool(value) {
       if (value === 1 || value === true || value === '1') return '在校'
       if (value === 0 || value === false || value === '0') return '離校'

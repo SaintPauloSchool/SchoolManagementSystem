@@ -71,12 +71,6 @@ public class WechatWorkHttpClient {
     private String schoolParentListUrl;
 
     /**
-     * 批量更新學生 API
-     */
-    @Value("${wechat.work.api.schoolUpdateStudentUrl:https://qyapi.weixin.qq.com/cgi-bin/school/user/batch_update_student?access_token={accessToken}}")
-    private String schoolUpdateStudentUrl;
-
-    /**
      * 企業微信 CropId
      */
     @Value("${wechat.work.corpId:ww04fad852e91fd490}")
@@ -93,12 +87,6 @@ public class WechatWorkHttpClient {
      */
     @Value("${wechat.work.secret:I31-B5clKayPf4vNl2bibhL1ia8x4cwIc884xK888Fc}")
     private String secret;
-
-    /**
-     * 學生修改專用的企業微信 Secret
-     */
-    @Value("${wechat.work.studentUpdateSecret:8eKTrrpvZwHZk3pAvCNaNFsZDKsLTcHAgovPbEmLOro}")
-    private String studentUpdateSecret;
 
     /**
      * 微信 OAuth 回調的重定向 URI
@@ -343,31 +331,6 @@ public class WechatWorkHttpClient {
         } catch (Exception e) {
             log.error("獲取家校通訊錄家長列表失敗", e);
             throw new RuntimeException("獲取家校通訊錄家長列表失敗: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * 批量更新學校通訊錄學生資訊
-     * @param students 學生資訊陣列
-     * @return 微信接口調用結果 (JSONObject)
-     */
-    public JSONObject batchUpdateStudent(JSONArray students) {
-        try {
-            if (!StringUtils.hasText(corpId)) {
-                throw new IllegalStateException("缺失corpId配置項");
-            }
-            String targetSecret = StringUtils.hasText(studentUpdateSecret) ? studentUpdateSecret : secret;
-            String accessToken = getAccessToken(targetSecret);
-            String url = schoolUpdateStudentUrl.replace("{accessToken}", accessToken);
-            
-            JSONObject payload = new JSONObject();
-            payload.put("students", students);
-            
-            String response = HttpUtils.sendPost(url, payload.toJSONString(), MediaType.APPLICATION_JSON_VALUE);
-            return JSONObject.parseObject(response);
-        } catch (Exception e) {
-            log.error("批量更新學生失敗", e);
-            throw new RuntimeException("批量更新學生失敗: " + e.getMessage(), e);
         }
     }
 

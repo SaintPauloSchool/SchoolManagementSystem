@@ -4,21 +4,15 @@ import java.io.Serializable;
 
 /**
  * 手動綁定學生匹配請求
+ * <p>綁定前尚無 {@code sys_student_match} 記錄，僅需學籍 {@code studentId} 與家長 {@code userId}。</p>
  */
 public class SysStudentMatchBindDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private Long matchId;
+    /** 學籍 student_id */
     private String studentId;
+    /** 家長企微 parent_user_id */
     private String userId;
-
-    public Long getMatchId() {
-        return matchId;
-    }
-
-    public void setMatchId(Long matchId) {
-        this.matchId = matchId;
-    }
 
     public String getStudentId() {
         return studentId;
