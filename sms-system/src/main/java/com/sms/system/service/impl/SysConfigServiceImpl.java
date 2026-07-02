@@ -15,6 +15,11 @@ public class SysConfigServiceImpl implements ISysConfigService {
     @Autowired
     private SysConfigMapper sysConfigMapper;
 
+    /**
+     * 讀取基本設置中配置的家校通訊錄學段部門 ID（type=3）。
+     *
+     * @return 學段部門 ID，無效配置時返回 null
+     */
     @Override
     public Long getAddressBookSegmentDepartmentId() {
         SysConfig config = sysConfigMapper.selectByConfigKey(SysConfigKeys.ADDRESS_BOOK_SEGMENT_DEPT_ID);

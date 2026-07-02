@@ -2,39 +2,33 @@ package com.sms.system.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.sms.common.config.StudentProfilesProperties;
 import com.sms.common.utils.bean.BeanCopyUtils;
 import com.sms.system.entity.SysDepartment;
 import com.sms.system.entity.SysDepartmentAdmin;
-import com.sms.system.entity.SysSchoolFamilyContact;
+import com.sms.system.entity.vo.SysDepartmentVO;
+import com.sms.system.entity.vo.SysSchoolFamilyContactVO;
 import com.sms.system.mapper.SysDepartmentAdminMapper;
 import com.sms.system.mapper.SysDepartmentMapper;
 import com.sms.system.mapper.SysSchoolFamilyContactMapper;
-import com.sms.system.entity.vo.SysDepartmentVO;
+import com.sms.system.service.ISysConfigService;
 import com.sms.system.service.ISysDepartmentAdminService;
 import com.sms.system.service.ISysDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.Collator;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * 部門 Service 業務層處理
- * 
+ *
  * @author sms
  * @date 2023-08-16
  */
 @Service
 public class SysDepartmentServiceImpl implements ISysDepartmentService {
-
-    /** 部門/聯絡人節點按名稱排序（繁體中文） */
-    private static final Collator NAME_COLLATOR = Collator.getInstance(Locale.TRADITIONAL_CHINESE);
-
-    static {
-        NAME_COLLATOR.setStrength(Collator.PRIMARY);
-    }
 
     private static final int TYPE_CLASS = 1;      // 班級
     private static final int TYPE_GRADE = 2;      // 年級
@@ -54,121 +48,63 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     @Autowired
     private SysDepartmentAdminMapper departmentAdminMapper;
 
-    /**
-     * 根據管理員權限獲取班級樹形結構
-     * 邏輯：查詢 sys_department_admin 獲取該用戶管理的部門 ID 集合，
-     * 然後對完整樹做剪枝，只保留有權限部門及其子孫節點。
-     *
-     * @param openUserId 企業微信 userid
-     * @return 過濾後的樹形結構
-     */
-    @Override
-    public List<SysDepartmentVO> getClassTreeByAdmin(String openUserId) {
-        // 1. 獲取用戶管理的部門 ID 集合
-        Set<Long> adminDeptIds = getAdminDepartmentIds(openUserId);
+    @Autowired
+    private ISysConfigService sysConfigService;
 
-        // 如果沒有任何權限記錄，返回空
-        if (adminDeptIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        // 2. 獲取完整樹
-        List<SysDepartment> fullTree = getClassTree();
-
-        // 3. 剪枝：只保留有權限的子樹
-        return BeanCopyUtils.copyTree(filterTree(fullTree, adminDeptIds), SysDepartmentVO.class,
-                SysDepartment::getChildren, SysDepartmentVO::setChildren);
-    }
+    @Autowired
+    private StudentProfilesProperties studentProfilesProperties;
 
     /**
-     * 根據管理員權限獲取班級樹形結構（帶家長學生關係）
+     * 獲取家校通訊錄樹（帶家長學生關係）。
+     * <p>根據 sys_config 配置的學段部門，構建 學段→年級→班級 樹；
+     * 班級下掛載已匹配學籍的家長聯絡人。</p>
      *
      * @param openUserId 企業微信 userid
-     * @return 過濾後的帶家長學生關係的樹形結構
+     * @return 過濾後的帶家長學生關係樹形結構
      */
     @Override
     public List<SysDepartmentVO> getClassTreeWithParentsByAdmin(String openUserId) {
-        // 1. 獲取用戶管理的部門 ID 集合
+        // 1. 獲取當前用戶可管理的部門 ID（sys_department_admin）
         Set<Long> adminDeptIds = getAdminDepartmentIds(openUserId);
-
         if (adminDeptIds.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 2. 獲取完整樹（含家長學生關係）
-        List<SysDepartment> fullTree = getClassTreeWithParents();
-
-        // 3. 剪枝
-        return BeanCopyUtils.copyTree(filterTree(fullTree, adminDeptIds), SysDepartmentVO.class,
-                SysDepartment::getChildren, SysDepartmentVO::setChildren);
-    }
-
-    /**
-     * 獲取班級樹形結構（私有輔助方法，供 ByAdmin 方法內部使用）
-     * 層級順序：type 5(學校) → type 4(校區) → type 3(學段) → type 2(年級) → type 1(班級)
-     */
-    private List<SysDepartment> getClassTree() {
-        // 1. 查詢所有部門數據
-        List<SysDepartment> allDepartments = departmentMapper.selectAll();
-
-        if (allDepartments == null || allDepartments.isEmpty()) {
+        // 2. 讀取基本設置中配置的學段部門（type=3）
+        Long segmentDepartmentId = sysConfigService.getAddressBookSegmentDepartmentId();
+        if (segmentDepartmentId == null) {
             return Collections.emptyList();
         }
 
-        // 2. 按 type 分組，便於快速查找
-        Map<Integer, List<SysDepartment>> departmentsByType = allDepartments.stream()
-                .filter(Objects::nonNull)
-                .filter(dept -> dept.getType() != null)
-                .collect(Collectors.groupingBy(SysDepartment::getType));
-
-        // 3. 從最高層級開始構建（優先學校，其次校區）
-        List<SysDepartment> rootNodes = departmentsByType.getOrDefault(TYPE_SCHOOL, Collections.emptyList());
-        
-        if (rootNodes.isEmpty()) {
-            // 如果沒有學校，嘗試從校區開始
-            rootNodes = departmentsByType.getOrDefault(TYPE_CAMPUS, Collections.emptyList());
-            if (!rootNodes.isEmpty()) {
-                buildAndSortTree(rootNodes, departmentsByType, TYPE_CAMPUS);
-                return rootNodes;
-            }
+        // 3. 以學段為根，構建 學段→年級→班級 部門樹
+        List<SysDepartmentVO> addressBookTree = getAddressBookDeptTree(segmentDepartmentId);
+        if (addressBookTree.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 4. 構建樹形結構並排序
-        buildAndSortTree(rootNodes, departmentsByType, TYPE_SCHOOL);
+        // 4. 為班級節點掛載已匹配學籍的家長聯絡人（class_section → student_info → sys_student_match → sys_school_family_contact）
+        loadMatchedAddressBookContacts(addressBookTree);
 
-        return rootNodes;
+        // 5. 按管理員權限剪枝後返回
+        return filterTree(addressBookTree, adminDeptIds);
     }
 
     /**
-     * 獲取班級樹形結構（帶家長學生關係，私有輔助方法，供 ByAdmin 方法內部使用）
-     */
-    private List<SysDepartment> getClassTreeWithParents() {
-        // 1. 獲取基礎樹形結構
-        List<SysDepartment> tree = getClassTree();
-        
-        // 2. 爲 type=1 的班級添加家長學生關係數據
-        if (!tree.isEmpty()) {
-            loadSchoolFamilyContacts(tree);
-        }
-        
-        return tree;
-    }
-
-    /**
-     * 查詢該用戶在 sys_department_admin 中管理的所有部門 ID
+     * 查詢當前用戶在企微家校通訊錄中可管理的部門 ID 集合。
      *
-     * @param openUserId 企業微信 userid
-     * @return 部門 ID 集合（空集合表示無權限記錄）
+     * @param openUserId 企業微信 userid（當前登錄用戶）
+     * @return 可管理部門 ID 集合；無記錄時返回空集合
      */
     private Set<Long> getAdminDepartmentIds(String openUserId) {
         if (openUserId == null || openUserId.isEmpty()) {
             return Collections.emptySet();
         }
+        // 查詢該用戶在 sys_department_admin 中的管理記錄
         List<SysDepartmentAdmin> adminRecords = departmentAdminMapper.selectByUserid(openUserId);
         if (adminRecords == null || adminRecords.isEmpty()) {
             return Collections.emptySet();
         }
+        // 提取部門 ID（可能含學段、年級、班級等不同層級）
         Set<Long> ids = new HashSet<>();
         for (SysDepartmentAdmin record : adminRecords) {
             if (record.getDepartmentId() != null) {
@@ -176,6 +112,151 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
             }
         }
         return ids;
+    }
+
+    /**
+     * 根據配置的學段部門 ID，構建 學段(type=3) → 年級(2) → 班級(1) 樹。
+     */
+    private List<SysDepartmentVO> getAddressBookDeptTree(Long segmentDepartmentId) {
+        // 查詢全部部門（順序沿用 SQL：type ASC, order_num ASC）
+        List<SysDepartment> allDepartments = departmentMapper.selectAll();
+        if (allDepartments == null || allDepartments.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 定位配置的學段節點，必須為 type=3
+        SysDepartment segment = allDepartments.stream()
+                .filter(dept -> dept != null && segmentDepartmentId != null
+                        && segmentDepartmentId.equals(dept.getId()))
+                .findFirst()
+                .orElse(null);
+        if (segment == null || segment.getType() == null || segment.getType() != TYPE_SCHOOL_SEGMENT) {
+            return Collections.emptyList();
+        }
+
+        // 以學段為根，向下掛載年級、班級子節點
+        List<SysDepartmentVO> rootNodes = Collections.singletonList(toDeptVo(segment));
+        // 從學段向下構建部門樹（僅到 type=1 班級），順序沿用 SQL 查詢結果。
+        buildAddressBookDeptTree(rootNodes, allDepartments, TYPE_SCHOOL_SEGMENT);
+        // 響應數據
+        return rootNodes;
+    }
+
+    /**
+     * 從學段向下遞歸構建部門樹（僅到 type=1 班級），順序沿用 SQL 查詢結果。
+     *
+     * @param currentLevel   當前層級節點（首次調用為學段根節點）
+     * @param allDepartments 全部部門扁平列表（來自 selectAll）
+     * @param currentType    當前層級 type（首次為 3 學段，遞歸時依次為 2 年級）
+     */
+    private void buildAddressBookDeptTree(List<SysDepartmentVO> currentLevel,
+                                          List<SysDepartment> allDepartments,
+                                          int currentType) {
+        if (currentLevel == null || currentLevel.isEmpty()) {
+            return;
+        }
+
+        // 下一層 type 遞減：學段(3) → 年級(2) → 班級(1)
+        int nextType = currentType - 1;
+        if (nextType < TYPE_CLASS) {
+            return;
+        }
+
+        for (SysDepartmentVO currentDept : currentLevel) {
+            if (currentDept == null || currentDept.getId() == null) {
+                continue;
+            }
+
+            long currentId = currentDept.getId();
+            // 從全量列表中篩選 parent_id 指向當前節點的直接子部門
+            List<SysDepartmentVO> children = new ArrayList<>();
+            for (SysDepartment dept : allDepartments) {
+                if (dept == null || dept.getType() == null || dept.getType() != nextType) {
+                    continue;
+                }
+                if (dept.getParentId() != null && dept.getParentId().longValue() == currentId) {
+                    children.add(toDeptVo(dept));
+                }
+            }
+
+            if (!children.isEmpty()) {
+                currentDept.setChildren(children);
+                // 班級為葉子節點，不再向下遞歸
+                if (nextType > TYPE_CLASS) {
+                    buildAddressBookDeptTree(children, allDepartments, nextType);
+                }
+            }
+        }
+    }
+
+    /** 將部門實體轉為 VO（僅含 sys_department 表字段） */
+    private SysDepartmentVO toDeptVo(SysDepartment dept) {
+        return BeanCopyUtils.copy(dept, SysDepartmentVO.class);
+    }
+
+    /**
+     * 為班級節點加載已匹配學籍的家長聯絡人。
+     * <p>關聯：部門 name → class_section → student_info → sys_student_match → sys_school_family_contact</p>
+     */
+    private void loadMatchedAddressBookContacts(List<SysDepartmentVO> nodes) {
+        if (nodes == null || nodes.isEmpty()) {
+            return;
+        }
+
+        // 1. 遞歸收集樹中所有班級節點（type=1）
+        List<SysDepartmentVO> classNodes = new ArrayList<>();
+        collectClassNodes(nodes, classNodes);
+        if (classNodes.isEmpty()) {
+            return;
+        }
+
+        // 2. 提取班級部門 ID，批量查詢（避免 N+1）
+        List<Long> classIds = classNodes.stream()
+                .map(SysDepartmentVO::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (classIds.isEmpty()) {
+            return;
+        }
+
+        // 3. 按關聯鏈查詢已匹配學籍的家長聯絡人
+        List<SysSchoolFamilyContactVO> allRelations = schoolFamilyContactMapper
+                .selectMatchedContactsByDepartmentIds(
+                        classIds,
+                        studentProfilesProperties.getDatabase()
+                );
+        if (allRelations == null || allRelations.isEmpty()) {
+            return;
+        }
+
+        // 4. 按班級部門 ID 分組，便於掛載到對應班級節點下
+        Map<Long, List<SysSchoolFamilyContactVO>> relationsByClassId = allRelations.stream()
+                .filter(Objects::nonNull)
+                .filter(relation -> relation.getDepartmentId() != null)
+                .collect(Collectors.groupingBy(SysSchoolFamilyContactVO::getDepartmentId));
+
+        // 5. 將家長聯絡人轉為葉子節點，掛到各班級下
+        for (SysDepartmentVO classNode : classNodes) {
+            List<SysSchoolFamilyContactVO> relations = relationsByClassId.get(classNode.getId());
+            if (relations == null || relations.isEmpty()) {
+                continue;
+            }
+
+            if (classNode.getChildren() == null) {
+                classNode.setChildren(new ArrayList<>());
+            }
+
+            for (SysSchoolFamilyContactVO relation : relations) {
+                classNode.getChildren().add(
+                        //  將家長學生關係轉換爲葉子 VO 節點
+                        convertToLeafVo(
+                                relation,
+                                classNode.getId()
+                        )
+                );
+            }
+        }
     }
 
     /**
@@ -188,23 +269,25 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
      * @param adminIds   有權限的部門 ID 集合
      * @return 過濾後的節點列表
      */
-    private List<SysDepartment> filterTree(List<SysDepartment> nodes, Set<Long> adminIds) {
+    private List<SysDepartmentVO> filterTree(List<SysDepartmentVO> nodes, Set<Long> adminIds) {
         if (nodes == null || nodes.isEmpty()) {
             return Collections.emptyList();
         }
-        List<SysDepartment> result = new ArrayList<>();
-        for (SysDepartment node : nodes) {
-            if (node == null) continue;
+        List<SysDepartmentVO> result = new ArrayList<>();
+        for (SysDepartmentVO node : nodes) {
+            if (node == null) {
+                continue;
+            }
 
             if (adminIds.contains(node.getId())) {
                 // 當前節點有權限，直接保留（子節點全部保留，無需繼續過濾）
                 result.add(node);
             } else {
                 // 遞歸過濾子節點
-                List<SysDepartment> filteredChildren = filterTree(node.getChildren(), adminIds);
+                List<SysDepartmentVO> filteredChildren = filterTree(node.getChildren(), adminIds);
                 if (!filteredChildren.isEmpty()) {
                     // 有子節點保留，則當前節點也保留（作爲路徑節點），並替換子節點列表
-                    SysDepartment copy = shallowCopy(node);
+                    SysDepartmentVO copy = shallowCopyDeptVo(node);
                     copy.setChildren(filteredChildren);
                     result.add(copy);
                 }
@@ -217,8 +300,8 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     /**
      * 淺拷貝部門節點（不包含子節點，用於構建剪枝後的路徑節點）
      */
-    private SysDepartment shallowCopy(SysDepartment src) {
-        SysDepartment copy = new SysDepartment();
+    private SysDepartmentVO shallowCopyDeptVo(SysDepartmentVO src) {
+        SysDepartmentVO copy = new SysDepartmentVO();
         copy.setId(src.getId());
         copy.setParentId(src.getParentId());
         copy.setName(src.getName());
@@ -229,149 +312,30 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
         copy.setIsGraduated(src.getIsGraduated());
         copy.setOpenGroupChat(src.getOpenGroupChat());
         copy.setGroupChatId(src.getGroupChatId());
-        copy.setIsLeaf(src.getIsLeaf());
         return copy;
     }
 
     /**
-     * 構建樹形結構並排序（合併了構建和排序邏輯）
-     * 從指定類型開始，逐級向下構建，並對每層進行排序
-     */
-    private void buildAndSortTree(List<SysDepartment> currentLevel,
-                                   Map<Integer, List<SysDepartment>> departmentsByType,
-                                   Integer currentType) {
-        if (currentLevel == null || currentLevel.isEmpty()) {
-            return;
-        }
-
-        currentLevel.sort(Comparator.comparing(
-                dept -> dept.getName() != null ? dept.getName() : "",
-                NAME_COLLATOR
-        ));
-
-        Integer nextType = currentType - 1;
-        if (nextType < TYPE_CLASS || !departmentsByType.containsKey(nextType)) {
-            return;
-        }
-
-        List<SysDepartment> nextLevelDepartments = departmentsByType.get(nextType);
-        if (nextLevelDepartments == null) {
-            return;
-        }
-
-        for (SysDepartment currentDept : currentLevel) {
-            if (currentDept == null || currentDept.getId() == null) {
-                continue;
-            }
-
-            long currentId = currentDept.getId();
-            List<SysDepartment> children = nextLevelDepartments.stream()
-                    .filter(Objects::nonNull)
-                    .filter(dept -> dept.getParentId() != null)
-                    .filter(dept -> dept.getParentId().longValue() == currentId)
-                    .collect(Collectors.toList());
-
-            if (!children.isEmpty()) {
-                currentDept.setChildren(children);
-                if (nextType > TYPE_CLASS) {
-                    buildAndSortTree(children, departmentsByType, nextType);
-                }
-            }
-        }
-    }
-
-    /**
-     * 爲班級節點加載家長學生關係數據
-     * 批量查詢所有班級的家長數據，避免 N+1 問題
-     *
-     * @param nodes 部門節點列表
-     */
-    private void loadSchoolFamilyContacts(List<SysDepartment> nodes) {
-        if (nodes == null || nodes.isEmpty()) {
-            return;
-        }
-        
-        // 1. 收集所有班級節點
-        List<SysDepartment> classNodes = new ArrayList<>();
-        collectClassNodes(nodes, classNodes);
-        
-        if (classNodes.isEmpty()) {
-            return;
-        }
-        
-        // 2. 收集所有班級 ID
-        List<Long> classIds = classNodes.stream()
-                .map(SysDepartment::getId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-        
-        if (classIds.isEmpty()) {
-            return;
-        }
-        
-        // 3. 批量查詢所有班級的家長學生關係
-        List<SysSchoolFamilyContact> allRelations = schoolFamilyContactMapper.selectByDepartmentIds(classIds);
-
-        if (allRelations == null || allRelations.isEmpty()) {
-            return;
-        }
-
-        Map<Long, List<SysSchoolFamilyContact>> relationsByClassId = allRelations.stream()
-                .filter(Objects::nonNull)
-                .filter(relation -> relation.getDepartmentId() != null)
-                .collect(Collectors.groupingBy(SysSchoolFamilyContact::getDepartmentId));
-
-        for (SysDepartment classNode : classNodes) {
-            List<SysSchoolFamilyContact> relations = relationsByClassId.get(classNode.getId());
-            if (relations == null || relations.isEmpty()) {
-                continue;
-            }
-
-            if (classNode.getChildren() == null) {
-                classNode.setChildren(new ArrayList<>());
-            }
-
-            for (SysSchoolFamilyContact relation : relations) {
-                SysDepartment node = convertToDepartmentNode(relation, classNode.getId());
-                classNode.getChildren().add(node);
-            }
-            sortChildrenByName(classNode);
-        }
-    }
-
-    /** 按名稱對節點的子列表排序 */
-    private void sortChildrenByName(SysDepartment node) {
-        if (node == null || node.getChildren() == null || node.getChildren().size() < 2) {
-            return;
-        }
-        node.getChildren().sort(Comparator.comparing(
-                dept -> dept.getName() != null ? dept.getName() : "",
-                NAME_COLLATOR
-        ));
-    }
-    
-    /**
      * 遞歸收集所有班級節點（type=1）
      *
-     * @param nodes 部門節點列表
+     * @param nodes      部門節點列表
      * @param classNodes 用於存儲收集到的班級節點
      */
-    private void collectClassNodes(List<SysDepartment> nodes, List<SysDepartment> classNodes) {
+    private void collectClassNodes(List<SysDepartmentVO> nodes, List<SysDepartmentVO> classNodes) {
         if (nodes == null || nodes.isEmpty()) {
             return;
         }
-        
-        for (SysDepartment dept : nodes) {
+
+        for (SysDepartmentVO dept : nodes) {
             if (dept == null) {
                 continue;
             }
-            
+
             // 如果是班級節點（type=1），添加到集合中
             if (dept.getType() != null && dept.getType() == TYPE_CLASS) {
                 classNodes.add(dept);
             }
-            
+
             // 遞歸處理子節點
             if (dept.getChildren() != null && !dept.getChildren().isEmpty()) {
                 collectClassNodes(dept.getChildren(), classNodes);
@@ -380,55 +344,63 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     }
 
     /**
-     * 將家長學生關係轉換爲部門節點
+     * 將家長學生關係轉換爲葉子 VO 節點
      * 節點名稱格式：學生姓名 - 關係描述（如：張三 - 父親）
      *
-     * @param relation 家長學生關係
+     * @param relation          家長學生關係
      * @param classDepartmentId 所屬家長班級部門 ID
-     * @return 部門節點
+     * @return 葉子 VO 節點
      */
-    private SysDepartment convertToDepartmentNode(SysSchoolFamilyContact relation, Long classDepartmentId) {
-        // 創建部門節點
-        SysDepartment node = new SysDepartment();
+    private SysDepartmentVO convertToLeafVo(SysSchoolFamilyContactVO relation, Long classDepartmentId) {
+        SysDepartmentVO node = new SysDepartmentVO();
         node.setId(relation.getId());
         node.setStudentUserId(relation.getStudentUserId());
+        node.setStudentId(relation.getStudentId());
         node.setParentUserId(relation.getParentUserId());
         node.setClassDepartmentId(classDepartmentId);
-        
+
         // 構建顯示名稱：學生姓名 - 關係描述
         String studentName = relation.getStudentName() != null ? relation.getStudentName() : "未知";
         String relationDesc = relation.getRelationDesc() != null ? relation.getRelationDesc() : "";
         node.setName(studentName + (relationDesc.isEmpty() ? "" : "-" + relationDesc));
-        
+
         node.setRelationDesc(relationDesc);
         node.setMobile(relation.getMobile());
         node.setIsLeaf(true);
         return node;
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void batchSaveDepartments(List<SysDepartment> departments) {
-        if (departments != null && !departments.isEmpty()) {
-            departmentMapper.batchInsertDepartments(departments);
-        }
-    }
+    // =========================================================================
+    // 同步家校通訊錄使用
+    // =========================================================================
 
+    /**
+     * 查詢家校通訊錄中所有班級部門 ID（type=1）。
+     *
+     * @return 班級部門 ID 列表，無符合條件時返回空列表
+     */
     @Override
     public List<Long> getClassDepartmentId() {
         return departmentMapper.selectClassDepartmentId();
     }
 
+    // =========================================================================
+    // 同步部門數據使用
+    // =========================================================================
+
     /**
      * 同步學校部門數據
+     *
      * @param departmentJson 微信接口返回的部門 JSON 數據
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void syncSchoolDepartmentData(JSONObject departmentJson) {
-
         // 1. 獲取部門數據
-        if (departmentJson != null && departmentJson.getInteger("errcode") != null && departmentJson.getInteger("errcode") == 0) {
+        if (departmentJson != null
+                && departmentJson.getInteger("errcode") != null
+                && departmentJson.getInteger("errcode") == 0) {
+
             JSONArray departmentsArray = departmentJson.getJSONArray("departments");
             // 2. 批量保存部門數據
             if (departmentsArray != null && !departmentsArray.isEmpty()) {
@@ -453,24 +425,25 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
                 }
                 // 批量保存部門數據
                 batchSaveDepartments(departmentsToSave);
+
                 // 3. 批量保存部門管理員數據
                 List<SysDepartmentAdmin> allAdmins = new ArrayList<>();
                 for (int i = 0; i < departmentsArray.size(); i++) {
                     JSONObject deptObj = departmentsArray.getJSONObject(i);
                     JSONArray adminsArray = deptObj.getJSONArray("department_admins");
-                    
+
                     if (adminsArray != null && !adminsArray.isEmpty()) {
                         Long departmentId = deptObj.getLong("id");
-                        
+
                         for (int j = 0; j < adminsArray.size(); j++) {
                             JSONObject adminObj = adminsArray.getJSONObject(j);
-                            
+
                             SysDepartmentAdmin admin = new SysDepartmentAdmin();
                             admin.setDepartmentId(departmentId);
                             admin.setUserid(adminObj.getString("userid"));
                             admin.setType(adminObj.getInteger("type"));
                             admin.setSubject(adminObj.getString("subject"));
-                            
+
                             allAdmins.add(admin);
                         }
                     }
@@ -484,13 +457,29 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
         }
     }
 
+
+    /**
+     * 批量寫入或更新家校通訊錄部門數據。
+     *
+     * @param departments 待保存的部門列表
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void batchSaveDepartments(List<SysDepartment> departments) {
+        if (departments != null && !departments.isEmpty()) {
+            departmentMapper.batchInsertDepartments(departments);
+        }
+    }
+
+    // =========================================================================
+    // 系統基礎設置使用
+    // =========================================================================
+
     /**
      * 獲取學段樹，供基本設置頁選擇家校通訊錄使用的學段（type=3）。
      */
     @Override
     public List<SysDepartmentVO> getSegmentTree() {
-        return BeanCopyUtils.copyTree(getSegmentTreeInternal(), SysDepartmentVO.class,
-                SysDepartment::getChildren, SysDepartmentVO::setChildren);
+        return getSegmentTreeInternal();
     }
 
     /**
@@ -498,7 +487,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
      * <p>層級：type 5(學校) → type 4(校區) → type 3(學段)，不含年級/班級。
      * 順序沿用 {@link SysDepartmentMapper#selectAll()} 的 SQL 排序結果。</p>
      */
-    private List<SysDepartment> getSegmentTreeInternal() {
+    private List<SysDepartmentVO> getSegmentTreeInternal() {
         // 獲取部門數據
         List<SysDepartment> allDepartments = departmentMapper.selectAll();
         if (allDepartments == null || allDepartments.isEmpty()) {
@@ -506,9 +495,13 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
         }
 
         // 優先以學校為根；若無學校節點則退而從校區開始
-        List<SysDepartment> rootNodes = collectDepartmentsByType(allDepartments, TYPE_SCHOOL);
+        List<SysDepartmentVO> rootNodes = collectDepartmentsByType(allDepartments, TYPE_SCHOOL).stream()
+                .map(this::toDeptVo)
+                .collect(Collectors.toList());
         if (rootNodes.isEmpty()) {
-            rootNodes = collectDepartmentsByType(allDepartments, TYPE_CAMPUS);
+            rootNodes = collectDepartmentsByType(allDepartments, TYPE_CAMPUS).stream()
+                    .map(this::toDeptVo)
+                    .collect(Collectors.toList());
             if (!rootNodes.isEmpty()) {
                 buildSegmentTree(rootNodes, allDepartments, TYPE_CAMPUS);
                 return rootNodes;
@@ -542,7 +535,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
      * @param allDepartments 全部部門（已按 SQL 排序）
      * @param currentType    當前層類型（5=學校，4=校區）
      */
-    private void buildSegmentTree(List<SysDepartment> currentLevel,
+    private void buildSegmentTree(List<SysDepartmentVO> currentLevel,
                                   List<SysDepartment> allDepartments,
                                   Integer currentType) {
         if (currentLevel == null || currentLevel.isEmpty()) {
@@ -555,20 +548,20 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
             return;
         }
 
-        for (SysDepartment currentDept : currentLevel) {
+        for (SysDepartmentVO currentDept : currentLevel) {
             if (currentDept == null || currentDept.getId() == null) {
                 continue;
             }
 
             long currentId = currentDept.getId();
             // 遍歷全表，按 SQL 順序收集直接子節點
-            List<SysDepartment> children = new ArrayList<>();
+            List<SysDepartmentVO> children = new ArrayList<>();
             for (SysDepartment dept : allDepartments) {
                 if (dept == null || dept.getType() == null || !dept.getType().equals(nextType)) {
                     continue;
                 }
                 if (dept.getParentId() != null && dept.getParentId().longValue() == currentId) {
-                    children.add(dept);
+                    children.add(toDeptVo(dept));
                 }
             }
 
@@ -581,5 +574,4 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
             }
         }
     }
-
 }

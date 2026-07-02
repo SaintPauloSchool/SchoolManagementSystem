@@ -86,11 +86,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{matchId}
     </select>
 
-    <select id="selectMatchIdByStudentId" resultType="Long">
+    <select id="selectMatchIdByStudentIdAndUserId" resultType="Long">
         select id
         from sys_student_match
         where student_id = #{studentId}
+          and user_id = #{userId}
         limit 1
+    </select>
+
+    <select id="selectAllStudentsForMatch" resultMap="SysStudentMatchVOResult">
+        select si.student_id, si.in_school, si.school_year, si.student_profile_number,
+               si.adid, si.class_section, si.class_num, si.id_name, si.dsej_student_id
+        from ${studentProfilesDatabase}.student_info si
+        where si.student_id is not null
+        order by si.class_section, si.class_num, si.id_name, si.student_profile_number
     </select>
 
     <insert id="saveOrUpdateStudentMatch" useGeneratedKeys="true" keyProperty="id">

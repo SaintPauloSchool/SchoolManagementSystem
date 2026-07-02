@@ -5,7 +5,7 @@ import java.util.Date;
 
 /**
  * 學生數據匹配表 sys_student_match
- * <p>僅保存已匹配成功的記錄，未匹配學籍資料來自 student_profiles 庫。</p>
+ * <p>學生與家長為多對多：同一 student_id 可對應多條記錄（每位家長一條 user_id）。</p>
  */
 public class SysStudentMatch implements Serializable {
     private static final long serialVersionUID = 1L;

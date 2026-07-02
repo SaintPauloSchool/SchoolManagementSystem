@@ -17,8 +17,11 @@
     </resultMap>
 
     <resultMap type="com.sms.system.entity.vo.SysSchoolFamilyContactVO" id="SysSchoolFamilyContactVOResult">
+        <result property="id" column="id"/>
+        <result property="departmentId" column="department_id"/>
         <result property="parentUserId" column="parent_user_id"/>
         <result property="studentUserId" column="student_user_id"/>
+        <result property="studentId" column="student_id"/>
         <result property="studentName" column="student_name"/>
         <result property="mobile" column="mobile"/>
         <result property="relationDesc" column="relation_desc"/>
@@ -150,6 +153,32 @@
         INNER JOIN sys_department d ON r.department_id = d.id
         INNER JOIN class_section cs ON d.name = cs.class_section_dsedj
         ORDER BY r.student_name ASC
+    </select>
+
+    <select id="selectMatchedContactsByDepartmentIds" resultMap="SysSchoolFamilyContactVOResult">
+        SELECT DISTINCT
+            sfc.id,
+            sfc.department_id,
+            sfc.parent_user_id,
+            sfc.student_user_id,
+            m.student_id AS student_id,
+            sfc.student_name,
+            sfc.relation_desc,
+            sfc.mobile,
+            sfc.create_time,
+            sfc.update_time
+        FROM sys_school_family_contact sfc
+        INNER JOIN sys_department d ON sfc.department_id = d.id AND d.type = 1
+        INNER JOIN class_section cs ON d.name = cs.class_section_dsedj
+        INNER JOIN ${studentProfilesDatabase}.student_info si
+            ON si.class_section COLLATE utf8mb4_unicode_ci = cs.class_section_sp COLLATE utf8mb4_unicode_ci
+        INNER JOIN sys_student_match m
+            ON m.student_id COLLATE utf8mb4_unicode_ci = si.student_id COLLATE utf8mb4_unicode_ci
+            AND m.user_id COLLATE utf8mb4_unicode_ci = sfc.parent_user_id COLLATE utf8mb4_unicode_ci
+        WHERE sfc.department_id IN
+        <foreach collection="departmentIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
     </select>
 
 </mapper>

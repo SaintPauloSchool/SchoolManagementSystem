@@ -47,14 +47,19 @@ public interface SysStudentMatchMapper {
     int countMatchById(@Param("matchId") Long matchId);
 
     /**
-     * 根據學生 ID 查詢匹配記錄 ID
-     *
-     * @return 匹配記錄 ID，不存在則為 null
+     * 根據學生 ID 與家長 user_id 查詢匹配記錄 ID
      */
-    Long selectMatchIdByStudentId(@Param("studentId") String studentId);
+    Long selectMatchIdByStudentIdAndUserId(@Param("studentId") String studentId,
+                                           @Param("userId") String userId);
 
     /**
-     * 保存已匹配記錄：不存在則新增，已存在則按 student_id 更新
+     * 查詢全部學籍學生（用於自動匹配，每位學生一條）
+     */
+    List<SysStudentMatchVO> selectAllStudentsForMatch(
+            @Param("studentProfilesDatabase") String studentProfilesDatabase);
+
+    /**
+     * 保存已匹配記錄：不存在則新增，已存在則按 (student_id, user_id) 更新
      */
     int saveOrUpdateStudentMatch(SysStudentMatch studentMatch);
 

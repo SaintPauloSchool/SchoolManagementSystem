@@ -16,31 +16,6 @@
         </template>
       
         <div class="receivers-section">
-          <!-- 班級選擇 -->
-          <el-form-item label="選擇班級">
-            <div class="selection-item">
-              <el-button 
-                type="primary" 
-                @click="openClassSelector"
-                plain
-              >
-                已選擇 {{ selectedClasses.length }} 個班級
-                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <div v-if="selectedClasses.length > 0" class="selected-tags">
-                <el-tag
-                  v-for="cls in selectedClasses"
-                  :key="cls.id"
-                  closable
-                  @close="removeClass(cls)"
-                  class="tag-item"
-                >
-                  {{ cls.name }}
-                </el-tag>
-              </div>
-            </div>
-          </el-form-item>
-      
           <!-- 學生/家長選擇 -->
           <el-form-item label="選擇學生/家長">
             <div class="selection-item">
@@ -179,12 +154,6 @@
     </el-form>
 
     <!-- 選擇器對話框 -->
-    <ClassSelectorDialog
-      v-model:visible="classSelectorVisible"
-      :selected-classes="selectedClasses"
-      @confirm="handleClassSelect"
-    />
-
     <StudentSelectorDialog
       v-model:visible="studentSelectorVisible"
       :selected-students="selectedStudents"
@@ -211,7 +180,6 @@
 <script>
 import { ElNotification } from 'element-plus'
 import { ArrowDown, ArrowLeft, Promotion, User, Message, Setting } from '@element-plus/icons-vue'
-import ClassSelectorDialog from './selectors/ClassSelectorDialog.vue'
 import StudentSelectorDialog from './selectors/StudentSelectorDialog.vue'
 import StaffSelectorDialog from './selectors/StaffSelectorDialog.vue'
 import DirectorySelectorDialog from './selectors/DirectorySelectorDialog.vue'
@@ -220,7 +188,6 @@ import dayjs from 'dayjs'
 export default {
   name: 'SendSettingsForm',
   components: {
-    ClassSelectorDialog,
     StudentSelectorDialog,
     StaffSelectorDialog,
     DirectorySelectorDialog
@@ -240,12 +207,10 @@ export default {
     return {
       localFormData: { ...this.formData },
       
-      classSelectorVisible: false,
       studentSelectorVisible: false,
       ccStaffSelectorVisible: false,
       directorySelectorVisible: false,
       
-      selectedClasses: [],
       selectedStudents: [],
       selectedCcStaff: [],
       selectedCcDirectory: []
@@ -274,22 +239,7 @@ export default {
       if (this.localFormData.receivers) {
         this.localFormData.receivers.forEach(receiver => {
           try {
-            if (receiver.receiveType === '1') {
-               if (receiver.receiveData) {
-                  const dataArr = JSON.parse(receiver.receiveData);
-                  dataArr.forEach(group => {
-                     const ids = group.receive_ids || [];
-                     const names = group.receive_names || [];
-                     const type = group.type || 1;
-                     ids.forEach((id, index) => {
-                        const item = { id: id, name: names[index] || '', type: type };
-                        if (!this.selectedClasses.some(c => c.id === id)) {
-                           this.selectedClasses.push(item);
-                        }
-                     });
-                  });
-               }
-            } else if (receiver.receiveType === '2') {
+            if (receiver.receiveType === '2') {
                if (receiver.receiveData) {
                   const dataArr = JSON.parse(receiver.receiveData);
                   dataArr.forEach(group => {
@@ -352,8 +302,7 @@ export default {
 
     validate() {
       return new Promise((resolve, reject) => {
-        const hasReceivers = this.selectedClasses.length > 0 || 
-                           this.selectedStudents.length > 0
+        const hasReceivers = this.selectedStudents.length > 0
         
         if (!hasReceivers) {
           ElNotification({ title: "提示", message: '請至少選擇一個接收對象', type: "warning", duration: 3000 })
@@ -399,7 +348,6 @@ export default {
     },
 
     resetForm() {
-      this.selectedClasses = []
       this.selectedStudents = []
       this.selectedCcStaff = []
       this.selectedCcDirectory = []
@@ -425,33 +373,7 @@ export default {
 
     syncData() {
       const receivers = []
-      
-      if (this.selectedClasses.length > 0) {
-        const type1Classes = this.selectedClasses.filter(c => c.type === 1 || !c.type);
-        const type2Classes = this.selectedClasses.filter(c => c.type === 2);
-        
-        const receiveDataPayload = [];
-        if (type1Classes.length > 0) {
-           receiveDataPayload.push({
-               receive_ids: type1Classes.map(c => c.id),
-               type: 1,
-               receive_names: type1Classes.map(c => c.name)
-           });
-        }
-        if (type2Classes.length > 0) {
-           receiveDataPayload.push({
-               receive_ids: type2Classes.map(c => c.id),
-               type: 2,
-               receive_names: type2Classes.map(c => c.name)
-           });
-        }
 
-        receivers.push({
-          receiveType: '1',
-          receiveData: JSON.stringify(receiveDataPayload)
-        })
-      }
-      
       if (this.selectedStudents.length > 0) {
         const type1Students = this.selectedStudents.filter(s => s.type === 1 || !s.type);
         const type2Students = this.selectedStudents.filter(s => s.type === 2);
@@ -546,10 +468,6 @@ export default {
       Object.assign(this.formData, this.localFormData)
     },
 
-    openClassSelector() {
-      this.classSelectorVisible = true
-    },
-
     openStudentSelector() {
       this.studentSelectorVisible = true
     },
@@ -562,10 +480,6 @@ export default {
       this.directorySelectorVisible = true
     },
 
-    handleClassSelect(classes) {
-      this.selectedClasses = classes
-    },
-
     handleStudentSelect(students) {
       this.selectedStudents = students
     },
@@ -576,13 +490,6 @@ export default {
 
     handleDirectorySelect(directories) {
       this.selectedCcDirectory = directories
-    },
-
-    removeClass(cls) {
-      const index = this.selectedClasses.findIndex(c => c.id === cls.id)
-      if (index > -1) {
-        this.selectedClasses.splice(index, 1)
-      }
     },
 
     removeStudent(student) {

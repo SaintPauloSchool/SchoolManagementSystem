@@ -118,13 +118,12 @@
                 詳情
               </el-button>
               <el-button 
-                v-if="!scope.row.userId || scope.row.matchStatus === '0'"
                 size="small" 
                 type="primary" 
                 :icon="Edit"
                 @click="handleManualMatch(scope.row)"
               >
-                手動匹配
+                {{ scope.row.userId ? '添加家長' : '手動匹配' }}
               </el-button>
             </div>
           </template>
@@ -598,7 +597,8 @@ export default {
             pageSize: this.candidatesPagination.pageSize,
             queryName: this.candidatesQuery.queryName,
             queryMobile: this.candidatesQuery.queryMobile,
-            queryClass: this.candidatesQuery.queryClass
+            queryClass: this.candidatesQuery.queryClass,
+            studentId: this.currentMatchingRow?.studentId || ''
           }
         })
         if (res.code === 200 || res.code === 0) {
@@ -631,7 +631,6 @@ export default {
           url: '/system/student/match/bind',
           method: 'post',
           data: {
-            matchId: this.currentMatchingRow.id || null,
             studentId: this.currentMatchingRow.studentId,
             userId: wecomStudent.parentUserId
           }

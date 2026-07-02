@@ -4,11 +4,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * 部門對象 sys_department
- *
  */
 public class SysDepartment implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -42,27 +40,6 @@ public class SysDepartment implements Serializable {
 
     /** 班級群 id */
     private String groupChatId;
-
-    /** 家長用戶 ID（type=10 時使用） */
-    private String parentUserId;
-
-    /** 學生用戶 ID（type=11 時使用） */
-    private String studentUserId;
-
-    /** 關係描述（type=11 時使用） */
-    private String relationDesc;
-
-    /** 手機號（type=11 時使用） */
-    private String mobile;
-
-    /** 是否葉子節點 */
-    private Boolean isLeaf;
-
-    /** 葉子節點所屬家長班級部門 ID（非數據庫字段） */
-    private Long classDepartmentId;
-
-    /** 子部門（非數據庫字段） */
-    private List<SysDepartment> children;
 
     public Long getId() {
         return id;
@@ -142,62 +119,6 @@ public class SysDepartment implements Serializable {
 
     public void setGroupChatId(String groupChatId) {
         this.groupChatId = groupChatId;
-    }
-
-    public String getParentUserId() {
-        return parentUserId;
-    }
-
-    public void setParentUserId(String parentUserId) {
-        this.parentUserId = parentUserId;
-    }
-
-    public String getStudentUserId() {
-        return studentUserId;
-    }
-
-    public void setStudentUserId(String studentUserId) {
-        this.studentUserId = studentUserId;
-    }
-
-    public String getRelationDesc() {
-        return relationDesc;
-    }
-
-    public void setRelationDesc(String relationDesc) {
-        this.relationDesc = relationDesc;
-    }
-
-    public String getMobile() {
-        return mobile;
-    }
-
-    public void setMobile(String mobile) {
-        this.mobile = mobile;
-    }
-
-    public Boolean getIsLeaf() {
-        return isLeaf;
-    }
-
-    public void setIsLeaf(Boolean isLeaf) {
-        this.isLeaf = isLeaf;
-    }
-
-    public Long getClassDepartmentId() {
-        return classDepartmentId;
-    }
-
-    public void setClassDepartmentId(Long classDepartmentId) {
-        this.classDepartmentId = classDepartmentId;
-    }
-
-    public List<SysDepartment> getChildren() {
-        return children;
-    }
-
-    public void setChildren(List<SysDepartment> children) {
-        this.children = children;
     }
 
     @Override

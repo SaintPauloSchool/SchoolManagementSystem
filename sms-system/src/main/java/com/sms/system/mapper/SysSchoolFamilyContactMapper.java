@@ -120,4 +120,16 @@ public interface SysSchoolFamilyContactMapper {
      * @return 含班級代碼的聯絡人 VO 列表
      */
     List<SysSchoolFamilyContactVO> selectSchoolFamilyContactWithClassList();
+
+    /**
+     * 按班級部門 ID 查詢已匹配學籍的家校聯絡人。
+     * <p>關聯鏈：部門 name → class_section → student_info.class_section → sys_student_match → parent_user_id</p>
+     *
+     * @param departmentIds           班級部門 ID 列表（type=1）
+     * @param studentProfilesDatabase 學籍庫名
+     * @return 已匹配學籍的聯絡人 VO 列表（含 studentId 等關聯字段）
+     */
+    List<SysSchoolFamilyContactVO> selectMatchedContactsByDepartmentIds(
+            @Param("departmentIds") List<Long> departmentIds,
+            @Param("studentProfilesDatabase") String studentProfilesDatabase);
 }

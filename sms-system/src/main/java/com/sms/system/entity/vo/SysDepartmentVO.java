@@ -21,6 +21,7 @@ public class SysDepartmentVO implements Serializable {
     private String groupChatId;
     private String parentUserId;
     private String studentUserId;
+    private String studentId;
     private String relationDesc;
     private String mobile;
     private Boolean isLeaf;
@@ -121,6 +122,14 @@ public class SysDepartmentVO implements Serializable {
 
     public void setStudentUserId(String studentUserId) {
         this.studentUserId = studentUserId;
+    }
+
+    public String getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
     public String getRelationDesc() {

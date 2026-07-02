@@ -473,8 +473,9 @@ CREATE TABLE IF NOT EXISTS sys_student_match (
     match_status CHAR(1) NOT NULL DEFAULT '0' COMMENT '匹配狀態 (0: 未匹配, 1: 自動匹配成功, 2: 手動匹配成功)',
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
     update_time DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
-    PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生數據匹配表';
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_student_parent (student_id, user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生數據匹配表（學生與家長多對多）';
 -- ----------------------------
 -- 系統公用配置表
 -- ----------------------------
