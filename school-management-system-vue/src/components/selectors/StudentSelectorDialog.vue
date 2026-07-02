@@ -64,7 +64,14 @@
                 @toggle-group="toggleGroupAll"
                 @toggle-parent="handleLeafNodeClick"
               />
-              <span v-else class="tree-node dept-node">
+              <span v-else class="tree-node dept-node" @click.stop>
+                <el-checkbox
+                  v-if="hasSelectableLeaves(data, 1)"
+                  :model-value="isDeptAllSelected(data, 1)"
+                  :indeterminate="isDeptIndeterminate(data, 1)"
+                  @change="toggleDept(data, 1)"
+                  class="dept-node-checkbox"
+                />
                 <el-icon v-if="data.type === 5" class="node-icon school-icon"><School /></el-icon>
                 <el-icon v-else-if="data.type === 4" class="node-icon campus-icon"><OfficeBuilding /></el-icon>
                 <el-icon v-else-if="data.type === 3" class="node-icon stage-icon"><Reading /></el-icon>
@@ -109,7 +116,14 @@
                 @toggle-group="toggleGroupAll"
                 @toggle-parent="handleLeafNodeClick"
               />
-              <span v-else class="tree-node dept-node">
+              <span v-else class="tree-node dept-node" @click.stop>
+                <el-checkbox
+                  v-if="hasSelectableLeaves(data, 2)"
+                  :model-value="isDeptAllSelected(data, 2)"
+                  :indeterminate="isDeptIndeterminate(data, 2)"
+                  @change="toggleDept(data, 2)"
+                  class="dept-node-checkbox"
+                />
                 <el-icon class="node-icon folder-icon"><Folder /></el-icon>
                 <span class="node-label">{{ node.label }}</span>
               </span>
@@ -125,16 +139,14 @@
             <span>已選擇</span>
             <span class="count-badge">{{ selectedStudentsWithDetails.length }}</span>
           </div>
-          <el-button
+          <button
             v-if="selectedStudentsWithDetails.length > 0"
-            link
-            type="primary"
-            size="small"
+            type="button"
             class="clear-all-btn"
             @click="clearAllSelected"
           >
             清空
-          </el-button>
+          </button>
         </div>
         <div class="selected-container" ref="selectedContainer">
           <div v-if="groupedSelectedDisplay.length > 0" class="selected-list">
@@ -142,12 +154,31 @@
               v-for="group in groupedSelectedDisplay"
               :key="group.key"
               class="selected-card"
+              :class="{ 'selected-card-dept': group.isDepartment }"
             >
-              <div class="selected-card-top">
-                <span class="student-avatar">{{ getNameInitial(group.studentName) }}</span>
+              <div class="selected-card-top" :class="{ 'selected-card-top-only': group.isDepartment }">
+                <span v-if="group.isDepartment" class="selected-dept-icon">
+                  <el-icon v-if="group.deptType === 5" class="node-icon school-icon"><School /></el-icon>
+                  <el-icon v-else-if="group.deptType === 4" class="node-icon campus-icon"><OfficeBuilding /></el-icon>
+                  <el-icon v-else-if="group.deptType === 3" class="node-icon stage-icon"><Reading /></el-icon>
+                  <el-icon v-else-if="group.deptType === 2" class="node-icon grade-icon"><Notebook /></el-icon>
+                  <el-icon v-else-if="group.deptType === 1" class="node-icon class-icon"><User /></el-icon>
+                  <el-icon v-else class="node-icon folder-icon"><Folder /></el-icon>
+                </span>
+                <span v-else class="student-avatar">{{ getNameInitial(group.studentName) }}</span>
                 <span class="selected-name">{{ group.studentName }}</span>
+                <span v-if="group.isDepartment" class="dept-member-count">{{ group.items.length }} 人</span>
                 <button
-                  v-if="group.items.length > 1"
+                  v-if="group.isDepartment"
+                  type="button"
+                  class="remove-dept-btn"
+                  title="移除該部門"
+                  @click="removeGroup(group)"
+                >
+                  <el-icon><CloseBold /></el-icon>
+                </button>
+                <button
+                  v-else-if="group.items.length > 1"
                   type="button"
                   class="remove-group-btn"
                   title="移除該學生全部家長"
@@ -156,7 +187,7 @@
                   全部移除
                 </button>
               </div>
-              <div class="selected-tags">
+              <div v-if="!group.isDepartment" class="selected-tags">
                 <button
                   v-for="item in group.items"
                   :key="`${item.type}-${item.id}-${item.departmentId}`"
@@ -249,19 +280,45 @@ export default {
       return this.filterTree(this.customTree, this.searchKeyword)
     },
     groupedSelectedDisplay() {
-      const groups = new Map()
+      const deptGroups = new Map()
+      const ungrouped = []
+
       this.selectedItems.forEach(item => {
+        if (item.sourceDeptId != null) {
+          const groupKey = `dept_${item.type}_${item.sourceDeptId}`
+          if (!deptGroups.has(groupKey)) {
+            deptGroups.set(groupKey, {
+              key: groupKey,
+              isDepartment: true,
+              studentName: item.sourceDeptName || '部門',
+              sourceDeptId: item.sourceDeptId,
+              deptType: item.sourceDeptType ?? null,
+              items: []
+            })
+          }
+          deptGroups.get(groupKey).items.push(item)
+        } else {
+          ungrouped.push(item)
+        }
+      })
+
+      const studentGroups = new Map()
+      ungrouped.forEach(item => {
         const studentName = this.extractStudentName(item.name)
         const groupKey = `${item.type}_${item.departmentId || 'none'}_${studentName}`
-        if (!groups.has(groupKey)) {
-          groups.set(groupKey, { key: groupKey, studentName, items: [] })
+        if (!studentGroups.has(groupKey)) {
+          studentGroups.set(groupKey, { key: groupKey, studentName, items: [] })
         }
-        groups.get(groupKey).items.push(item)
+        studentGroups.get(groupKey).items.push(item)
       })
-      return Array.from(groups.values()).map(group => ({
-        ...group,
-        relationText: group.items.map(i => this.getRelationLabel(i.name)).join('、')
-      }))
+
+      return [
+        ...Array.from(deptGroups.values()),
+        ...Array.from(studentGroups.values()).map(group => ({
+          ...group,
+          relationText: group.items.map(i => this.getRelationLabel(i.name)).join('、')
+        }))
+      ]
     }
   },
   watch: {
@@ -437,7 +494,10 @@ export default {
         parentUserId: student.parentUserId,
         relationDesc: student.relationDesc,
         mobile: student.mobile,
-        type: student.type === 2 ? 2 : 1
+        type: student.type === 2 ? 2 : 1,
+        sourceDeptId: student.sourceDeptId ?? null,
+        sourceDeptName: student.sourceDeptName ?? null,
+        sourceDeptType: student.sourceDeptType ?? null
       }))
     },
 
@@ -464,6 +524,87 @@ export default {
         departmentId: data.classDepartmentId || null,
         type: 2
       }
+    },
+
+    itemKey(item) {
+      return `${item.type}_${item.id}_${item.departmentId}`
+    },
+
+    collectSelectableLeaves(node, type) {
+      const items = []
+      const walk = (n) => {
+        if (!n) return
+        if (n.isStudentGroup) {
+          ;(n.parents || []).forEach(parent => {
+            items.push(this.buildSelectedItem(parent, type))
+          })
+          return
+        }
+        if (this.isLeafNode(n)) {
+          items.push(this.buildSelectedItem(n, type))
+          return
+        }
+        if (Array.isArray(n.children)) {
+          n.children.forEach(walk)
+        }
+      }
+
+      if (node.isStudentGroup || this.isLeafNode(node)) {
+        walk(node)
+      } else if (Array.isArray(node.children)) {
+        node.children.forEach(walk)
+      }
+      return items
+    },
+
+    hasSelectableLeaves(node, type) {
+      return this.collectSelectableLeaves(node, type).length > 0
+    },
+
+    isDeptAllSelected(dept, type) {
+      const leaves = this.collectSelectableLeaves(dept, type)
+      return leaves.length > 0 && leaves.every(item => this.findSelectedIndex(item) > -1)
+    },
+
+    isDeptIndeterminate(dept, type) {
+      const leaves = this.collectSelectableLeaves(dept, type)
+      if (leaves.length === 0) return false
+      const selectedCount = leaves.filter(item => this.findSelectedIndex(item) > -1).length
+      return selectedCount > 0 && selectedCount < leaves.length
+    },
+
+    toggleDept(dept, type) {
+      const leaves = this.collectSelectableLeaves(dept, type)
+      if (leaves.length === 0) return
+
+      const selectAll = !this.isDeptAllSelected(dept, type)
+      if (selectAll) {
+        leaves.forEach(item => {
+          const enriched = {
+            ...item,
+            sourceDeptId: dept.id,
+            sourceDeptName: dept.name,
+            sourceDeptType: dept.type ?? null
+          }
+          const index = this.findSelectedIndex(item)
+          if (index === -1) {
+            this.selectedItems.push(enriched)
+          } else {
+            this.selectedItems[index] = { ...this.selectedItems[index], ...enriched }
+          }
+        })
+      } else {
+        const removeKeys = new Set(leaves.map(leaf => this.itemKey(leaf)))
+        this.selectedItems = this.selectedItems.filter(
+          selected => !removeKeys.has(this.itemKey(selected))
+        )
+      }
+      this.$nextTick(() => {
+        this.$refs.selectedContainer?.scrollTo?.({
+          top: this.$refs.selectedContainer.scrollHeight,
+          behavior: 'smooth'
+        })
+      })
     },
 
     findSelectedIndex(item) {
@@ -524,6 +665,12 @@ export default {
     },
 
     removeGroup(group) {
+      if (group.isDepartment) {
+        this.selectedItems = this.selectedItems.filter(
+          item => item.sourceDeptId !== group.sourceDeptId
+        )
+        return
+      }
       group.items.forEach(item => this.removeSelectedStudent(item))
     },
 
@@ -595,8 +742,40 @@ export default {
 }
 
 .clear-all-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  background: #eff6ff;
   font-size: 13px;
-  padding: 0 4px;
+  font-weight: 500;
+  color: #2563eb;
+  cursor: pointer;
+  box-shadow: none;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.clear-all-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.clear-all-btn:active {
+  background: #bfdbfe;
+}
+
+.clear-all-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.clear-all-btn:focus:not(:focus-visible) {
+  box-shadow: none;
 }
 
 .count-badge {
@@ -649,9 +828,46 @@ export default {
   box-shadow: none;
 }
 
+.dept-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.dept-node-checkbox {
+  margin: 0;
+  height: 14px;
+  --el-checkbox-height: 14px;
+  flex-shrink: 0;
+}
+
 .dept-node .node-label {
   font-weight: 500;
   color: #374151;
+}
+
+.selected-dept-icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.selected-dept-icon .node-icon {
+  font-size: 18px;
+}
+
+.folder-icon {
+  color: #909399;
+}
+
+.dept-member-count {
+  font-size: 12px;
+  color: #6b7280;
+  flex-shrink: 0;
 }
 
 .selected-container {
@@ -724,8 +940,32 @@ export default {
   transition: color 0.15s;
 }
 
-.remove-group-btn:hover {
+.selected-card-dept {
+  padding: 10px 12px;
+}
+
+.selected-card-top-only {
+  margin-bottom: 0;
+}
+
+.remove-dept-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+
+.remove-dept-btn:hover {
   color: #ef4444;
+  background: #fef2f2;
 }
 
 .selected-tags {

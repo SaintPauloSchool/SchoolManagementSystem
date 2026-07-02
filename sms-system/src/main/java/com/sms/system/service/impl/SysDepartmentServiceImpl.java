@@ -180,6 +180,10 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
             }
 
             if (!children.isEmpty()) {
+                // 年級下的班級節點：先排全部學生部門，再排全部家長部門
+                if (nextType == TYPE_CLASS) {
+                    children.sort(this::compareClassDepartmentByRoleThenName);
+                }
                 currentDept.setChildren(children);
                 // 班級為葉子節點，不再向下遞歸
                 if (nextType > TYPE_CLASS) {
@@ -192,6 +196,35 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     /** 將部門實體轉為 VO（僅含 sys_department 表字段） */
     private SysDepartmentVO toDeptVo(SysDepartment dept) {
         return BeanCopyUtils.copy(dept, SysDepartmentVO.class);
+    }
+
+    /**
+     * 班級部門排序：學生部門在前、家長部門在後，同組內按名稱升序。
+     */
+    private int compareClassDepartmentByRoleThenName(SysDepartmentVO a, SysDepartmentVO b) {
+        int roleCompare = Integer.compare(
+                classDepartmentRoleRank(a != null ? a.getName() : null),
+                classDepartmentRoleRank(b != null ? b.getName() : null)
+        );
+        if (roleCompare != 0) {
+            return roleCompare;
+        }
+        String nameA = a != null && a.getName() != null ? a.getName() : "";
+        String nameB = b != null && b.getName() != null ? b.getName() : "";
+        return nameA.compareTo(nameB);
+    }
+
+    private int classDepartmentRoleRank(String name) {
+        if (name == null) {
+            return 2;
+        }
+        if (name.endsWith("_學生")) {
+            return 0;
+        }
+        if (name.endsWith("_家長")) {
+            return 1;
+        }
+        return 2;
     }
 
     /**

@@ -29,13 +29,15 @@
               </el-button>
               <div v-if="selectedStudents.length > 0" class="selected-tags">
                 <el-tag
-                  v-for="student in selectedStudents"
-                  :key="`${student.type || 1}-${student.id}-${student.departmentId}`"
+                  v-for="group in selectedStudentsDisplayGroups"
+                  :key="group.key"
                   closable
-                  @close="removeStudent(student)"
+                  :type="group.isDepartment ? 'warning' : undefined"
+                  @close="group.isDepartment ? removeDepartmentGroup(group) : removeStudent(group.student)"
                   class="tag-item"
+                  :class="{ 'dept-tag-item': group.isDepartment }"
                 >
-                  {{ student.name }}
+                  {{ group.isDepartment ? `${group.name}（${group.count} 人）` : (group.student?.name || '') }}
                 </el-tag>
               </div>
             </div>
@@ -217,9 +219,38 @@ export default {
     }
   },
   computed: {
-    // 獲取當前發布日期（通知創建時間）
     publishDate() {
       return this.localFormData.createTime || new Date()
+    },
+    selectedStudentsDisplayGroups() {
+      const deptGroups = new Map()
+      const individuals = []
+
+      this.selectedStudents.forEach(student => {
+        if (student.sourceDeptId != null) {
+          const key = `dept_${student.type || 1}_${student.sourceDeptId}`
+          if (!deptGroups.has(key)) {
+            deptGroups.set(key, {
+              key,
+              isDepartment: true,
+              name: student.sourceDeptName || '部門',
+              sourceDeptId: student.sourceDeptId,
+              type: student.type || 1,
+              count: 0
+            })
+          }
+          deptGroups.get(key).count += 1
+        } else {
+          individuals.push({
+            key: `person_${student.type || 1}-${student.id}-${student.departmentId}`,
+            isDepartment: false,
+            name: student.name || '',
+            student
+          })
+        }
+      })
+
+      return [...Array.from(deptGroups.values()), ...individuals]
     }
   },
   watch: {
@@ -501,6 +532,12 @@ export default {
       if (index > -1) {
         this.selectedStudents.splice(index, 1)
       }
+    },
+
+    removeDepartmentGroup(group) {
+      this.selectedStudents = this.selectedStudents.filter(
+        student => student.sourceDeptId !== group.sourceDeptId
+      )
     },
 
     removeCcStaff(staff) {
