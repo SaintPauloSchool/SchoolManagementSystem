@@ -53,6 +53,9 @@ public class SysSchoolDepartment implements Serializable {
     /** 關聯學生 UserID（家校成員節點，非數據庫字段） */
     private String studentUserId;
 
+    /** 家長 UserID（家校成員節點，非數據庫字段） */
+    private String parentUserId;
+
     public Long getId() {
         return id;
     }
@@ -155,6 +158,14 @@ public class SysSchoolDepartment implements Serializable {
 
     public void setStudentUserId(String studentUserId) {
         this.studentUserId = studentUserId;
+    }
+
+    public String getParentUserId() {
+        return parentUserId;
+    }
+
+    public void setParentUserId(String parentUserId) {
+        this.parentUserId = parentUserId;
     }
 
     @Override

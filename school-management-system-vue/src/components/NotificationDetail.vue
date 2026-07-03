@@ -695,25 +695,17 @@ export default {
       }
 
       try {
-        const dataArr = JSON.parse(receiver.receiveData);
-        const grouped = {};
+        const type = receiver.receiveType === '2' ? 2 : 1;
+        const sourceText = type === 1 ? 'WeCom家校通訊錄：' : '自定義家校通訊錄：';
 
-        dataArr.forEach(group => {
-          if (group.receive_names && Array.isArray(group.receive_names) && group.type) {
-            const type = group.type;
-            const sourceText = type === 1 ? 'WeCom家校通訊錄：' : '自定義家校通訊錄：';
+        if (receiver.receiveNames && Array.isArray(receiver.receiveNames) && receiver.receiveNames.length > 0) {
+          return [{
+            source: sourceText,
+            names: receiver.receiveNames.filter(name => name && String(name).trim())
+          }];
+        }
 
-            if (!grouped[type]) {
-              grouped[type] = {
-                source: sourceText,
-                names: []
-              };
-            }
-            grouped[type].names.push(...group.receive_names);
-          }
-        });
-
-        return Object.values(grouped);
+        return [];
       } catch (e) {
         return [{ source: '解析錯誤', names: [] }];
       }

@@ -53,8 +53,8 @@ DROP TABLE IF EXISTS notification_receiver;
 CREATE TABLE notification_receiver (
                                        receiver_id         BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '接收關係 ID',
                                        notification_id     BIGINT(20)      NOT NULL                   COMMENT '通知 ID',
-                                       receive_type        CHAR(1)         NOT NULL                   COMMENT '接收類型（1 班級 2 學生/家長）',
-                                       receive_data        TEXT                                       COMMENT 'receive_ids 接收對象 ID 列表 (JSON 格式)， receive_names 接收對象名稱列表 (JSON 格式)， type = 1 是wecom的數據， type = 2 是自定義的數據',
+                                       receive_type        CHAR(1)         NOT NULL                   COMMENT '接收來源類型（1 WeCom家校通訊錄，2 自定義家校通訊錄）',
+                                       receive_data        LONGTEXT                                   COMMENT '接收家長 parentUserId 列表（JSON 數組），如 ["userid1","userid2"]',
                                        create_time         DATETIME                                   COMMENT '創建時間',
                                        PRIMARY KEY (receiver_id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT = '通知接收對象表';
@@ -204,9 +204,9 @@ INSERT INTO notification VALUES(
                                    '重要通知'
                                );
 
--- 示例接收對象數據
-INSERT INTO notification_receiver VALUES(1, 1, '1', '[1,2,3]', '["一年級 1 班","一年級 2 班","二年級 1 班"]', NOW());
-INSERT INTO notification_receiver VALUES(2, 1, '2', '[101,102,103]', '["張小明家長","李小紅家長","王小華家長"]', NOW());
+-- 示例接收對象數據（按來源各存一行，receive_data 為 parentUserId JSON 數組）
+INSERT INTO notification_receiver VALUES(1, 1, '1', '["parent_userid_1","parent_userid_2"]', NOW());
+INSERT INTO notification_receiver VALUES(2, 1, '2', '["custom_parent_userid_1"]', NOW());
 
 -- 示例抄送對象數據
 INSERT INTO notification_cc VALUES(1, 1, '1', '[201,202]', NOW());

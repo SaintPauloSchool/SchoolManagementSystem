@@ -23,7 +23,6 @@ public interface SysSchoolFamilyContactMapper {
 
     /**
      * 按主鍵 ID 批量查詢聯絡人
-     * <p>通知按個人選人時，{@code receive_ids} 即為此表的 {@code id}</p>
      *
      * @param ids 聯絡人主鍵 ID 列表
      * @return 聯絡人列表

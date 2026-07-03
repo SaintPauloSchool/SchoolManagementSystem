@@ -190,7 +190,7 @@
               <div v-if="!group.isDepartment" class="selected-tags">
                 <button
                   v-for="item in group.items"
-                  :key="`${item.type}-${item.id}-${item.departmentId}`"
+                  :key="`${item.type}-${item.parentUserId}-${item.departmentId || ''}`"
                   type="button"
                   class="selected-parent-tag"
                   @click="removeSelectedStudent(item)"
@@ -483,11 +483,10 @@ export default {
 
     initSelectedTree() {
       this.selectedItems = (this.selectedStudents || []).map(student => ({
-        id: student.id,
+        parentUserId: student.parentUserId,
         name: student.name || '',
         departmentId: student.departmentId || null,
         studentUserId: student.studentUserId,
-        parentUserId: student.parentUserId,
         relationDesc: student.relationDesc,
         mobile: student.mobile,
         type: student.type === 2 ? 2 : 1,
@@ -502,9 +501,8 @@ export default {
         const name = data.name || ''
         const parsed = this.parseMemberName(name)
         return {
-          id: data.id,
-          studentUserId: data.studentUserId,
           parentUserId: data.parentUserId,
+          studentUserId: data.studentUserId,
           name,
           studentName: parsed.studentName,
           parentName: parsed.relation,
@@ -515,7 +513,7 @@ export default {
         }
       }
       return {
-        id: Math.abs(data.id),
+        parentUserId: data.parentUserId || '',
         name: data.name || '',
         departmentId: data.classDepartmentId || null,
         type: 2
@@ -523,7 +521,7 @@ export default {
     },
 
     itemKey(item) {
-      return `${item.type}_${item.id}_${item.departmentId}`
+      return `${item.type}_${item.parentUserId}_${item.departmentId || ''}`
     },
 
     collectSelectableLeaves(node, type) {
@@ -605,7 +603,7 @@ export default {
 
     findSelectedIndex(item) {
       return this.selectedItems.findIndex(selected =>
-        selected.id === item.id
+        selected.parentUserId === item.parentUserId
         && selected.departmentId === item.departmentId
         && selected.type === item.type
       )
@@ -647,7 +645,7 @@ export default {
     },
 
     handleLeafNodeClick(data, type) {
-      if (!data || data.id == null) return
+      if (!data || !data.parentUserId) return
       const item = this.buildSelectedItem(data, type)
       const index = this.findSelectedIndex(item)
       if (index > -1) {
