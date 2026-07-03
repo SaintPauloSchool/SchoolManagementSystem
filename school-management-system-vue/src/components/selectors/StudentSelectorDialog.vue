@@ -211,11 +211,7 @@
     <template #footer>
       <div class="dialog-footer modern-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button
-          type="primary"
-          @click="handleConfirm"
-          :disabled="selectedStudentsWithDetails.length === 0"
-        >
+        <el-button type="primary" @click="handleConfirm">
           確定 ({{ selectedStudentsWithDetails.length }})
         </el-button>
       </div>

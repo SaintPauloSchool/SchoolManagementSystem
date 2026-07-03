@@ -251,7 +251,7 @@
     </div>
 
     <!-- 抄送對象 -->
-    <div v-if="notification.ccs && notification.ccs.length > 0" class="section-card">
+    <div v-if="ccDisplayGroups.length > 0" class="section-card">
       <div class="section-header">
         <div class="section-icon cc-icon">
           <el-icon :size="16"><Message /></el-icon>
@@ -259,24 +259,18 @@
         <h3 class="section-label">抄送對象</h3>
       </div>
       <div class="cc-groups">
-        <template v-for="cc in [...notification.ccs].sort((a, b) => b.ccType - a.ccType)" :key="cc.ccId">
-          <div class="cc-group-card">
-            <div class="group-header">
-              <el-icon :size="16"><Message /></el-icon>
-              <span class="group-title">{{ getCcTypeText(cc.ccType) }}</span>
-            </div>
-            <div class="group-content">
-              <div
-                  v-for="(ccData, index) in getCcGroupedData(cc)"
-                  :key="index"
-                  class="source-chip"
-              >
-                <span class="source-label">{{ ccData.source }}</span>
-                <span class="source-names">{{ ccData.names.join(', ') }}</span>
-              </div>
+        <div class="cc-group-card">
+          <div class="group-content">
+            <div
+              v-for="(ccData, index) in ccDisplayGroups"
+              :key="index"
+              class="source-chip"
+            >
+              <span class="source-label">{{ ccData.source }}</span>
+              <span class="source-names">{{ ccData.names.join(', ') }}</span>
             </div>
           </div>
-        </template>
+        </div>
       </div>
     </div>
 
@@ -423,6 +417,28 @@ export default {
         }
       }
       return []
+    },
+    ccDisplayGroups() {
+      if (!this.notification?.ccs?.length) {
+        return []
+      }
+
+      const grouped = {}
+      this.notification.ccs
+        .filter(cc => cc.ccType === '1' || cc.ccType === '2')
+        .forEach(cc => {
+          this.getCcGroupedData(cc).forEach(item => {
+            if (!grouped[item.source]) {
+              grouped[item.source] = {
+                source: item.source,
+                names: []
+              }
+            }
+            grouped[item.source].names.push(...item.names)
+          })
+        })
+
+      return Object.values(grouped).filter(group => group.names.length > 0)
     }
   },
   methods: {
@@ -599,14 +615,6 @@ export default {
       return typeMap[type] || '未知'
     },
 
-    getCcTypeText(type) {
-      const typeMap = {
-        '1': '個別教職工',
-        '2': '教職工群組'
-      }
-      return typeMap[type] || '未知'
-    },
-
     getQuestionIndex(question) {
       const index = this.notification.questions.findIndex(q => q.questionId === question.questionId)
       return index + 1
@@ -717,25 +725,17 @@ export default {
       }
 
       try {
-        const dataArr = JSON.parse(cc.ccData);
-        const grouped = {};
+        const type = cc.ccType === '2' ? 2 : 1;
+        const sourceText = type === 1 ? 'WeCom老師通訊錄：' : '自定義老師通訊錄：';
 
-        dataArr.forEach(group => {
-          if (group.cc_names && Array.isArray(group.cc_names) && group.type) {
-            const type = group.type;
-            const sourceText = type === 1 ? 'WeCom老師通訊錄：' : '自定義老師通訊錄：';
+        if (cc.ccNames && Array.isArray(cc.ccNames) && cc.ccNames.length > 0) {
+          return [{
+            source: sourceText,
+            names: cc.ccNames.filter(name => name && String(name).trim())
+          }];
+        }
 
-            if (!grouped[type]) {
-              grouped[type] = {
-                source: sourceText,
-                names: []
-              };
-            }
-            grouped[type].names.push(...group.cc_names);
-          }
-        });
-
-        return Object.values(grouped);
+        return [];
       } catch (e) {
         return [{ source: '解析錯誤', names: [] }];
       }

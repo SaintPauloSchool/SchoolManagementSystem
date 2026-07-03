@@ -66,8 +66,8 @@ DROP TABLE IF EXISTS notification_cc;
 CREATE TABLE notification_cc (
                                  cc_id               BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '抄送關係 ID',
                                  notification_id     BIGINT(20)      NOT NULL                   COMMENT '通知 ID',
-                                 cc_type             CHAR(1)         NOT NULL                   COMMENT '抄送類型（1 教職員工 2 學校通訊錄）',
-                                 cc_data             TEXT            NOT NULL                   COMMENT '抄送數據 (JSON 格式)，格式：[{"cc_ids": [1,2], "type": 1, "cc_names": ["聖保祿學校-054"]}, {"cc_ids": [1,2], "type": 2, "cc_names": ["聖保祿學校"]}]，其中 type 1代表wecom的，type 2代表自定義的',
+                                 cc_type             CHAR(1)         NOT NULL                   COMMENT '抄送來源類型（1 WeCom老師通訊錄，2 自定義老師通訊錄）',
+                                 cc_data             TEXT            NOT NULL                   COMMENT '抄送成員 ID 列表（JSON 數組），如 [1,2,3]',
                                  create_time         DATETIME                                   COMMENT '創建時間',
                                  PRIMARY KEY (cc_id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT = '通知抄送對象表';
@@ -209,8 +209,8 @@ INSERT INTO notification_receiver VALUES(1, 1, '1', '[1,2,3]', '["一年級 1 �
 INSERT INTO notification_receiver VALUES(2, 1, '2', '[101,102,103]', '["張小明家長","李小紅家長","王小華家長"]', NOW());
 
 -- 示例抄送對象數據
-INSERT INTO notification_cc VALUES(1, 1, '1', '[{"cc_ids": [201,202], "type": 1, "cc_names": ["李主任","王副校長"]}]', NOW());
-INSERT INTO notification_cc VALUES(2, 1, '2', '[{"cc_ids": [301], "type": 2, "cc_names": ["校長辦公室"]}]', NOW());
+INSERT INTO notification_cc VALUES(1, 1, '1', '[201,202]', NOW());
+INSERT INTO notification_cc VALUES(2, 1, '2', '[301]', NOW());
 
 -- 示例問題數據
 -- 單選題：第一個問題

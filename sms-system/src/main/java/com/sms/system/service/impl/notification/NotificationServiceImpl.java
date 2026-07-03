@@ -2,7 +2,6 @@ package com.sms.system.service.impl.notification;
 
 import com.sms.common.utils.bean.BeanCopyUtils;
 import com.sms.system.entity.SysAdmin;
-import com.sms.system.entity.WecomSchoolDepartmentMember;
 import com.sms.system.entity.dto.NotificationCcSaveDTO;
 import com.sms.system.entity.dto.NotificationQueryDTO;
 import com.sms.system.entity.dto.NotificationQuestionSaveDTO;
@@ -12,7 +11,6 @@ import com.sms.system.entity.notification.Notification;
 import com.sms.system.entity.notification.NotificationReceiver;
 import com.sms.system.entity.vo.NotificationVO;
 import com.sms.system.mapper.SysAdminMapper;
-import com.sms.system.mapper.WecomSchoolDepartmentMemberMapper;
 import com.sms.system.mapper.notification.NotificationMapper;
 import com.sms.system.service.notification.INotificationCcService;
 import com.sms.system.service.notification.INotificationQuestionService;
@@ -47,9 +45,6 @@ public class NotificationServiceImpl implements INotificationService {
 
     @Autowired
     private INotificationQuestionService notificationQuestionService;
-
-    @Autowired
-    private WecomSchoolDepartmentMemberMapper wecomSchoolDepartmentMemberMapper;
 
     @Autowired
     private SysAdminMapper sysAdminMapper;
@@ -100,15 +95,7 @@ public class NotificationServiceImpl implements INotificationService {
                     .map(Notification::getNotificationId)
                     .collect(Collectors.toSet());
         } else {
-            // 普通用戶：按抄送對象及部門匹配
-            Long departmentId = null;
-            if (openUserId != null && !openUserId.trim().isEmpty()) {
-                WecomSchoolDepartmentMember member = wecomSchoolDepartmentMemberMapper.selectByUserid(openUserId);
-                if (member != null) {
-                    departmentId = member.getDepartmentId();
-                }
-            }
-            notificationIds = notificationCcService.selectNotificationIdsByUserId(userId, departmentId);
+            notificationIds = notificationCcService.selectNotificationIdsByUserId(userId);
         }
 
         if (notificationIds == null || notificationIds.isEmpty()) {

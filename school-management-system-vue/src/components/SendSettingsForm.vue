@@ -68,38 +68,15 @@
               </el-button>
               <div v-if="selectedCcStaff.length > 0" class="selected-tags">
                 <el-tag
-                  v-for="staff in selectedCcStaff"
-                  :key="staff.id"
+                  v-for="group in selectedCcStaffDisplayGroups"
+                  :key="group.key"
                   closable
-                  @close="removeCcStaff(staff)"
+                  :type="group.isDepartment ? 'warning' : undefined"
+                  @close="group.isDepartment ? removeCcDepartmentGroup(group) : removeCcStaff(group.staff)"
                   class="tag-item"
+                  :class="{ 'dept-tag-item': group.isDepartment }"
                 >
-                  {{ staff.name }}
-                </el-tag>
-              </div>
-            </div>
-          </el-form-item>
-
-          <!-- 抄送教職工群組 -->
-          <el-form-item label="抄送教職工群組">
-            <div class="selection-item">
-              <el-button 
-                type="primary" 
-                @click="openCcDirectorySelector"
-                plain
-              >
-                已抄送 {{ selectedCcDirectory.length }} 個通訊錄
-                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <div v-if="selectedCcDirectory.length > 0" class="selected-tags">
-                <el-tag
-                  v-for="dir in selectedCcDirectory"
-                  :key="dir.id"
-                  closable
-                  @close="removeCcDirectory(dir)"
-                  class="tag-item"
-                >
-                  {{ dir.name }}
+                  {{ group.isDepartment ? `${group.name}（${group.count} 人）` : group.name }}
                 </el-tag>
               </div>
             </div>
@@ -170,12 +147,6 @@
       title="選擇抄送教職工"
       @confirm="handleCcStaffSelect"
     />
-
-    <DirectorySelectorDialog
-      v-model:visible="directorySelectorVisible"
-      :selected-directories="selectedCcDirectory"
-      @confirm="handleDirectorySelect"
-    />
   </div>
 </template>
 
@@ -184,15 +155,13 @@ import { ElNotification } from 'element-plus'
 import { ArrowDown, ArrowLeft, Promotion, User, Message, Setting } from '@element-plus/icons-vue'
 import StudentSelectorDialog from './selectors/StudentSelectorDialog.vue'
 import StaffSelectorDialog from './selectors/StaffSelectorDialog.vue'
-import DirectorySelectorDialog from './selectors/DirectorySelectorDialog.vue'
 import dayjs from 'dayjs'
 
 export default {
   name: 'SendSettingsForm',
   components: {
     StudentSelectorDialog,
-    StaffSelectorDialog,
-    DirectorySelectorDialog
+    StaffSelectorDialog
   },
   props: {
     formData: {
@@ -211,11 +180,9 @@ export default {
       
       studentSelectorVisible: false,
       ccStaffSelectorVisible: false,
-      directorySelectorVisible: false,
       
       selectedStudents: [],
-      selectedCcStaff: [],
-      selectedCcDirectory: []
+      selectedCcStaff: []
     }
   },
   computed: {
@@ -246,6 +213,36 @@ export default {
             isDepartment: false,
             name: student.name || '',
             student
+          })
+        }
+      })
+
+      return [...Array.from(deptGroups.values()), ...individuals]
+    },
+    selectedCcStaffDisplayGroups() {
+      const deptGroups = new Map()
+      const individuals = []
+
+      this.selectedCcStaff.forEach(staff => {
+        if (staff.sourceDeptId != null) {
+          const key = `dept_${staff.type || 1}_${staff.sourceDeptId}`
+          if (!deptGroups.has(key)) {
+            deptGroups.set(key, {
+              key,
+              isDepartment: true,
+              name: staff.sourceDeptName || '部門',
+              sourceDeptId: staff.sourceDeptId,
+              type: staff.type || 1,
+              count: 0
+            })
+          }
+          deptGroups.get(key).count += 1
+        } else if (staff.name?.trim()) {
+          individuals.push({
+            key: `person_${staff.type || 1}_${staff.id}`,
+            isDepartment: false,
+            name: staff.name,
+            staff
           })
         }
       })
@@ -300,30 +297,26 @@ export default {
 
       if (this.localFormData.ccs) {
         this.localFormData.ccs.forEach(cc => {
+          if (cc.ccType !== '1' && cc.ccType !== '2') {
+            return
+          }
           try {
-            const ccDataArr = JSON.parse(cc.ccData)
-            
-            ccDataArr.forEach(group => {
-              const ids = group.cc_ids || []
-              const names = group.cc_names || []
-              const type = group.type || 1
-              
-              ids.forEach((id, index) => {
-                const item = { id: id, name: names[index] || '', type: type }
-                switch(cc.ccType) {
-                  case '1':
-                    if (!this.selectedCcStaff.some(s => s.id === id)) {
-                      this.selectedCcStaff.push(item)
-                    }
-                    break
-                  case '2':
-                    if (!this.selectedCcDirectory.some(d => d.id === id)) {
-                      this.selectedCcDirectory.push(item)
-                    }
-                    break
-                }
-              })
-            })
+            const type = cc.ccType === '2' ? 2 : 1
+            const parsed = JSON.parse(cc.ccData)
+            const names = cc.ccNames || []
+
+            const pushStaff = (id, name) => {
+              const item = { id, name: name || '', type }
+              if (!this.selectedCcStaff.some(s => s.id === id && (s.type || 1) === type)) {
+                this.selectedCcStaff.push(item)
+              }
+            }
+
+            if (!Array.isArray(parsed)) {
+              return
+            }
+
+            parsed.forEach((id, index) => pushStaff(id, names[index]))
           } catch (e) {
             console.error('解析抄送對象數據失敗:', e)
           }
@@ -381,7 +374,6 @@ export default {
     resetForm() {
       this.selectedStudents = []
       this.selectedCcStaff = []
-      this.selectedCcDirectory = []
       this.localFormData = {
         receivers: [],
         ccs: [],
@@ -434,61 +426,21 @@ export default {
       }
       
       const ccs = []
-      
-      // 處理 WeCom 老師通訊錄 (type=1) 和自定義老師通訊錄 (type=2)
+
       if (this.selectedCcStaff.length > 0) {
         const type1Staff = this.selectedCcStaff.filter(s => s.type === 1 || !s.type)
         const type2Staff = this.selectedCcStaff.filter(s => s.type === 2)
-        
-        const staffPayload = []
+
         if (type1Staff.length > 0) {
-          staffPayload.push({
-            cc_ids: type1Staff.map(s => s.id),
-            type: 1,
-            cc_names: type1Staff.map(s => s.name)
+          ccs.push({
+            ccType: '1',
+            ccData: JSON.stringify(type1Staff.map(s => s.id))
           })
         }
         if (type2Staff.length > 0) {
-          staffPayload.push({
-            cc_ids: type2Staff.map(s => s.id),
-            type: 2,
-            cc_names: type2Staff.map(s => s.name)
-          })
-        }
-        
-        if (staffPayload.length > 0) {
-          ccs.push({
-            ccType: '1',
-            ccData: JSON.stringify(staffPayload)
-          })
-        }
-      }
-      
-      // 處理 WeCom 學校通訊錄 (type=1) 和自定義學校通訊錄 (type=2)
-      if (this.selectedCcDirectory.length > 0) {
-        const type1Dirs = this.selectedCcDirectory.filter(d => d.type === 1 || !d.type)
-        const type2Dirs = this.selectedCcDirectory.filter(d => d.type === 2)
-        
-        const dirPayload = []
-        if (type1Dirs.length > 0) {
-          dirPayload.push({
-            cc_ids: type1Dirs.map(d => d.id),
-            type: 1,
-            cc_names: type1Dirs.map(d => d.name)
-          })
-        }
-        if (type2Dirs.length > 0) {
-          dirPayload.push({
-            cc_ids: type2Dirs.map(d => d.id),
-            type: 2,
-            cc_names: type2Dirs.map(d => d.name)
-          })
-        }
-        
-        if (dirPayload.length > 0) {
           ccs.push({
             ccType: '2',
-            ccData: JSON.stringify(dirPayload)
+            ccData: JSON.stringify(type2Staff.map(s => s.id))
           })
         }
       }
@@ -507,20 +459,12 @@ export default {
       this.ccStaffSelectorVisible = true
     },
 
-    openCcDirectorySelector() {
-      this.directorySelectorVisible = true
-    },
-
     handleStudentSelect(students) {
       this.selectedStudents = students
     },
 
     handleCcStaffSelect(staff) {
       this.selectedCcStaff = staff
-    },
-
-    handleDirectorySelect(directories) {
-      this.selectedCcDirectory = directories
     },
 
     removeStudent(student) {
@@ -541,17 +485,18 @@ export default {
     },
 
     removeCcStaff(staff) {
-      const index = this.selectedCcStaff.findIndex(s => s.id === staff.id)
+      const index = this.selectedCcStaff.findIndex(s =>
+        s.id === staff.id && (s.type || 1) === (staff.type || 1)
+      )
       if (index > -1) {
         this.selectedCcStaff.splice(index, 1)
       }
     },
 
-    removeCcDirectory(dir) {
-      const index = this.selectedCcDirectory.findIndex(d => d.id === dir.id)
-      if (index > -1) {
-        this.selectedCcDirectory.splice(index, 1)
-      }
+    removeCcDepartmentGroup(group) {
+      this.selectedCcStaff = this.selectedCcStaff.filter(
+        staff => !(staff.sourceDeptId === group.sourceDeptId && (staff.type || 1) === group.type)
+      )
     },
 
     disabledDate(date) {

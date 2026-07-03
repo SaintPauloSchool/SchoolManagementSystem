@@ -40,8 +40,12 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
      */
     @Override
     public List<SysSchoolDepartmentVO> getSysSchoolDepartmentTree(Integer type) {
-        return BeanCopyUtils.copyTree(buildDepartmentTree(type), SysSchoolDepartmentVO.class,
-                SysSchoolDepartment::getChildren, SysSchoolDepartmentVO::setChildren);
+        return BeanCopyUtils.copyTree(
+                buildDepartmentTree(type),
+                SysSchoolDepartmentVO.class,
+                SysSchoolDepartment::getChildren,
+                SysSchoolDepartmentVO::setChildren
+        );
     }
 
     /**
