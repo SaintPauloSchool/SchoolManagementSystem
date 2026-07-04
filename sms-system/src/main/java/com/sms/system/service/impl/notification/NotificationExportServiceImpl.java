@@ -4,11 +4,13 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.system.entity.SysDepartment;
+import com.sms.system.entity.SysSchoolDepartmentMember;
 import com.sms.system.entity.SysSchoolFamilyContact;
 import com.sms.system.entity.SysSchoolDepartment;
 import com.sms.system.entity.notification.*;
 import com.sms.system.entity.vo.QuestionItemVO;
 import com.sms.system.mapper.SysDepartmentMapper;
+import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
 import com.sms.system.mapper.SysSchoolFamilyContactMapper;
 import com.sms.system.mapper.SysSchoolDepartmentMapper;
 import com.sms.system.mapper.notification.*;
@@ -57,6 +59,9 @@ public class NotificationExportServiceImpl implements INotificationExportService
 
     @Autowired
     private NotificationUserReadRecordMapper notificationUserReadRecordMapper;
+
+    @Autowired
+    private SysSchoolDepartmentMemberMapper schoolDepartmentMemberMapper;
 
     @Autowired
     private SysSchoolFamilyContactMapper schoolFamilyContactMapper;
@@ -520,20 +525,25 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 .distinct()
                 .collect(Collectors.toList());
 
-        List<String> allStudentUserIds = readRecords.stream()
-                .map(NotificationUserReadRecord::getStudentUserId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-
-        // 使用組合鍵 "parentUserId_studentUserId" 存儲關係
+        // 使用組合鍵 parentUserId_departmentId 存儲 WeCom 關係
         Map<String, SysSchoolFamilyContact> relationMap = new HashMap<>();
-        if (!allParentUserIds.isEmpty() && !allStudentUserIds.isEmpty()) {
-            List<SysSchoolFamilyContact> relations = schoolFamilyContactMapper.selectByParentAndStudentUserIds(
-                    allParentUserIds, allStudentUserIds);
+        Map<String, SysSchoolDepartmentMember> customMemberMap = new HashMap<>();
+        if (!allParentUserIds.isEmpty()) {
+            List<SysSchoolFamilyContact> relations = schoolFamilyContactMapper.selectByParentUserIds(
+                    allParentUserIds);
             for (SysSchoolFamilyContact relation : relations) {
-                String key = relation.getParentUserId() + "_" + relation.getStudentUserId();
+                String key = parentDeptKey(relation.getParentUserId(), relation.getDepartmentId());
                 relationMap.put(key, relation);
+            }
+            List<SysSchoolDepartmentMember> customMembers =
+                    schoolDepartmentMemberMapper.selectMembersByUserids(allParentUserIds);
+            if (customMembers != null) {
+                for (SysSchoolDepartmentMember member : customMembers) {
+                    if (member.getUserid() == null || member.getDepartmentId() == null) {
+                        continue;
+                    }
+                    customMemberMap.put(parentDeptKey(member.getUserid(), member.getDepartmentId()), member);
+                }
             }
         }
 
@@ -563,11 +573,11 @@ public class NotificationExportServiceImpl implements INotificationExportService
             }
         }
 
-        // 按用戶+學生組合鍵分組答案（防止同一家長爲多個孩子回答時數據混亂）
+        // 按 parentUserId + student_id 分組答案
         Map<String, List<NotificationAnswer>> answersByUser = new HashMap<>();
         for (NotificationAnswer answer : allAnswers) {
-            // 需要關聯查詢 student_user_id
-            String key = answer.getUserId() + "_" + (answer.getStudentUserId() != null ? answer.getStudentUserId() : "");
+            String key = answer.getUserId() + "_"
+                    + (answer.getStudentId() != null ? answer.getStudentId() : "");
             answersByUser.computeIfAbsent(key, k -> new ArrayList<>()).add(answer);
         }
 
@@ -579,14 +589,19 @@ public class NotificationExportServiceImpl implements INotificationExportService
             Row dataRow = sheet.createRow(rowNum++);
             colNum = 0;
 
-            // 使用組合鍵 "parentUserId_studentUserId" 查詢
-            String relationKey = record.getUserId() + "_" + record.getStudentUserId();
+            // 按 parentUserId + departmentId 查詢 WeCom 關係；自定義家校 fallback 到成員表
+            String relationKey = parentDeptKey(record.getUserId(), record.getDepartmentId());
             SysSchoolFamilyContact relation = relationMap.get(relationKey);
             String studentName = "";
             String relationDesc = "";
             if (relation != null) {
                 studentName = relation.getStudentName() != null ? relation.getStudentName() : "";
                 relationDesc = relation.getRelationDesc() != null ? relation.getRelationDesc() : "";
+            } else {
+                SysSchoolDepartmentMember customMember = customMemberMap.get(relationKey);
+                if (customMember != null && customMember.getName() != null) {
+                    studentName = customMember.getName();
+                }
             }
 
             // 班級：直接讀取閱讀記錄中的 department_id
@@ -609,9 +624,9 @@ public class NotificationExportServiceImpl implements INotificationExportService
             // 確認時間
             dataRow.createCell(colNum++).setCellValue(formatDate(record.getReplyTime()));
 
-            // 問題答案
-            // 使用組合鍵 "parentUserId_studentUserId" 獲取該家長-學生對的答案
-            String answerKey = record.getUserId() + "_" + (record.getStudentUserId() != null ? record.getStudentUserId() : "");
+            // 按 parentUserId + student_id 獲取該家長-學生對的答案
+            String answerKey = record.getUserId() + "_"
+                    + (record.getStudentId() != null ? record.getStudentId() : "");
             List<NotificationAnswer> userAnswers = answersByUser.getOrDefault(answerKey, new ArrayList<>());
 
             // 對於每個問題項，從用戶答案中查找匹配的選項
@@ -701,6 +716,10 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 }
             }
         }
+    }
+
+    private String parentDeptKey(String parentUserId, Long departmentId) {
+        return parentUserId + "_" + (departmentId != null ? departmentId : "null");
     }
 
     /**

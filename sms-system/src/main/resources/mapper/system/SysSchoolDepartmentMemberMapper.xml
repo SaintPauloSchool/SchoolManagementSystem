@@ -11,14 +11,17 @@
         <result property="departmentId" column="department_id"/>
         <result property="openUserid" column="open_userid"/>
         <result property="type" column="type"/>
-        <result property="studentUserId" column="student_user_id"/>
+        <result property="studentId" column="student_id"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
-    <!-- 批量查詢多個部門的成員 -->
+    <sql id="memberColumns">
+        id, userid, name, department_id, open_userid, type, student_id, create_time, update_time
+    </sql>
+
     <select id="selectMembersByDepartmentIds" resultMap="SysSchoolDepartmentMemberResult">
-        SELECT id, userid, name, department_id, open_userid, type, student_user_id, create_time, update_time
+        SELECT <include refid="memberColumns"/>
         FROM sys_school_department_member
         WHERE department_id IN
         <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
@@ -28,7 +31,7 @@
     </select>
 
     <select id="selectMembersByIds" resultMap="SysSchoolDepartmentMemberResult">
-        SELECT id, userid, name, department_id, open_userid, type, student_user_id, create_time, update_time
+        SELECT <include refid="memberColumns"/>
         FROM sys_school_department_member
         WHERE id IN
         <foreach collection="ids" item="id" open="(" separator="," close=")">
@@ -37,21 +40,18 @@
         ORDER BY department_id ASC, name ASC
     </select>
 
-    <!-- 根據 ID 刪除部門成員 -->
     <delete id="deleteMemberById" parameterType="Long">
         DELETE FROM sys_school_department_member
         WHERE id = #{id}
     </delete>
 
-    <!-- 根據部門 ID 刪除成員 -->
     <delete id="deleteByDepartmentId" parameterType="Long">
         DELETE FROM sys_school_department_member
         WHERE department_id = #{departmentId}
     </delete>
 
-    <!-- 批量插入部門成員 -->
     <insert id="batchInsertMembers">
-        INSERT INTO sys_school_department_member (userid, name, department_id, open_userid, type, student_user_id, create_time, update_time)
+        INSERT INTO sys_school_department_member (userid, name, department_id, open_userid, type, student_id, create_time, update_time)
         VALUES
         <foreach collection="members" item="member" separator=",">
             (
@@ -60,7 +60,7 @@
                 #{member.departmentId},
                 #{member.openUserid},
                 #{member.type},
-                #{member.studentUserId},
+                #{member.studentId},
                 #{member.createTime},
                 #{member.updateTime}
             )
@@ -68,7 +68,7 @@
     </insert>
 
     <select id="selectMembersByUserids" resultMap="SysSchoolDepartmentMemberResult">
-        SELECT id, userid, name, department_id, open_userid, type, student_user_id, create_time, update_time
+        SELECT <include refid="memberColumns"/>
         FROM sys_school_department_member
         WHERE type = 2
           AND userid IN

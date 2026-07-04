@@ -8,36 +8,20 @@ import java.time.LocalDateTime;
 
 /**
  * 系統學校部門成員對象 sys_school_department_member
- *
  */
 public class SysSchoolDepartmentMember implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 主鍵 ID */
     private Long id;
-
-    /** 成員 UserID */
     private String userid;
-
-    /** 成員名稱 */
     private String name;
-
-    /** 部門 ID */
     private Long departmentId;
-
-    /** 全局唯一 UserID */
     private String openUserid;
-
     /** 類型：1-學校部門通訊錄，2-家校通訊錄 */
     private Integer type;
-
-    /** 關聯學生 UserID（家校通訊錄成員，發通知與閱讀記錄關聯用） */
-    private String studentUserId;
-
-    /** 創建時間 */
+    /** 關聯學籍 student_id（student_profiles.student_info.student_id） */
+    private String studentId;
     private LocalDateTime createTime;
-
-    /** 更新時間 */
     private LocalDateTime updateTime;
 
     public Long getId() {
@@ -88,12 +72,12 @@ public class SysSchoolDepartmentMember implements Serializable {
         this.type = type;
     }
 
-    public String getStudentUserId() {
-        return studentUserId;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setStudentUserId(String studentUserId) {
-        this.studentUserId = studentUserId;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
     public LocalDateTime getCreateTime() {
@@ -121,7 +105,7 @@ public class SysSchoolDepartmentMember implements Serializable {
             .append("departmentId", getDepartmentId())
             .append("openUserid", getOpenUserid())
             .append("type", getType())
-            .append("studentUserId", getStudentUserId())
+            .append("studentId", getStudentId())
             .append("createTime", getCreateTime())
             .append("updateTime", getUpdateTime())
             .toString();

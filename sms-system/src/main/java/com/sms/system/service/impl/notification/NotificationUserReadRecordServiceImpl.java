@@ -67,11 +67,7 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
             Set<String> repliedStudents = new HashSet<>();
             
             for (NotificationUserReadRecord record : readRecords) {
-                // 以 studentUserId 爲分組依據，若無則降級使用 userId
-                String groupId = record.getStudentUserId();
-                if (groupId == null || groupId.trim().isEmpty()) {
-                    groupId = record.getUserId();
-                }
+                String groupId = resolveStatsStudentKey(record);
                 
                 if ("1".equals(record.getIsRead())) {
                     readStudents.add(groupId);
@@ -101,9 +97,9 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
             return Collections.emptyList();
         }
         
-        // 2. 過濾出有 studentUserId 的記錄
+        // 2. 過濾出有 student_id 的記錄
         List<NotificationUserReadRecord> validRecords = allRecords.stream()
-            .filter(record -> record.getStudentUserId() != null && !record.getStudentUserId().trim().isEmpty())
+            .filter(record -> record.getStudentId() != null && !record.getStudentId().trim().isEmpty())
             .collect(Collectors.toList());
         
         if (validRecords.isEmpty()) {
@@ -117,8 +113,7 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
         Map<String, UnrepliedStudentVO> unrepliedStudentVOMap = new HashMap<>();
         // 家長列表
         for (NotificationUserReadRecord record : validRecords) {
-            // 以 studentUserId 爲分組依據，若無則降級使用 userId
-            String studentId = record.getStudentUserId();
+            String studentId = record.getStudentId();
             
             // 只要有任何一個用戶（學生或家長）回復了，該學生就算已回復
             if ("1".equals(record.getReplyStatus())) {
@@ -126,7 +121,7 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
             }
             
             // 只考慮家長類型，收集未回復學生的家長列表
-            if ("2".equals(record.getUserType())) {
+            if ("1".equals(record.getUserType())) {
                 // 如果該學生還沒有創建 VO，則創建一個新的
                 UnrepliedStudentVO vo = unrepliedStudentVOMap.computeIfAbsent(
                     studentId, 
@@ -176,5 +171,12 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
         record.setReadId(readId);
         record.setSendStatus(sendStatus);
         notificationUserReadRecordMapper.updateById(record);
+    }
+
+    private String resolveStatsStudentKey(NotificationUserReadRecord record) {
+        if (record.getStudentId() != null && !record.getStudentId().trim().isEmpty()) {
+            return record.getStudentId().trim();
+        }
+        return "parent:" + record.getUserId();
     }
 }

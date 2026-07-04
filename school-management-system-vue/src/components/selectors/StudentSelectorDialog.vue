@@ -487,6 +487,7 @@ export default {
         name: student.name || '',
         departmentId: student.departmentId || null,
         studentUserId: student.studentUserId,
+        studentId: student.studentId,
         relationDesc: student.relationDesc,
         mobile: student.mobile,
         type: student.type === 2 ? 2 : 1,
@@ -503,6 +504,7 @@ export default {
         return {
           parentUserId: data.parentUserId,
           studentUserId: data.studentUserId,
+          studentId: data.studentId || '',
           name,
           studentName: parsed.studentName,
           parentName: parsed.relation,
@@ -516,12 +518,13 @@ export default {
         parentUserId: data.parentUserId || '',
         name: data.name || '',
         departmentId: data.classDepartmentId || null,
+        studentId: data.studentId || '',
         type: 2
       }
     },
 
     itemKey(item) {
-      return `${item.type}_${item.parentUserId}_${item.departmentId || ''}`
+      return `${item.type}_${item.parentUserId}_${item.departmentId || ''}_${item.studentId || ''}`
     },
 
     collectSelectableLeaves(node, type) {
@@ -605,6 +608,7 @@ export default {
       return this.selectedItems.findIndex(selected =>
         selected.parentUserId === item.parentUserId
         && selected.departmentId === item.departmentId
+        && (selected.studentId || '') === (item.studentId || '')
         && selected.type === item.type
       )
     },

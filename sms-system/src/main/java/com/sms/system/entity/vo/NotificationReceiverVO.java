@@ -16,7 +16,7 @@ public class NotificationReceiverVO implements Serializable {
     private Long notificationId;
     private String receiveType;
     private String receiveData;
-    /** 展示用姓名列表（由 parentUserId 解析，非持久化字段） */
+    /** 展示用姓名列表（按 receive_data 逐項解析，非持久化字段） */
     private List<String> receiveNames;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")

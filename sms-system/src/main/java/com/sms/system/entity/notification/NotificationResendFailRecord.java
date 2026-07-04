@@ -29,17 +29,13 @@ public class NotificationResendFailRecord implements Serializable {
     @TableField("send_record_id")
     private Long sendRecordId;
 
-    /** 接收用戶ID（家長或學生） */
+    /** 接收用戶ID（家長 userid，僅學生/家長重發失敗記錄） */
     @TableField("user_id")
     private String userId;
 
-    /** 用戶類型（1學生 2家長） */
-    @TableField("user_type")
-    private String userType;
-
-    /** 關聯學生ID */
-    @TableField("student_user_id")
-    private String studentUserId;
+    /** 關聯學籍 student_id */
+    @TableField("student_id")
+    private String studentId;
 
     /** 第1次失敗原因 */
     @TableField("fail_reason_1")
@@ -83,8 +79,6 @@ public class NotificationResendFailRecord implements Serializable {
     @TableField("update_time")
     private LocalDateTime updateTime;
 
-    // ===== Getters & Setters =====
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -97,11 +91,8 @@ public class NotificationResendFailRecord implements Serializable {
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
 
-    public String getUserType() { return userType; }
-    public void setUserType(String userType) { this.userType = userType; }
-
-    public String getStudentUserId() { return studentUserId; }
-    public void setStudentUserId(String studentUserId) { this.studentUserId = studentUserId; }
+    public String getStudentId() { return studentId; }
+    public void setStudentId(String studentId) { this.studentId = studentId; }
 
     public String getFailReason1() { return failReason1; }
     public void setFailReason1(String failReason1) { this.failReason1 = failReason1; }
@@ -140,8 +131,7 @@ public class NotificationResendFailRecord implements Serializable {
                 ", notificationId=" + notificationId +
                 ", sendRecordId=" + sendRecordId +
                 ", userId='" + userId + '\'' +
-                ", userType='" + userType + '\'' +
-                ", studentUserId='" + studentUserId + '\'' +
+                ", studentId='" + studentId + '\'' +
                 ", failReason1='" + failReason1 + '\'' +
                 ", failReason2='" + failReason2 + '\'' +
                 ", failReason3='" + failReason3 + '\'' +

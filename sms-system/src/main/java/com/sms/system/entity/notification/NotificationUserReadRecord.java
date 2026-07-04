@@ -29,7 +29,7 @@ public class NotificationUserReadRecord implements Serializable {
     @TableField("user_id")
     private String userId;
 
-    /** 用戶類型（1學生 2家長 3教師） */
+    /** 用戶類型（1學生/家長 2教師/職工） */
     @TableField("user_type")
     private String userType;
 
@@ -55,9 +55,9 @@ public class NotificationUserReadRecord implements Serializable {
     @TableField("send_status")
     private String sendStatus;
 
-    /** 關聯的學生ID（當接收者是家長時記錄，若發送給學生本身則與userId相同） */
-    @TableField("student_user_id")
-    private String studentUserId;
+    /** 關聯的學籍 student_id（student_profiles.student_info.student_id） */
+    @TableField("student_id")
+    private String studentId;
 
     /** 發送時所屬部門ID */
     @TableField("department_id")
@@ -149,12 +149,12 @@ public class NotificationUserReadRecord implements Serializable {
         this.createTime = createTime;
     }
 
-    public String getStudentUserId() {
-        return studentUserId;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setStudentUserId(String studentUserId) {
-        this.studentUserId = studentUserId;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
     public Long getDepartmentId() {
@@ -177,7 +177,7 @@ public class NotificationUserReadRecord implements Serializable {
                 ", replyStatus='" + replyStatus + '\'' +
                 ", replyTime=" + replyTime +
                 ", sendStatus='" + sendStatus + '\'' +
-                ", studentUserId='" + studentUserId + '\'' +
+                ", studentId='" + studentId + '\'' +
                 ", departmentId=" + departmentId +
                 ", createTime=" + createTime +
                 '}';

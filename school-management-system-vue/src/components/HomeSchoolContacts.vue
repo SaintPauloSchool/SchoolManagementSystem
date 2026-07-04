@@ -745,12 +745,12 @@ export default {
 
     handleWecomCheckChange() {
       const checkedNodes = this.$refs.wecomTree.getCheckedNodes(true)
-      // 葉子節點：parentUserId=家長 userid，studentUserId=學生 userid（來自 treeWithParents）
+      // 葉子節點：parentUserId=家長 userid，studentId=學籍 ID（來自 treeWithParents）
       this.selectedWecomMembers = checkedNodes.map(node => ({
         id: node.id,
         treeKey: node.treeKey,
         userid: node.parentUserId || '',
-        studentUserId: node.studentUserId || '',
+        studentId: node.studentId || '',
         name: node.name,
         openUserid: node.groupChatId || ''
       }))
@@ -779,13 +779,13 @@ export default {
       }
 
       const membersWithoutStudent = this.selectedWecomMembers.filter(
-        member => !member.studentUserId || !member.studentUserId.trim()
+        member => !member.studentId || !member.studentId.trim()
       )
       if (membersWithoutStudent.length > 0) {
         const names = membersWithoutStudent.map(m => m.name || m.userid).join('、')
         ElNotification({
           title: "無法添加",
-          message: `以下成員缺少學生關聯，請重新選擇：${names}`,
+          message: `以下成員缺少學籍 student_id，請重新選擇：${names}`,
           type: "warning",
           duration: 5000
         })
@@ -800,7 +800,7 @@ export default {
       try {
         const membersToAdd = this.selectedWecomMembers.map(member => ({
           userid: member.userid,
-          studentUserId: member.studentUserId || '',
+          studentId: member.studentId || '',
           name: member.name,
           departmentId: this.currentDepartment.id,
           openUserid: member.openUserid || ''

@@ -63,14 +63,14 @@ public class NotificationCcSendHelper {
      */
     public void sendCcInBatches(Notification notification, List<String> userIds) {
         int totalBatches = NotificationSchoolSendHelper.calcBatchCount(
-                userIds.size(), NotificationSchoolSendHelper.PARENT_STUDENT_BATCH_SIZE);
+                userIds.size(), NotificationSchoolSendHelper.PARENT_BATCH_SIZE);
 
         log.info("通知 {} 的抄送消息需要分 {} 批發送，共 {} 個接收者",
                 notification.getNotificationId(), totalBatches, userIds.size());
 
         for (int i = 0; i < totalBatches; i++) {
             List<String> currentUserIds = NotificationSchoolSendHelper.extractBatch(
-                    userIds, i, NotificationSchoolSendHelper.PARENT_STUDENT_BATCH_SIZE);
+                    userIds, i, NotificationSchoolSendHelper.PARENT_BATCH_SIZE);
             if (currentUserIds.isEmpty()) {
                 continue;
             }
@@ -97,11 +97,11 @@ public class NotificationCcSendHelper {
      */
     public void sendRecallTextInBatches(List<String> userIds, String content) {
         int totalBatches = NotificationSchoolSendHelper.calcBatchCount(
-                userIds.size(), NotificationSchoolSendHelper.PARENT_STUDENT_BATCH_SIZE);
+                userIds.size(), NotificationSchoolSendHelper.PARENT_BATCH_SIZE);
 
         for (int i = 0; i < totalBatches; i++) {
             List<String> currentUserIds = NotificationSchoolSendHelper.extractBatch(
-                    userIds, i, NotificationSchoolSendHelper.PARENT_STUDENT_BATCH_SIZE);
+                    userIds, i, NotificationSchoolSendHelper.PARENT_BATCH_SIZE);
             if (currentUserIds.isEmpty()) {
                 continue;
             }

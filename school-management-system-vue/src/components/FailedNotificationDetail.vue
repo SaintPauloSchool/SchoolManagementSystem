@@ -61,7 +61,7 @@
               <el-tag size="small">{{ getUserTypeText(scope.row.userType) }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="studentUserId" label="關聯學生企微ID" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="studentId" label="關聯學籍ID" min-width="180" show-overflow-tooltip />
           <el-table-column prop="studentName" label="學生名字" min-width="120" align="center">
             <template #default="scope">
               {{ scope.row.studentName || '-' }}
@@ -122,12 +122,7 @@
           empty-text="暫無數據"
         >
           <el-table-column prop="userId" label="用戶企微ID" min-width="180" show-overflow-tooltip />
-          <el-table-column label="用戶類型" min-width="100" align="center">
-            <template #default="scope">
-              <el-tag size="small">{{ getUserTypeText(scope.row.userType) }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="studentUserId" label="關聯學生企微ID" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="studentId" label="關聯學籍ID" min-width="180" show-overflow-tooltip />
           <el-table-column prop="studentName" label="學生名字" min-width="120" align="center">
             <template #default="scope">
               {{ scope.row.studentName || '-' }}
@@ -368,9 +363,8 @@ export default {
 
     getUserTypeText(type) {
       const typeMap = {
-        '1': '學生',
-        '2': '家長',
-        '3': '教師'
+        '1': '學生/家長',
+        '2': '教師/職工'
       }
       return typeMap[type] || '未知'
     }

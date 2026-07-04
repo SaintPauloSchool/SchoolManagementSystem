@@ -14,23 +14,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="replyStatus"    column="reply_status"    />
         <result property="replyTime"    column="reply_time"    />
         <result property="sendStatus"    column="send_status"    />
-        <result property="studentUserId"    column="student_user_id"    />
+        <result property="studentId"    column="student_id"    />
         <result property="departmentId"    column="department_id"    />
         <result property="createTime"    column="create_time"    />
     </resultMap>
 
     <insert id="batchInsert" parameterType="java.util.List">
         insert into notification_user_read_record
-        (send_record_id, user_id, user_type, is_read, reply_status, send_status, student_user_id, department_id, create_time)
+        (send_record_id, user_id, user_type, is_read, reply_status, send_status, student_id, department_id, create_time)
         values
         <foreach collection="list" item="item" separator=",">
-            (#{item.sendRecordId}, #{item.userId}, #{item.userType}, #{item.isRead}, #{item.replyStatus}, #{item.sendStatus}, #{item.studentUserId}, #{item.departmentId}, #{item.createTime})
+            (#{item.sendRecordId}, #{item.userId}, #{item.userType}, #{item.isRead}, #{item.replyStatus}, #{item.sendStatus}, #{item.studentId}, #{item.departmentId}, #{item.createTime})
         </foreach>
     </insert>
 
     <select id="selectBySendRecordId" resultMap="NotificationUserReadRecordResult">
         select read_id, send_record_id, user_id, user_type, is_read,
-               read_time, reply_status, reply_time, send_status, student_user_id, department_id, create_time
+               read_time, reply_status, reply_time, send_status, student_id, department_id, create_time
         from notification_user_read_record
         where send_record_id = #{sendRecordId}
     </select>
@@ -45,12 +45,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                r.read_time as readTime,
                r.reply_status as replyStatus,
                r.send_status as sendStatus,
-               r.student_user_id as studentUserId,
-               ps.student_name as studentName,
+               r.student_id as studentId,
+               si.id_name as studentName,
                ps.relation_desc as relation,
                r.create_time as createTime
         from notification_user_read_record r
-        left join sys_school_family_contact ps on r.user_id = ps.parent_user_id and r.student_user_id = ps.student_user_id
+        left join sys_school_family_contact ps
+            on r.user_id = ps.parent_user_id and r.department_id = ps.department_id
+        left join student_profiles.student_info si on r.student_id = si.student_id
         where r.send_record_id = #{sendRecordId}
           and r.send_status = '0'
     </select>

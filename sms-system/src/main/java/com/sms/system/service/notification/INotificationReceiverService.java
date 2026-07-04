@@ -17,12 +17,12 @@ public interface INotificationReceiverService {
     List<NotificationReceiverVO> selectByNotificationId(Long notificationId);
 
     /**
-     * 新增通知接收記錄（按來源類型各存一行，{@code receive_data} 為 parentUserId 數組）。
+     * 新增通知接收記錄（按來源類型各存一行，{@code receive_data} 為目標 JSON 數組）。
      */
     int save(NotificationReceiverSaveDTO notificationReceiverSaveDTO);
 
     /**
-     * 解析接收對象列表，將 {@code receive_data} 中的 parentUserId 轉為實際發送目標。
+     * 解析接收對象列表，將 {@code receive_data} 轉為實際發送目標（含 departmentId）。
      *
      * @param strictDepartmentCheck 發佈時建議 {@code true}，定時任務可放寬為 {@code false}
      */

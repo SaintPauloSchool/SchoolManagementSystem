@@ -75,15 +75,15 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
         List<SysSchoolDepartmentMember> sysSchoolDepartmentMemberList = new ArrayList<>();
         for (SysSchoolDepartmentMemberSaveDTO sysSchoolDepartmentMemberSaveDTO : sysSchoolDepartmentMemberBatchSaveDTO.getMembers()) {
             if (Integer.valueOf(2).equals(defaultType)
-                    && !StringUtils.hasText(sysSchoolDepartmentMemberSaveDTO.getStudentUserId())) {
+                    && !StringUtils.hasText(sysSchoolDepartmentMemberSaveDTO.getStudentId())) {
                 String memberName = sysSchoolDepartmentMemberSaveDTO.getName();
                 throw new ServiceException(String.format(
-                        "自定義家校成員必須關聯學生：%s",
+                        "自定義家校成員必須關聯學籍 student_id：%s",
                         StringUtils.hasText(memberName) ? memberName : sysSchoolDepartmentMemberSaveDTO.getUserid()));
             }
             SysSchoolDepartmentMember sysSchoolDepartmentMember = BeanCopyUtils.copy(sysSchoolDepartmentMemberSaveDTO, SysSchoolDepartmentMember.class);
-            if (StringUtils.hasText(sysSchoolDepartmentMemberSaveDTO.getStudentUserId())) {
-                sysSchoolDepartmentMember.setStudentUserId(sysSchoolDepartmentMemberSaveDTO.getStudentUserId().trim());
+            if (StringUtils.hasText(sysSchoolDepartmentMemberSaveDTO.getStudentId())) {
+                sysSchoolDepartmentMember.setStudentId(sysSchoolDepartmentMemberSaveDTO.getStudentId().trim());
             }
             sysSchoolDepartmentMember.setType(defaultType);
             sysSchoolDepartmentMember.setCreateTime(now);
@@ -100,13 +100,16 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
         List<SysSchoolDepartmentMember> existingMembers = memberMapper.selectMembersByDepartmentIds(departmentIds);
 
         List<SysSchoolDepartmentMember> toInsert = sysSchoolDepartmentMemberList.stream()
-                .filter(m -> existingMembers.stream().noneMatch(exist -> 
-                        exist.getDepartmentId().equals(m.getDepartmentId()) && 
-                        exist.getUserid().equals(m.getUserid())
+                .filter(m -> existingMembers.stream().noneMatch(exist ->
+                        exist.getDepartmentId().equals(m.getDepartmentId())
+                                && exist.getUserid().equals(m.getUserid())
+                                && Objects.equals(exist.getStudentId(), m.getStudentId())
                 ))
                 .collect(Collectors.collectingAndThen(
                         Collectors.toCollection(() -> new TreeSet<>(
-                                Comparator.comparing(m -> m.getDepartmentId() + "_" + m.getUserid())
+                                Comparator.comparing(m -> m.getDepartmentId() + "_"
+                                        + m.getUserid() + "_"
+                                        + (m.getStudentId() != null ? m.getStudentId() : ""))
                         )), ArrayList::new));
 
         if (toInsert.isEmpty()) {

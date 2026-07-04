@@ -14,7 +14,7 @@ public class UserReadRecordVO {
     /** 用戶ID */
     private String userId;
 
-    /** 用戶類型（1學生 2家長 3教師） */
+    /** 用戶類型（1學生/家長 2教師/職工） */
     private String userType;
 
     /** 是否已讀（0未讀 1已讀） */
@@ -30,8 +30,8 @@ public class UserReadRecordVO {
     /** 發送狀態（0發送失敗 1發送成功） */
     private String sendStatus;
 
-    /** 關聯的學生ID */
-    private String studentUserId;
+    /** 關聯的學籍 student_id */
+    private String studentId;
 
     /** 學生名字 */
     private String studentName;
@@ -115,12 +115,12 @@ public class UserReadRecordVO {
         this.sendStatus = sendStatus;
     }
 
-    public String getStudentUserId() {
-        return studentUserId;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setStudentUserId(String studentUserId) {
-        this.studentUserId = studentUserId;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
     public LocalDateTime getCreateTime() {

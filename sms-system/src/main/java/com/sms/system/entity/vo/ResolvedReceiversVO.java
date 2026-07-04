@@ -1,51 +1,37 @@
 package com.sms.system.entity.vo;
 
 import com.sms.system.entity.SysSchoolFamilyContact;
+import com.sms.system.entity.notification.receiver.NotificationReceiverTarget;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Collections;
+import java.util.Set;
 
 /**
- * 解析後的通知接收者結果視圖對象
+ * 解析後的通知接收者結果。
+ * <p>企微家校通知僅向 {@link #parentUserIds} 發送。</p>
  */
 public class ResolvedReceiversVO {
-    
-    /** 發送給家長的企業微信 userId 列表 */
+
     private List<String> parentUserIds;
-
-    /** 發送給學生的企業微信 userId 列表 */
-    private List<String> studentUserIds;
-
-    /** 發送給部門的部門 ID 列表 */
-    private List<String> partyIds;
-
-    /** 從發送對象中解析出的精確家長與學生關係（含部門） */
     private List<SysSchoolFamilyContact> relations;
-
-    /** 學生 userId 對應的部門 ID */
-    private Map<String, Long> studentDepartmentIds;
-
-    /** 自定義家校成員：家長 userId → 學生 userId */
-    private Map<String, String> parentStudentUserIds;
+    private List<NotificationReceiverTarget> receiverTargets;
 
     public ResolvedReceiversVO() {
     }
 
-    public ResolvedReceiversVO(List<String> parentUserIds, List<String> studentUserIds, List<String> partyIds,
-                               List<SysSchoolFamilyContact> relations, Map<String, Long> studentDepartmentIds,
-                               Map<String, String> parentStudentUserIds) {
+    public ResolvedReceiversVO(List<String> parentUserIds,
+                               List<SysSchoolFamilyContact> relations,
+                               List<NotificationReceiverTarget> receiverTargets) {
         this.parentUserIds = parentUserIds;
-        this.studentUserIds = studentUserIds;
-        this.partyIds = partyIds;
         this.relations = relations;
-        this.studentDepartmentIds = studentDepartmentIds;
-        this.parentStudentUserIds = parentStudentUserIds;
+        this.receiverTargets = receiverTargets;
     }
 
-    public ResolvedReceiversVO(List<String> parentUserIds, List<String> studentUserIds, List<String> partyIds,
-                               List<SysSchoolFamilyContact> relations, Map<String, Long> studentDepartmentIds) {
-        this(parentUserIds, studentUserIds, partyIds, relations, studentDepartmentIds, Collections.emptyMap());
+    public boolean hasAnyReceiver() {
+        return parentUserIds != null && !parentUserIds.isEmpty();
     }
 
     public List<String> getParentUserIds() {
@@ -56,22 +42,6 @@ public class ResolvedReceiversVO {
         this.parentUserIds = parentUserIds;
     }
 
-    public List<String> getStudentUserIds() {
-        return studentUserIds;
-    }
-
-    public void setStudentUserIds(List<String> studentUserIds) {
-        this.studentUserIds = studentUserIds;
-    }
-
-    public List<String> getPartyIds() {
-        return partyIds;
-    }
-
-    public void setPartyIds(List<String> partyIds) {
-        this.partyIds = partyIds;
-    }
-
     public List<SysSchoolFamilyContact> getRelations() {
         return relations;
     }
@@ -80,19 +50,26 @@ public class ResolvedReceiversVO {
         this.relations = relations;
     }
 
-    public Map<String, Long> getStudentDepartmentIds() {
-        return studentDepartmentIds;
+    public List<NotificationReceiverTarget> getReceiverTargets() {
+        return receiverTargets;
     }
 
-    public void setStudentDepartmentIds(Map<String, Long> studentDepartmentIds) {
-        this.studentDepartmentIds = studentDepartmentIds;
+    public void setReceiverTargets(List<NotificationReceiverTarget> receiverTargets) {
+        this.receiverTargets = receiverTargets;
     }
 
-    public Map<String, String> getParentStudentUserIds() {
-        return parentStudentUserIds;
-    }
+    /** 解析過程中的可變上下文，解析完成後 {@link #build()} 得到 VO。 */
+    public static class ResolutionContext {
+        public final Set<String> parentUserIds = new LinkedHashSet<>();
+        public final List<SysSchoolFamilyContact> relations = new ArrayList<>();
+        public final List<NotificationReceiverTarget> receiverTargets = new ArrayList<>();
+        public final Set<String> relationKeys = new HashSet<>();
 
-    public void setParentStudentUserIds(Map<String, String> parentStudentUserIds) {
-        this.parentStudentUserIds = parentStudentUserIds;
+        public ResolvedReceiversVO build() {
+            return new ResolvedReceiversVO(
+                    new ArrayList<>(parentUserIds),
+                    new ArrayList<>(relations),
+                    new ArrayList<>(receiverTargets));
+        }
     }
 }

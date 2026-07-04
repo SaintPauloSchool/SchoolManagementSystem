@@ -12,9 +12,9 @@ public class UnrepliedStudentVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 學生用戶ID
+     * 學籍 student_id
      */
-    private String studentUserId;
+    private String studentId;
 
     /**
      * 未回復的家長用戶ID列表
@@ -24,17 +24,17 @@ public class UnrepliedStudentVO implements Serializable {
     public UnrepliedStudentVO() {
     }
 
-    public UnrepliedStudentVO(String studentUserId, List<String> parentUserIds) {
-        this.studentUserId = studentUserId;
+    public UnrepliedStudentVO(String studentId, List<String> parentUserIds) {
+        this.studentId = studentId;
         this.parentUserIds = parentUserIds;
     }
 
-    public String getStudentUserId() {
-        return studentUserId;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setStudentUserId(String studentUserId) {
-        this.studentUserId = studentUserId;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
     public List<String> getParentUserIds() {
@@ -48,7 +48,7 @@ public class UnrepliedStudentVO implements Serializable {
     @Override
     public String toString() {
         return "UnrepliedStudentVO{" +
-                "studentUserId='" + studentUserId + '\'' +
+                "studentId='" + studentId + '\'' +
                 ", parentUserIds=" + parentUserIds +
                 '}';
     }

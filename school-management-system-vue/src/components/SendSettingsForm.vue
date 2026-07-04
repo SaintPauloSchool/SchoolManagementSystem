@@ -274,10 +274,19 @@ export default {
             const parsed = JSON.parse(receiver.receiveData)
             const names = receiver.receiveNames || []
 
-            const pushStudent = (parentUserId, name) => {
-              const item = { parentUserId, name: name || '', type }
+            const pushStudent = (parentUserId, studentId, departmentId, name) => {
+              const item = {
+                parentUserId,
+                studentId: studentId || '',
+                departmentId: departmentId || null,
+                name: name || '',
+                type
+              }
               if (!this.selectedStudents.some(s =>
-                s.parentUserId === parentUserId && (s.type || 1) === type
+                s.parentUserId === parentUserId
+                && (s.type || 1) === type
+                && (s.departmentId || null) === (departmentId || null)
+                && (s.studentId || '') === (studentId || '')
               )) {
                 this.selectedStudents.push(item)
               }
@@ -287,7 +296,14 @@ export default {
               return
             }
 
-            parsed.forEach((parentUserId, index) => pushStudent(parentUserId, names[index]))
+            parsed.forEach((entry, index) => {
+              if (entry && typeof entry === 'object' && entry.parentUserId) {
+                const matchedName = names[index] || ''
+                pushStudent(entry.parentUserId, entry.studentId, entry.departmentId, matchedName)
+              } else if (typeof entry === 'string') {
+                pushStudent(entry, '', null, names[index] || '')
+              }
+            })
           } catch (e) {
             console.error('解析接收對象數據失敗:', e)
           }
@@ -404,7 +420,13 @@ export default {
           receivers.push({
             receiveType: '1',
             receiveData: JSON.stringify(
-              type1Students.map(s => s.parentUserId).filter(Boolean)
+              type1Students
+                .filter(s => s.parentUserId)
+                .map(s => ({
+                  parentUserId: s.parentUserId,
+                  studentId: s.studentId || '',
+                  departmentId: s.departmentId || null
+                }))
             )
           })
         }
@@ -412,7 +434,13 @@ export default {
           receivers.push({
             receiveType: '2',
             receiveData: JSON.stringify(
-              type2Students.map(s => s.parentUserId).filter(Boolean)
+              type2Students
+                .filter(s => s.parentUserId)
+                .map(s => ({
+                  parentUserId: s.parentUserId,
+                  studentId: s.studentId || '',
+                  departmentId: s.departmentId || null
+                }))
             )
           })
         }
@@ -464,6 +492,7 @@ export default {
       const index = this.selectedStudents.findIndex(s =>
         s.parentUserId === student.parentUserId
         && s.departmentId === student.departmentId
+        && (s.studentId || '') === (student.studentId || '')
         && (s.type || 1) === (student.type || 1)
       )
       if (index > -1) {

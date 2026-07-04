@@ -34,10 +34,10 @@ public interface INotificationService {
     /**
      * 保存通知（新增或草稿）
      */
-    boolean save(NotificationSaveDTO notificationSaveDTO);
+    boolean save(NotificationSaveDTO notificationSaveDTO, String createBy);
 
     /**
      * 撤回通知
      */
-    boolean recallNotification(Long notificationId);
+    boolean recallNotification(Long notificationId, String updateBy);
 }

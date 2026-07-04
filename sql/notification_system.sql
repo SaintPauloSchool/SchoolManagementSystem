@@ -129,13 +129,13 @@ CREATE TABLE notification_user_read_record (
                                                read_id             BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '閱讀記錄ID',
                                                send_record_id      BIGINT(20)      NOT NULL                   COMMENT '發送記錄ID',
                                                user_id             VARCHAR(64)     NOT NULL                   COMMENT '用戶ID',
-                                               user_type           CHAR(1)         NOT NULL                   COMMENT '用戶類型（1學生 2家長 3教師）',
+                                               user_type           CHAR(1)         NOT NULL                   COMMENT '用戶類型（1學生/家長 2教師/職工）',
                                                is_read             CHAR(1)         DEFAULT '0'                COMMENT '是否已讀（0未讀 1已讀）',
                                                read_time           DATETIME        DEFAULT NULL               COMMENT '閱讀時間',
                                                reply_status        CHAR(1)         DEFAULT '0'                COMMENT '回覆狀態（0未回覆 1已回覆）',
                                                reply_time          DATETIME        DEFAULT NULL               COMMENT '回覆時間',
                                                send_status         CHAR(1)         DEFAULT '0'                COMMENT '發送狀態（0發送失敗 1發送成功）',
-                                               student_user_id     VARCHAR(64)     DEFAULT NULL               COMMENT '關聯的學生ID（當接收者是家長時記錄，若發送給學生本身則與userId相同）',
+                                               student_id          VARCHAR(64)     DEFAULT NULL               COMMENT '關聯的學籍 student_id（student_profiles.student_info.student_id）',
                                                department_id       BIGINT(20)      DEFAULT NULL               COMMENT '發送時所屬部門ID',
                                                create_time         DATETIME                                   COMMENT '創建時間',
                                                PRIMARY KEY (read_id),
@@ -153,7 +153,7 @@ CREATE TABLE notification_reminder_record (
                                               reminder_id         BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '提醒記錄ID',
                                               notification_id     BIGINT(20)      NOT NULL                   COMMENT '原通知ID',
                                               send_record_id      BIGINT(20)      NOT NULL                   COMMENT '原發送記錄ID',
-                                              student_user_id     VARCHAR(64)     NOT NULL                   COMMENT '學生用戶ID',
+                                              student_id          VARCHAR(64)     NOT NULL                   COMMENT '學籍 student_id（student_profiles.student_info.student_id）',
                                               parent_user_ids     TEXT            DEFAULT NULL               COMMENT '未回覆的家長用戶ID列表(JSON格式)',
                                               remind_send_time    DATETIME        DEFAULT NULL               COMMENT '提醒發送時間',
                                               remind_send_status  CHAR(1)         DEFAULT '0'                COMMENT '提醒發送狀態（0待發送 1發送成功 2發送失敗）',
@@ -161,7 +161,7 @@ CREATE TABLE notification_reminder_record (
                                               PRIMARY KEY (reminder_id),
                                               KEY idx_notification (notification_id),
                                               KEY idx_send_record (send_record_id),
-                                              KEY idx_student (student_user_id)
+                                              KEY idx_student (student_id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT = '通知提醒記錄表';
 
 -- ----------------------------
@@ -173,8 +173,7 @@ CREATE TABLE notification_answer (
                                      notification_id     BIGINT(20)      NOT NULL                   COMMENT '通知 ID',
                                      question_id         BIGINT(20)      NOT NULL                   COMMENT '問題 ID',
                                      user_id             VARCHAR(64)     NOT NULL                   COMMENT '用戶 ID（parentUserId）',
-                                     student_user_id     VARCHAR(64)     NOT NULL                   COMMENT '學生用戶 ID',
-                                     user_type           CHAR(1)         NOT NULL                   COMMENT '用戶類型（1 學生 2 家長 3 教師）',
+                                     student_id          VARCHAR(64)     NOT NULL                   COMMENT '學籍 student_id（student_profiles.student_info.student_id）',
                                      answer_data         JSON            DEFAULT NULL               COMMENT '答案數據（JSON格式，包含nodeId、nodeTitle、nodeType、answerContent、attachmentUrls）',
                                      create_time         DATETIME                                   COMMENT '創建時間',
                                      PRIMARY KEY (answer_id),
@@ -378,7 +377,7 @@ CREATE TABLE sys_school_department_member (
                                               department_id       BIGINT(20)      NOT NULL                   COMMENT '部門 ID',
                                               open_userid         VARCHAR(100)    DEFAULT NULL               COMMENT '全局唯一 UserID',
                                               type                TINYINT(1)      DEFAULT 1                  COMMENT '類型：1-學校部門通訊錄，2-家校通訊錄',
-                                              student_user_id     VARCHAR(100)    DEFAULT NULL               COMMENT '關聯學生 UserID（家校通訊錄成員）',
+                                              student_id          VARCHAR(64)     DEFAULT NULL               COMMENT '關聯學籍 student_id（student_profiles.student_info.student_id）',
                                               create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP  COMMENT '創建時間',
                                               update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
                                               PRIMARY KEY (id)
@@ -391,9 +390,8 @@ CREATE TABLE `notification_resend_fail_record` (
                                                    `id`              bigint       NOT NULL AUTO_INCREMENT          COMMENT '主鍵ID',
                                                    `notification_id` bigint       NOT NULL                         COMMENT '通知ID',
                                                    `send_record_id`  bigint       NOT NULL                         COMMENT '發送記錄ID',
-                                                   `user_id`         varchar(64)  NOT NULL                         COMMENT '接收用戶ID（家長或學生）',
-                                                   `user_type`       char(1)      NOT NULL DEFAULT '2'             COMMENT '用戶類型（1學生 2家長）',
-                                                   `student_user_id` varchar(64)           DEFAULT NULL            COMMENT '關聯學生ID',
+                                                   `user_id`         varchar(64)  NOT NULL                         COMMENT '接收用戶ID',
+                                                   `student_id`      varchar(64)           DEFAULT NULL            COMMENT '關聯學生信息表 student_id',
                                                    `fail_reason_1`   varchar(255)          DEFAULT NULL            COMMENT '第1次失敗原因',
                                                    `fail_message_1`  varchar(1000)         DEFAULT NULL            COMMENT '第1次失敗詳細信息',
                                                    `fail_reason_2`   varchar(255)          DEFAULT NULL            COMMENT '第2次失敗原因',
@@ -513,3 +511,7 @@ CREATE TABLE student_attendance_record (
 
 -- 若 sys_token 已存在，補充 display_name 欄位：
 -- ALTER TABLE sys_token ADD COLUMN display_name varchar(64) DEFAULT NULL COMMENT '顯示名稱' AFTER user_id;
+
+-- 若 sys_school_department_member 仍為 student_user_id，遷移為 student_id：
+-- ALTER TABLE sys_school_department_member
+--   CHANGE COLUMN student_user_id student_id VARCHAR(64) DEFAULT NULL COMMENT '關聯學籍 student_id（student_profiles.student_info.student_id）';

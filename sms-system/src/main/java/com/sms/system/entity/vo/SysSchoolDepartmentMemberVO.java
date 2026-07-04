@@ -14,7 +14,7 @@ public class SysSchoolDepartmentMemberVO implements Serializable {
     private String name;
     private Long departmentId;
     private String openUserid;
-    private String studentUserId;
+    private String studentId;
     private Integer type;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
@@ -59,12 +59,12 @@ public class SysSchoolDepartmentMemberVO implements Serializable {
         this.openUserid = openUserid;
     }
 
-    public String getStudentUserId() {
-        return studentUserId;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setStudentUserId(String studentUserId) {
-        this.studentUserId = studentUserId;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
     public Integer getType() {

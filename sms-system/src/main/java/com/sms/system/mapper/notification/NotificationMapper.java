@@ -57,7 +57,9 @@ public interface NotificationMapper {
      * @param status 狀態
      * @return 影響行數
      */
-    int updateStatus(@Param("notificationId") Long notificationId, @Param("status") String status);
+    int updateStatus(@Param("notificationId") Long notificationId,
+                     @Param("status") String status,
+                     @Param("updateBy") String updateBy);
 
 }
 

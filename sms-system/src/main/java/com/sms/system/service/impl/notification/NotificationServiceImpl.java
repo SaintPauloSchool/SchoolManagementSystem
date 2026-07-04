@@ -126,9 +126,11 @@ public class NotificationServiceImpl implements INotificationService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean save(NotificationSaveDTO notificationSaveDTO) {
+    public boolean save(NotificationSaveDTO notificationSaveDTO, String createBy) {
         Notification notification = BeanCopyUtils.copy(notificationSaveDTO, Notification.class);
-        notification.setCreateTime(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        notification.setCreateBy(createBy);
+        notification.setCreateTime(now);
 
         // 正式發佈前校驗接收對象是否可解析
         if ("1".equals(notificationSaveDTO.getStatus())
@@ -180,13 +182,13 @@ public class NotificationServiceImpl implements INotificationService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean recallNotification(Long notificationId) {
+    public boolean recallNotification(Long notificationId, String updateBy) {
         Notification notification = notificationMapper.selectById(notificationId);
         if (notification == null || !"1".equals(notification.getStatus())) {
             return false;
         }
 
-        int rows = notificationMapper.updateStatus(notificationId, "2");
+        int rows = notificationMapper.updateStatus(notificationId, "2", updateBy);
         return rows > 0;
     }
 

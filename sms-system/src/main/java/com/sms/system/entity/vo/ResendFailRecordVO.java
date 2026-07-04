@@ -11,14 +11,11 @@ public class ResendFailRecordVO {
     /** 主鍵ID */
     private Long id;
 
-    /** 用戶ID */
+    /** 用戶ID（家長 userid） */
     private String userId;
 
-    /** 用戶類型（1學生 2家長） */
-    private String userType;
-
-    /** 關聯學生ID */
-    private String studentUserId;
+    /** 關聯學籍 student_id */
+    private String studentId;
 
     /** 學生名字 */
     private String studentName;
@@ -75,20 +72,12 @@ public class ResendFailRecordVO {
         this.userId = userId;
     }
 
-    public String getUserType() {
-        return userType;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setUserType(String userType) {
-        this.userType = userType;
-    }
-
-    public String getStudentUserId() {
-        return studentUserId;
-    }
-
-    public void setStudentUserId(String studentUserId) {
-        this.studentUserId = studentUserId;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
     public String getStudentName() {
