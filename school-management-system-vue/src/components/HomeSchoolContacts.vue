@@ -751,6 +751,7 @@ export default {
         treeKey: node.treeKey,
         userid: node.parentUserId || '',
         studentId: node.studentId || '',
+        classDepartmentId: node.classDepartmentId || null,
         name: node.name,
         openUserid: node.groupChatId || ''
       }))
@@ -802,7 +803,8 @@ export default {
           userid: member.userid,
           studentId: member.studentId || '',
           name: member.name,
-          departmentId: this.currentDepartment.id,
+          schoolDepartmentId: this.currentDepartment.id,
+          departmentId: member.classDepartmentId || null,
           openUserid: member.openUserid || ''
         }))
 

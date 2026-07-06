@@ -12,6 +12,7 @@ public class SysSchoolDepartmentMemberVO implements Serializable {
     private Long id;
     private String userid;
     private String name;
+    private Long schoolDepartmentId;
     private Long departmentId;
     private String openUserid;
     private String studentId;
@@ -41,6 +42,14 @@ public class SysSchoolDepartmentMemberVO implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Long getSchoolDepartmentId() {
+        return schoolDepartmentId;
+    }
+
+    public void setSchoolDepartmentId(Long schoolDepartmentId) {
+        this.schoolDepartmentId = schoolDepartmentId;
     }
 
     public Long getDepartmentId() {

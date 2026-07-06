@@ -28,7 +28,7 @@ public class SchoolNoticeTask {
     private static final AtomicBoolean isExecuting = new AtomicBoolean(false);
 
     /**
-     * 每周一到周五下午 6 點執行（北京時間）
+     * 每周一到周五下午 6 點執行
      */
     //@Scheduled(cron = "0 0 18 ? * MON-FRI")
     public void executeTask() {

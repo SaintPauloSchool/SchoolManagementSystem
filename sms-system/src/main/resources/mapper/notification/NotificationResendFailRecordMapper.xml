@@ -80,8 +80,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                r.update_time as updateTime
         from notification_resend_fail_record r
         left join sys_school_family_contact ps
-            on r.user_id = ps.parent_user_id and r.student_id is not null
-        left join student_profiles.student_info si on r.student_id = si.student_id
+            on r.user_id collate utf8mb4_unicode_ci = ps.parent_user_id collate utf8mb4_unicode_ci
+            and r.student_id is not null
+        left join student_profiles.student_info si
+            on r.student_id collate utf8mb4_unicode_ci = si.student_id
         where r.send_record_id = #{sendRecordId}
     </select>
 

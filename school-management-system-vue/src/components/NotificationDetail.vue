@@ -230,20 +230,23 @@
       </div>
       <div class="receiver-groups">
         <template v-for="receiver in notification.receivers" :key="receiver.receiverId">
-          <div class="receiver-group-card">
-            <div class="group-header">
+          <div
+            class="receiver-group-card"
+            :class="{ 'is-expanded': isReceiverExpanded(receiver.receiverId) }"
+          >
+            <div class="group-header" @click="toggleReceiverGroup(receiver.receiverId)">
               <el-icon :size="16"><User /></el-icon>
               <span class="group-title">{{ getReceiveTypeText(receiver.receiveType) }}</span>
-            </div>
-            <div class="group-content">
-              <div
-                  v-for="(groupData, index) in getReceiverGroupedData(receiver)"
-                  :key="index"
-                  class="source-chip"
+              <span class="group-count">{{ getReceiverNameCount(receiver) }} 人</span>
+              <el-icon
+                class="expand-arrow"
+                :class="{ 'is-rotated': isReceiverExpanded(receiver.receiverId) }"
               >
-                <span class="source-label">{{ groupData.source }}</span>
-                <span class="source-names">{{ groupData.names.join(', ') }}</span>
-              </div>
+                <ArrowDown />
+              </el-icon>
+            </div>
+            <div v-show="isReceiverExpanded(receiver.receiverId)" class="group-content">
+              <div class="source-names-block">{{ getReceiverNames(receiver).join(', ') }}</div>
             </div>
           </div>
         </template>
@@ -259,16 +262,22 @@
         <h3 class="section-label">抄送對象</h3>
       </div>
       <div class="cc-groups">
-        <div class="cc-group-card">
-          <div class="group-content">
-            <div
-              v-for="(ccData, index) in ccDisplayGroups"
-              :key="index"
-              class="source-chip"
-            >
-              <span class="source-label">{{ ccData.source }}</span>
-              <span class="source-names">{{ ccData.names.join(', ') }}</span>
-            </div>
+        <div
+          v-for="(ccData, index) in ccDisplayGroups"
+          :key="index"
+          class="cc-group-card"
+          :class="{ 'is-expanded': isCcExpanded(index) }"
+        >
+          <div class="group-header" @click="toggleCcGroup(index)">
+            <el-icon :size="16"><Message /></el-icon>
+            <span class="group-title">{{ formatCcSourceTitle(ccData.source) }}</span>
+            <span class="group-count">{{ ccData.names.length }} 人</span>
+            <el-icon class="expand-arrow" :class="{ 'is-rotated': isCcExpanded(index) }">
+              <ArrowDown />
+            </el-icon>
+          </div>
+          <div v-show="isCcExpanded(index)" class="group-content">
+            <div class="source-names-block">{{ ccData.names.join(', ') }}</div>
           </div>
         </div>
       </div>
@@ -395,7 +404,9 @@ export default {
   },
   data() {
     return {
-      expandedQuestions: []
+      expandedQuestions: [],
+      expandedReceiverIds: [],
+      expandedCcIndexes: []
     }
   },
   computed: {
@@ -609,10 +620,44 @@ export default {
 
     getReceiveTypeText(type) {
       const typeMap = {
-        '1': '班級群組',
-        '2': '個別學生/家長'
+        '1': 'WeCom家校通訊錄',
+        '2': '自定義家校通訊錄'
       }
       return typeMap[type] || '未知'
+    },
+
+    isReceiverExpanded(receiverId) {
+      return this.expandedReceiverIds.includes(receiverId)
+    },
+
+    toggleReceiverGroup(receiverId) {
+      const idx = this.expandedReceiverIds.indexOf(receiverId)
+      if (idx > -1) {
+        this.expandedReceiverIds.splice(idx, 1)
+      } else {
+        this.expandedReceiverIds.push(receiverId)
+      }
+    },
+
+    getReceiverNameCount(receiver) {
+      return this.getReceiverNames(receiver).length
+    },
+
+    isCcExpanded(index) {
+      return this.expandedCcIndexes.includes(index)
+    },
+
+    toggleCcGroup(index) {
+      const idx = this.expandedCcIndexes.indexOf(index)
+      if (idx > -1) {
+        this.expandedCcIndexes.splice(idx, 1)
+      } else {
+        this.expandedCcIndexes.push(index)
+      }
+    },
+
+    formatCcSourceTitle(source) {
+      return (source || '').replace(/：$/, '')
     },
 
     getQuestionIndex(question) {
@@ -689,26 +734,11 @@ export default {
       return idx > -1 ? idx + 1 : '?'
     },
 
-    getReceiverGroupedData(receiver) {
-      if (!receiver.receiveData) {
-        return [];
+    getReceiverNames(receiver) {
+      if (!receiver?.receiveNames || !Array.isArray(receiver.receiveNames)) {
+        return []
       }
-
-      try {
-        const type = receiver.receiveType === '2' ? 2 : 1;
-        const sourceText = type === 1 ? 'WeCom家校通訊錄：' : '自定義家校通訊錄：';
-
-        if (receiver.receiveNames && Array.isArray(receiver.receiveNames) && receiver.receiveNames.length > 0) {
-          return [{
-            source: sourceText,
-            names: receiver.receiveNames.filter(name => name && String(name).trim())
-          }];
-        }
-
-        return [];
-      } catch (e) {
-        return [{ source: '解析錯誤', names: [] }];
-      }
+      return receiver.receiveNames.filter(name => name && String(name).trim())
     },
 
     getCcGroupedData(cc) {
@@ -1195,16 +1225,44 @@ export default {
   border-color: #93c5fd;
 }
 
+.receiver-group-card.is-expanded {
+  border-color: #93c5fd;
+  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.08);
+}
+
 .group-header {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid transparent;
   color: #1e40af;
   font-weight: 600;
   font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+.receiver-group-card.is-expanded .group-header,
+.cc-group-card.is-expanded .group-header {
+  border-bottom-color: #e2e8f0;
+}
+
+.group-header:hover {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.group-title {
+  flex: 1;
+}
+
+.group-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  margin-right: 4px;
 }
 
 .group-header .el-icon {
@@ -1346,6 +1404,18 @@ export default {
 
 .cc-group-card:hover {
   border-color: #93c5fd;
+}
+
+.cc-group-card.is-expanded {
+  border-color: #93c5fd;
+  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.08);
+}
+
+.source-names-block {
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.6;
+  word-break: break-word;
 }
 
 /* ===== 問題卡片網格 ===== */

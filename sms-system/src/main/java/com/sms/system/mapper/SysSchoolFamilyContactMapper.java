@@ -67,12 +67,12 @@ public interface SysSchoolFamilyContactMapper {
     List<SysSchoolFamilyContact> selectByStudentUserIds(@Param("studentUserIds") List<String> studentUserIds);
 
     /**
-     * 查詢符合每日學校通知條件的去重家長 userid
-     * <p>範圍：2025 學年 P1–P6 班級家長部門</p>
+     * 按班級部門 ID 列表查詢去重家長 userid。
      *
+     * @param departmentIds 班級部門 ID 列表（type=1）
      * @return 家長企微 userid 列表
      */
-    List<String> selectAllParentUserIds();
+    List<String> selectParentUserIdsByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
 
     /**
      * 批量新增聯絡人

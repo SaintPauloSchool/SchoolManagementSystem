@@ -18,9 +18,9 @@ public interface ISysSchoolFamilyContactService {
     void syncSchoolFamilyContactData(Long targetDepartmentId, JSONObject parentJson);
 
     /**
-     * 查詢符合每日學校通知發送條件的家長 userid 列表。
+     * 查詢基本設置所配置學段下、用於每日學校通知發送的家長 userid 列表。
      *
-     * @return 家長企微 userid 列表，無符合條件時返回空列表
+     * @return 去重後的家長企微 userid 列表；未配置學段或無聯絡人時返回空列表
      */
     List<String> getAllParentUserIds();
 }

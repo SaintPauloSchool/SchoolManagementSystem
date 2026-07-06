@@ -128,14 +128,14 @@ DROP TABLE IF EXISTS notification_user_read_record;
 CREATE TABLE notification_user_read_record (
                                                read_id             BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '閱讀記錄ID',
                                                send_record_id      BIGINT(20)      NOT NULL                   COMMENT '發送記錄ID',
-                                               user_id             VARCHAR(64)     NOT NULL                   COMMENT '用戶ID',
+                                               user_id             VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '用戶ID',
                                                user_type           CHAR(1)         NOT NULL                   COMMENT '用戶類型（1學生/家長 2教師/職工）',
                                                is_read             CHAR(1)         DEFAULT '0'                COMMENT '是否已讀（0未讀 1已讀）',
                                                read_time           DATETIME        DEFAULT NULL               COMMENT '閱讀時間',
                                                reply_status        CHAR(1)         DEFAULT '0'                COMMENT '回覆狀態（0未回覆 1已回覆）',
                                                reply_time          DATETIME        DEFAULT NULL               COMMENT '回覆時間',
                                                send_status         CHAR(1)         DEFAULT '0'                COMMENT '發送狀態（0發送失敗 1發送成功）',
-                                               student_id          VARCHAR(64)     DEFAULT NULL               COMMENT '關聯的學籍 student_id（student_profiles.student_info.student_id）',
+                                               student_id          VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '關聯的學籍 student_id（student_profiles.student_info.student_id）',
                                                department_id       BIGINT(20)      DEFAULT NULL               COMMENT '發送時所屬部門ID',
                                                create_time         DATETIME                                   COMMENT '創建時間',
                                                PRIMARY KEY (read_id),
@@ -372,9 +372,10 @@ CREATE TABLE sys_school_department (
 DROP TABLE IF EXISTS sys_school_department_member;
 CREATE TABLE sys_school_department_member (
                                               id                  BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '主鍵 ID',
+                                              school_department_id BIGINT(20)     NOT NULL                   COMMENT '自定義部門節點 ID（sys_school_department.id）',
                                               userid              VARCHAR(100)    NOT NULL                   COMMENT '成員 UserID',
                                               name                VARCHAR(255)    DEFAULT NULL               COMMENT '成員名稱',
-                                              department_id       BIGINT(20)      NOT NULL                   COMMENT '部門 ID',
+                                              department_id       BIGINT(20)      DEFAULT NULL               COMMENT '真實班級/部門 ID（選人時 sys_department.id）',
                                               open_userid         VARCHAR(100)    DEFAULT NULL               COMMENT '全局唯一 UserID',
                                               type                TINYINT(1)      DEFAULT 1                  COMMENT '類型：1-學校部門通訊錄，2-家校通訊錄',
                                               student_id          VARCHAR(64)     DEFAULT NULL               COMMENT '關聯學籍 student_id（student_profiles.student_info.student_id）',
@@ -390,8 +391,8 @@ CREATE TABLE `notification_resend_fail_record` (
                                                    `id`              bigint       NOT NULL AUTO_INCREMENT          COMMENT '主鍵ID',
                                                    `notification_id` bigint       NOT NULL                         COMMENT '通知ID',
                                                    `send_record_id`  bigint       NOT NULL                         COMMENT '發送記錄ID',
-                                                   `user_id`         varchar(64)  NOT NULL                         COMMENT '接收用戶ID',
-                                                   `student_id`      varchar(64)           DEFAULT NULL            COMMENT '關聯學生信息表 student_id',
+                                                   `user_id`         varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '接收用戶ID',
+                                                   `student_id`      varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '關聯學生信息表 student_id',
                                                    `fail_reason_1`   varchar(255)          DEFAULT NULL            COMMENT '第1次失敗原因',
                                                    `fail_message_1`  varchar(1000)         DEFAULT NULL            COMMENT '第1次失敗詳細信息',
                                                    `fail_reason_2`   varchar(255)          DEFAULT NULL            COMMENT '第2次失敗原因',
@@ -515,3 +516,23 @@ CREATE TABLE student_attendance_record (
 -- 若 sys_school_department_member 仍為 student_user_id，遷移為 student_id：
 -- ALTER TABLE sys_school_department_member
 --   CHANGE COLUMN student_user_id student_id VARCHAR(64) DEFAULT NULL COMMENT '關聯學籍 student_id（student_profiles.student_info.student_id）';
+
+-- 若 sys_school_department_member 尚無 school_department_id，拆分部門綁定與真實班級 ID：
+-- ALTER TABLE sys_school_department_member
+--   ADD COLUMN school_department_id BIGINT DEFAULT NULL COMMENT '自定義部門節點 ID（sys_school_department.id）' AFTER name;
+-- UPDATE sys_school_department_member SET school_department_id = department_id WHERE school_department_id IS NULL;
+-- UPDATE sys_school_department_member SET department_id = NULL;
+-- ALTER TABLE sys_school_department_member
+--   MODIFY COLUMN school_department_id BIGINT NOT NULL COMMENT '自定義部門節點 ID（sys_school_department.id）',
+--   MODIFY COLUMN department_id BIGINT DEFAULT NULL COMMENT '真實班級/部門 ID（選人時 sys_department.id，家校通訊錄必填）';
+
+-- 若通知閱讀/重發表與 student_profiles.student_info JOIN 報 collation 衝突，統一為 utf8mb4_unicode_ci：
+-- ALTER TABLE notification_user_read_record
+--   MODIFY COLUMN user_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+--   MODIFY COLUMN student_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+-- ALTER TABLE notification_resend_fail_record
+--   MODIFY COLUMN user_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+--   MODIFY COLUMN student_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+
+-- 每日學校通知班級範圍（type=1，多選）首次保存時自動寫入 sys_config：
+-- config_key = notice.daily_class_department_ids，config_value 為逗號分隔的部門 ID，如 16770,16771

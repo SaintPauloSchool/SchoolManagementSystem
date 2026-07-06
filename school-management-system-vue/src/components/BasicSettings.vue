@@ -12,7 +12,7 @@
 
       <el-tabs v-model="activeTab">
         <el-tab-pane label="家校通訊錄選擇學段" name="wecom">
-          <div class="tree-panel" v-loading="loading">
+          <div class="tree-panel" v-loading="segmentLoading">
             <el-tree
               ref="segmentTreeRef"
               :data="segmentTree"
@@ -20,9 +20,8 @@
               node-key="id"
               show-checkbox
               check-strictly
-              default-expand-all
-              :default-checked-keys="checkedIds"
-              @check="handleCheck"
+              :default-checked-keys="segmentCheckedIds"
+              @check="handleSegmentCheck"
             >
               <template #default="{ data }">
                 <span class="tree-node">
@@ -35,8 +34,44 @@
           </div>
 
           <div class="action-bar">
-            <el-button type="primary" :loading="saving" @click="handleSave">保存配置</el-button>
-            <el-button @click="loadData">重新載入</el-button>
+            <el-button type="primary" :loading="segmentSaving" @click="handleSaveSegment">保存配置</el-button>
+            <el-button @click="loadSegmentData">重新載入</el-button>
+          </div>
+        </el-tab-pane>
+
+        <el-tab-pane label="每日學校通知選擇班級" name="dailyNotice">
+          <div class="tree-panel" v-loading="dailyNoticeLoading">
+            <el-tree
+              ref="dailyNoticeTreeRef"
+              :data="dailyNoticeTree"
+              :props="treeProps"
+              node-key="id"
+              show-checkbox
+              check-strictly
+              :default-checked-keys="dailyNoticeCheckedIds"
+              @check="handleDailyNoticeCheck"
+            >
+              <template #default="{ data }">
+                <span class="tree-node">
+                  <span>{{ data.name }}</span>
+                  <el-tag v-if="data.type === 1" size="small" type="warning" class="type-tag">班級</el-tag>
+                  <el-tag v-else-if="data.type === 2" size="small" type="info" class="type-tag">年級</el-tag>
+                  <el-tag v-else-if="data.type === 3" size="small" type="success" class="type-tag">學段</el-tag>
+                  <span
+                    v-if="data.type !== 1 && getDailyNoticeSelectedLabel(data)"
+                    class="selected-count"
+                  >{{ getDailyNoticeSelectedLabel(data) }}</span>
+                </span>
+              </template>
+            </el-tree>
+          </div>
+
+          <div class="action-bar">
+            <span v-if="dailyNoticeCheckedIds.length > 0" class="action-selected-tip">
+              已選 {{ dailyNoticeCheckedIds.length }} 個班級
+            </span>
+            <el-button type="primary" :loading="dailyNoticeSaving" @click="handleSaveDailyNotice">保存配置</el-button>
+            <el-button @click="loadDailyNoticeData">重新載入</el-button>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -55,53 +90,99 @@ export default {
   data() {
     return {
       activeTab: 'wecom',
-      loading: false,
-      saving: false,
+      segmentLoading: false,
+      segmentSaving: false,
+      dailyNoticeLoading: false,
+      dailyNoticeSaving: false,
       segmentTree: [],
-      checkedIds: [],
+      segmentCheckedIds: [],
+      dailyNoticeTree: [],
+      dailyNoticeCheckedIds: [],
       treeProps: {
         children: 'children',
         label: 'name'
       }
     }
   },
+  computed: {
+    dailyNoticeCheckedSet() {
+      return new Set(this.dailyNoticeCheckedIds)
+    }
+  },
   mounted() {
-    this.loadData()
+    this.loadSegmentData()
+    this.loadDailyNoticeData()
   },
   methods: {
-    async loadData() {
-      this.loading = true
+    async loadSegmentData() {
+      this.segmentLoading = true
       try {
         const [treeRes, scopeRes] = await Promise.all([
           request({ url: '/system/basic/addressBook/segmentTree', method: 'get' }),
           request({ url: '/system/basic/addressBook/segmentSetting', method: 'get' })
         ])
         if (treeRes.code === 200 || treeRes.code === 0) {
-          this.segmentTree = this.markTreeSelectable(treeRes.data || [])
+          this.segmentTree = this.markSegmentTreeSelectable(treeRes.data || [])
         }
         if (scopeRes.code === 200 || scopeRes.code === 0) {
           const id = scopeRes.data?.segmentDepartmentId
-          this.checkedIds = id != null ? [id] : []
+          this.segmentCheckedIds = id != null ? [id] : []
           this.$nextTick(() => {
             if (this.$refs.segmentTreeRef) {
-              this.$refs.segmentTreeRef.setCheckedKeys(this.checkedIds)
+              this.$refs.segmentTreeRef.setCheckedKeys(this.segmentCheckedIds)
             }
           })
         }
       } catch (e) {
         console.error(e)
       } finally {
-        this.loading = false
+        this.segmentLoading = false
       }
     },
-    markTreeSelectable(nodes) {
+
+    async loadDailyNoticeData() {
+      this.dailyNoticeLoading = true
+      try {
+        const [treeRes, settingRes] = await Promise.all([
+          request({ url: '/system/basic/dailyNotice/classTree', method: 'get' }),
+          request({ url: '/system/basic/dailyNotice/classSetting', method: 'get' })
+        ])
+        if (treeRes.code === 200 || treeRes.code === 0) {
+          this.dailyNoticeTree = this.markDailyNoticeTreeSelectable(treeRes.data || [])
+        }
+        if (settingRes.code === 200 || settingRes.code === 0) {
+          const ids = settingRes.data?.classDepartmentIds || []
+          this.dailyNoticeCheckedIds = ids.map(id => Number(id))
+          this.$nextTick(() => {
+            if (this.$refs.dailyNoticeTreeRef) {
+              this.$refs.dailyNoticeTreeRef.setCheckedKeys(this.dailyNoticeCheckedIds)
+            }
+          })
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        this.dailyNoticeLoading = false
+      }
+    },
+
+    markSegmentTreeSelectable(nodes) {
       return (nodes || []).map(node => ({
         ...node,
         disabled: node.type !== 3,
-        children: node.children ? this.markTreeSelectable(node.children) : undefined
+        children: node.children ? this.markSegmentTreeSelectable(node.children) : undefined
       }))
     },
-    handleCheck(data, { checkedKeys }) {
+
+    markDailyNoticeTreeSelectable(nodes) {
+      return (nodes || []).map(node => ({
+        ...node,
+        disabled: node.type !== 1,
+        children: node.children ? this.markDailyNoticeTreeSelectable(node.children) : undefined
+      }))
+    },
+
+    handleSegmentCheck(data, { checkedKeys }) {
       const treeRef = this.$refs.segmentTreeRef
       if (!treeRef || data.type !== 3) {
         return
@@ -110,22 +191,63 @@ export default {
       const isChecked = checkedKeys.includes(data.id)
       if (isChecked) {
         treeRef.setCheckedKeys([data.id])
-        this.checkedIds = [data.id]
+        this.segmentCheckedIds = [data.id]
       } else {
-        this.checkedIds = []
+        this.segmentCheckedIds = []
       }
     },
-    async handleSave() {
-      if (this.checkedIds.length === 0) {
+
+    handleDailyNoticeCheck() {
+      const treeRef = this.$refs.dailyNoticeTreeRef
+      if (!treeRef) {
+        return
+      }
+      const checkedNodes = treeRef.getCheckedNodes(false, true)
+      this.dailyNoticeCheckedIds = checkedNodes
+        .filter(node => node.type === 1)
+        .map(node => node.id)
+    },
+
+    countClassSelectionUnder(node) {
+      let total = 0
+      let selected = 0
+      const walk = (current) => {
+        if (!current) return
+        if (current.type === 1) {
+          total++
+          if (this.dailyNoticeCheckedSet.has(current.id)) {
+            selected++
+          }
+          return
+        }
+        ;(current.children || []).forEach(walk)
+      }
+      walk(node)
+      return { total, selected }
+    },
+
+    getDailyNoticeSelectedLabel(node) {
+      if (!node || node.type === 1) {
+        return ''
+      }
+      const { total, selected } = this.countClassSelectionUnder(node)
+      if (selected === 0) {
+        return ''
+      }
+      return total > 0 ? `已選 ${selected}/${total}` : `已選 ${selected}`
+    },
+
+    async handleSaveSegment() {
+      if (this.segmentCheckedIds.length === 0) {
         ElNotification({ title: '提示', message: '請選擇一個學段', type: 'warning', duration: 3000 })
         return
       }
-      this.saving = true
+      this.segmentSaving = true
       try {
         const res = await request({
           url: '/system/basic/addressBook/segmentSetting',
           method: 'post',
-          data: { segmentDepartmentId: this.checkedIds[0] }
+          data: { segmentDepartmentId: this.segmentCheckedIds[0] }
         })
         if (res.code === 200 || res.code === 0) {
           ElNotification({ title: '保存成功', message: '學段設置已保存', type: 'success', duration: 3000 })
@@ -133,7 +255,29 @@ export default {
       } catch (e) {
         console.error(e)
       } finally {
-        this.saving = false
+        this.segmentSaving = false
+      }
+    },
+
+    async handleSaveDailyNotice() {
+      if (this.dailyNoticeCheckedIds.length === 0) {
+        ElNotification({ title: '提示', message: '請至少選擇一個班級部門', type: 'warning', duration: 3000 })
+        return
+      }
+      this.dailyNoticeSaving = true
+      try {
+        const res = await request({
+          url: '/system/basic/dailyNotice/classSetting',
+          method: 'post',
+          data: { classDepartmentIds: this.dailyNoticeCheckedIds }
+        })
+        if (res.code === 200 || res.code === 0) {
+          ElNotification({ title: '保存成功', message: '每日學校通知班級範圍已保存', type: 'success', duration: 3000 })
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        this.dailyNoticeSaving = false
       }
     }
   }
@@ -151,6 +295,21 @@ export default {
   gap: 8px;
   font-size: 16px;
   font-weight: 600;
+}
+
+.selected-count {
+  margin-left: 4px;
+  font-size: 12px;
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.action-selected-tip {
+  align-self: center;
+  margin-right: 8px;
+  font-size: 14px;
+  color: #2563eb;
+  font-weight: 500;
 }
 
 .tree-panel {

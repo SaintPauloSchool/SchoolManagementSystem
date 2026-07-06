@@ -8,6 +8,7 @@
         <result property="id" column="id"/>
         <result property="userid" column="userid"/>
         <result property="name" column="name"/>
+        <result property="schoolDepartmentId" column="school_department_id"/>
         <result property="departmentId" column="department_id"/>
         <result property="openUserid" column="open_userid"/>
         <result property="type" column="type"/>
@@ -17,17 +18,17 @@
     </resultMap>
 
     <sql id="memberColumns">
-        id, userid, name, department_id, open_userid, type, student_id, create_time, update_time
+        id, userid, name, school_department_id, department_id, open_userid, type, student_id, create_time, update_time
     </sql>
 
     <select id="selectMembersByDepartmentIds" resultMap="SysSchoolDepartmentMemberResult">
         SELECT <include refid="memberColumns"/>
         FROM sys_school_department_member
-        WHERE department_id IN
+        WHERE school_department_id IN
         <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
             #{departmentId}
         </foreach>
-        ORDER BY department_id ASC, name ASC
+        ORDER BY school_department_id ASC, name ASC
     </select>
 
     <select id="selectMembersByIds" resultMap="SysSchoolDepartmentMemberResult">
@@ -37,7 +38,7 @@
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
-        ORDER BY department_id ASC, name ASC
+        ORDER BY school_department_id ASC, name ASC
     </select>
 
     <delete id="deleteMemberById" parameterType="Long">
@@ -47,16 +48,17 @@
 
     <delete id="deleteByDepartmentId" parameterType="Long">
         DELETE FROM sys_school_department_member
-        WHERE department_id = #{departmentId}
+        WHERE school_department_id = #{departmentId}
     </delete>
 
     <insert id="batchInsertMembers">
-        INSERT INTO sys_school_department_member (userid, name, department_id, open_userid, type, student_id, create_time, update_time)
+        INSERT INTO sys_school_department_member (userid, name, school_department_id, department_id, open_userid, type, student_id, create_time, update_time)
         VALUES
         <foreach collection="members" item="member" separator=",">
             (
                 #{member.userid},
                 #{member.name},
+                #{member.schoolDepartmentId},
                 #{member.departmentId},
                 #{member.openUserid},
                 #{member.type},
@@ -75,7 +77,7 @@
         <foreach collection="userids" item="userid" open="(" separator="," close=")">
             #{userid}
         </foreach>
-        ORDER BY department_id ASC, name ASC
+        ORDER BY school_department_id ASC, name ASC
     </select>
 
     <select id="selectHomeSchoolUseridsByUserids" resultType="java.lang.String">

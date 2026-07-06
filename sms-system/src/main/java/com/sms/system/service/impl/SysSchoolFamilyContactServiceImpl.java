@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.system.entity.SysSchoolFamilyContact;
 import com.sms.system.mapper.SysSchoolFamilyContactMapper;
+import com.sms.system.service.ISysConfigService;
 import com.sms.system.service.ISysSchoolFamilyContactService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,9 +29,20 @@ public class SysSchoolFamilyContactServiceImpl implements ISysSchoolFamilyContac
     @Autowired
     private SysSchoolFamilyContactMapper schoolFamilyContactMapper;
 
+    @Autowired
+    private ISysConfigService sysConfigService;
+
     @Override
     public List<String> getAllParentUserIds() {
-        return schoolFamilyContactMapper.selectAllParentUserIds();
+        List<Long> classDepartmentIds = sysConfigService.getDailyNoticeClassDepartmentIds();
+        if (classDepartmentIds == null || classDepartmentIds.isEmpty()) {
+            logger.warn("未配置每日學校通知班級範圍，跳過查詢家長列表");
+            return Collections.emptyList();
+        }
+
+        List<String> parentUserIds = schoolFamilyContactMapper
+                .selectParentUserIdsByDepartmentIds(classDepartmentIds);
+        return parentUserIds != null ? parentUserIds : Collections.emptyList();
     }
 
     @Override

@@ -15,6 +15,9 @@ public class SysSchoolDepartmentMember implements Serializable {
     private Long id;
     private String userid;
     private String name;
+    /** 自定義部門節點 ID（sys_school_department.id） */
+    private Long schoolDepartmentId;
+    /** 真實班級/部門 ID（選人時 sys_department.id） */
     private Long departmentId;
     private String openUserid;
     /** 類型：1-學校部門通訊錄，2-家校通訊錄 */
@@ -46,6 +49,14 @@ public class SysSchoolDepartmentMember implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Long getSchoolDepartmentId() {
+        return schoolDepartmentId;
+    }
+
+    public void setSchoolDepartmentId(Long schoolDepartmentId) {
+        this.schoolDepartmentId = schoolDepartmentId;
     }
 
     public Long getDepartmentId() {
@@ -102,6 +113,7 @@ public class SysSchoolDepartmentMember implements Serializable {
             .append("id", getId())
             .append("userid", getUserid())
             .append("name", getName())
+            .append("schoolDepartmentId", getSchoolDepartmentId())
             .append("departmentId", getDepartmentId())
             .append("openUserid", getOpenUserid())
             .append("type", getType())

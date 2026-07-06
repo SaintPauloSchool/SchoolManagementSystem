@@ -21,9 +21,9 @@ public interface ISysDepartmentService {
     List<SysDepartmentVO> getClassTreeWithParentsByAdmin(String openUserId);
 
     /**
-     * 獲取班級部門 ID
+     * 獲取基本設置所配置學段下的班級部門 ID（type=1）。
      *
-     * @return 班級部門 ID 列表
+     * @return 班級部門 ID 列表；未配置學段或學段無班級時返回空列表
      */
     List<Long> getClassDepartmentId();
 
@@ -31,6 +31,11 @@ public interface ISysDepartmentService {
      * 獲取學段樹（僅到 type=3）
      */
     List<SysDepartmentVO> getSegmentTree();
+
+    /**
+     * 獲取每日學校通知班級選擇樹（學校→校區→學段→年級→班級，含 type=1）
+     */
+    List<SysDepartmentVO> getDailyNoticeClassTree();
 
     /**
      * 同步企業微信家校通訊錄部門與管理員數據

@@ -412,10 +412,10 @@ public class NotificationPublishHandler {
      */
     public TaskResult sendDailySchoolNotice() {
         log.info("開始執行學校通知發送任務");
-        // 獲取所有家長用戶 ID
+        // 按基本設置中配置的學段，查詢該學段下家長 userid
         List<String> allParentUserIds = schoolFamilyContactService.getAllParentUserIds();
         if (allParentUserIds == null || allParentUserIds.isEmpty()) {
-            log.warn("沒有家長用戶 ID，跳過發送");
+            log.warn("沒有可發送的家長用戶（請確認基本設置已選擇每日學校通知班級，且對應班級下已有家校聯絡人數據）");
             return TaskResult.success(0, 0, "無家長需發送");
         }
         log.info("獲取到家長用戶 ID 總數量: {}", allParentUserIds.size());
@@ -512,7 +512,7 @@ public class NotificationPublishHandler {
         }
 
         if (failCount > 0) {
-            return new TaskResult(remindCount, failCount, "定時提示家長回復通知部分失敗: " + errorMsg.toString());
+            return new TaskResult(remindCount, failCount, "定時提示家長回復通知部分失敗: " + errorMsg);
         }
 
         log.info("定時提示家長回復通知任務執行完成，共處理 {} 個通知", remindCount);

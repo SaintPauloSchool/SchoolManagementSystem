@@ -80,11 +80,11 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
                     SysSchoolDepartment::getChildren, SysSchoolDepartmentVO::setChildren);
         }
 
-        // 4. 按部門分組
+        // 4. 按自定義部門節點分組
         Map<Long, List<SysSchoolDepartmentMember>> membersByDeptMap = members.stream()
                 .filter(Objects::nonNull)
-                .filter(m -> m.getDepartmentId() != null)
-                .collect(Collectors.groupingBy(SysSchoolDepartmentMember::getDepartmentId));
+                .filter(m -> m.getSchoolDepartmentId() != null)
+                .collect(Collectors.groupingBy(SysSchoolDepartmentMember::getSchoolDepartmentId));
 
         // 5. 將成員附加到對應部門的 children 目錄下
         for (SysSchoolDepartment dept : allDepartments) {

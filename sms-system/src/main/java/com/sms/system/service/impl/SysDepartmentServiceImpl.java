@@ -408,13 +408,37 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     // =========================================================================
 
     /**
-     * 查詢家校通訊錄中所有班級部門 ID（type=1）。
+     * 查詢基本設置所配置學段下的班級部門 ID（type=1）。
      *
-     * @return 班級部門 ID 列表，無符合條件時返回空列表
+     * @return 班級部門 ID 列表，未配置學段或無班級時返回空列表
      */
     @Override
     public List<Long> getClassDepartmentId() {
-        return departmentMapper.selectClassDepartmentId();
+        Long segmentDepartmentId = sysConfigService.getAddressBookSegmentDepartmentId();
+        if (segmentDepartmentId == null) {
+            return Collections.emptyList();
+        }
+        return getClassDepartmentIdsUnderSegment(segmentDepartmentId);
+    }
+
+    /**
+     * 收集指定學段部門下所有班級（type=1）的部門 ID。
+     */
+    private List<Long> getClassDepartmentIdsUnderSegment(Long segmentDepartmentId) {
+        List<SysDepartmentVO> addressBookTree = getAddressBookDeptTree(segmentDepartmentId);
+        if (addressBookTree.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<SysDepartmentVO> classNodes = new ArrayList<>();
+        collectClassNodes(addressBookTree, classNodes);
+        if (classNodes.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return classNodes.stream()
+                .map(SysDepartmentVO::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     // =========================================================================
@@ -513,6 +537,77 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     @Override
     public List<SysDepartmentVO> getSegmentTree() {
         return getSegmentTreeInternal();
+    }
+
+    /**
+     * 獲取每日學校通知班級選擇樹（含 type=1 班級節點）。
+     */
+    @Override
+    public List<SysDepartmentVO> getDailyNoticeClassTree() {
+        List<SysDepartment> allDepartments = departmentMapper.selectAll();
+        if (allDepartments == null || allDepartments.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<SysDepartmentVO> rootNodes = collectDepartmentsByType(allDepartments, TYPE_SCHOOL).stream()
+                .map(this::toDeptVo)
+                .collect(Collectors.toList());
+        if (rootNodes.isEmpty()) {
+            rootNodes = collectDepartmentsByType(allDepartments, TYPE_CAMPUS).stream()
+                    .map(this::toDeptVo)
+                    .collect(Collectors.toList());
+            if (!rootNodes.isEmpty()) {
+                buildDailyNoticeClassTree(rootNodes, allDepartments, TYPE_CAMPUS);
+                return rootNodes;
+            }
+            return Collections.emptyList();
+        }
+
+        buildDailyNoticeClassTree(rootNodes, allDepartments, TYPE_SCHOOL);
+        return rootNodes;
+    }
+
+    /**
+     * 遞歸構建每日通知班級選擇樹：學校(5)→校區(4)→學段(3)→年級(2)→班級(1)。
+     */
+    private void buildDailyNoticeClassTree(List<SysDepartmentVO> currentLevel,
+                                           List<SysDepartment> allDepartments,
+                                           int currentType) {
+        if (currentLevel == null || currentLevel.isEmpty()) {
+            return;
+        }
+
+        int nextType = currentType - 1;
+        if (nextType < TYPE_CLASS) {
+            return;
+        }
+
+        for (SysDepartmentVO currentDept : currentLevel) {
+            if (currentDept == null || currentDept.getId() == null) {
+                continue;
+            }
+
+            long currentId = currentDept.getId();
+            List<SysDepartmentVO> children = new ArrayList<>();
+            for (SysDepartment dept : allDepartments) {
+                if (dept == null || dept.getType() == null || dept.getType() != nextType) {
+                    continue;
+                }
+                if (dept.getParentId() != null && dept.getParentId().longValue() == currentId) {
+                    children.add(toDeptVo(dept));
+                }
+            }
+
+            if (!children.isEmpty()) {
+                if (nextType == TYPE_CLASS) {
+                    children.sort(this::compareClassDepartmentByRoleThenName);
+                }
+                currentDept.setChildren(children);
+                if (nextType > TYPE_CLASS) {
+                    buildDailyNoticeClassTree(children, allDepartments, nextType);
+                }
+            }
+        }
     }
 
     /**

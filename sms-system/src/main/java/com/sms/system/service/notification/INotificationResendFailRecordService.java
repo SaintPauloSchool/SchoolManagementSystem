@@ -3,6 +3,7 @@ package com.sms.system.service.notification;
 import com.sms.system.entity.notification.NotificationResendFailRecord;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * 通知重發失敗記錄 Service 接口
@@ -36,5 +37,5 @@ public interface INotificationResendFailRecordService {
      * @param notificationId 通知ID
      * @return 已放棄的 userId 集合
      */
-    java.util.Set<String> selectAbandonedUserIds(Long notificationId);
+    Set<String> selectAbandonedUserIds(Long notificationId);
 }

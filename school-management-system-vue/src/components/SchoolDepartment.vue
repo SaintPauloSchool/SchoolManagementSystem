@@ -723,7 +723,12 @@ export default {
     
     handleWecomCheckChange(data, checked) {
       const checkedNodes = this.$refs.wecomTree.getCheckedNodes()
-      this.selectedWecomMembers = checkedNodes.filter(node => node.isLeaf === true)
+      this.selectedWecomMembers = checkedNodes
+        .filter(node => node.isLeaf === true)
+        .map(node => ({
+          ...node,
+          departmentId: node.parentId != null ? Number(node.parentId) : null
+        }))
     },
     
     removeWecomMember(index) {
@@ -757,7 +762,8 @@ export default {
         const membersToAdd = this.selectedWecomMembers.map(member => ({
           userid: member.staffUserId || member.userid,
           name: member.name,
-          departmentId: this.currentDepartment.id,
+          schoolDepartmentId: this.currentDepartment.id,
+          departmentId: member.departmentId || (member.parentId != null ? Number(member.parentId) : null),
           openUserid: member.openUserid || ''
         }))
         

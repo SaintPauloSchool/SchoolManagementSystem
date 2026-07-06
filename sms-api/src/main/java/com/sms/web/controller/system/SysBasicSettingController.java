@@ -4,6 +4,7 @@ import com.sms.common.annotation.Log;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.enums.BusinessType;
 import com.sms.system.entity.dto.AddressBookSegmentSettingDTO;
+import com.sms.system.entity.dto.DailyNoticeClassSettingDTO;
 import com.sms.system.entity.vo.SysDepartmentVO;
 import com.sms.system.service.ISysConfigService;
 import com.sms.system.service.ISysDepartmentService;
@@ -63,6 +64,41 @@ public class SysBasicSettingController extends AdminBaseController {
         sysConfigService.saveAddressBookSegmentDepartmentId(
                 settingDTO != null ? settingDTO.getSegmentDepartmentId() : null,
                 getOpenUserId());
+        return AjaxResult.success("保存成功");
+    }
+
+    /** 每日學校通知班級選擇樹（含 type=1） */
+    @Log(title = "查詢每日通知班級樹", businessType = BusinessType.SELECT)
+    @GetMapping("/dailyNotice/classTree")
+    public AjaxResult dailyNoticeClassTree() {
+        if (isNotAdmin()) {
+            return AjaxResult.error("無權限");
+        }
+        List<SysDepartmentVO> tree = departmentService.getDailyNoticeClassTree();
+        return AjaxResult.success(tree);
+    }
+
+    /** 讀取每日學校通知班級範圍設置 */
+    @Log(title = "查詢每日通知班級設置", businessType = BusinessType.SELECT)
+    @GetMapping("/dailyNotice/classSetting")
+    public AjaxResult getDailyNoticeClassSetting() {
+        if (isNotAdmin()) {
+            return AjaxResult.error("無權限");
+        }
+        DailyNoticeClassSettingDTO dto = new DailyNoticeClassSettingDTO();
+        dto.setClassDepartmentIds(sysConfigService.getDailyNoticeClassDepartmentIds());
+        return AjaxResult.success(dto);
+    }
+
+    /** 保存每日學校通知班級範圍設置 */
+    @Log(title = "保存每日通知班級設置", businessType = BusinessType.UPDATE)
+    @PostMapping("/dailyNotice/classSetting")
+    public AjaxResult saveDailyNoticeClassSetting(@RequestBody DailyNoticeClassSettingDTO settingDTO) {
+        if (isNotAdmin()) {
+            return AjaxResult.error("無權限");
+        }
+        List<Long> ids = settingDTO != null ? settingDTO.getClassDepartmentIds() : null;
+        sysConfigService.saveDailyNoticeClassDepartmentIds(ids, getOpenUserId());
         return AjaxResult.success("保存成功");
     }
 }
