@@ -313,16 +313,6 @@ export default {
     },
     
     getInitialExpandedSections() {
-      // 從 sessionStorage 獲取上次菜單展開狀態
-      const savedSections = sessionStorage.getItem('expandedSections')
-      if (savedSections) {
-        try {
-          return JSON.parse(savedSections)
-        } catch (e) {
-          console.error('解析菜單展開狀態失敗:', e)
-        }
-      }
-      // 默認狀態：家校通知展開，其他摺疊
       return {
         homeSchool: true,
         contact: false,
@@ -339,7 +329,6 @@ export default {
         // 切換到抄送我的並加載背後列表數據
         this.handleMenuSelect('1-2');
         this.expandedSections.homeSchool = true;
-        this.saveExpandedSections();
         
         // 使用 nextTick 確保 NotificationList 元件已渲染
         this.$nextTick(() => {
@@ -352,10 +341,6 @@ export default {
       }
     },
     
-    saveExpandedSections() {
-      // 保存菜單展開狀態到 sessionStorage
-      sessionStorage.setItem('expandedSections', JSON.stringify(this.expandedSections))
-    },
     loadInitialData() {
       // 根據當前激活的菜單加載對應的數據
       if (this.activeMenu === '1-2') {
@@ -404,7 +389,6 @@ export default {
         this.isCollapsed = false
       }
       this.expandedSections[sectionName] = !this.expandedSections[sectionName]
-      this.saveExpandedSections() // 保存展開狀態
     },
     
     handleMenuSelect(index) {

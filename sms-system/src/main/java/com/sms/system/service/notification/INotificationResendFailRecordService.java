@@ -2,7 +2,6 @@ package com.sms.system.service.notification;
 
 import com.sms.system.entity.notification.NotificationResendFailRecord;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -21,14 +20,6 @@ public interface INotificationResendFailRecordService {
      * @param record 重發失敗記錄
      */
     void saveOrUpdate(NotificationResendFailRecord record);
-
-    /**
-     * 根據通知ID查詢所有重發失敗記錄
-     *
-     * @param notificationId 通知ID
-     * @return 記錄列表
-     */
-    List<NotificationResendFailRecord> selectByNotificationId(Long notificationId);
 
     /**
      * 根據通知ID構建已放棄用戶ID集合（fail_count >= MAX_FAIL_COUNT 或 status = 1）

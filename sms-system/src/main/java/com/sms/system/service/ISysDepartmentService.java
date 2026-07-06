@@ -1,7 +1,6 @@
 package com.sms.system.service;
 
 import com.alibaba.fastjson.JSONObject;
-import com.sms.system.entity.SysDepartment;
 import com.sms.system.entity.vo.SysDepartmentVO;
 
 import java.util.List;

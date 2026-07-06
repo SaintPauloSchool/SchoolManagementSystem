@@ -33,14 +33,4 @@ public class WecomSchoolDepartmentController extends BaseController {
         List<WecomSchoolDepartmentVO> tree = wecomSchoolDepartmentService.getWecomSchoolDepartmentTreeWithMembers();
         return AjaxResult.success(tree);
     }
-
-    /**
-     * 獲取學校部門樹形結構（僅部門，不含人員）
-     */
-    @Log(title = "查詢學校部門樹", businessType = BusinessType.SELECT)
-    @GetMapping("/tree")
-    public AjaxResult tree() {
-        List<WecomSchoolDepartmentVO> tree = wecomSchoolDepartmentService.getWecomSchoolDepartmentTree();
-        return AjaxResult.success(tree);
-    }
 }
