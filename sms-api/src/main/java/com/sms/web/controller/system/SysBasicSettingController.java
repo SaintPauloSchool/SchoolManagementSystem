@@ -67,7 +67,7 @@ public class SysBasicSettingController extends AdminBaseController {
         return AjaxResult.success("保存成功");
     }
 
-    /** 每日學校通知班級選擇樹（含 type=1） */
+    /** 每日學生手冊通知班級選擇樹（含 type=1） */
     @Log(title = "查詢每日通知班級樹", businessType = BusinessType.SELECT)
     @GetMapping("/dailyNotice/classTree")
     public AjaxResult dailyNoticeClassTree() {
@@ -78,7 +78,7 @@ public class SysBasicSettingController extends AdminBaseController {
         return AjaxResult.success(tree);
     }
 
-    /** 讀取每日學校通知班級範圍設置 */
+    /** 讀取每日學生手冊通知班級範圍設置 */
     @Log(title = "查詢每日通知班級設置", businessType = BusinessType.SELECT)
     @GetMapping("/dailyNotice/classSetting")
     public AjaxResult getDailyNoticeClassSetting() {
@@ -90,7 +90,7 @@ public class SysBasicSettingController extends AdminBaseController {
         return AjaxResult.success(dto);
     }
 
-    /** 保存每日學校通知班級範圍設置 */
+    /** 保存每日學生手冊通知班級範圍設置 */
     @Log(title = "保存每日通知班級設置", businessType = BusinessType.UPDATE)
     @PostMapping("/dailyNotice/classSetting")
     public AjaxResult saveDailyNoticeClassSetting(@RequestBody DailyNoticeClassSettingDTO settingDTO) {

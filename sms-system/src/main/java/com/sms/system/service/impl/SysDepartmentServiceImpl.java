@@ -540,31 +540,11 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     }
 
     /**
-     * 獲取每日學校通知班級選擇樹（含 type=1 班級節點）。
+     * 獲取每日學生手冊通知班級選擇樹（含 type=1 班級節點）。
      */
     @Override
     public List<SysDepartmentVO> getDailyNoticeClassTree() {
-        List<SysDepartment> allDepartments = departmentMapper.selectAll();
-        if (allDepartments == null || allDepartments.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<SysDepartmentVO> rootNodes = collectDepartmentsByType(allDepartments, TYPE_SCHOOL).stream()
-                .map(this::toDeptVo)
-                .collect(Collectors.toList());
-        if (rootNodes.isEmpty()) {
-            rootNodes = collectDepartmentsByType(allDepartments, TYPE_CAMPUS).stream()
-                    .map(this::toDeptVo)
-                    .collect(Collectors.toList());
-            if (!rootNodes.isEmpty()) {
-                buildDailyNoticeClassTree(rootNodes, allDepartments, TYPE_CAMPUS);
-                return rootNodes;
-            }
-            return Collections.emptyList();
-        }
-
-        buildDailyNoticeClassTree(rootNodes, allDepartments, TYPE_SCHOOL);
-        return rootNodes;
+        return buildBasicSettingDepartmentTree(true);
     }
 
     /**
@@ -616,13 +596,20 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
      * 順序沿用 {@link SysDepartmentMapper#selectAll()} 的 SQL 排序結果。</p>
      */
     private List<SysDepartmentVO> getSegmentTreeInternal() {
-        // 獲取部門數據
+        return buildBasicSettingDepartmentTree(false);
+    }
+
+    /**
+     * 從扁平部門列表構建基本設置用部門樹：優先以學校(type=5)為根，若無則退而從校區(type=4)開始。
+     *
+     * @param dailyNoticeClassTree true 構建至班級(type=1)；false 僅構建至學段(type=3)
+     */
+    private List<SysDepartmentVO> buildBasicSettingDepartmentTree(boolean dailyNoticeClassTree) {
         List<SysDepartment> allDepartments = departmentMapper.selectAll();
         if (allDepartments == null || allDepartments.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 優先以學校為根；若無學校節點則退而從校區開始
         List<SysDepartmentVO> rootNodes = collectDepartmentsByType(allDepartments, TYPE_SCHOOL).stream()
                 .map(this::toDeptVo)
                 .collect(Collectors.toList());
@@ -630,14 +617,22 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
             rootNodes = collectDepartmentsByType(allDepartments, TYPE_CAMPUS).stream()
                     .map(this::toDeptVo)
                     .collect(Collectors.toList());
-            if (!rootNodes.isEmpty()) {
-                buildSegmentTree(rootNodes, allDepartments, TYPE_CAMPUS);
-                return rootNodes;
+            if (rootNodes.isEmpty()) {
+                return Collections.emptyList();
             }
-            return Collections.emptyList();
+            if (dailyNoticeClassTree) {
+                buildDailyNoticeClassTree(rootNodes, allDepartments, TYPE_CAMPUS);
+            } else {
+                buildSegmentTree(rootNodes, allDepartments, TYPE_CAMPUS);
+            }
+            return rootNodes;
         }
 
-        buildSegmentTree(rootNodes, allDepartments, TYPE_SCHOOL);
+        if (dailyNoticeClassTree) {
+            buildDailyNoticeClassTree(rootNodes, allDepartments, TYPE_SCHOOL);
+        } else {
+            buildSegmentTree(rootNodes, allDepartments, TYPE_SCHOOL);
+        }
         return rootNodes;
     }
 

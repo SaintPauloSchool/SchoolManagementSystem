@@ -79,11 +79,11 @@ public class SysConfigServiceImpl implements ISysConfigService {
         if (existing == null) {
             SysConfig config = new SysConfig();
             config.setConfigKey(SysConfigKeys.DAILY_NOTICE_CLASS_DEPT_IDS);
-            config.setConfigName("每日學校通知班級範圍");
+            config.setConfigName("每日學生手冊通知班級範圍");
             config.setConfigValue(configValue);
             config.setConfigGroup("notice");
             config.setValueType("string");
-            config.setRemark("type=1 班級部門 ID 列表（逗號分隔），指定每日學校通知發送範圍");
+            config.setRemark("type=1 班級部門 ID 列表（逗號分隔），指定每日學生手冊通知發送範圍");
             config.setCreateBy(updateBy);
             sysConfigMapper.insertConfig(config);
             return;

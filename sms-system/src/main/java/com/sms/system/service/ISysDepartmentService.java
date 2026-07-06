@@ -33,7 +33,7 @@ public interface ISysDepartmentService {
     List<SysDepartmentVO> getSegmentTree();
 
     /**
-     * 獲取每日學校通知班級選擇樹（學校→校區→學段→年級→班級，含 type=1）
+     * 獲取每日學生手冊通知班級選擇樹（學校→校區→學段→年級→班級，含 type=1）
      */
     List<SysDepartmentVO> getDailyNoticeClassTree();
 

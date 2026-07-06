@@ -33,18 +33,18 @@ public class SchoolNoticeTask {
     //@Scheduled(cron = "0 0 18 ? * MON-FRI")
     public void executeTask() {
         if (!isExecuting.compareAndSet(false, true)) {
-            log.info("每日學校通知發送任務已在執行中，跳過本次執行");
+            log.info("每日學生手冊通知發送任務已在執行中，跳過本次執行");
             return;
         }
         try {
             taskLogHelper.executeAndLog(
-                    "每日學校通知發送",
+                    "每日學生手冊通知發送",
                     "notificationPublishHandler",
                     "sendDailySchoolNotice",
                     () -> notificationPublishHandler.sendDailySchoolNotice()
             );
         } catch (Exception e) {
-            log.error("執行每日學校通知發送發生異常", e);
+            log.error("執行每日學生手冊通知發送發生異常", e);
         } finally {
             isExecuting.set(false);
         }

@@ -36,7 +36,7 @@ public class SysSchoolFamilyContactServiceImpl implements ISysSchoolFamilyContac
     public List<String> getAllParentUserIds() {
         List<Long> classDepartmentIds = sysConfigService.getDailyNoticeClassDepartmentIds();
         if (classDepartmentIds == null || classDepartmentIds.isEmpty()) {
-            logger.warn("未配置每日學校通知班級範圍，跳過查詢家長列表");
+            logger.warn("未配置每日學生手冊通知班級範圍，跳過查詢家長列表");
             return Collections.emptyList();
         }
 

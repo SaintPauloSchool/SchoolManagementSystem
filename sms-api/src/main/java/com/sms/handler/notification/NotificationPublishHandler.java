@@ -407,7 +407,7 @@ public class NotificationPublishHandler {
     }
 
     /**
-     * 每日學校通知發送主方法
+     * 每日學生手冊通知發送主方法
      * 由 SchoolNoticeTask 調用（每周一至周五下午 6 點）
      */
     public TaskResult sendDailySchoolNotice() {
@@ -415,7 +415,7 @@ public class NotificationPublishHandler {
         // 按基本設置中配置的學段，查詢該學段下家長 userid
         List<String> allParentUserIds = schoolFamilyContactService.getAllParentUserIds();
         if (allParentUserIds == null || allParentUserIds.isEmpty()) {
-            log.warn("沒有可發送的家長用戶（請確認基本設置已選擇每日學校通知班級，且對應班級下已有家校聯絡人數據）");
+            log.warn("沒有可發送的家長用戶（請確認基本設置已選擇每日學生手冊通知班級，且對應班級下已有家校聯絡人數據）");
             return TaskResult.success(0, 0, "無家長需發送");
         }
         log.info("獲取到家長用戶 ID 總數量: {}", allParentUserIds.size());

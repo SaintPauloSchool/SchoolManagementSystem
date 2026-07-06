@@ -447,7 +447,7 @@ CREATE TABLE IF NOT EXISTS `calendar_event` (
 DROP TABLE IF EXISTS sys_task_log;
 CREATE TABLE `sys_task_log` (
                                 `log_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '日誌主鍵',
-                                `task_name` varchar(100) NOT NULL COMMENT '任務名稱 (例如: 每日學校通知發送)',
+                                `task_name` varchar(100) NOT NULL COMMENT '任務名稱 (例如: 每日學生手冊通知發送)',
                                 `bean_name` varchar(100) NOT NULL COMMENT 'Spring Bean 名稱 (例如: notificationPublishHandler)',
                                 `method_name` varchar(255) DEFAULT NULL COMMENT '方法名稱',
                                 `status` char(1) DEFAULT '0' COMMENT '執行狀態(0-成功, 1-失敗, 2-部分失敗)',
@@ -534,5 +534,5 @@ CREATE TABLE student_attendance_record (
 --   MODIFY COLUMN user_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 --   MODIFY COLUMN student_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
 
--- 每日學校通知班級範圍（type=1，多選）首次保存時自動寫入 sys_config：
+-- 每日學生手冊通知班級範圍（type=1，多選）首次保存時自動寫入 sys_config：
 -- config_key = notice.daily_class_department_ids，config_value 為逗號分隔的部門 ID，如 16770,16771
