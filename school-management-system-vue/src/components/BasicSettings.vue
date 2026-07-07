@@ -136,7 +136,7 @@
                 </ul>
               </div>
               <div
-                v-if="savedDailyNoticeItems.length > 0 && dailyNoticeSelectionChanged"
+                v-if="dailyNoticeSelectionChanged"
                 class="saved-pending-tip"
               >
                 左側選擇已變更，請點擊「保存配置」後才會生效
@@ -383,10 +383,6 @@ export default {
     },
 
     async handleSaveDailyNotice() {
-      if (this.dailyNoticeCheckedIds.length === 0) {
-        ElNotification({ title: '提示', message: '請至少選擇一個班級部門', type: 'warning', duration: 3000 })
-        return
-      }
       this.dailyNoticeSaving = true
       try {
         const res = await request({
@@ -396,7 +392,14 @@ export default {
         })
         if (res.code === 200 || res.code === 0) {
           this.savedClassDepartmentIds = [...this.dailyNoticeCheckedIds]
-          ElNotification({ title: '保存成功', message: '每日學生手冊通知班級範圍已保存', type: 'success', duration: 3000 })
+          ElNotification({
+            title: '保存成功',
+            message: this.dailyNoticeCheckedIds.length > 0
+              ? '每日學生手冊通知班級範圍已保存'
+              : '每日學生手冊通知班級範圍已清空',
+            type: 'success',
+            duration: 3000
+          })
         }
       } catch (e) {
         console.error(e)
