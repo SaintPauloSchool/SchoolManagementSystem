@@ -84,9 +84,15 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="userId" label="家長 user_id" min-width="140" align="center" show-overflow-tooltip>
+        <el-table-column label="企微班級" min-width="100" align="center" show-overflow-tooltip>
           <template #default="scope">
-            <span v-if="scope.row.userId">{{ scope.row.userId }}</span>
+            <span v-if="scope.row.classCodeWecom">{{ scope.row.classCodeWecom }}</span>
+            <span v-else class="text-placeholder">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="匹配聯絡人" min-width="160" align="center" show-overflow-tooltip>
+          <template #default="scope">
+            <span v-if="formatContactLabel(scope.row)">{{ formatContactLabel(scope.row) }}</span>
             <span v-else class="text-placeholder">-</span>
           </template>
         </el-table-column>
@@ -197,7 +203,7 @@
           <el-table
             ref="candidatesTable"
             :data="candidatesList"
-            row-key="parentUserId"
+            :row-key="candidateRowKey"
             border
             :stripe="candidatesMode === 'bind'"
             :height="candidatesTableHeight"
@@ -282,7 +288,8 @@
         <el-descriptions-item label="班號">{{ detailForm.classNum || '-' }}</el-descriptions-item>
         <el-descriptions-item label="姓名">{{ detailForm.idName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="學生證編號">{{ detailForm.dsejStudentId || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="家長 user_id">{{ detailForm.userId || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="企微班級">{{ detailForm.classCodeWecom || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="匹配聯絡人">{{ formatContactLabel(detailForm) || '-' }}</el-descriptions-item>
         <el-descriptions-item label="匹配狀態">
           <el-tag :type="getMatchStatusTag(detailForm.matchStatus)">
             {{ getMatchStatusText(detailForm.matchStatus) }}
@@ -344,6 +351,7 @@ export default {
       },
       candidatesSelection: [],
       selectedParentUserId: null,
+      selectedStudentUserId: null,
       submittingCandidates: false,
       candidatesTableHeight: 200,
       // 詳情彈窗
@@ -353,10 +361,13 @@ export default {
   },
   computed: {
     selectedUpdateCandidate() {
-      if (!this.selectedParentUserId) {
+      if (!this.selectedParentUserId || !this.selectedStudentUserId) {
         return null
       }
-      return this.candidatesList.find(item => item.parentUserId === this.selectedParentUserId) || this.candidatesSelection[0] || null
+      return this.candidatesList.find(item =>
+        item.parentUserId === this.selectedParentUserId
+        && item.studentUserId === this.selectedStudentUserId
+      ) || this.candidatesSelection[0] || null
     }
   },
   mounted() {
@@ -376,7 +387,13 @@ export default {
       if (!row) {
         return ''
       }
-      return `${row.studentId || ''}_${row.userId || ''}_${row.id || ''}_${row.studentProfileNumber || ''}`
+      return `${row.studentId || ''}_${row.userId || ''}_${row.studentUserId || ''}_${row.id || ''}_${row.studentProfileNumber || ''}`
+    },
+    candidateRowKey(row) {
+      if (!row) {
+        return ''
+      }
+      return `${row.parentUserId || ''}_${row.studentUserId || ''}`
     },
 
     // 查詢主列表
@@ -537,32 +554,37 @@ export default {
       this.candidatesSelection = selection || []
     },
     selectUpdateCandidate(row) {
-      if (!row?.parentUserId) {
+      if (!row?.parentUserId || !row?.studentUserId) {
         this.selectedParentUserId = null
+        this.selectedStudentUserId = null
         this.candidatesSelection = []
         return
       }
       this.selectedParentUserId = row.parentUserId
+      this.selectedStudentUserId = row.studentUserId
       this.candidatesSelection = [row]
     },
     handleCandidateRowClick(row) {
-      if (this.candidatesMode !== 'update' || !row?.parentUserId) {
+      if (this.candidatesMode !== 'update' || !row?.parentUserId || !row?.studentUserId) {
         return
       }
       this.selectUpdateCandidate(row)
     },
     getCandidateRowClassName({ row }) {
-      if (this.candidatesMode === 'update' && row?.parentUserId === this.selectedParentUserId) {
+      if (this.candidatesMode === 'update' && this.isCandidateSelected(row)) {
         return 'candidate-row-selected'
       }
       return ''
     },
     isCandidateSelected(row) {
-      return this.candidatesMode === 'update' && row?.parentUserId === this.selectedParentUserId
+      return this.candidatesMode === 'update'
+        && row?.parentUserId === this.selectedParentUserId
+        && row?.studentUserId === this.selectedStudentUserId
     },
     clearCandidatesSelection() {
       this.candidatesSelection = []
       this.selectedParentUserId = null
+      this.selectedStudentUserId = null
       this.$refs.candidatesTable?.clearSelection()
     },
     handleCandidatesSearch() {
@@ -625,9 +647,16 @@ export default {
         return
       }
 
-      const userIds = this.candidatesSelection
-        .map(row => row?.parentUserId)
-        .filter(Boolean)
+      const bindings = this.candidatesSelection
+        .filter(row => row?.parentUserId && row?.studentUserId)
+        .map(row => ({
+          parentUserId: row.parentUserId,
+          studentUserId: row.studentUserId
+        }))
+
+      if (bindings.length === 0) {
+        return
+      }
 
       this.submittingCandidates = true
       try {
@@ -636,14 +665,14 @@ export default {
           method: 'post',
           data: {
             studentId: this.currentMatchingRow.studentId,
-            userIds
+            bindings
           }
         })
 
         if (res.code === 200 || res.code === 0) {
           ElNotification({
             title: '批量綁定完成',
-            message: res.msg || `成功綁定 ${userIds.length} 位家長`,
+            message: res.msg || `成功綁定 ${bindings.length} 位家長`,
             type: 'success',
             duration: 4000
           })
@@ -671,7 +700,7 @@ export default {
     },
     async submitUpdateMatch() {
       const selected = this.candidatesSelection[0]
-      if (!this.currentMatchingRow?.id || !selected?.parentUserId) {
+      if (!this.currentMatchingRow?.id || !selected?.parentUserId || !selected?.studentUserId) {
         return
       }
 
@@ -682,7 +711,8 @@ export default {
           method: 'put',
           data: {
             id: this.currentMatchingRow.id,
-            userId: selected.parentUserId
+            userId: selected.parentUserId,
+            studentUserId: selected.studentUserId
           }
         })
 
@@ -720,6 +750,13 @@ export default {
       if (value === 1 || value === true || value === '1') return '在校'
       if (value === 0 || value === false || value === '0') return '離校'
       return '-'
+    },
+    formatContactLabel(row) {
+      if (!row?.contactStudentName) {
+        return ''
+      }
+      const relation = row.relationDesc ? `-${row.relationDesc}` : ''
+      return `${row.contactStudentName}${relation}`
     },
     handleViewDetail(row) {
       this.detailForm = { ...row }

@@ -12,6 +12,7 @@ public class SysStudentMatchVO implements Serializable {
     // ── sys_student_match ──
     private Long id;
     private String userId;
+    private String studentUserId;
     private Integer matchStatus;
     private Date createTime;
     private Date updateTime;
@@ -27,6 +28,11 @@ public class SysStudentMatchVO implements Serializable {
     private String idName;
     private String dsejStudentId;
 
+    // ── sys_school_family_contact ──
+    private String contactStudentName;
+    private String relationDesc;
+    private String classCodeWecom;
+
     public Long getId() {
         return id;
     }
@@ -41,6 +47,14 @@ public class SysStudentMatchVO implements Serializable {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getStudentUserId() {
+        return studentUserId;
+    }
+
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
     }
 
     public Integer getMatchStatus() {
@@ -137,5 +151,29 @@ public class SysStudentMatchVO implements Serializable {
 
     public void setDsejStudentId(String dsejStudentId) {
         this.dsejStudentId = dsejStudentId;
+    }
+
+    public String getContactStudentName() {
+        return contactStudentName;
+    }
+
+    public void setContactStudentName(String contactStudentName) {
+        this.contactStudentName = contactStudentName;
+    }
+
+    public String getRelationDesc() {
+        return relationDesc;
+    }
+
+    public void setRelationDesc(String relationDesc) {
+        this.relationDesc = relationDesc;
+    }
+
+    public String getClassCodeWecom() {
+        return classCodeWecom;
+    }
+
+    public void setClassCodeWecom(String classCodeWecom) {
+        this.classCodeWecom = classCodeWecom;
     }
 }

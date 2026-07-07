@@ -12,6 +12,8 @@ public class SysStudentMatchUpdateDTO implements Serializable {
     private Long id;
     /** 新的家長企微 parent_user_id */
     private String userId;
+    /** 新的企微學生 student_user_id */
+    private String studentUserId;
 
     public Long getId() {
         return id;
@@ -27,5 +29,13 @@ public class SysStudentMatchUpdateDTO implements Serializable {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getStudentUserId() {
+        return studentUserId;
+    }
+
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
     }
 }

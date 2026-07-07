@@ -131,7 +131,7 @@ public interface SysSchoolFamilyContactMapper {
 
     /**
      * 按班級部門 ID 查詢已匹配學籍的家校聯絡人。
-     * <p>關聯鏈：部門 name → class_section → student_info.class_section → sys_student_match → parent_user_id</p>
+     * <p>關聯鏈：部門 name → class_section → student_info.class_section → sys_student_match → parent_user_id + student_user_id</p>
      *
      * @param departmentIds           班級部門 ID 列表（type=1）
      * @param studentProfilesDatabase 學籍庫名

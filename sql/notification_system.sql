@@ -468,15 +468,14 @@ DROP TABLE IF EXISTS sys_student_match;
 CREATE TABLE IF NOT EXISTS sys_student_match (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主鍵 ID',
     student_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '學生 ID（關聯 student_profiles.student_info.student_id）',
-    user_id VARCHAR(64) DEFAULT NULL COMMENT '家校通訊錄家長 user_id（parent_user_id）',
+    user_id VARCHAR(64) NOT NULL COMMENT '家校通訊錄家長 user_id（parent_user_id）',
+    student_user_id VARCHAR(64) NOT NULL COMMENT '家校通訊錄學生 user_id（關聯 sys_school_family_contact.student_user_id）',
     match_status INT NOT NULL COMMENT '匹配狀態 (1: 自動匹配成功, 2: 手動匹配成功)',
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
     update_time DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_student_parent (student_id, user_id)
+    UNIQUE KEY uk_student_contact (student_id, user_id, student_user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生數據匹配表（學生與家長多對多）';
--- 已有庫升級：ALTER TABLE sys_student_match MODIFY COLUMN match_status INT NOT NULL COMMENT '匹配狀態 (1: 自動匹配成功, 2: 手動匹配成功)';
--- 已有庫清理：DELETE FROM sys_student_match WHERE match_status NOT IN (1, 2);
 -- ----------------------------
 -- 系統公用配置表
 -- ----------------------------

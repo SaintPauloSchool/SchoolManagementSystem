@@ -183,13 +183,15 @@
                 AND NOT EXISTS (
                     SELECT 1 FROM sys_student_match m
                     WHERE m.student_id COLLATE utf8mb4_unicode_ci = #{studentId}
-                      AND m.user_id COLLATE utf8mb4_unicode_ci = r.parent_user_id COLLATE utf8mb4_unicode_ci
+                      AND m.user_id = r.parent_user_id
+                      AND m.student_user_id = r.student_user_id
                 )
             </when>
             <otherwise>
                 AND NOT EXISTS (
                     SELECT 1 FROM sys_student_match m
-                    WHERE m.user_id COLLATE utf8mb4_unicode_ci = r.parent_user_id COLLATE utf8mb4_unicode_ci
+                    WHERE m.user_id = r.parent_user_id
+                      AND m.student_user_id = r.student_user_id
                 )
             </otherwise>
         </choose>
@@ -215,7 +217,8 @@
             ON si.class_section COLLATE utf8mb4_unicode_ci = cs.class_section_sp COLLATE utf8mb4_unicode_ci
         INNER JOIN sys_student_match m
             ON m.student_id COLLATE utf8mb4_unicode_ci = si.student_id COLLATE utf8mb4_unicode_ci
-            AND m.user_id COLLATE utf8mb4_unicode_ci = sfc.parent_user_id COLLATE utf8mb4_unicode_ci
+            AND m.user_id = sfc.parent_user_id
+            AND m.student_user_id = sfc.student_user_id
         WHERE sfc.department_id IN
         <foreach collection="departmentIds" item="id" open="(" separator="," close=")">
             #{id}

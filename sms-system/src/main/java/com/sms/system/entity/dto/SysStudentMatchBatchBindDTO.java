@@ -11,8 +11,8 @@ public class SysStudentMatchBatchBindDTO implements Serializable {
 
     /** 學籍 student_id */
     private String studentId;
-    /** 家長企微 parent_user_id 列表 */
-    private List<String> userIds;
+    /** 綁定項列表（家長 parent_user_id + 企微學生 student_user_id） */
+    private List<SysStudentMatchBindItemDTO> bindings;
 
     public String getStudentId() {
         return studentId;
@@ -22,11 +22,11 @@ public class SysStudentMatchBatchBindDTO implements Serializable {
         this.studentId = studentId;
     }
 
-    public List<String> getUserIds() {
-        return userIds;
+    public List<SysStudentMatchBindItemDTO> getBindings() {
+        return bindings;
     }
 
-    public void setUserIds(List<String> userIds) {
-        this.userIds = userIds;
+    public void setBindings(List<SysStudentMatchBindItemDTO> bindings) {
+        this.bindings = bindings;
     }
 }

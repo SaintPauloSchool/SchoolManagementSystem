@@ -5,7 +5,7 @@ import java.util.Date;
 
 /**
  * 學生數據匹配表 sys_student_match
- * <p>學生與家長為多對多：同一 student_id 可對應多條記錄（每位家長一條 user_id）。</p>
+ * <p>學生與家長為多對多：同一 student_id 可對應多條記錄（每位家長聯絡人一條，以 parent_user_id + student_user_id 唯一定位）。</p>
  */
 public class SysStudentMatch implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -15,6 +15,8 @@ public class SysStudentMatch implements Serializable {
     private String studentId;
     /** 家校通訊錄家長 user_id（parent_user_id） */
     private String userId;
+    /** 家校通訊錄學生 user_id（關聯 sys_school_family_contact.student_user_id） */
+    private String studentUserId;
     private Integer matchStatus;
     private Date createTime;
     private Date updateTime;
@@ -41,6 +43,14 @@ public class SysStudentMatch implements Serializable {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getStudentUserId() {
+        return studentUserId;
+    }
+
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
     }
 
     public Integer getMatchStatus() {

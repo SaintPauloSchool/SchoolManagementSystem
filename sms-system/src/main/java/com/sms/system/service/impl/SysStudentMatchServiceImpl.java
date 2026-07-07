@@ -101,27 +101,35 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
     public SysStudentMatchOperationResultVO bindStudents(SysStudentMatchBatchBindDTO batchBindDTO) {
         if (batchBindDTO == null
                 || !StringUtils.hasText(batchBindDTO.getStudentId())
-                || batchBindDTO.getUserIds() == null
-                || batchBindDTO.getUserIds().isEmpty()) {
+                || batchBindDTO.getBindings() == null
+                || batchBindDTO.getBindings().isEmpty()) {
             return SysStudentMatchOperationResultVO.failure("綁定參數無效");
         }
 
         String studentId = batchBindDTO.getStudentId().trim();
-        LinkedHashSet<String> uniqueUserIds = batchBindDTO.getUserIds().stream()
-                .filter(StringUtils::hasText)
-                .map(String::trim)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        if (uniqueUserIds.isEmpty()) {
-            return SysStudentMatchOperationResultVO.failure("未選擇有效家長");
-        }
-
-        List<SysStudentMatch> matches = new ArrayList<>(uniqueUserIds.size());
-        for (String userId : uniqueUserIds) {
+        LinkedHashSet<String> uniqueBindingKeys = new LinkedHashSet<>();
+        List<SysStudentMatch> matches = new ArrayList<>();
+        for (SysStudentMatchBindItemDTO binding : batchBindDTO.getBindings()) {
+            if (binding == null
+                    || !StringUtils.hasText(binding.getParentUserId())
+                    || !StringUtils.hasText(binding.getStudentUserId())) {
+                continue;
+            }
+            String parentUserId = binding.getParentUserId().trim();
+            String studentUserId = binding.getStudentUserId().trim();
+            String bindingKey = parentUserId + "|" + studentUserId;
+            if (!uniqueBindingKeys.add(bindingKey)) {
+                continue;
+            }
             SysStudentMatch studentMatch = new SysStudentMatch();
             studentMatch.setStudentId(studentId);
-            studentMatch.setUserId(userId);
+            studentMatch.setUserId(parentUserId);
+            studentMatch.setStudentUserId(studentUserId);
             studentMatch.setMatchStatus(StudentMatchStatus.MANUAL.getCode());
             matches.add(studentMatch);
+        }
+        if (matches.isEmpty()) {
+            return SysStudentMatchOperationResultVO.failure("未選擇有效家長");
         }
 
         int affected = batchSaveStudentMatches(matches);
@@ -140,7 +148,10 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public SysStudentMatchOperationResultVO updateStudentMatch(SysStudentMatchUpdateDTO updateDTO) {
-        if (updateDTO == null || updateDTO.getId() == null || !StringUtils.hasText(updateDTO.getUserId())) {
+        if (updateDTO == null
+                || updateDTO.getId() == null
+                || !StringUtils.hasText(updateDTO.getUserId())
+                || !StringUtils.hasText(updateDTO.getStudentUserId())) {
             return SysStudentMatchOperationResultVO.failure("更新參數無效");
         }
 
@@ -156,21 +167,23 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
         }
 
         String newUserId = updateDTO.getUserId().trim();
-        if (newUserId.equals(existing.getUserId())) {
+        String newStudentUserId = updateDTO.getStudentUserId().trim();
+        if (newUserId.equals(existing.getUserId()) && newStudentUserId.equals(existing.getStudentUserId())) {
             return SysStudentMatchOperationResultVO.failure("新家長與當前綁定相同，無需更新");
         }
 
-        if (sysStudentMatchMapper.countStudentMatchByStudentAndUserExceptId(
-                existing.getStudentId().trim(), newUserId, existing.getId()) > 0) {
-            return SysStudentMatchOperationResultVO.failure("該家長已綁定此學生，請選擇其他家長");
+        if (sysStudentMatchMapper.countStudentMatchByStudentAndContactExceptId(
+                existing.getStudentId().trim(), newUserId, newStudentUserId, existing.getId()) > 0) {
+            return SysStudentMatchOperationResultVO.failure("該家長聯絡人已綁定此學生，請選擇其他家長");
         }
 
         SysStudentMatch toUpdate = new SysStudentMatch();
         toUpdate.setId(existing.getId());
         toUpdate.setUserId(newUserId);
+        toUpdate.setStudentUserId(newStudentUserId);
         toUpdate.setMatchStatus(StudentMatchStatus.MANUAL.getCode());
 
-        if (sysStudentMatchMapper.updateStudentMatchUserId(toUpdate) <= 0) {
+        if (sysStudentMatchMapper.updateStudentMatchContact(toUpdate) <= 0) {
             return SysStudentMatchOperationResultVO.failure("更新失敗");
         }
         return SysStudentMatchOperationResultVO.success("家長信息已更新", 1);
@@ -199,7 +212,7 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
             return SysStudentMatchOperationResultVO.success("本地家校通訊錄中未找到企微學生數據，無法執行自動比對！");
         }
 
-        // 已存在的 (student_id, parent_user_id) 組合，避免重複寫入
+        // 已存在的 (student_id, parent_user_id, student_user_id) 組合，避免重複寫入
         Set<String> existingPairKeys = new HashSet<>();
         List<SysStudentMatchVO> existingMatches = sysStudentMatchMapper.selectSysStudentMatchList(
                 new SysStudentMatchDTO(), studentProfilesDatabase()
@@ -208,9 +221,12 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
             for (SysStudentMatchVO matchVO : existingMatches) {
                 if (matchVO.getId() != null
                         && StringUtils.hasText(matchVO.getStudentId())
-                        && StringUtils.hasText(matchVO.getUserId())) {
+                        && StringUtils.hasText(matchVO.getUserId())
+                        && StringUtils.hasText(matchVO.getStudentUserId())) {
                     existingPairKeys.add(
-                            matchVO.getStudentId().trim() + "|" + matchVO.getUserId().trim()
+                            matchVO.getStudentId().trim() + "|"
+                                    + matchVO.getUserId().trim() + "|"
+                                    + matchVO.getStudentUserId().trim()
                     );
                 }
             }
@@ -247,14 +263,19 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
             }).collect(Collectors.toList());
 
             for (SysSchoolFamilyContactVO contact : matchedContacts) {
+                if (!StringUtils.hasText(contact.getStudentUserId())) {
+                    continue;
+                }
                 String parentUserId = contact.getParentUserId().trim();
-                String pairKey = studentId + "|" + parentUserId;
+                String studentUserId = contact.getStudentUserId().trim();
+                String pairKey = studentId + "|" + parentUserId + "|" + studentUserId;
                 if (existingPairKeys.contains(pairKey)) {
                     continue;
                 }
                 SysStudentMatch studentMatch = new SysStudentMatch();
                 studentMatch.setStudentId(studentId);
                 studentMatch.setUserId(parentUserId);
+                studentMatch.setStudentUserId(studentUserId);
                 studentMatch.setMatchStatus(StudentMatchStatus.AUTO.getCode());
                 toInsert.add(studentMatch);
                 existingPairKeys.add(pairKey);

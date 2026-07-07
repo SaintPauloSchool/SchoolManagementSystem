@@ -229,7 +229,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
 
     /**
      * 為班級節點加載已匹配學籍的家長聯絡人。
-     * <p>關聯：部門 name → class_section → student_info → sys_student_match → sys_school_family_contact</p>
+     * <p>關聯：部門 name → class_section → student_info → sys_student_match（parent_user_id + student_user_id）→ sys_school_family_contact</p>
      */
     private void loadMatchedAddressBookContacts(List<SysDepartmentVO> nodes) {
         if (nodes == null || nodes.isEmpty()) {

@@ -39,11 +39,12 @@ public interface SysStudentMatchMapper {
 
     SysStudentMatch selectStudentMatchById(@Param("id") Long id);
 
-    int countStudentMatchByStudentAndUserExceptId(
+    int countStudentMatchByStudentAndContactExceptId(
             @Param("studentId") String studentId,
             @Param("userId") String userId,
+            @Param("studentUserId") String studentUserId,
             @Param("excludeId") Long excludeId);
 
-    int updateStudentMatchUserId(SysStudentMatch studentMatch);
+    int updateStudentMatchContact(SysStudentMatch studentMatch);
 
 }

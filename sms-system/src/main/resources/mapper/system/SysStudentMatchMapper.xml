@@ -7,6 +7,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <resultMap type="com.sms.system.entity.vo.SysStudentMatchVO" id="SysStudentMatchVOResult">
         <result property="id" column="id"/>
         <result property="userId" column="user_id"/>
+        <result property="studentUserId" column="student_user_id"/>
         <result property="matchStatus" column="match_status"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
@@ -19,12 +20,28 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="classNum" column="class_num"/>
         <result property="idName" column="id_name"/>
         <result property="dsejStudentId" column="dsej_student_id"/>
+        <result property="contactStudentName" column="contact_student_name"/>
+        <result property="relationDesc" column="relation_desc"/>
+        <result property="classCodeWecom" column="class_code_wecom"/>
     </resultMap>
+
+    <sql id="matchedContactSubquery">
+        select r.parent_user_id,
+               r.student_user_id,
+               max(r.student_name) as student_name,
+               max(r.relation_desc) as relation_desc,
+               max(cs.class_section_sp) as class_code_wecom
+        from sys_school_family_contact r
+        inner join sys_department d on r.department_id = d.id
+        left join class_section cs on d.name = cs.class_section_dsedj
+        group by r.parent_user_id, r.student_user_id
+    </sql>
 
     <resultMap type="com.sms.system.entity.SysStudentMatch" id="SysStudentMatchResult">
         <result property="id" column="id"/>
         <result property="studentId" column="student_id"/>
         <result property="userId" column="user_id"/>
+        <result property="studentUserId" column="student_user_id"/>
         <result property="matchStatus" column="match_status"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
@@ -33,6 +50,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectSysStudentMatchList" resultMap="SysStudentMatchVOResult">
         select m.id,
                m.user_id,
+               m.student_user_id,
                m.match_status,
                m.create_time,
                m.update_time,
@@ -44,10 +62,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                si.class_section,
                si.class_num,
                si.id_name,
-               si.dsej_student_id
+               si.dsej_student_id,
+               sfc.student_name as contact_student_name,
+               sfc.relation_desc,
+               sfc.class_code_wecom
         from ${studentProfilesDatabase}.student_info si
         left join sys_student_match m
             on m.student_id collate utf8mb4_unicode_ci = si.student_id
+        left join (
+            <include refid="matchedContactSubquery"/>
+        ) sfc
+            on sfc.parent_user_id = m.user_id
+            and sfc.student_user_id = m.student_user_id
         <where>
             si.student_id is not null
             <if test="studentMatchDTO != null and studentMatchDTO.idNameQuery != null and studentMatchDTO.idNameQuery != ''">
@@ -69,6 +95,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectUnmatchedList" resultMap="SysStudentMatchVOResult">
         select m.id,
                m.user_id,
+               m.student_user_id,
                m.match_status,
                m.create_time,
                m.update_time,
@@ -80,10 +107,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                si.class_section,
                si.class_num,
                si.id_name,
-               si.dsej_student_id
+               si.dsej_student_id,
+               sfc.student_name as contact_student_name,
+               sfc.relation_desc,
+               sfc.class_code_wecom
         from ${studentProfilesDatabase}.student_info si
         left join sys_student_match m
             on m.student_id collate utf8mb4_unicode_ci = si.student_id
+        left join (
+            <include refid="matchedContactSubquery"/>
+        ) sfc
+            on sfc.parent_user_id = m.user_id
+            and sfc.student_user_id = m.student_user_id
         where si.student_id is not null
           and m.id is null
         <if test="studentMatchDTO != null and studentMatchDTO.idNameQuery != null and studentMatchDTO.idNameQuery != ''">
@@ -107,6 +142,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into sys_student_match (
             student_id,
             user_id,
+            student_user_id,
             match_status,
             create_time
         ) values
@@ -114,6 +150,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             (
                 #{item.studentId},
                 #{item.userId},
+                #{item.studentUserId},
                 #{item.matchStatus},
                 sysdate()
             )
@@ -124,22 +161,24 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </insert>
 
     <select id="selectStudentMatchById" resultMap="SysStudentMatchResult">
-        select id, student_id, user_id, match_status, create_time, update_time
+        select id, student_id, user_id, student_user_id, match_status, create_time, update_time
         from sys_student_match
         where id = #{id}
     </select>
 
-    <select id="countStudentMatchByStudentAndUserExceptId" resultType="int">
+    <select id="countStudentMatchByStudentAndContactExceptId" resultType="int">
         select count(1)
         from sys_student_match
         where student_id = #{studentId}
           and user_id = #{userId}
+          and student_user_id = #{studentUserId}
           and id != #{excludeId}
     </select>
 
-    <update id="updateStudentMatchUserId">
+    <update id="updateStudentMatchContact">
         update sys_student_match
         set user_id = #{userId},
+            student_user_id = #{studentUserId},
             match_status = #{matchStatus},
             update_time = sysdate()
         where id = #{id}
