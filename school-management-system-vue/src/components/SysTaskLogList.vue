@@ -7,33 +7,44 @@
             <el-icon><VideoPlay /></el-icon>
             定時任務執行日誌
           </span>
-          
-          <!-- 手動執行區塊 -->
-          <div class="manual-execute-section">
-            <span class="execute-label">手動執行定時任務：</span>
-            <el-select 
-              v-model="selectedTask" 
-              placeholder="請選擇要執行的任務" 
-              class="task-select"
-              style="width: 250px"
-            >
-              <el-option
-                v-for="item in taskOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+
+          <div class="header-actions">
+            <div class="toolbar-group">
+              <span class="toolbar-label">任務配置</span>
+              <el-button plain @click="openTaskManageDialog">
+                <el-icon class="btn-icon"><Setting /></el-icon>
+                定時任務管理
+              </el-button>
+            </div>
+
+            <div class="toolbar-divider" />
+
+            <div class="toolbar-group">
+              <span class="toolbar-label">手動執行</span>
+              <el-select
+                v-model="selectedTask"
+                placeholder="請選擇要執行的任務"
+                class="task-select"
+                popper-class="task-select-popper"
+                :fit-input-width="false"
               >
-              </el-option>
-            </el-select>
-            <el-button 
-              type="primary" 
-              @click="executeSelectedTask" 
-              :loading="isExecuting"
-              :disabled="!selectedTask"
-            >
-              <el-icon style="margin-right: 4px"><VideoPlay /></el-icon>
-              手動觸發
-            </el-button>
+                <el-option
+                  v-for="item in taskOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+              <el-button
+                type="primary"
+                @click="executeSelectedTask"
+                :loading="isExecuting"
+                :disabled="!selectedTask"
+              >
+                <el-icon class="btn-icon"><VideoPlay /></el-icon>
+                手動觸發
+              </el-button>
+            </div>
           </div>
         </div>
       </template>
@@ -59,59 +70,61 @@
     </div>
 
     <!-- 列表區 -->
-    <el-table 
-      v-loading="loading" 
-      :data="logList" 
+    <div class="table-wrapper">
+    <el-table
+      v-loading="loading"
+      :data="logList"
       style="width: 100%"
       :row-style="{ height: '56px' }"
       :cell-style="{ padding: '14px 0' }"
       :header-cell-style="{background:'#f5f7fa',color:'#606266'}"
       empty-text="暫無數據"
     >
-      <el-table-column label="日誌編號" prop="logId" width="100" align="center" />
-        <el-table-column label="任務名稱" prop="taskName" min-width="180" show-overflow-tooltip />
-        <el-table-column label="Bean名稱" prop="beanName" min-width="180" show-overflow-tooltip />
-        <el-table-column label="方法名稱" prop="methodName" min-width="180" show-overflow-tooltip />
-        <el-table-column label="成功數量" prop="successCount" align="center" width="90">
-          <template #default="scope">
-            {{ scope.row.successCount != null ? scope.row.successCount : '-' }}
-          </template>
-        </el-table-column>
-        <el-table-column label="失敗數量" prop="failCount" align="center" width="90">
-          <template #default="scope">
-            <span :class="{'error-text': scope.row.failCount > 0}">{{ scope.row.failCount != null ? scope.row.failCount : '-' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="執行耗時" align="center" width="120">
-          <template #default="scope">
-            {{ scope.row.duration }} 毫秒
-          </template>
-        </el-table-column>
-        <el-table-column label="執行時間" prop="executionTime" align="center" width="180" />
-        <el-table-column label="失敗原因" prop="failReason" min-width="250" show-overflow-tooltip>
-          <template #default="scope">
-            <span v-if="scope.row.status === '1' || scope.row.status === '2'" class="error-text">{{ scope.row.failReason }}</span>
-            <span v-else class="success-text">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="執行狀態" align="center" width="100">
-          <template #default="scope">
-            <el-tag :type="scope.row.status === '0' ? 'success' : (scope.row.status === '2' ? 'warning' : 'danger')">
-              {{ scope.row.status === '0' ? '成功' : (scope.row.status === '2' ? '部分失敗' : '失敗') }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="是否處理" align="center" width="100">
-          <template #default="scope">
-            <el-switch
-              v-model="scope.row.isProcessed"
-              active-value="1"
-              inactive-value="0"
-              @change="handleStatusChange(scope.row)"
-            ></el-switch>
-          </template>
-        </el-table-column>
+      <el-table-column label="日誌編號" prop="logId" width="90" align="center" />
+      <el-table-column label="任務名稱" prop="taskName" min-width="150" show-overflow-tooltip />
+      <el-table-column label="Bean名稱" prop="beanName" min-width="130" show-overflow-tooltip />
+      <el-table-column label="方法名稱" prop="methodName" min-width="130" show-overflow-tooltip />
+      <el-table-column label="成功數量" prop="successCount" align="center" width="85">
+        <template #default="scope">
+          {{ scope.row.successCount != null ? scope.row.successCount : '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="失敗數量" prop="failCount" align="center" width="85">
+        <template #default="scope">
+          <span :class="{'error-text': scope.row.failCount > 0}">{{ scope.row.failCount != null ? scope.row.failCount : '-' }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="執行耗時" align="center" width="105">
+        <template #default="scope">
+          {{ scope.row.duration }} 毫秒
+        </template>
+      </el-table-column>
+      <el-table-column label="執行時間" prop="executionTime" align="center" width="170" />
+      <el-table-column label="失敗原因" prop="failReason" min-width="180" show-overflow-tooltip>
+        <template #default="scope">
+          <span v-if="scope.row.status === '1' || scope.row.status === '2'" class="error-text">{{ scope.row.failReason }}</span>
+          <span v-else class="success-text">-</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="執行狀態" align="center" width="105">
+        <template #default="scope">
+          <el-tag :type="scope.row.status === '0' ? 'success' : (scope.row.status === '2' ? 'warning' : 'danger')">
+            {{ scope.row.status === '0' ? '成功' : (scope.row.status === '2' ? '部分失敗' : '失敗') }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="日誌已處理" align="center" width="115" fixed="right">
+        <template #default="scope">
+          <el-switch
+            v-model="scope.row.isProcessed"
+            active-value="1"
+            inactive-value="0"
+            @change="handleStatusChange(scope.row)"
+          ></el-switch>
+        </template>
+      </el-table-column>
     </el-table>
+    </div>
 
     <!-- 分頁 -->
     <div class="pagination-container" v-if="total > 0">
@@ -127,12 +140,66 @@
       />
     </div>
   </el-card>
+
+  <!-- 定時任務管理彈窗 -->
+  <el-dialog
+    v-model="taskManageVisible"
+    title="定時任務管理"
+    width="1200px"
+    top="4vh"
+    class="task-manage-dialog"
+    destroy-on-close
+    @open="loadScheduledTasks"
+  >
+    <el-table
+      v-loading="taskManageLoading"
+      :data="scheduledTaskList"
+      class="task-manage-table"
+      style="width: 100%"
+      :row-style="{ height: '56px' }"
+      :cell-style="{ padding: '16px 0', fontSize: '15px' }"
+      :header-cell-style="{ background: '#f5f7fa', color: '#303133', fontSize: '15px', fontWeight: '600', padding: '14px 0' }"
+      empty-text="暫無定時任務配置"
+    >
+      <el-table-column label="任務名稱" prop="taskName" min-width="200" show-overflow-tooltip />
+      <el-table-column label="Cron 表達式" prop="cronExpression" min-width="160" show-overflow-tooltip />
+      <el-table-column label="說明" prop="remark" min-width="320" show-overflow-tooltip />
+      <el-table-column label="最近執行" align="center" width="180">
+        <template #default="scope">
+          {{ scope.row.lastExecutionTime || '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="最近狀態" align="center" width="100">
+        <template #default="scope">
+          <el-tag
+            v-if="scope.row.lastStatus != null"
+            :type="scope.row.lastStatus === '0' ? 'success' : (scope.row.lastStatus === '2' ? 'warning' : 'danger')"
+            size="default"
+          >
+            {{ formatLastStatus(scope.row.lastStatus) }}
+          </el-tag>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="自動執行" align="center" width="100" fixed="right">
+        <template #default="scope">
+          <el-switch
+            v-model="scope.row.enabled"
+            active-value="1"
+            inactive-value="0"
+            :loading="scope.row._updating"
+            @change="handleTaskEnabledChange(scope.row)"
+          />
+        </template>
+      </el-table-column>
+    </el-table>
+  </el-dialog>
   </div>
 </template>
 
 <script>
 import { ElMessageBox, ElNotification } from 'element-plus'
-import { Search, Refresh, VideoPlay } from '@element-plus/icons-vue'
+import { Search, Refresh, VideoPlay, Setting } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
 export default {
@@ -140,45 +207,105 @@ export default {
   components: {
     Search,
     Refresh,
-    VideoPlay
+    VideoPlay,
+    Setting
   },
   data() {
     return {
-      // 遮罩層
       loading: true,
-      // 執行中狀態
       isExecuting: false,
-      // 總筆數
       total: 0,
-      // 日誌列表
       logList: [],
-      // 查詢參數
       queryParams: {
         pageNum: 1,
         pageSize: 10,
         taskName: undefined,
         status: undefined
       },
-      // 選擇要手動執行的任務
       selectedTask: '',
-      // 定時任務選項
-      taskOptions: [
-        { label: '檢查失敗任務通知', value: 'failedTaskNotifierTask|executeTask' },
-        { label: '家校通訊錄部門數據同步', value: 'departmentSyncTask|executeTask' },
-        { label: '定時提示家長回復通知', value: 'notificationReminderTask|executeTask' },
-        { label: '定時重新發送失敗通知', value: 'notificationResendTask|executeTask' },
-        { label: '家校通訊錄同步', value: 'schoolFamilyContactSyncTask|executeTask' },
-        { label: '每日學生手冊通知發送', value: 'schoolNoticeTask|executeTask' },
-        { label: '企業微信部門與成員同步', value: 'wecomSchoolDepartmentTask|executeTask' },
-        { label: '考勤拍卡通知發送', value: 'attendanceNotifyTask|executeTask' }
-      ]
+      taskOptions: [],
+      taskManageVisible: false,
+      taskManageLoading: false,
+      scheduledTaskList: []
     }
   },
   created() {
+    this.loadScheduledTasks()
     this.getList()
   },
   methods: {
-    /** 查詢日誌列表 */
+    async loadScheduledTasks() {
+      try {
+        const response = await request({
+          url: '/system/scheduledTask/list',
+          method: 'get'
+        })
+        if (response.code === 200 || response.code === 0) {
+          const list = response.data || []
+          this.scheduledTaskList = list.map(item => ({ ...item, _updating: false }))
+          this.taskOptions = list.map(item => ({
+            label: item.taskName,
+            value: `${item.taskBean}|${item.methodName || 'executeTask'}`
+          }))
+        }
+      } catch (error) {
+        console.error('獲取定時任務配置失敗', error)
+      }
+    },
+
+    openTaskManageDialog() {
+      this.taskManageVisible = true
+    },
+
+    formatLastStatus(status) {
+      if (status === '0') return '成功'
+      if (status === '2') return '部分失敗'
+      if (status === '1') return '失敗'
+      return '-'
+    },
+
+    async handleTaskEnabledChange(row) {
+      const previous = row.enabled === '1' ? '0' : '1'
+      row._updating = true
+      try {
+        const response = await request({
+          url: '/system/scheduledTask/status',
+          method: 'put',
+          data: {
+            taskKey: row.taskKey,
+            enabled: row.enabled
+          }
+        })
+        if (response.code === 200 || response.code === 0) {
+          ElNotification({
+            title: '更新成功',
+            message: `「${row.taskName}」已${row.enabled === '1' ? '啟用' : '停用'}自動執行`,
+            type: 'success',
+            duration: 3000
+          })
+        } else {
+          row.enabled = previous
+          ElNotification({
+            title: '更新失敗',
+            message: response.msg || '狀態更新失敗',
+            type: 'error',
+            duration: 4000
+          })
+        }
+      } catch (error) {
+        row.enabled = previous
+        console.error('更新定時任務狀態失敗', error)
+        ElNotification({
+          title: '更新失敗',
+          message: '狀態更新發生錯誤，請稍後再試',
+          type: 'error',
+          duration: 4000
+        })
+      } finally {
+        row._updating = false
+      }
+    },
+
     async getList() {
       this.loading = true
       try {
@@ -197,38 +324,43 @@ export default {
         this.loading = false
       }
     },
-    
-    /** 搜尋按鈕操作 */
+
     handleQuery() {
       this.queryParams.pageNum = 1
       this.getList()
     },
-    
-    /** 重置按鈕操作 */
+
     resetQuery() {
       this.queryParams.taskName = undefined
       this.queryParams.status = undefined
       this.handleQuery()
     },
-    
-    /** 分頁大小改變 */
+
     handleSizeChange(val) {
       this.queryParams.pageSize = val
       this.getList()
     },
-    
-    /** 分頁頁碼改變 */
+
     handleCurrentChange(val) {
       this.queryParams.pageNum = val
       this.getList()
     },
 
-    /** 執行選擇的任務 */
+    async refreshListAfterExecute(previousTotal = 0, maxAttempts = 5, intervalMs = 1500) {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        await this.getList()
+        if (this.total > previousTotal || attempt === maxAttempts - 1) {
+          break
+        }
+        await new Promise(resolve => setTimeout(resolve, intervalMs))
+      }
+    },
+
     executeSelectedTask() {
-      if (!this.selectedTask) return;
-      
-      const selectedOption = this.taskOptions.find(item => item.value === this.selectedTask);
-      const [beanName, methodName] = this.selectedTask.split('|');
+      if (!this.selectedTask) return
+
+      const selectedOption = this.taskOptions.find(item => item.value === this.selectedTask)
+      const [beanName, methodName] = this.selectedTask.split('|')
 
       ElMessageBox.confirm(
         `確定要手動執行「${selectedOption.label}」嗎？`,
@@ -239,14 +371,15 @@ export default {
           type: 'warning'
         }
       ).then(async () => {
-        this.isExecuting = true;
+        const previousTotal = this.total
+        this.isExecuting = true
         try {
           const response = await request({
             url: '/system/taskLog/execute',
             method: 'post',
             data: { beanName, methodName }
-          });
-          
+          })
+
           if (response.code === 200 || response.code === 0) {
             ElNotification({
               title: '觸發成功',
@@ -254,10 +387,12 @@ export default {
               type: 'success',
               duration: 3000
             })
-            // 延遲一下刷新列表，等待任務執行完畢產生紀錄
-            setTimeout(() => {
-              this.getList();
-            }, 1000);
+            setTimeout(async () => {
+              await this.refreshListAfterExecute(previousTotal)
+              if (this.taskManageVisible) {
+                this.loadScheduledTasks()
+              }
+            }, 800)
           } else {
             ElNotification({
               title: '觸發失敗',
@@ -275,14 +410,11 @@ export default {
             duration: 4000
           })
         } finally {
-          this.isExecuting = false;
+          this.isExecuting = false
         }
-      }).catch(() => {
-        // 取消
-      });
+      }).catch(() => {})
     },
 
-    /** 修改處理狀態 */
     async handleStatusChange(row) {
       try {
         const response = await request({
@@ -292,7 +424,7 @@ export default {
             logId: row.logId,
             isProcessed: row.isProcessed
           }
-        });
+        })
         if (response.code === 200 || response.code === 0) {
           ElNotification({
             title: '修改成功',
@@ -301,7 +433,7 @@ export default {
             duration: 3000
           })
         } else {
-          row.isProcessed = row.isProcessed === "0" ? "1" : "0";
+          row.isProcessed = row.isProcessed === '0' ? '1' : '0'
           ElNotification({
             title: '修改失敗',
             message: response.msg || '狀態修改失敗',
@@ -310,8 +442,8 @@ export default {
           })
         }
       } catch (error) {
-        row.isProcessed = row.isProcessed === "0" ? "1" : "0";
-        console.error('修改狀態失敗', error);
+        row.isProcessed = row.isProcessed === '0' ? '1' : '0'
+        console.error('修改狀態失敗', error)
         ElNotification({
           title: '修改失敗',
           message: '狀態修改發生錯誤，請稍後再試',
@@ -337,6 +469,93 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 8px 14px;
+  background: linear-gradient(180deg, #fafbfc 0%, #f4f6f8 100%);
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.05);
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 10px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 22px;
+  margin: 0 8px;
+  background: linear-gradient(180deg, transparent, #e0e3e9 25%, #e0e3e9 75%, transparent);
+  flex-shrink: 0;
+}
+
+.toolbar-label {
+  font-size: 13px;
+  color: #a8abb2;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.btn-icon {
+  margin-right: 4px;
+}
+
+.header-actions :deep(.el-button) {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-weight: 400;
+  box-shadow: none;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.header-actions :deep(.el-button.is-plain) {
+  color: #606266;
+  border-color: #e4e7ed;
+  background-color: #fff;
+}
+
+.header-actions :deep(.el-button.is-plain:hover) {
+  color: #409eff;
+  border-color: #c6e2ff;
+  background-color: #ecf5ff;
+}
+
+.header-actions :deep(.el-select) {
+  width: 200px;
+}
+
+.header-actions :deep(.el-select .el-input__wrapper) {
+  height: 34px;
+  border-radius: 8px;
+  box-shadow: none !important;
+  background-color: #fff;
+  transition: border-color 0.2s ease;
+}
+
+.header-actions :deep(.el-select .el-input__wrapper:hover) {
+  border-color: #c0c4cc;
+}
+
+.header-actions :deep(.el-select .el-input.is-focus .el-input__wrapper) {
+  border-color: #a0cfff;
+}
+
+.header-actions :deep(.el-select .el-input__inner) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .title {
@@ -346,6 +565,7 @@ export default {
   font-size: 16px;
   font-weight: 600;
   color: #303133;
+  flex-shrink: 0;
 }
 
 .title .el-icon {
@@ -353,24 +573,36 @@ export default {
   color: #409eff;
 }
 
-.manual-execute-section {
+.task-manage-dialog :deep(.el-dialog) {
+  min-height: 78vh;
   display: flex;
-  align-items: center;
-  background-color: #f0f9eb;
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: 1px solid #e1f3d8;
+  flex-direction: column;
+  margin-bottom: 4vh;
 }
 
-.execute-label {
-  font-size: 14px;
-  color: #67c23a;
-  font-weight: 500;
-  margin-right: 12px;
+.task-manage-dialog :deep(.el-dialog__header) {
+  padding: 18px 24px;
 }
 
-.task-select {
-  margin-right: 12px;
+.task-manage-dialog :deep(.el-dialog__title) {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.task-manage-dialog :deep(.el-dialog__body) {
+  flex: 1;
+  padding: 16px 24px 24px;
+  min-height: 68vh;
+  max-height: 78vh;
+  overflow-y: auto;
+}
+
+.task-manage-table :deep(.el-table__cell) {
+  font-size: 15px;
+}
+
+.task-manage-table :deep(.el-table__header .el-table__cell) {
+  font-size: 15px;
 }
 
 .filter-section {
@@ -378,6 +610,15 @@ export default {
   background-color: #f8f9fa;
   padding: 16px;
   border-radius: 6px;
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-wrapper :deep(.el-table) {
+  min-width: 1240px;
 }
 
 .demo-form-inline {
@@ -389,7 +630,6 @@ export default {
   margin-bottom: 0;
   margin-right: 24px;
 }
-
 
 .error-text {
   color: #F56C6C;
@@ -423,5 +663,25 @@ export default {
 .pagination-container :deep(.el-pager li.is-active) {
   background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
   color: #ffffff;
+}
+</style>
+
+<style>
+.task-select-popper.el-popper {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+  overflow: hidden;
+}
+
+.task-select-popper .el-select-dropdown__item {
+  padding: 8px 16px;
+  font-size: 14px;
+  transition: background-color 0.15s ease;
+}
+
+.task-select-popper .el-select-dropdown__item.hover,
+.task-select-popper .el-select-dropdown__item:hover {
+  background-color: #f0f7ff;
 }
 </style>

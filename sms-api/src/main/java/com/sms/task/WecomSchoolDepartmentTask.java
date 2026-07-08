@@ -1,7 +1,9 @@
 package com.sms.task;
 
 import com.sms.handler.wecom.WecomSyncHandler;
+import com.sms.handler.ScheduledTaskSupport;
 import com.sms.handler.TaskLogHelper;
+import com.sms.system.constant.ScheduledTaskKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,13 +27,16 @@ public class WecomSchoolDepartmentTask {
     @Autowired
     private TaskLogHelper taskLogHelper;
 
+    @Autowired
+    private ScheduledTaskSupport scheduledTaskSupport;
+
     private static final AtomicBoolean isExecuting = new AtomicBoolean(false);
 
-    /**
-     * 每天凌晨 1 點執行（北京時間）
-     */
-    //@Scheduled(cron = "0 0 1 * * ?")
+    @Scheduled(cron = "0 0 1 * * ?")
     public void executeTask() {
+        if (scheduledTaskSupport.shouldSkipForSchedule(ScheduledTaskKeys.WECOM_SCHOOL_DEPARTMENT)) {
+            return;
+        }
         if (!isExecuting.compareAndSet(false, true)) {
             log.info("企業微信部門同步任務已在執行中，跳過本次執行");
             return;

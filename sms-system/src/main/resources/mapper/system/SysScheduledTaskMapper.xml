@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sms.system.mapper.SysScheduledTaskMapper">
+
+    <resultMap type="com.sms.system.entity.vo.SysScheduledTaskVO" id="SysScheduledTaskVOResult">
+        <id     property="id"                 column="id"/>
+        <result property="taskKey"            column="task_key"/>
+        <result property="taskName"           column="task_name"/>
+        <result property="taskBean"           column="task_bean"/>
+        <result property="methodName"         column="method_name"/>
+        <result property="cronExpression"     column="cron_expression"/>
+        <result property="enabled"            column="enabled"/>
+        <result property="remark"             column="remark"/>
+        <result property="sortOrder"          column="sort_order"/>
+        <result property="lastExecutionTime"  column="last_execution_time"/>
+        <result property="lastStatus"         column="last_status"/>
+    </resultMap>
+
+    <resultMap type="com.sms.system.entity.SysScheduledTask" id="SysScheduledTaskResult">
+        <id     property="id"             column="id"/>
+        <result property="taskKey"        column="task_key"/>
+        <result property="taskName"       column="task_name"/>
+        <result property="taskBean"       column="task_bean"/>
+        <result property="methodName"     column="method_name"/>
+        <result property="cronExpression" column="cron_expression"/>
+        <result property="enabled"        column="enabled"/>
+        <result property="remark"         column="remark"/>
+        <result property="sortOrder"      column="sort_order"/>
+        <result property="createTime"     column="create_time"/>
+        <result property="updateTime"     column="update_time"/>
+    </resultMap>
+
+    <select id="selectTaskList" resultMap="SysScheduledTaskVOResult">
+        select
+            id,
+            task_key,
+            task_name,
+            task_bean,
+            method_name,
+            cron_expression,
+            enabled,
+            remark,
+            sort_order
+        from sys_scheduled_task
+        order by sort_order asc, id asc
+    </select>
+
+    <select id="selectByTaskKey" resultMap="SysScheduledTaskResult">
+        select id, task_key, task_name, task_bean, method_name, cron_expression,
+               enabled, remark, sort_order, create_time, update_time
+        from sys_scheduled_task
+        where task_key = #{taskKey}
+    </select>
+
+    <update id="updateEnabled">
+        update sys_scheduled_task
+        set enabled = #{enabled},
+            update_time = sysdate()
+        where task_key = #{taskKey}
+    </update>
+
+</mapper>

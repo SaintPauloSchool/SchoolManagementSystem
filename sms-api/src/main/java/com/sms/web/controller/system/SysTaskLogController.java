@@ -5,6 +5,7 @@ import com.sms.common.core.controller.BaseController;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.core.page.TableDataInfo;
 import com.sms.common.enums.BusinessType;
+import com.sms.handler.ScheduledTaskSupport;
 import com.sms.system.entity.dto.SysTaskExecuteDTO;
 import com.sms.system.entity.dto.SysTaskLogQueryDTO;
 import com.sms.system.entity.dto.SysTaskLogUpdateDTO;
@@ -35,6 +36,9 @@ public class SysTaskLogController extends BaseController {
     @Autowired
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private ScheduledTaskSupport scheduledTaskSupport;
+
     @Log(title = "查詢定時任務日誌", businessType = BusinessType.SELECT)
     @GetMapping("/list")
     public TableDataInfo list(SysTaskLogQueryDTO sysTaskLogQueryDTO) {
@@ -61,7 +65,12 @@ public class SysTaskLogController extends BaseController {
 
             log.info("手動執行任務開始 - Bean: {}, Method: {}", beanName, methodName);
 
-            method.invoke(bean);
+            scheduledTaskSupport.markManualTrigger();
+            try {
+                method.invoke(bean);
+            } finally {
+                scheduledTaskSupport.clearManualTrigger();
+            }
 
             return AjaxResult.success("任務觸發成功，請稍後查看日誌");
         } catch (NoSuchBeanDefinitionException e) {

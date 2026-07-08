@@ -1,7 +1,9 @@
 package com.sms.task;
 
 import com.sms.handler.notification.NotificationPublishHandler;
+import com.sms.handler.ScheduledTaskSupport;
 import com.sms.handler.TaskLogHelper;
+import com.sms.system.constant.ScheduledTaskKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,13 +27,16 @@ public class SchoolNoticeTask {
     @Autowired
     private TaskLogHelper taskLogHelper;
 
+    @Autowired
+    private ScheduledTaskSupport scheduledTaskSupport;
+
     private static final AtomicBoolean isExecuting = new AtomicBoolean(false);
 
-    /**
-     * 每周一到周五下午 6 點執行
-     */
-    //@Scheduled(cron = "0 0 18 ? * MON-FRI")
+    @Scheduled(cron = "0 0 18 ? * MON-FRI")
     public void executeTask() {
+        if (scheduledTaskSupport.shouldSkipForSchedule(ScheduledTaskKeys.SCHOOL_NOTICE)) {
+            return;
+        }
         if (!isExecuting.compareAndSet(false, true)) {
             log.info("每日學生手冊通知發送任務已在執行中，跳過本次執行");
             return;
