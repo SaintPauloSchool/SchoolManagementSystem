@@ -4,14 +4,19 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.common.exception.ServiceException;
 import com.sms.common.utils.bean.BeanCopyUtils;
+import com.sms.system.entity.SysDepartment;
+import com.sms.system.entity.SysSchoolDepartment;
 import com.sms.system.entity.SysSchoolDepartmentMember;
 import com.sms.system.entity.SysSchoolFamilyContact;
 import com.sms.system.entity.dto.NotificationReceiverSaveDTO;
 import com.sms.system.entity.notification.NotificationReceiver;
 import com.sms.system.entity.notification.receiver.NotificationReceiverTarget;
+import com.sms.system.entity.vo.NotificationReceiverDeptGroupVO;
 import com.sms.system.entity.vo.NotificationReceiverVO;
 import com.sms.system.entity.vo.ResolvedReceiversVO;
 import com.sms.system.enums.NotificationReceiverType;
+import com.sms.system.mapper.SysDepartmentMapper;
+import com.sms.system.mapper.SysSchoolDepartmentMapper;
 import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
 import com.sms.system.mapper.SysSchoolFamilyContactMapper;
 import com.sms.system.mapper.notification.NotificationReceiverMapper;
@@ -24,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,6 +56,12 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
     @Autowired
     private SysSchoolDepartmentMemberMapper schoolDepartmentMemberMapper;
 
+    @Autowired
+    private SysDepartmentMapper sysDepartmentMapper;
+
+    @Autowired
+    private SysSchoolDepartmentMapper schoolDepartmentMapper;
+
     @Override
     public List<NotificationReceiverVO> selectByNotificationId(Long notificationId) {
         List<NotificationReceiverVO> list = BeanCopyUtils.copyList(
@@ -57,6 +69,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
                 NotificationReceiverVO.class);
         for (NotificationReceiverVO vo : list) {
             vo.setReceiveNames(resolveReceiveNames(vo.getReceiveType(), vo.getReceiveData()));
+            vo.setReceiveDeptGroups(resolveReceiveDeptGroups(vo.getReceiveType(), vo.getReceiveData()));
         }
         return list;
     }
@@ -143,6 +156,10 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
             if (departmentId != null) {
                 target.setDepartmentId(departmentId);
             }
+            Long schoolDepartmentId = item.getLong("schoolDepartmentId");
+            if (schoolDepartmentId != null) {
+                target.setSchoolDepartmentId(schoolDepartmentId);
+            }
             targets.add(target);
         }
         return targets;
@@ -203,6 +220,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
     private NotificationReceiverTarget copyTarget(NotificationReceiverTarget source) {
         NotificationReceiverTarget copy = new NotificationReceiverTarget(source.getParentUserId(), source.getStudentId());
         copy.setDepartmentId(source.getDepartmentId());
+        copy.setSchoolDepartmentId(source.getSchoolDepartmentId());
         return copy;
     }
 
@@ -282,6 +300,161 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
             log.error("解析接收對象名稱失敗: {}", e.getMessage(), e);
             return Collections.emptyList();
         }
+    }
+
+    private List<NotificationReceiverDeptGroupVO> resolveReceiveDeptGroups(String receiveTypeCode, String receiveData) {
+        NotificationReceiverType receiveType = NotificationReceiverType.fromCode(receiveTypeCode);
+        if (!StringUtils.hasText(receiveData) || receiveType == null) {
+            return Collections.emptyList();
+        }
+        try {
+            List<NotificationReceiverTarget> targets = parseReceiverTargets(receiveData);
+            if (targets.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            Map<Long, List<NotificationReceiverTarget>> targetsByDept = new LinkedHashMap<>();
+            List<NotificationReceiverTarget> ungroupedTargets = new ArrayList<>();
+            Map<String, Long> customSchoolDeptFallback = receiveType == NotificationReceiverType.CUSTOM
+                    ? buildCustomSchoolDepartmentFallbackMap(targets)
+                    : Collections.emptyMap();
+
+            for (NotificationReceiverTarget target : targets) {
+                Long groupDepartmentId = resolveGroupDepartmentId(target, receiveType, customSchoolDeptFallback);
+                if (groupDepartmentId != null) {
+                    targetsByDept.computeIfAbsent(groupDepartmentId, key -> new ArrayList<>()).add(target);
+                } else {
+                    ungroupedTargets.add(target);
+                }
+            }
+
+            Map<String, String> nameMap = buildReceiveNameMap(targets, receiveType);
+            Map<Long, String> departmentNameMap = buildDepartmentNameMap(targetsByDept.keySet(), receiveType);
+            List<NotificationReceiverDeptGroupVO> groups = new ArrayList<>();
+            for (Map.Entry<Long, List<NotificationReceiverTarget>> entry : targetsByDept.entrySet()) {
+                NotificationReceiverDeptGroupVO group = new NotificationReceiverDeptGroupVO();
+                group.setDepartmentId(entry.getKey());
+                group.setDepartmentName(departmentNameMap.getOrDefault(entry.getKey(), "未知部門"));
+                List<String> names = resolveTargetNames(entry.getValue(), nameMap);
+                group.setNames(names);
+                group.setCount(names.size());
+                groups.add(group);
+            }
+
+            groups.sort((a, b) -> {
+                String nameA = a.getDepartmentName() != null ? a.getDepartmentName() : "";
+                String nameB = b.getDepartmentName() != null ? b.getDepartmentName() : "";
+                return nameA.compareTo(nameB);
+            });
+
+            if (!ungroupedTargets.isEmpty()) {
+                NotificationReceiverDeptGroupVO ungrouped = new NotificationReceiverDeptGroupVO();
+                List<String> names = resolveTargetNames(ungroupedTargets, nameMap);
+                ungrouped.setDepartmentName("未分組");
+                ungrouped.setNames(names);
+                ungrouped.setCount(names.size());
+                groups.add(ungrouped);
+            }
+            return groups;
+        } catch (Exception e) {
+            log.error("解析接收對象部門分組失敗: {}", e.getMessage(), e);
+            return Collections.emptyList();
+        }
+    }
+
+    private Long resolveGroupDepartmentId(NotificationReceiverTarget target,
+                                          NotificationReceiverType receiveType,
+                                          Map<String, Long> customSchoolDeptFallback) {
+        if (receiveType == NotificationReceiverType.CUSTOM) {
+            if (target.getSchoolDepartmentId() != null) {
+                return target.getSchoolDepartmentId();
+            }
+            if (customSchoolDeptFallback != null && !customSchoolDeptFallback.isEmpty()) {
+                String deptKey = parentDeptKey(target.getParentUserId(), target.getDepartmentId());
+                Long fallbackId = customSchoolDeptFallback.get(deptKey);
+                if (fallbackId != null) {
+                    return fallbackId;
+                }
+            }
+            return null;
+        }
+        return target.getDepartmentId();
+    }
+
+    private Map<String, Long> buildCustomSchoolDepartmentFallbackMap(List<NotificationReceiverTarget> targets) {
+        List<String> userids = targets.stream()
+                .filter(target -> target.getSchoolDepartmentId() == null)
+                .map(NotificationReceiverTarget::getParentUserId)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .collect(Collectors.toList());
+        if (userids.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<SysSchoolDepartmentMember> members = schoolDepartmentMemberMapper.selectMembersByUserids(userids);
+        if (members == null || members.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, Long> fallbackMap = new HashMap<>();
+        for (SysSchoolDepartmentMember member : members) {
+            if (!StringUtils.hasText(member.getUserid()) || member.getSchoolDepartmentId() == null) {
+                continue;
+            }
+            if (member.getDepartmentId() != null) {
+                fallbackMap.putIfAbsent(
+                        parentDeptKey(member.getUserid(), member.getDepartmentId()),
+                        member.getSchoolDepartmentId());
+            }
+            fallbackMap.putIfAbsent(member.getUserid(), member.getSchoolDepartmentId());
+        }
+        return fallbackMap;
+    }
+
+    private Map<Long, String> buildDepartmentNameMap(Set<Long> departmentIds, NotificationReceiverType receiveType) {
+        if (departmentIds == null || departmentIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<Long, String> nameMap = new HashMap<>();
+        if (receiveType == NotificationReceiverType.WECOM) {
+            List<SysDepartment> departments = sysDepartmentMapper.selectAll();
+            if (departments != null) {
+                for (SysDepartment department : departments) {
+                    if (department != null && department.getId() != null && department.getName() != null
+                            && departmentIds.contains(department.getId())) {
+                        nameMap.put(department.getId(), department.getName());
+                    }
+                }
+            }
+            return nameMap;
+        }
+        if (receiveType == NotificationReceiverType.CUSTOM) {
+            List<SysSchoolDepartment> departments = schoolDepartmentMapper.selectAll(2);
+            if (departments != null) {
+                for (SysSchoolDepartment department : departments) {
+                    if (department != null && department.getId() != null && department.getName() != null
+                            && departmentIds.contains(department.getId())) {
+                        nameMap.put(department.getId(), department.getName());
+                    }
+                }
+            }
+        }
+        return nameMap;
+    }
+
+    private List<String> resolveTargetNames(List<NotificationReceiverTarget> targets, Map<String, String> nameMap) {
+        if (targets == null || targets.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<String> names = new ArrayList<>(targets.size());
+        for (NotificationReceiverTarget target : targets) {
+            String name = lookupReceiveName(nameMap, target);
+            if (StringUtils.hasText(name)) {
+                names.add(name);
+            }
+        }
+        return names;
     }
 
     private String lookupReceiveName(Map<String, String> nameMap, NotificationReceiverTarget target) {

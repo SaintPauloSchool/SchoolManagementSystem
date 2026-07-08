@@ -3,13 +3,18 @@ package com.sms.system.service.impl.notification;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.common.utils.bean.BeanCopyUtils;
+import com.sms.system.entity.SysSchoolDepartment;
 import com.sms.system.entity.SysSchoolDepartmentMember;
+import com.sms.system.entity.WecomSchoolDepartment;
 import com.sms.system.entity.WecomSchoolDepartmentMember;
 import com.sms.system.entity.dto.NotificationCcSaveDTO;
 import com.sms.system.entity.notification.NotificationCc;
 import com.sms.system.entity.vo.NotificationCcVO;
+import com.sms.system.entity.vo.NotificationReceiverDeptGroupVO;
 import com.sms.system.enums.NotificationCcType;
+import com.sms.system.mapper.SysSchoolDepartmentMapper;
 import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
+import com.sms.system.mapper.WecomSchoolDepartmentMapper;
 import com.sms.system.mapper.WecomSchoolDepartmentMemberMapper;
 import com.sms.system.mapper.notification.NotificationCcMapper;
 import com.sms.system.service.notification.INotificationCcService;
@@ -21,8 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -48,6 +56,12 @@ public class NotificationCcServiceImpl implements INotificationCcService {
     @Autowired
     private SysSchoolDepartmentMemberMapper sysSchoolDepartmentMemberMapper;
 
+    @Autowired
+    private WecomSchoolDepartmentMapper wecomSchoolDepartmentMapper;
+
+    @Autowired
+    private SysSchoolDepartmentMapper schoolDepartmentMapper;
+
     /**
      * 根據通知 ID 查詢抄送對象列表。
      *
@@ -60,6 +74,7 @@ public class NotificationCcServiceImpl implements INotificationCcService {
                 notificationCcMapper.selectByNotificationId(notificationId), NotificationCcVO.class);
         for (NotificationCcVO vo : list) {
             vo.setCcNames(resolveCcNames(vo.getCcType(), vo.getCcData()));
+            vo.setCcDeptGroups(resolveCcDeptGroups(vo.getCcType(), vo.getCcData()));
         }
         return list;
     }
@@ -90,6 +105,155 @@ public class NotificationCcServiceImpl implements INotificationCcService {
             log.error("解析抄送名稱失敗: {}", e.getMessage(), e);
             return Collections.emptyList();
         }
+    }
+
+    private List<NotificationReceiverDeptGroupVO> resolveCcDeptGroups(String ccTypeCode, String ccData) {
+        NotificationCcType ccType = NotificationCcType.fromCode(ccTypeCode);
+        if (!StringUtils.hasText(ccData) || ccType == null) {
+            return Collections.emptyList();
+        }
+        try {
+            List<Long> ids = parseMemberIds(ccData);
+            if (ids.isEmpty()) {
+                return Collections.emptyList();
+            }
+            if (ccType == NotificationCcType.WECOM) {
+                return buildWecomCcDeptGroups(ids);
+            }
+            if (ccType == NotificationCcType.CUSTOM) {
+                return buildCustomCcDeptGroups(ids);
+            }
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.error("解析抄送部門分組失敗: {}", e.getMessage(), e);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<NotificationReceiverDeptGroupVO> buildWecomCcDeptGroups(List<Long> ids) {
+        List<WecomSchoolDepartmentMember> members = wecomSchoolDepartmentMemberMapper.selectMembersByIds(ids);
+        if (members == null || members.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Long, List<WecomSchoolDepartmentMember>> membersByDept = new LinkedHashMap<>();
+        List<WecomSchoolDepartmentMember> ungroupedMembers = new ArrayList<>();
+        for (WecomSchoolDepartmentMember member : members) {
+            if (member != null && member.getDepartmentId() != null) {
+                membersByDept.computeIfAbsent(member.getDepartmentId(), key -> new ArrayList<>()).add(member);
+            } else if (member != null) {
+                ungroupedMembers.add(member);
+            }
+        }
+
+        Map<Long, String> departmentNameMap = buildWecomDepartmentNameMap(membersByDept.keySet());
+        return buildDeptGroupsFromMembers(
+                membersByDept,
+                departmentNameMap,
+                ungroupedMembers,
+                WecomSchoolDepartmentMember::getName);
+    }
+
+    private List<NotificationReceiverDeptGroupVO> buildCustomCcDeptGroups(List<Long> ids) {
+        List<SysSchoolDepartmentMember> members = sysSchoolDepartmentMemberMapper.selectMembersByIds(ids);
+        if (members == null || members.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Long, List<SysSchoolDepartmentMember>> membersByDept = new LinkedHashMap<>();
+        List<SysSchoolDepartmentMember> ungroupedMembers = new ArrayList<>();
+        for (SysSchoolDepartmentMember member : members) {
+            if (member == null || member.getType() == null || member.getType() != 1) {
+                continue;
+            }
+            if (member.getSchoolDepartmentId() != null) {
+                membersByDept.computeIfAbsent(member.getSchoolDepartmentId(), key -> new ArrayList<>()).add(member);
+            } else {
+                ungroupedMembers.add(member);
+            }
+        }
+
+        Map<Long, String> departmentNameMap = buildCustomDepartmentNameMap(membersByDept.keySet());
+        return buildDeptGroupsFromMembers(
+                membersByDept,
+                departmentNameMap,
+                ungroupedMembers,
+                SysSchoolDepartmentMember::getName);
+    }
+
+    private <T> List<NotificationReceiverDeptGroupVO> buildDeptGroupsFromMembers(
+            Map<Long, List<T>> membersByDept,
+            Map<Long, String> departmentNameMap,
+            List<T> ungroupedMembers,
+            Function<T, String> nameGetter) {
+        List<NotificationReceiverDeptGroupVO> groups = new ArrayList<>();
+        for (Map.Entry<Long, List<T>> entry : membersByDept.entrySet()) {
+            NotificationReceiverDeptGroupVO group = new NotificationReceiverDeptGroupVO();
+            group.setDepartmentId(entry.getKey());
+            group.setDepartmentName(departmentNameMap.getOrDefault(entry.getKey(), "未知部門"));
+            List<String> names = entry.getValue().stream()
+                    .map(nameGetter)
+                    .filter(StringUtils::hasText)
+                    .collect(Collectors.toList());
+            group.setNames(names);
+            group.setCount(names.size());
+            groups.add(group);
+        }
+
+        groups.sort((a, b) -> {
+            String nameA = a.getDepartmentName() != null ? a.getDepartmentName() : "";
+            String nameB = b.getDepartmentName() != null ? b.getDepartmentName() : "";
+            return nameA.compareTo(nameB);
+        });
+
+        if (!ungroupedMembers.isEmpty()) {
+            List<String> names = ungroupedMembers.stream()
+                    .map(nameGetter)
+                    .filter(StringUtils::hasText)
+                    .collect(Collectors.toList());
+            NotificationReceiverDeptGroupVO ungrouped = new NotificationReceiverDeptGroupVO();
+            ungrouped.setDepartmentName("未分組");
+            ungrouped.setNames(names);
+            ungrouped.setCount(names.size());
+            groups.add(ungrouped);
+        }
+        return groups;
+    }
+
+    private Map<Long, String> buildWecomDepartmentNameMap(Set<Long> departmentIds) {
+        if (departmentIds == null || departmentIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<WecomSchoolDepartment> departments = wecomSchoolDepartmentMapper.selectAll();
+        if (departments == null || departments.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<Long, String> nameMap = new HashMap<>();
+        for (WecomSchoolDepartment department : departments) {
+            if (department != null && department.getId() != null && department.getName() != null
+                    && departmentIds.contains(department.getId())) {
+                nameMap.put(department.getId(), department.getName());
+            }
+        }
+        return nameMap;
+    }
+
+    private Map<Long, String> buildCustomDepartmentNameMap(Set<Long> departmentIds) {
+        if (departmentIds == null || departmentIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<SysSchoolDepartment> departments = schoolDepartmentMapper.selectAll(1);
+        if (departments == null || departments.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<Long, String> nameMap = new HashMap<>();
+        for (SysSchoolDepartment department : departments) {
+            if (department != null && department.getId() != null && department.getName() != null
+                    && departmentIds.contains(department.getId())) {
+                nameMap.put(department.getId(), department.getName());
+            }
+        }
+        return nameMap;
     }
 
     /**

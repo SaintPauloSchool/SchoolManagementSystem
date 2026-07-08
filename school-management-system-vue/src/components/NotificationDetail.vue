@@ -246,7 +246,35 @@
               </el-icon>
             </div>
             <div v-show="isReceiverExpanded(receiver.receiverId)" class="group-content">
-              <div class="source-names-block">{{ getReceiverNames(receiver).join(', ') }}</div>
+              <template v-if="getReceiverDeptGroups(receiver).length > 0">
+                <div
+                  v-for="(deptGroup, deptIndex) in getReceiverDeptGroups(receiver)"
+                  :key="`${receiver.receiverId}_${deptGroup.departmentId ?? 'none'}_${deptIndex}`"
+                  class="dept-group-card"
+                  :class="{ 'is-expanded': isReceiverDeptExpanded(receiver.receiverId, deptIndex) }"
+                >
+                  <div
+                    class="dept-group-header"
+                    @click="toggleReceiverDeptGroup(receiver.receiverId, deptIndex)"
+                  >
+                    <span class="dept-group-name">{{ deptGroup.departmentName }}</span>
+                    <span class="dept-group-count">{{ deptGroup.count }} 人</span>
+                    <el-icon
+                      class="expand-arrow"
+                      :class="{ 'is-rotated': isReceiverDeptExpanded(receiver.receiverId, deptIndex) }"
+                    >
+                      <ArrowDown />
+                    </el-icon>
+                  </div>
+                  <div
+                    v-show="isReceiverDeptExpanded(receiver.receiverId, deptIndex)"
+                    class="dept-group-content"
+                  >
+                    <div class="source-names-block">{{ getDeptGroupNames(deptGroup).join(', ') }}</div>
+                  </div>
+                </div>
+              </template>
+              <div v-else class="source-names-block">{{ getReceiverNames(receiver).join(', ') }}</div>
             </div>
           </div>
         </template>
@@ -254,7 +282,7 @@
     </div>
 
     <!-- 抄送對象 -->
-    <div v-if="ccDisplayGroups.length > 0" class="section-card">
+    <div v-if="ccListForDisplay.length > 0" class="section-card">
       <div class="section-header">
         <div class="section-icon cc-icon">
           <el-icon :size="16"><Message /></el-icon>
@@ -262,24 +290,52 @@
         <h3 class="section-label">抄送對象</h3>
       </div>
       <div class="cc-groups">
-        <div
-          v-for="(ccData, index) in ccDisplayGroups"
-          :key="index"
-          class="cc-group-card"
-          :class="{ 'is-expanded': isCcExpanded(index) }"
-        >
-          <div class="group-header" @click="toggleCcGroup(index)">
-            <el-icon :size="16"><Message /></el-icon>
-            <span class="group-title">{{ formatCcSourceTitle(ccData.source) }}</span>
-            <span class="group-count">{{ ccData.names.length }} 人</span>
-            <el-icon class="expand-arrow" :class="{ 'is-rotated': isCcExpanded(index) }">
-              <ArrowDown />
-            </el-icon>
+        <template v-for="cc in ccListForDisplay" :key="cc.ccId">
+          <div
+            class="cc-group-card"
+            :class="{ 'is-expanded': isCcExpanded(cc.ccId) }"
+          >
+            <div class="group-header" @click="toggleCcGroup(cc.ccId)">
+              <el-icon :size="16"><Message /></el-icon>
+              <span class="group-title">{{ getCcTypeText(cc.ccType) }}</span>
+              <span class="group-count">{{ getCcNameCount(cc) }} 人</span>
+              <el-icon class="expand-arrow" :class="{ 'is-rotated': isCcExpanded(cc.ccId) }">
+                <ArrowDown />
+              </el-icon>
+            </div>
+            <div v-show="isCcExpanded(cc.ccId)" class="group-content">
+              <template v-if="getCcDeptGroups(cc).length > 0">
+                <div
+                  v-for="(deptGroup, deptIndex) in getCcDeptGroups(cc)"
+                  :key="`${cc.ccId}_${deptGroup.departmentId ?? 'none'}_${deptIndex}`"
+                  class="dept-group-card"
+                  :class="{ 'is-expanded': isCcDeptExpanded(cc.ccId, deptIndex) }"
+                >
+                  <div
+                    class="dept-group-header"
+                    @click="toggleCcDeptGroup(cc.ccId, deptIndex)"
+                  >
+                    <span class="dept-group-name">{{ deptGroup.departmentName }}</span>
+                    <span class="dept-group-count">{{ deptGroup.count }} 人</span>
+                    <el-icon
+                      class="expand-arrow"
+                      :class="{ 'is-rotated': isCcDeptExpanded(cc.ccId, deptIndex) }"
+                    >
+                      <ArrowDown />
+                    </el-icon>
+                  </div>
+                  <div
+                    v-show="isCcDeptExpanded(cc.ccId, deptIndex)"
+                    class="dept-group-content"
+                  >
+                    <div class="source-names-block">{{ getDeptGroupNames(deptGroup).join(', ') }}</div>
+                  </div>
+                </div>
+              </template>
+              <div v-else class="source-names-block">{{ getCcNames(cc).join(', ') }}</div>
+            </div>
           </div>
-          <div v-show="isCcExpanded(index)" class="group-content">
-            <div class="source-names-block">{{ ccData.names.join(', ') }}</div>
-          </div>
-        </div>
+        </template>
       </div>
     </div>
 
@@ -406,7 +462,9 @@ export default {
     return {
       expandedQuestions: [],
       expandedReceiverIds: [],
-      expandedCcIndexes: []
+      expandedReceiverDeptKeys: [],
+      expandedCcIds: [],
+      expandedCcDeptKeys: []
     }
   },
   computed: {
@@ -429,27 +487,11 @@ export default {
       }
       return []
     },
-    ccDisplayGroups() {
+    ccListForDisplay() {
       if (!this.notification?.ccs?.length) {
         return []
       }
-
-      const grouped = {}
-      this.notification.ccs
-        .filter(cc => cc.ccType === '1' || cc.ccType === '2')
-        .forEach(cc => {
-          this.getCcGroupedData(cc).forEach(item => {
-            if (!grouped[item.source]) {
-              grouped[item.source] = {
-                source: item.source,
-                names: []
-              }
-            }
-            grouped[item.source].names.push(...item.names)
-          })
-        })
-
-      return Object.values(grouped).filter(group => group.names.length > 0)
+      return this.notification.ccs.filter(cc => cc.ccType === '1' || cc.ccType === '2')
     }
   },
   methods: {
@@ -634,30 +676,101 @@ export default {
       const idx = this.expandedReceiverIds.indexOf(receiverId)
       if (idx > -1) {
         this.expandedReceiverIds.splice(idx, 1)
+        this.expandedReceiverDeptKeys = this.expandedReceiverDeptKeys.filter(
+          key => !String(key).startsWith(`${receiverId}_`)
+        )
       } else {
         this.expandedReceiverIds.push(receiverId)
       }
     },
 
-    getReceiverNameCount(receiver) {
-      return this.getReceiverNames(receiver).length
+    getReceiverDeptKey(receiverId, deptIndex) {
+      return `${receiverId}_${deptIndex}`
     },
 
-    isCcExpanded(index) {
-      return this.expandedCcIndexes.includes(index)
+    isReceiverDeptExpanded(receiverId, deptIndex) {
+      return this.expandedReceiverDeptKeys.includes(this.getReceiverDeptKey(receiverId, deptIndex))
     },
 
-    toggleCcGroup(index) {
-      const idx = this.expandedCcIndexes.indexOf(index)
+    toggleReceiverDeptGroup(receiverId, deptIndex) {
+      const key = this.getReceiverDeptKey(receiverId, deptIndex)
+      const idx = this.expandedReceiverDeptKeys.indexOf(key)
       if (idx > -1) {
-        this.expandedCcIndexes.splice(idx, 1)
+        this.expandedReceiverDeptKeys.splice(idx, 1)
       } else {
-        this.expandedCcIndexes.push(index)
+        this.expandedReceiverDeptKeys.push(key)
       }
     },
 
-    formatCcSourceTitle(source) {
-      return (source || '').replace(/：$/, '')
+    getDeptGroupNames(deptGroup) {
+      if (!deptGroup?.names || !Array.isArray(deptGroup.names)) {
+        return []
+      }
+      return deptGroup.names.filter(name => name && String(name).trim())
+    },
+
+    getCcTypeText(type) {
+      const typeMap = {
+        '1': 'WeCom老師通訊錄',
+        '2': '自定義老師通訊錄'
+      }
+      return typeMap[type] || '未知'
+    },
+
+    getCcNames(cc) {
+      if (!cc?.ccNames || !Array.isArray(cc.ccNames)) {
+        return []
+      }
+      return cc.ccNames.filter(name => name && String(name).trim())
+    },
+
+    getCcNameCount(cc) {
+      return this.getCcNames(cc).length
+    },
+
+    getCcDeptGroups(cc) {
+      if (!cc?.ccDeptGroups || !Array.isArray(cc.ccDeptGroups)) {
+        return []
+      }
+      return cc.ccDeptGroups.filter(group => group?.departmentName)
+    },
+
+    isCcExpanded(ccId) {
+      return this.expandedCcIds.includes(ccId)
+    },
+
+    toggleCcGroup(ccId) {
+      const idx = this.expandedCcIds.indexOf(ccId)
+      if (idx > -1) {
+        this.expandedCcIds.splice(idx, 1)
+        this.expandedCcDeptKeys = this.expandedCcDeptKeys.filter(
+          key => !String(key).startsWith(`${ccId}_`)
+        )
+      } else {
+        this.expandedCcIds.push(ccId)
+      }
+    },
+
+    getCcDeptKey(ccId, deptIndex) {
+      return `${ccId}_${deptIndex}`
+    },
+
+    isCcDeptExpanded(ccId, deptIndex) {
+      return this.expandedCcDeptKeys.includes(this.getCcDeptKey(ccId, deptIndex))
+    },
+
+    toggleCcDeptGroup(ccId, deptIndex) {
+      const key = this.getCcDeptKey(ccId, deptIndex)
+      const idx = this.expandedCcDeptKeys.indexOf(key)
+      if (idx > -1) {
+        this.expandedCcDeptKeys.splice(idx, 1)
+      } else {
+        this.expandedCcDeptKeys.push(key)
+      }
+    },
+
+    getReceiverNameCount(receiver) {
+      return this.getReceiverNames(receiver).length
     },
 
     getQuestionIndex(question) {
@@ -741,26 +854,11 @@ export default {
       return receiver.receiveNames.filter(name => name && String(name).trim())
     },
 
-    getCcGroupedData(cc) {
-      if (!cc.ccData) {
-        return [];
+    getReceiverDeptGroups(receiver) {
+      if (!receiver?.receiveDeptGroups || !Array.isArray(receiver.receiveDeptGroups)) {
+        return []
       }
-
-      try {
-        const type = cc.ccType === '2' ? 2 : 1;
-        const sourceText = type === 1 ? 'WeCom老師通訊錄：' : '自定義老師通訊錄：';
-
-        if (cc.ccNames && Array.isArray(cc.ccNames) && cc.ccNames.length > 0) {
-          return [{
-            source: sourceText,
-            names: cc.ccNames.filter(name => name && String(name).trim())
-          }];
-        }
-
-        return [];
-      } catch (e) {
-        return [{ source: '解析錯誤', names: [] }];
-      }
+      return receiver.receiveDeptGroups.filter(group => group?.departmentName)
     },
 
     handleRemindParents() {
@@ -1275,6 +1373,64 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.dept-group-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dept-group-card.is-expanded {
+  border-color: #cbd5e1;
+}
+
+.dept-group-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dept-group-header:hover {
+  background: #f1f5f9;
+}
+
+.dept-group-content {
+  padding: 10px 14px 12px;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.dept-group-name {
+  flex: 1;
+  min-width: 0;
+  color: #1e293b;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dept-group-count {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.dept-group-header .expand-arrow {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #64748b;
+  transition: transform 0.2s ease;
+}
+
+.dept-group-header .expand-arrow.is-rotated {
+  transform: rotate(180deg);
 }
 
 .source-chip {

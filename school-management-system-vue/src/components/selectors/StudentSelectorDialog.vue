@@ -280,14 +280,17 @@ export default {
       const ungrouped = []
 
       this.selectedItems.forEach(item => {
-        if (item.sourceDeptId != null) {
-          const groupKey = `dept_${item.type}_${item.sourceDeptId}`
+        const deptGroupId = item.type === 2
+          ? (item.schoolDepartmentId ?? item.sourceDeptId)
+          : item.sourceDeptId
+        if (deptGroupId != null) {
+          const groupKey = `dept_${item.type}_${deptGroupId}`
           if (!deptGroups.has(groupKey)) {
             deptGroups.set(groupKey, {
               key: groupKey,
               isDepartment: true,
               studentName: item.sourceDeptName || '部門',
-              sourceDeptId: item.sourceDeptId,
+              sourceDeptId: deptGroupId,
               deptType: item.sourceDeptType ?? null,
               items: []
             })
@@ -341,7 +344,7 @@ export default {
           this.wecomExpandedKeys = this.collectRootKeys(this.departmentTree)
         }
         if (customResponse.code === 200 || customResponse.code === 0) {
-          const tree = this.annotateTreeKeys(customResponse.data || [])
+          const tree = this.annotateTreeKeys(customResponse.data || [], true)
           this.customTree = this.transformTreeForDisplay(tree)
           this.customExpandedKeys = this.collectRootKeys(this.customTree)
         }
@@ -371,19 +374,25 @@ export default {
         && node.type == null
     },
 
-    annotateTreeKeys(nodes) {
+    annotateTreeKeys(nodes, trackSchoolDepartmentId = false, currentSchoolDeptId = null) {
       if (!Array.isArray(nodes)) return []
       nodes.forEach(node => {
         if (!node) return
         if (this.isLeafNode(node)) {
           node.isLeaf = true
+          if (trackSchoolDepartmentId && currentSchoolDeptId != null) {
+            node.schoolDepartmentId = currentSchoolDeptId
+          }
           const deptId = node.classDepartmentId != null ? node.classDepartmentId : 'none'
           node.treeKey = `leaf_${node.id}_${deptId}`
         } else {
           node.treeKey = `dept_${node.id}`
-        }
-        if (node.children?.length) {
-          this.annotateTreeKeys(node.children)
+          const nextSchoolDeptId = trackSchoolDepartmentId && node.id > 0
+            ? node.id
+            : currentSchoolDeptId
+          if (node.children?.length) {
+            this.annotateTreeKeys(node.children, trackSchoolDepartmentId, nextSchoolDeptId)
+          }
         }
       })
       return nodes
@@ -440,6 +449,7 @@ export default {
           name: studentName,
           parents,
           classDepartmentId: parents[0].classDepartmentId,
+          schoolDepartmentId: parents[0].schoolDepartmentId ?? null,
           treeKey: `group_${classDeptId}_${studentName}`
         }
       })
@@ -491,7 +501,8 @@ export default {
         relationDesc: student.relationDesc,
         mobile: student.mobile,
         type: student.type === 2 ? 2 : 1,
-        sourceDeptId: student.sourceDeptId ?? null,
+        schoolDepartmentId: student.schoolDepartmentId ?? student.sourceDeptId ?? null,
+        sourceDeptId: student.sourceDeptId ?? student.schoolDepartmentId ?? null,
         sourceDeptName: student.sourceDeptName ?? null,
         sourceDeptType: student.sourceDeptType ?? null
       }))
@@ -518,6 +529,7 @@ export default {
         parentUserId: data.parentUserId || '',
         name: data.name || '',
         departmentId: data.classDepartmentId || null,
+        schoolDepartmentId: data.schoolDepartmentId || null,
         studentId: data.studentId || '',
         type: 2
       }
@@ -581,7 +593,8 @@ export default {
             ...item,
             sourceDeptId: dept.id,
             sourceDeptName: dept.name,
-            sourceDeptType: dept.type ?? null
+            sourceDeptType: dept.type ?? null,
+            schoolDepartmentId: type === 2 ? dept.id : null
           }
           const index = this.findSelectedIndex(item)
           if (index === -1) {

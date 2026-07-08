@@ -194,14 +194,17 @@ export default {
       const individuals = []
 
       this.selectedStudents.forEach(student => {
-        if (student.sourceDeptId != null) {
-          const key = `dept_${student.type || 1}_${student.sourceDeptId}`
+        const groupDeptId = student.type === 2
+          ? (student.schoolDepartmentId ?? student.sourceDeptId)
+          : student.sourceDeptId
+        if (groupDeptId != null) {
+          const key = `dept_${student.type || 1}_${groupDeptId}`
           if (!deptGroups.has(key)) {
             deptGroups.set(key, {
               key,
               isDepartment: true,
               name: student.sourceDeptName || '部門',
-              sourceDeptId: student.sourceDeptId,
+              sourceDeptId: groupDeptId,
               type: student.type || 1,
               count: 0
             })
@@ -274,11 +277,12 @@ export default {
             const parsed = JSON.parse(receiver.receiveData)
             const names = receiver.receiveNames || []
 
-            const pushStudent = (parentUserId, studentId, departmentId, name) => {
+            const pushStudent = (parentUserId, studentId, departmentId, schoolDepartmentId, name) => {
               const item = {
                 parentUserId,
                 studentId: studentId || '',
                 departmentId: departmentId || null,
+                schoolDepartmentId: schoolDepartmentId || null,
                 name: name || '',
                 type
               }
@@ -299,9 +303,15 @@ export default {
             parsed.forEach((entry, index) => {
               if (entry && typeof entry === 'object' && entry.parentUserId) {
                 const matchedName = names[index] || ''
-                pushStudent(entry.parentUserId, entry.studentId, entry.departmentId, matchedName)
+                pushStudent(
+                  entry.parentUserId,
+                  entry.studentId,
+                  entry.departmentId,
+                  entry.schoolDepartmentId,
+                  matchedName
+                )
               } else if (typeof entry === 'string') {
-                pushStudent(entry, '', null, names[index] || '')
+                pushStudent(entry, '', null, null, names[index] || '')
               }
             })
           } catch (e) {
@@ -439,7 +449,8 @@ export default {
                 .map(s => ({
                   parentUserId: s.parentUserId,
                   studentId: s.studentId || '',
-                  departmentId: s.departmentId || null
+                  departmentId: s.departmentId || null,
+                  schoolDepartmentId: s.schoolDepartmentId || s.sourceDeptId || null
                 }))
             )
           })
@@ -501,9 +512,12 @@ export default {
     },
 
     removeDepartmentGroup(group) {
-      this.selectedStudents = this.selectedStudents.filter(
-        student => student.sourceDeptId !== group.sourceDeptId
-      )
+      this.selectedStudents = this.selectedStudents.filter(student => {
+        const studentDeptId = student.type === 2
+          ? (student.schoolDepartmentId ?? student.sourceDeptId)
+          : student.sourceDeptId
+        return studentDeptId !== group.sourceDeptId
+      })
     },
 
     removeCcStaff(staff) {

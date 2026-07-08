@@ -18,6 +18,9 @@ public class NotificationReceiverTarget implements Serializable {
     /** 選人時所在班級/部門 ID（來自選擇框，寫入閱讀記錄 department_id） */
     private Long departmentId;
 
+    /** 自定義家校通訊錄部門節點 ID（sys_school_department.id，僅展示分組用） */
+    private Long schoolDepartmentId;
+
     public NotificationReceiverTarget() {
     }
 
@@ -48,5 +51,13 @@ public class NotificationReceiverTarget implements Serializable {
 
     public void setDepartmentId(Long departmentId) {
         this.departmentId = departmentId;
+    }
+
+    public Long getSchoolDepartmentId() {
+        return schoolDepartmentId;
+    }
+
+    public void setSchoolDepartmentId(Long schoolDepartmentId) {
+        this.schoolDepartmentId = schoolDepartmentId;
     }
 }

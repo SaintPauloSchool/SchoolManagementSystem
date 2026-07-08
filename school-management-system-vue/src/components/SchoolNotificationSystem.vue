@@ -313,11 +313,22 @@ export default {
     },
     
     getInitialExpandedSections() {
+      const savedMenu = this.getInitialActiveMenu()
       return {
-        homeSchool: true,
-        contact: false,
-        system: false,
+        homeSchool: savedMenu.startsWith('1-'),
+        contact: savedMenu.startsWith('2-'),
+        system: savedMenu.startsWith('3-'),
         report: false
+      }
+    },
+
+    expandSectionForMenu(menu) {
+      if (menu.startsWith('1-')) {
+        this.expandedSections.homeSchool = true
+      } else if (menu.startsWith('2-')) {
+        this.expandedSections.contact = true
+      } else if (menu.startsWith('3-')) {
+        this.expandedSections.system = true
       }
     },
     
@@ -394,6 +405,7 @@ export default {
     handleMenuSelect(index) {
       this.activeMenu = index
       this.saveActiveMenu(index) // 保存菜單選擇
+      this.expandSectionForMenu(index)
       if (this.isMobile) {
         this.isMobileMenuOpen = false
       }
