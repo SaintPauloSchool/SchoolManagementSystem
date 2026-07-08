@@ -93,7 +93,15 @@ public class SysScheduledTaskServiceImpl implements ISysScheduledTaskService {
         if (!StringUtils.hasText(taskKey)) {
             return false;
         }
-        return Boolean.TRUE.equals(enabledCache.get(taskKey));
+        SysScheduledTask task = sysScheduledTaskMapper.selectByTaskKey(taskKey);
+        if (task == null) {
+            log.warn("定時任務配置不存在，taskKey={}", taskKey);
+            enabledCache.remove(taskKey);
+            return false;
+        }
+        boolean enabled = "1".equals(task.getEnabled());
+        enabledCache.put(taskKey, enabled);
+        return enabled;
     }
 
     @Override

@@ -1,6 +1,8 @@
 package com.sms.handler;
 
 import com.sms.system.service.ISysScheduledTaskService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -9,6 +11,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ScheduledTaskSupport {
+
+    private static final Logger log = LoggerFactory.getLogger(ScheduledTaskSupport.class);
 
     private static final ThreadLocal<Boolean> MANUAL_TRIGGER = new ThreadLocal<>();
 
@@ -36,6 +40,10 @@ public class ScheduledTaskSupport {
         if (Boolean.TRUE.equals(MANUAL_TRIGGER.get())) {
             return false;
         }
-        return !sysScheduledTaskService.isEnabled(taskKey);
+        boolean enabled = sysScheduledTaskService.isEnabled(taskKey);
+        if (!enabled) {
+            log.info("定時任務已停用，跳過本次執行，taskKey={}", taskKey);
+        }
+        return !enabled;
     }
 }
