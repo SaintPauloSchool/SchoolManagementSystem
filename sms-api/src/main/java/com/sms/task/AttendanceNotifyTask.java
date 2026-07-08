@@ -1,7 +1,7 @@
 package com.sms.task;
 
-import com.sms.handler.attendance.AttendanceNotifyHandler;
 import com.sms.handler.ScheduledTaskSupport;
+import com.sms.handler.attendance.AttendanceNotifyHandler;
 import com.sms.system.constant.ScheduledTaskKeys;
 import com.sms.system.entity.task.TaskResult;
 import org.slf4j.Logger;
@@ -39,9 +39,17 @@ public class AttendanceNotifyTask {
             return;
         }
         try {
+            log.info("開始執行任務: 考勤拍卡通知發送");
             TaskResult result = attendanceNotifyHandler.processPendingNotifications();
-            if (result != null && (result.getSuccessCount() > 0 || result.getFailCount() > 0)) {
-                log.info("考勤拍卡通知執行完成: {}", result.getMessage());
+            if (result != null) {
+                log.info(
+                    "任務執行完成: 考勤拍卡通知發送, 成功: {}, 失敗: {}, 信息: {}",
+                    result.getSuccessCount(),
+                    result.getFailCount(),
+                    result.getMessage()
+                );
+            } else {
+                log.info("任務執行完成: 考勤拍卡通知發送, 返回結果為空");
             }
         } catch (Exception e) {
             log.error("執行考勤拍卡通知任務異常", e);
