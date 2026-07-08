@@ -498,40 +498,27 @@ CREATE TABLE sys_config (
 -- ----------------------------
 -- 學生考勤記錄表
 -- ----------------------------
-DROP TABLE IF EXISTS student_attendance_record;
-CREATE TABLE student_attendance_record (
-                                           id                  BIGINT(20)      NOT NULL AUTO_INCREMENT    COMMENT '主鍵 ID',
-                                           student_id          VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '學生 ID（關聯 student_profiles.student_info.student_id）',
-                                           attendance_status   TINYINT(1)      NOT NULL                   COMMENT '考勤狀態（1: 到校, 2: 請假, 3: 遲到）',
-                                           record_time         DATETIME        NOT NULL                   COMMENT '考勤記錄時間',
-                                           create_by           VARCHAR(64)     DEFAULT ''                 COMMENT '記錄人（教職員姓名）',
-                                           create_time         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
-                                           PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生考勤記錄表';
-
--- 若 sys_token 已存在，補充 display_name 欄位：
--- ALTER TABLE sys_token ADD COLUMN display_name varchar(64) DEFAULT NULL COMMENT '顯示名稱' AFTER user_id;
-
--- 若 sys_school_department_member 仍為 student_user_id，遷移為 student_id：
--- ALTER TABLE sys_school_department_member
---   CHANGE COLUMN student_user_id student_id VARCHAR(64) DEFAULT NULL COMMENT '關聯學籍 student_id（student_profiles.student_info.student_id）';
-
--- 若 sys_school_department_member 尚無 school_department_id，拆分部門綁定與真實班級 ID：
--- ALTER TABLE sys_school_department_member
---   ADD COLUMN school_department_id BIGINT DEFAULT NULL COMMENT '自定義部門節點 ID（sys_school_department.id）' AFTER name;
--- UPDATE sys_school_department_member SET school_department_id = department_id WHERE school_department_id IS NULL;
--- UPDATE sys_school_department_member SET department_id = NULL;
--- ALTER TABLE sys_school_department_member
---   MODIFY COLUMN school_department_id BIGINT NOT NULL COMMENT '自定義部門節點 ID（sys_school_department.id）',
---   MODIFY COLUMN department_id BIGINT DEFAULT NULL COMMENT '真實班級/部門 ID（選人時 sys_department.id，家校通訊錄必填）';
-
--- 若通知閱讀/重發表與 student_profiles.student_info JOIN 報 collation 衝突，統一為 utf8mb4_unicode_ci：
--- ALTER TABLE notification_user_read_record
---   MODIFY COLUMN user_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
---   MODIFY COLUMN student_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
--- ALTER TABLE notification_resend_fail_record
---   MODIFY COLUMN user_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
---   MODIFY COLUMN student_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
-
--- 每日學生手冊通知班級範圍（type=1，多選）首次保存時自動寫入 sys_config：
--- config_key = notice.daily_class_department_ids，config_value 為逗號分隔的部門 ID，如 16770,16771
+DROP TABLE IF EXISTS attendance_record;
+CREATE TABLE `attendance_record` (
+                                     `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主鍵',
+                                     `employee_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '學生 ID（關聯 student_profiles.student_info.student_id）',
+                                     `access_datetime` datetime DEFAULT NULL COMMENT '進出日期和時間 (yyyy-MM-dd HH:mm:ss)',
+                                     `access_date` date DEFAULT NULL COMMENT '進出日期 (yyyy-MM-dd)',
+                                     `access_time` time DEFAULT NULL COMMENT '進出時間 (HH:mm:ss)',
+                                     `access_result` varchar(24) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '存取結果: 0=失敗, 1=成功',
+                                     `snapshot_image` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '驗證記錄抓拍圖',
+                                     `access_mode` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '存取模式',
+                                     `device_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '裝置名稱',
+                                     `device_serial_number` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '裝置序列號',
+                                     `resource_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '資源名稱',
+                                     `card_reader_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '讀卡器名稱',
+                                     `first_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '名字',
+                                     `last_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '姓',
+                                     `person_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '人員名稱',
+                                     `person_group` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '人員群組',
+                                     `card_number` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '卡號',
+                                     `direction` varchar(24) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '方向: 0=進, 1=出',
+                                     `is_notified` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0' COMMENT '是否已通知（0未通知 1已通知）',
+                                     `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '記錄寫入時間',
+                                     PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='考勤記錄表'

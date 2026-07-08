@@ -169,7 +169,8 @@ export default {
         { label: '定時重新發送失敗通知', value: 'notificationResendTask|executeTask' },
         { label: '家校通訊錄同步', value: 'schoolFamilyContactSyncTask|executeTask' },
         { label: '每日學生手冊通知發送', value: 'schoolNoticeTask|executeTask' },
-        { label: '企業微信部門與成員同步', value: 'wecomSchoolDepartmentTask|executeTask' }
+        { label: '企業微信部門與成員同步', value: 'wecomSchoolDepartmentTask|executeTask' },
+        { label: '考勤拍卡通知發送', value: 'attendanceNotifyTask|executeTask' }
       ]
     }
   },
