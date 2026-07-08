@@ -3,6 +3,7 @@ package com.sms.system.service.impl;
 import com.sms.system.entity.ClassSection;
 import com.sms.system.entity.SysDepartment;
 import com.sms.system.entity.SysSchoolFamilyContact;
+import com.sms.system.entity.notification.receiver.NotificationReceiverTarget;
 import com.sms.system.entity.vo.ParentStudentMessageInfo;
 import com.sms.system.mapper.SysDepartmentMapper;
 import com.sms.system.service.IClassSectionService;
@@ -11,8 +12,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -30,24 +38,26 @@ public class NotificationMessageServiceImpl implements INotificationMessageServi
     private IClassSectionService classSectionService;
 
     @Override
-    public List<ParentStudentMessageInfo> buildMessageInfos(List<SysSchoolFamilyContact> relations) {
-        if (relations == null || relations.isEmpty()) {
+    public List<ParentStudentMessageInfo> buildMessageInfos(List<NotificationReceiverTarget> targets,
+                                                            List<SysSchoolFamilyContact> relations) {
+        if (targets == null || targets.isEmpty()) {
             return Collections.emptyList();
         }
 
-        log.info("開始構建消息信息，relations 數量: {}", relations.size());
+        log.info("開始構建消息信息，targets 數量: {}", targets.size());
 
-        Map<Long, String> departmentNameMap = preloadDepartmentNames(relations);
+        Map<String, SysSchoolFamilyContact> relationByParentDept = indexRelationsByParentDept(relations);
+        Map<Long, String> departmentNameMap = preloadDepartmentNames(targets);
         Map<String, ClassSection> classSectionMap = preloadClassSections(departmentNameMap);
 
         List<ParentStudentMessageInfo> messageInfos = new ArrayList<>();
-        for (SysSchoolFamilyContact relation : relations) {
-            String parentUserId = relation.getParentUserId();
-            String studentUserId = relation.getStudentUserId();
-            Long departmentId = relation.getDepartmentId();
+        for (NotificationReceiverTarget target : targets) {
+            String parentUserId = target.getParentUserId();
+            String studentId = target.getStudentId();
+            Long departmentId = target.getDepartmentId();
 
-            if (parentUserId == null || studentUserId == null) {
-                log.warn("跳過無效的關係: parentUserId={}, studentUserId={}", parentUserId, studentUserId);
+            if (!StringUtils.hasText(parentUserId) || !StringUtils.hasText(studentId)) {
+                log.warn("跳過無效的接收目標: parentUserId={}, studentId={}", parentUserId, studentId);
                 continue;
             }
 
@@ -59,17 +69,43 @@ public class NotificationMessageServiceImpl implements INotificationMessageServi
                 }
             }
 
-            String studentName = relation.getStudentName();
-            messageInfos.add(new ParentStudentMessageInfo(parentUserId, studentUserId, className, studentName));
+            String studentName = null;
+            if (departmentId != null) {
+                SysSchoolFamilyContact relation = relationByParentDept.get(parentDeptKey(parentUserId, departmentId));
+                if (relation != null) {
+                    studentName = relation.getStudentName();
+                }
+            }
+
+            messageInfos.add(new ParentStudentMessageInfo(
+                    parentUserId.trim(), studentId.trim(), className, studentName));
         }
 
         log.info("消息信息構建完成，總數: {}", messageInfos.size());
         return messageInfos;
     }
 
-    private Map<Long, String> preloadDepartmentNames(List<SysSchoolFamilyContact> relations) {
-        Set<Long> departmentIds = relations.stream()
-                .map(SysSchoolFamilyContact::getDepartmentId)
+    private Map<String, SysSchoolFamilyContact> indexRelationsByParentDept(List<SysSchoolFamilyContact> relations) {
+        if (relations == null || relations.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, SysSchoolFamilyContact> map = new HashMap<>();
+        for (SysSchoolFamilyContact relation : relations) {
+            if (!StringUtils.hasText(relation.getParentUserId()) || relation.getDepartmentId() == null) {
+                continue;
+            }
+            map.put(parentDeptKey(relation.getParentUserId(), relation.getDepartmentId()), relation);
+        }
+        return map;
+    }
+
+    private String parentDeptKey(String parentUserId, Long departmentId) {
+        return parentUserId + "_" + departmentId;
+    }
+
+    private Map<Long, String> preloadDepartmentNames(List<NotificationReceiverTarget> targets) {
+        Set<Long> departmentIds = targets.stream()
+                .map(NotificationReceiverTarget::getDepartmentId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 

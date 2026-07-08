@@ -1,6 +1,7 @@
 package com.sms.system.service;
 
 import com.sms.system.entity.SysSchoolFamilyContact;
+import com.sms.system.entity.notification.receiver.NotificationReceiverTarget;
 import com.sms.system.entity.vo.ParentStudentMessageInfo;
 
 import java.util.List;
@@ -11,7 +12,9 @@ import java.util.List;
 public interface INotificationMessageService {
 
     /**
-     * 根據家長-學生關系列表，構建完整的消息信息
+     * 根據接收目標與家校聯絡人關係，構建個性化消息信息。
+     * <p>{@code sid} 使用 {@code student_id}（學籍 ID），非企微 {@code student_user_id}。</p>
      */
-    List<ParentStudentMessageInfo> buildMessageInfos(List<SysSchoolFamilyContact> relations);
+    List<ParentStudentMessageInfo> buildMessageInfos(List<NotificationReceiverTarget> targets,
+                                                     List<SysSchoolFamilyContact> relations);
 }

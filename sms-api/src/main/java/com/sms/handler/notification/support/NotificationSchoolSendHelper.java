@@ -78,7 +78,7 @@ public class NotificationSchoolSendHelper {
                     try {
                         String content = messageContentHelper.buildPublishContent(
                                 notification, msgInfo.getClassName(), msgInfo.getStudentName(),
-                                msgInfo.getStudentUserId());
+                                msgInfo.getStudentId());
                         JSONObject result = wechatWorkHttpClient.sendSchoolNotification(
                                 buildParentOnlyPayload(parentUserId, content));
                         if (isWechatSuccess(result)) {

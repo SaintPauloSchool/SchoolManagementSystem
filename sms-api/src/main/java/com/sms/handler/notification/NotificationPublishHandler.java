@@ -122,7 +122,8 @@ public class NotificationPublishHandler {
         }
 
         List<ParentStudentMessageInfo> messageInfos =
-                notificationMessageService.buildMessageInfos(resolved.getRelations());
+                notificationMessageService.buildMessageInfos(
+                        resolved.getReceiverTargets(), resolved.getRelations());
 
         SendResult sendResult = schoolSendHelper.sendWithPersonalization(
                 notification, resolved.getParentUserIds(), messageInfos);

@@ -12,8 +12,8 @@ public class ParentStudentMessageInfo implements Serializable {
     /** 家長用戶 ID */
     private String parentUserId;
 
-    /** 學生用戶 ID */
-    private String studentUserId;
+    /** 學籍 student_id（用於通知詳情連結 sid 加密） */
+    private String studentId;
 
     /** 班級名稱（SP 格式，如：K1A） */
     private String className;
@@ -24,9 +24,9 @@ public class ParentStudentMessageInfo implements Serializable {
     public ParentStudentMessageInfo() {
     }
 
-    public ParentStudentMessageInfo(String parentUserId, String studentUserId, String className, String studentName) {
+    public ParentStudentMessageInfo(String parentUserId, String studentId, String className, String studentName) {
         this.parentUserId = parentUserId;
-        this.studentUserId = studentUserId;
+        this.studentId = studentId;
         this.className = className;
         this.studentName = studentName;
     }
@@ -39,12 +39,12 @@ public class ParentStudentMessageInfo implements Serializable {
         this.parentUserId = parentUserId;
     }
 
-    public String getStudentUserId() {
-        return studentUserId;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setStudentUserId(String studentUserId) {
-        this.studentUserId = studentUserId;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
     public String getClassName() {
@@ -67,7 +67,7 @@ public class ParentStudentMessageInfo implements Serializable {
     public String toString() {
         return "ParentStudentMessageInfo{" +
                 "parentUserId='" + parentUserId + '\'' +
-                ", studentUserId='" + studentUserId + '\'' +
+                ", studentId='" + studentId + '\'' +
                 ", className='" + className + '\'' +
                 ", studentName='" + studentName + '\'' +
                 '}';

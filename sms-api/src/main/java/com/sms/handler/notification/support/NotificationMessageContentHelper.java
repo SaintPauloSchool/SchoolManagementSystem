@@ -27,9 +27,9 @@ public class NotificationMessageContentHelper {
     }
 
     public String buildPublishContent(Notification notification, String className,
-                                      String studentName, String studentUserId) {
+                                      String studentName, String studentId) {
         String title = notification.getTitle() == null ? "" : notification.getTitle().trim();
-        String noticeUrl = buildNoticeUrl(notification.getNotificationId(), studentUserId);
+        String noticeUrl = buildNoticeUrl(notification.getNotificationId(), studentId);
         String publishTime = formatTime(notification.getCreateTime());
 
         String header;
@@ -76,9 +76,12 @@ public class NotificationMessageContentHelper {
         return formatTime(createTime);
     }
 
-    private String buildNoticeUrl(Long notificationId, String studentUserId) {
-        if (studentUserId != null && !studentUserId.trim().isEmpty()) {
-            String encryptedStudentId = Md5Utils.encryptSensitiveId(studentUserId, encryptionSalt);
+    /**
+     * 構建通知詳情連結，{@code sid} 為學籍 {@code student_id} 加鹽 MD5。
+     */
+    private String buildNoticeUrl(Long notificationId, String studentId) {
+        if (studentId != null && !studentId.trim().isEmpty()) {
+            String encryptedStudentId = Md5Utils.encryptSensitiveId(studentId, encryptionSalt);
             return noticeBaseUrl + notificationId + "?sid=" + encryptedStudentId;
         }
         return noticeBaseUrl + notificationId;
