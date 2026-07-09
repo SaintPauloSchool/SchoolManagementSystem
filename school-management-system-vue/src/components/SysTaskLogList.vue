@@ -26,7 +26,10 @@
                 placeholder="請選擇要執行的任務"
                 class="task-select"
                 popper-class="task-select-popper"
-                :fit-input-width="false"
+                placement="bottom-start"
+                :offset="4"
+                :show-arrow="false"
+                :fit-input-width="true"
               >
                 <el-option
                   v-for="item in taskOptions"
@@ -669,14 +672,20 @@ export default {
 <style>
 .task-select-popper.el-popper {
   border: none;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
   overflow: hidden;
+  margin-top: 0 !important;
+}
+
+.task-select-popper .el-select-dropdown__list {
+  padding: 4px 0;
 }
 
 .task-select-popper .el-select-dropdown__item {
-  padding: 8px 16px;
+  padding: 8px 12px;
   font-size: 14px;
+  line-height: 1.4;
   transition: background-color 0.15s ease;
 }
 
