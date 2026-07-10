@@ -63,7 +63,7 @@ public class SysSchoolFamilyContactServiceImpl implements ISysSchoolFamilyContac
             return;
         }
 
-        logger.info("部門 ID {} 成功獲取到 {} 個家長信息", targetDepartmentId, parentsArray.size());
+        logger.info("部門 ID {} 成功獲取到 {} 個家長資訊", targetDepartmentId, parentsArray.size());
 
         // 查詢指定班級部門下的全部聯絡人
         List<SysSchoolFamilyContact> existingContacts =
@@ -84,7 +84,7 @@ public class SysSchoolFamilyContactServiceImpl implements ISysSchoolFamilyContac
 
         // 遍歷企微返回的家長列表，每個家長可關聯多名學生
         for (int i = 0; i < parentsArray.size(); i++) {
-            // 解析家長信息
+            // 解析家長資訊
             JSONObject parentObj = parentsArray.getJSONObject(i);
             String parentUserId = parentObj.getString("parent_userid");
             String mobile = parentObj.getString("mobile");
@@ -93,7 +93,7 @@ public class SysSchoolFamilyContactServiceImpl implements ISysSchoolFamilyContac
                 continue;
             }
 
-            // 獲取到學生信息
+            // 獲取到學生資訊
             JSONArray childrenArray = parentObj.getJSONArray("children");
             if (childrenArray == null || childrenArray.isEmpty()) {
                 continue;
@@ -101,7 +101,7 @@ public class SysSchoolFamilyContactServiceImpl implements ISysSchoolFamilyContac
 
             // 同一家長下的每名學生對應一條聯絡人記錄
             for (int j = 0; j < childrenArray.size(); j++) {
-                // 解析學生信息
+                // 解析學生資訊
                 JSONObject childObj = childrenArray.getJSONObject(j);
                 String studentUserId = childObj.getString("student_userid");
                 String relationDesc = childObj.getString("relation");

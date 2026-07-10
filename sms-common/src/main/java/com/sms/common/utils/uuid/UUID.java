@@ -202,7 +202,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID>
     }
 
     /**
-     * 與此 {@code UUID} 相關聯的變體號。變體號描述 {@code UUID} 的布局。
+     * 與此 {@code UUID} 相關聯的變體號。變體號描述 {@code UUID} 的佈局。
      * <p>
      * 變體號具有以下含意：
      * <ul>

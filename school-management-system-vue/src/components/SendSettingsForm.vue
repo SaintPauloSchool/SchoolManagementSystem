@@ -577,7 +577,7 @@ export default {
   margin-bottom: 20px;
 }
 
-/* 選擇區域布局 */
+/* 選擇區域佈局 */
 .receivers-section,
 .cc-section {
   display: flex;
@@ -605,7 +605,7 @@ export default {
   margin: 4px 0;
 }
 
-/* 發送選項布局 */
+/* 發送選項佈局 */
 .send-options {
   display: flex;
   flex-direction: column;

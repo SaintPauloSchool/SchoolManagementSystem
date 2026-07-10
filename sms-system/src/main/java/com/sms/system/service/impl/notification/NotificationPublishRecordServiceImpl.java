@@ -30,7 +30,7 @@ import java.util.Set;
 
 /**
  * 通知發佈相關持久化 Service 實現。
- * <p>接收人信息由上游 {@code resolveReceivers} 解析後傳入，寫庫時不再查庫。</p>
+ * <p>接收人資訊由上游 {@code resolveReceivers} 解析後傳入，寫庫時不再查庫。</p>
  */
 @Service
 public class NotificationPublishRecordServiceImpl implements INotificationPublishRecordService {

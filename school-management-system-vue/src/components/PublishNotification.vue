@@ -4,7 +4,7 @@
     <div class="steps-wrapper">
       <div class="simple-steps">
         <div :class="['step-item', { active: currentStep === 0 }]">
-          <span class="step-title">基本信息</span>
+          <span class="step-title">基本資訊</span>
         </div>
         <div class="step-line"></div>
         <div :class="['step-item', { active: currentStep === 1 }]">
@@ -101,7 +101,7 @@ export default {
         
         // 準備提交數據
         const submitData = {
-          // 通知基本信息
+          // 通知基本資訊
           title: this.formData.title,
           content: this.formData.content,
           jumpUrl: this.formData.jumpUrl || null,

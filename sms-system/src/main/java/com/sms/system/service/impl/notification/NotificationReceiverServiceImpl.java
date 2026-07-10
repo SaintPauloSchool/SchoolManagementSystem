@@ -89,7 +89,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
         ResolvedReceiversVO.ResolutionContext context = new ResolvedReceiversVO.ResolutionContext();
 
         if (receivers == null || receivers.isEmpty()) {
-            log.warn("通知接收者为空");
+            log.warn("通知接收者為空");
             return context.build();
         }
 
@@ -100,7 +100,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
-            log.error("无法解析通知接收者", e);
+            log.error("無法解析通知接收者", e);
             throw new ServiceException("解析接收對象失敗：" + e.getMessage());
         }
 

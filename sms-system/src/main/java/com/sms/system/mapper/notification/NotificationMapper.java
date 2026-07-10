@@ -13,7 +13,7 @@ public interface NotificationMapper {
     /**
      * 查詢通知列表
      *
-     * @param notification 通知信息
+     * @param notification 通知資訊
      * @return 通知集合
      */
     List<Notification> selectNotificationList(Notification notification);
@@ -21,7 +21,7 @@ public interface NotificationMapper {
     /**
      * 根據用戶 ID 查詢抄送給我的通知列表
      *
-     * @param notification 通知信息（包含 userId, userType, publishDate）
+     * @param notification 通知資訊（包含 userId, userType, publishDate）
      * @return 通知集合
      */
     List<Notification> selectCcToMeList(Notification notification);
@@ -29,7 +29,7 @@ public interface NotificationMapper {
     /**
      * 根據用戶 ID 查詢我發送的通知列表
      *
-     * @param notification 通知信息（包含 senderId, publishDate）
+     * @param notification 通知資訊（包含 senderId, publishDate）
      * @return 通知集合
      */
     List<Notification> selectMySendList(Notification notification);

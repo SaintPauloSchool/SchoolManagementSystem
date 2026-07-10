@@ -163,7 +163,7 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
         if (matchStatus == null
                 || (matchStatus != StudentMatchStatus.AUTO.getCode()
                 && matchStatus != StudentMatchStatus.MANUAL.getCode())) {
-            return SysStudentMatchOperationResultVO.failure("僅支持更正已匹配成功的記錄");
+            return SysStudentMatchOperationResultVO.failure("僅支援更正已匹配成功的記錄");
         }
 
         String newUserId = updateDTO.getUserId().trim();
@@ -186,7 +186,7 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
         if (sysStudentMatchMapper.updateStudentMatchContact(toUpdate) <= 0) {
             return SysStudentMatchOperationResultVO.failure("更新失敗");
         }
-        return SysStudentMatchOperationResultVO.success("家長信息已更新", 1);
+        return SysStudentMatchOperationResultVO.success("家長資訊已更新", 1);
     }
 
 

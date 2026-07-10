@@ -32,19 +32,19 @@ public class ResendFailRecordVO {
     /** 第1次失敗原因 */
     private String failReason1;
 
-    /** 第1次失敗詳細信息 */
+    /** 第1次失敗詳細資訊 */
     private String failMessage1;
 
     /** 第2次失敗原因 */
     private String failReason2;
 
-    /** 第2次失敗詳細信息 */
+    /** 第2次失敗詳細資訊 */
     private String failMessage2;
 
     /** 第3次失敗原因 */
     private String failReason3;
 
-    /** 第3次失敗詳細信息 */
+    /** 第3次失敗詳細資訊 */
     private String failMessage3;
 
     /** 首次失敗時間 */

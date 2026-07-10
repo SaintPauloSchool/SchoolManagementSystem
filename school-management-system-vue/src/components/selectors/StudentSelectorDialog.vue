@@ -25,7 +25,7 @@
           </el-tabs>
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索學生或家長..."
+            placeholder="搜尋學生或家長..."
             clearable
             class="tree-search"
             :prefix-icon="Search"

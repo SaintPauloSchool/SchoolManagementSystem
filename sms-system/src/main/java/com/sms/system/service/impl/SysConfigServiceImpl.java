@@ -21,7 +21,7 @@ public class SysConfigServiceImpl implements ISysConfigService {
     private SysConfigMapper sysConfigMapper;
 
     /**
-     * 讀取基本設置中配置的家校通訊錄學段部門 ID（type=3）。
+     * 讀取基礎設置中配置的家校通訊錄學段部門 ID（type=3）。
      *
      * @return 學段部門 ID，無效配置時返回 null
      */

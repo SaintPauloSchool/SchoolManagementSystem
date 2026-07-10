@@ -104,7 +104,7 @@ public class SysStudentMatchController extends AdminBaseController {
         return AjaxResult.from(resultVO.isSuccess(), resultVO.getMessage());
     }
 
-    @Log(title = "更正學生匹配家長信息", businessType = BusinessType.UPDATE)
+    @Log(title = "更正學生匹配家長資訊", businessType = BusinessType.UPDATE)
     @PutMapping("/update")
     public AjaxResult update(@RequestBody SysStudentMatchUpdateDTO updateDTO) {
         if (isNotAdmin()) {

@@ -85,11 +85,27 @@
           <ul v-show="!isCollapsed && expandedSections.system" class="nav-list nav-sublist">
             <li 
               class="nav-item nav-subitem"
-              :class="{ active: activeMenu === '3-1' }"
-              @click="handleMenuSelect('3-1')"
+              :class="{ active: activeMenu === '3-5' }"
+              @click="handleMenuSelect('3-5')"
             >
-              <el-icon class="nav-icon"><Warning /></el-icon>
-              <span class="nav-text">查詢失敗通知</span>
+              <el-icon class="nav-icon"><Tools /></el-icon>
+              <span class="nav-text">基礎設置</span>
+            </li>
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-6' }"
+              @click="handleMenuSelect('3-6')"
+            >
+              <el-icon class="nav-icon"><Collection /></el-icon>
+              <span class="nav-text">班級對照表</span>
+            </li>
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-4' }"
+              @click="handleMenuSelect('3-4')"
+            >
+              <el-icon class="nav-icon"><User /></el-icon>
+              <span class="nav-text">學生資訊管理</span>
             </li>
             <li 
               class="nav-item nav-subitem"
@@ -101,27 +117,19 @@
             </li>
             <li 
               class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-1' }"
+              @click="handleMenuSelect('3-1')"
+            >
+              <el-icon class="nav-icon"><Warning /></el-icon>
+              <span class="nav-text">查詢失敗通知</span>
+            </li>
+            <li 
+              class="nav-item nav-subitem"
               :class="{ active: activeMenu === '3-3' }"
               @click="handleMenuSelect('3-3')"
             >
               <el-icon class="nav-icon"><Document /></el-icon>
               <span class="nav-text">定時任務日誌</span>
-            </li>
-            <li 
-              class="nav-item nav-subitem"
-              :class="{ active: activeMenu === '3-4' }"
-              @click="handleMenuSelect('3-4')"
-            >
-              <el-icon class="nav-icon"><User /></el-icon>
-              <span class="nav-text">學生信息管理</span>
-            </li>
-            <li 
-              class="nav-item nav-subitem"
-              :class="{ active: activeMenu === '3-5' }"
-              @click="handleMenuSelect('3-5')"
-            >
-              <el-icon class="nav-icon"><Tools /></el-icon>
-              <span class="nav-text">基本設置</span>
             </li>
           </ul>
         </div>
@@ -216,13 +224,17 @@
             v-else-if="activeMenu === '3-3'"
           />
           
-          <!-- 學生信息管理 -->
+          <!-- 學生資訊管理 -->
           <StudentMatch
             v-else-if="activeMenu === '3-4'"
           />
 
           <BasicSettings
             v-else-if="activeMenu === '3-5'"
+          />
+
+          <ClassSectionList
+            v-else-if="activeMenu === '3-6'"
           />
         </transition>
       </div>
@@ -235,7 +247,7 @@
 
 <script>
 import { ElNotification } from 'element-plus'
-import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning, Calendar, Tools } from '@element-plus/icons-vue'
+import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning, Calendar, Tools, Collection } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
 import SchoolDepartment from './SchoolDepartment.vue'
@@ -245,6 +257,7 @@ import CalendarEventList from './CalendarEventList.vue'
 import SysTaskLogList from './SysTaskLogList.vue'
 import StudentMatch from './StudentMatch.vue'
 import BasicSettings from './BasicSettings.vue'
+import ClassSectionList from './ClassSectionList.vue'
 import request from '@/utils/request'
 
 export default {
@@ -258,7 +271,8 @@ export default {
     CalendarEventList,
     SysTaskLogList,
     StudentMatch,
-    BasicSettings
+    BasicSettings,
+    ClassSectionList
   },
   data() {
     return {
@@ -367,7 +381,7 @@ export default {
         if (res.code === 200 || res.code === 0) {
           this.isAdmin = res.data === true
           // 若非管理員但目前在系統管理頁，則跳回首頁
-          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2' || this.activeMenu === '3-3' || this.activeMenu === '3-4' || this.activeMenu === '3-5')) {
+          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2' || this.activeMenu === '3-3' || this.activeMenu === '3-4' || this.activeMenu === '3-5' || this.activeMenu === '3-6')) {
             this.handleMenuSelect('1-1')
           }
         }

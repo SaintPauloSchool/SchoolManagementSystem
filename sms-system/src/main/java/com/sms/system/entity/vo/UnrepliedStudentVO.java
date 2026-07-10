@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 未回復學生信息 VO
+ * 未回復學生資訊 VO
  * 用於提示家長回復功能
  *
  */

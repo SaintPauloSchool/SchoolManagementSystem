@@ -3,8 +3,8 @@ package com.sms.system.entity.vo;
 import java.io.Serializable;
 
 /**
- * 家長-學生消息信息 VO
- * 用於存儲發送給家長的個性化消息所需的完整信息
+ * 家長-學生消息資訊 VO
+ * 用於存儲發送給家長的個性化消息所需的完整資訊
  */
 public class ParentStudentMessageInfo implements Serializable {
     private static final long serialVersionUID = 1L;

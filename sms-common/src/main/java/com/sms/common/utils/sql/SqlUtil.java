@@ -15,7 +15,7 @@ public class SqlUtil
     public static String SQL_REGEX = "\u000B|and |extractvalue|updatexml|sleep|exec |insert |select |delete |update |drop |count |chr |mid |master |truncate |char |declare |or |union |like |+|/*|user()";
 
     /**
-     * 僅支持字母、數字、下劃線、空格、逗號、小數點（支持多個字段排序）
+     * 僅支援字母、數字、下劃線、空格、逗號、小數點（支援多個字段排序）
      */
     public static String SQL_PATTERN = "[a-zA-Z0-9_\\ \\,\\.]+";
 

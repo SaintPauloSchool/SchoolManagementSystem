@@ -22,7 +22,7 @@ import oshi.software.os.OperatingSystem;
 import oshi.util.Util;
 
 /**
- * 服務器相關信息
+ * 服務器相關資訊
  *
  */
 public class Server
@@ -31,27 +31,27 @@ public class Server
     private static final int OSHI_WAIT_SECOND = 1000;
     
     /**
-     * CPU相關信息
+     * CPU相關資訊
      */
     private Cpu cpu = new Cpu();
 
     /**
-     * 內存相關信息
+     * 內存相關資訊
      */
     private Mem mem = new Mem();
 
     /**
-     * JVM相關信息
+     * JVM相關資訊
      */
     private Jvm jvm = new Jvm();
 
     /**
-     * 服務器相關信息
+     * 服務器相關資訊
      */
     private Sys sys = new Sys();
 
     /**
-     * 磁盤相關信息
+     * 磁盤相關資訊
      */
     private List<SysFile> sysFiles = new LinkedList<SysFile>();
 
@@ -122,11 +122,11 @@ public class Server
     }
 
     /**
-     * 設置CPU信息
+     * 設置CPU資訊
      */
     private void setCpuInfo(CentralProcessor processor)
     {
-        // CPU信息
+        // CPU資訊
         long[] prevTicks = processor.getSystemCpuLoadTicks();
         Util.sleep(OSHI_WAIT_SECOND);
         long[] ticks = processor.getSystemCpuLoadTicks();
@@ -148,7 +148,7 @@ public class Server
     }
 
     /**
-     * 設置內存信息
+     * 設置內存資訊
      */
     private void setMemInfo(GlobalMemory memory)
     {
@@ -158,7 +158,7 @@ public class Server
     }
 
     /**
-     * 設置服務器信息
+     * 設置服務器資訊
      */
     private void setSysInfo()
     {
@@ -184,7 +184,7 @@ public class Server
     }
 
     /**
-     * 設置磁盤信息
+     * 設置磁盤資訊
      */
     private void setSysFiles(OperatingSystem os)
     {

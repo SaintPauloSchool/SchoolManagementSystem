@@ -313,7 +313,7 @@ export default {
           )
           this.$emit('next')
         } else {
-          ElNotification({ title: '請完善資訊', message: '請先完善基本信息再進行下一步', type: 'warning', duration: 3000 })
+          ElNotification({ title: '請完善資訊', message: '請先完善基本資訊再進行下一步', type: 'warning', duration: 3000 })
         }
       })
     },

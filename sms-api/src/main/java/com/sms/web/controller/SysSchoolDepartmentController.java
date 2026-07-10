@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 系統學校部門信息管理
+ * 系統學校部門資訊管理
  *
  */
 @RestController

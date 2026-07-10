@@ -41,7 +41,7 @@ public class NotificationResendFailRecord implements Serializable {
     @TableField("fail_reason_1")
     private String failReason1;
 
-    /** 第1次失敗詳細信息 */
+    /** 第1次失敗詳細資訊 */
     @TableField("fail_message_1")
     private String failMessage1;
 
@@ -49,7 +49,7 @@ public class NotificationResendFailRecord implements Serializable {
     @TableField("fail_reason_2")
     private String failReason2;
 
-    /** 第2次失敗詳細信息 */
+    /** 第2次失敗詳細資訊 */
     @TableField("fail_message_2")
     private String failMessage2;
 
@@ -57,7 +57,7 @@ public class NotificationResendFailRecord implements Serializable {
     @TableField("fail_reason_3")
     private String failReason3;
 
-    /** 第3次失敗詳細信息 */
+    /** 第3次失敗詳細資訊 */
     @TableField("fail_message_3")
     private String failMessage3;
 

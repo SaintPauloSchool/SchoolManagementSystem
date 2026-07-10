@@ -51,8 +51,8 @@ public class PermissionUtils
     /**
      * 權限錯誤消息提醒
      * 
-     * @param permissionsStr 錯誤信息
-     * @return 提示信息
+     * @param permissionsStr 錯誤資訊
+     * @return 提示資訊
      */
     public static String getMsg(String permissionsStr)
     {

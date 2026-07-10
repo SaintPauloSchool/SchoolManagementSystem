@@ -32,7 +32,7 @@ public interface ISysStudentMatchService {
     List<SysSchoolFamilyContactVO> selectWecomCandidates(SysWecomStudentDTO wecomStudentDTO);
 
     /**
-     * 手動綁定學生匹配（支持單條或多條家長，底層批量寫庫）
+     * 手動綁定學生匹配（支援單條或多條家長，底層批量寫庫）
      */
     SysStudentMatchOperationResultVO bindStudents(SysStudentMatchBatchBindDTO batchBindDTO);
 

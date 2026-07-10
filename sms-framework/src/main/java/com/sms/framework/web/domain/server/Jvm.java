@@ -5,7 +5,7 @@ import com.sms.common.utils.Arith;
 import com.sms.common.utils.DateUtils;
 
 /**
- * JVM相關信息
+ * JVM相關資訊
  *
  */
 public class Jvm

@@ -107,7 +107,7 @@ public class NotificationServiceImpl implements INotificationService {
         notification.setNotificationIds(notificationIds);
 
         startPage();
-        // 查詢通知詳細信息
+        // 查詢通知詳細資訊
         return BeanCopyUtils.copyPageList(notificationMapper.selectCcToMeList(notification), NotificationVO.class);
     }
 

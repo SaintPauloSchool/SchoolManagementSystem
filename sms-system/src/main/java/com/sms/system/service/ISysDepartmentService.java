@@ -20,7 +20,7 @@ public interface ISysDepartmentService {
     List<SysDepartmentVO> getClassTreeWithParentsByAdmin(String openUserId);
 
     /**
-     * 獲取基本設置所配置學段下的班級部門 ID（type=1）。
+     * 獲取基礎設置所配置學段下的班級部門 ID（type=1）。
      *
      * @return 班級部門 ID 列表；未配置學段或學段無班級時返回空列表
      */

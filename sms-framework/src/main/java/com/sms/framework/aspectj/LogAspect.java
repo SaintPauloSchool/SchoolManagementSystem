@@ -80,7 +80,7 @@ public class LogAspect
         catch (Exception exp)
         {
             // 記錄本地異常日誌
-            log.error("異常信息:{}", exp.getMessage());
+            log.error("異常資訊:{}", exp.getMessage());
         }
         finally
         {
@@ -125,7 +125,7 @@ public class LogAspect
     /**
      * 判斷是否需要過濾的對象。
      * 
-     * @param o 對象信息。
+     * @param o 對象資訊。
      * @return 如果是需要過濾的對象，則返回true；否則返回false。
      */
     @SuppressWarnings("rawtypes")

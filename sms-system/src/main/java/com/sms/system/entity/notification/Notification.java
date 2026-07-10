@@ -49,7 +49,7 @@ public class Notification extends BaseEntity {
     @TableField("attachment_urls")
     private String attachmentUrls;
 
-    /** 狀態（0草稿 1已發布 2已撤回） */
+    /** 狀態（0草稿 1已發佈 2已撤回） */
     @TableField("status")
     private String status;
 
@@ -76,7 +76,7 @@ public class Notification extends BaseEntity {
     @TableField(exist = false)
     private List<NotificationQuestion> questions;
 
-    /** 發布時間篩選（非數據庫字段） */
+    /** 發佈時間篩選（非數據庫字段） */
     @TableField(exist = false)
     private String publishDate;
 

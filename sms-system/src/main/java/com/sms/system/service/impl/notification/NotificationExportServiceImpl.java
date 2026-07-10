@@ -78,7 +78,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
     @Override
     public void exportNotificationAnswers(Long notificationId, HttpServletResponse response) {
         try {
-            // 1. 查詢通知基本信息
+            // 1. 查詢通知基本資訊
             Notification notification = notificationMapper.selectById(notificationId);
             if (notification == null) {
                 log.error("通知不存在，notificationId: {}", notificationId);
@@ -152,7 +152,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
                                         if (attachments != null) {
                                             // 遍歷附件
                                             for (int j = 0; j < attachments.size(); j++) {
-                                                // 獲取附件信息
+                                                // 獲取附件資訊
                                                 JSONObject attachment = attachments.getJSONObject(j);
                                                 String url = attachment.getString("url");
                                                 String name = attachment.getString("name");
@@ -268,7 +268,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
 
         int rowNum = 0;
 
-        // 第1-4行：合併單元格顯示問卷信息
+        // 第1-4行：合併單元格顯示問卷資訊
         Row headerInfoRow = sheet.createRow(rowNum);
         headerInfoRow.setHeightInPoints(100); // 設置較高的行高以容納4行內容
         Cell headerInfoCell = headerInfoRow.createCell(0);
@@ -407,7 +407,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
             allQuestionItems.addAll(parseQuestionContent(question));
         }
 
-        // 第1-2行：合併單元格顯示問卷信息（與統計Sheet一致）
+        // 第1-2行：合併單元格顯示問卷資訊（與統計Sheet一致）
         Row headerInfoRow = sheet.createRow(rowNum);
         headerInfoRow.setHeightInPoints(80);
         Cell headerInfoCell = headerInfoRow.createCell(0);

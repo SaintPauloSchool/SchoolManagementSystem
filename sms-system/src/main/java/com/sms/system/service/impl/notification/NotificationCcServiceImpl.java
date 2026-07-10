@@ -356,7 +356,7 @@ public class NotificationCcServiceImpl implements INotificationCcService {
      * 解析單條抄送記錄，獲取對應的 userid 集合。
      *
      * @param cc 抄送記錄
-     * @return userid 集合；數據無效或類型不支持時返回空集合
+     * @return userid 集合；數據無效或類型不支援時返回空集合
      */
     private Set<String> resolveCcUserIds(NotificationCc cc) {
         if (cc == null || !StringUtils.hasText(cc.getCcData())) {
@@ -365,7 +365,7 @@ public class NotificationCcServiceImpl implements INotificationCcService {
 
         NotificationCcType ccType = NotificationCcType.fromCode(cc.getCcType());
         if (ccType == null) {
-            log.warn("忽略不支持的抄送類型 ccType={}", cc.getCcType());
+            log.warn("忽略不支援的抄送類型 ccType={}", cc.getCcType());
             return Collections.emptySet();
         }
 
@@ -384,7 +384,7 @@ public class NotificationCcServiceImpl implements INotificationCcService {
      *
      * @param ids    成員 ID 列表
      * @param ccType 抄送來源類型（WeCom / 自定義）
-     * @return 去重後的 userid 集合；類型不支持或無有效成員時返回空集合
+     * @return 去重後的 userid 集合；類型不支援或無有效成員時返回空集合
      */
     private Set<String> lookupUserIds(List<Long> ids, NotificationCcType ccType) {
         if (ccType == NotificationCcType.WECOM) {
@@ -440,7 +440,7 @@ public class NotificationCcServiceImpl implements INotificationCcService {
 
         Set<Long> notificationIds = new HashSet<>();
         for (NotificationCc cc : allCcList) {
-            // 僅處理支持的來源類型，且 cc_data 包含當前成員 ID
+            // 僅處理支援的來源類型，且 cc_data 包含當前成員 ID
             if (NotificationCcType.isSupported(cc.getCcType()) && containsMemberId(cc.getCcData(), userId)) {
                 notificationIds.add(cc.getNotificationId());
             }

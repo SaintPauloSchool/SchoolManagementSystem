@@ -5,7 +5,7 @@
         <div class="card-header">
           <span class="title">
             <el-icon><Setting /></el-icon>
-            基本設置
+            基礎設置
           </span>
         </div>
       </template>

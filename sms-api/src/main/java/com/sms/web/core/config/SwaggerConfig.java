@@ -33,7 +33,7 @@ public class SwaggerConfig
         return new Docket(DocumentationType.OAS_30)
                 // 是否啓用Swagger
                 .enable(enabled)
-                // 用來創建該API的基本信息，展示在文檔的頁面中（自定義展示的信息）
+                // 用來創建該API的基本資訊，展示在文檔的頁面中（自定義展示的資訊）
                 .apiInfo(apiInfo())
                 // 設置哪些接口暴露給Swagger展示
                 .select()
@@ -47,7 +47,7 @@ public class SwaggerConfig
     }
 
     /**
-     * 添加摘要信息
+     * 添加摘要資訊
      */
     private ApiInfo apiInfo()
     {
@@ -57,7 +57,7 @@ public class SwaggerConfig
                 .title("標題：系統接口文檔")
                 // 描述
                 .description("描述")
-                // 作者信息
+                // 作者資訊
                 .contact(new Contact(OverallSituationConfig.getName(), null, null))
                 // 版本
                 .version("版本號:" + OverallSituationConfig.getVersion())

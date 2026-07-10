@@ -794,7 +794,7 @@ export default {
       }
       
       if (!this.currentDepartment || !this.currentDepartment.id) {
-        ElNotification({ title: "操作失敗", message: '部門信息異常，請重新選擇', type: "error", duration: 4000 })
+        ElNotification({ title: "操作失敗", message: '部門資訊異常，請重新選擇', type: "error", duration: 4000 })
         return
       }
       
@@ -873,7 +873,7 @@ export default {
   background: #f0f2f5;
 }
 
-/* 主體布局 */
+/* 主體佈局 */
 .layout-content {
   display: flex;
   height: 100%;

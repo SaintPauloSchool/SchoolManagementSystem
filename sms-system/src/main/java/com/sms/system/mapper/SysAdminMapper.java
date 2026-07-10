@@ -16,17 +16,17 @@ public interface SysAdminMapper {
      */
     List<String> selectAdminUserIds();
     /**
-     * 根據用戶ID查詢管理員信息
+     * 根據用戶ID查詢管理員資訊
      *
      * @param userId 用戶ID
-     * @return 管理員信息
+     * @return 管理員資訊
      */
     SysAdmin selectByUserId(@Param("userId") String userId);
 
     /**
      * 新增管理員
      *
-     * @param admin 管理員信息
+     * @param admin 管理員資訊
      * @return 結果
      */
     int insert(SysAdmin admin);
@@ -34,7 +34,7 @@ public interface SysAdminMapper {
     /**
      * 更新管理員狀態
      *
-     * @param admin 管理員信息
+     * @param admin 管理員資訊
      * @return 結果
      */
     int updateById(SysAdmin admin);

@@ -43,7 +43,7 @@ public class NotificationUserReadRecordServiceImpl implements INotificationUserR
     }
 
     /**
-     * 查詢通知閱讀統計信息（強類型 VO）
+     * 查詢通知閱讀統計資訊（強類型 VO）
      *
      * @param notificationId 通知ID
      * @return 閱讀統計 VO

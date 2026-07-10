@@ -8,13 +8,13 @@
     @close="handleClose"
   >
     <div v-loading="loading" class="detail-container">
-      <!-- 基本信息 -->
+      <!-- 基本資訊 -->
       <el-card class="info-card" shadow="never">
         <template #header>
           <div class="card-header">
             <span class="title">
               <el-icon><InfoFilled /></el-icon>
-              基本信息
+              基本資訊
             </span>
           </div>
         </template>

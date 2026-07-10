@@ -70,7 +70,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
             return Collections.emptyList();
         }
 
-        // 2. 讀取基本設置中配置的學段部門（type=3）
+        // 2. 讀取基礎設置中配置的學段部門（type=3）
         Long segmentDepartmentId = sysConfigService.getAddressBookSegmentDepartmentId();
         if (segmentDepartmentId == null) {
             return Collections.emptyList();
@@ -408,7 +408,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     // =========================================================================
 
     /**
-     * 查詢基本設置所配置學段下的班級部門 ID（type=1）。
+     * 查詢基礎設置所配置學段下的班級部門 ID（type=1）。
      *
      * @return 班級部門 ID 列表，未配置學段或無班級時返回空列表
      */
@@ -506,7 +506,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
                     }
                 }
 
-                // 批量保存部門管理員信息
+                // 批量保存部門管理員資訊
                 if (!allAdmins.isEmpty()) {
                     departmentAdminService.batchSaveDepartmentAdmins(allAdmins);
                 }
@@ -532,7 +532,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     // =========================================================================
 
     /**
-     * 獲取學段樹，供基本設置頁選擇家校通訊錄使用的學段（type=3）。
+     * 獲取學段樹，供基礎設置頁選擇家校通訊錄使用的學段（type=3）。
      */
     @Override
     public List<SysDepartmentVO> getSegmentTree() {
@@ -600,7 +600,7 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     }
 
     /**
-     * 從扁平部門列表構建基本設置用部門樹：優先以學校(type=5)為根，若無則退而從校區(type=4)開始。
+     * 從扁平部門列表構建基礎設置用部門樹：優先以學校(type=5)為根，若無則退而從校區(type=4)開始。
      *
      * @param dailyNoticeClassTree true 構建至班級(type=1)；false 僅構建至學段(type=3)
      */

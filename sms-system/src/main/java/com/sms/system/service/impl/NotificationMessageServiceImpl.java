@@ -44,7 +44,7 @@ public class NotificationMessageServiceImpl implements INotificationMessageServi
             return Collections.emptyList();
         }
 
-        log.info("開始構建消息信息，targets 數量: {}", targets.size());
+        log.info("開始構建消息資訊，targets 數量: {}", targets.size());
 
         Map<String, SysSchoolFamilyContact> relationByParentDept = indexRelationsByParentDept(relations);
         Map<Long, String> departmentNameMap = preloadDepartmentNames(targets);
@@ -81,7 +81,7 @@ public class NotificationMessageServiceImpl implements INotificationMessageServi
                     parentUserId.trim(), studentId.trim(), className, studentName));
         }
 
-        log.info("消息信息構建完成，總數: {}", messageInfos.size());
+        log.info("消息資訊構建完成，總數: {}", messageInfos.size());
         return messageInfos;
     }
 

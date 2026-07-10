@@ -25,7 +25,7 @@ import org.springframework.util.ClassUtils;
 import com.sms.common.utils.StringUtils;
 
 /**
- * Mybatis支持*匹配掃描包
+ * Mybatis支援*匹配掃描包
  *
  */
 @Configuration

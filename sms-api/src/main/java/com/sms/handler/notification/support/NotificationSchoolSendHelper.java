@@ -104,7 +104,7 @@ public class NotificationSchoolSendHelper {
             customThreadPool.shutdown();
         }
 
-        // 無個性化信息的接收人（如自定義家校）走統一正文
+        // 無個性化資訊的接收人（如自定義家校）走統一正文
         List<String> genericParentIds = collectParentsWithoutPersonalization(parentUserIds, parentToMessagesMap);
         if (!genericParentIds.isEmpty()) {
             SendResult genericResult = sendInBatches(notification, genericParentIds);

@@ -186,7 +186,7 @@ public class NotificationPublishHandler {
         // 1. 查詢原始通知
         Notification notification = loadNotificationEntity(notificationId);
         if (notification == null) {
-            throw new IllegalStateException("未找到通知信息");
+            throw new IllegalStateException("未找到通知資訊");
         }
 
         // 2. 檢查是否超過回復截止時間
@@ -290,7 +290,7 @@ public class NotificationPublishHandler {
         result.put("successCount", successCount);
         result.put("failCount", failCount);
 
-        // 根據發送結果生成不同的提示信息
+        // 根據發送結果生成不同的提示資訊
         if (failCount == 0) {
             // 全部成功
             result.put("message", String.format("提醒發送成功，共發送 %d 個學生", successCount));
@@ -319,7 +319,7 @@ public class NotificationPublishHandler {
         // 1. 查詢原始通知
         Notification notification = loadNotificationEntity(notificationId);
         if (notification == null) {
-            throw new IllegalStateException("未找到通知信息");
+            throw new IllegalStateException("未找到通知資訊");
         }
 
         // 2. 查詢發送記錄
@@ -413,10 +413,10 @@ public class NotificationPublishHandler {
      */
     public TaskResult sendDailySchoolNotice() {
         log.info("開始執行學校通知發送任務");
-        // 按基本設置中配置的學段，查詢該學段下家長 userid
+        // 按基礎設置中配置的學段，查詢該學段下家長 userid
         List<String> allParentUserIds = schoolFamilyContactService.getAllParentUserIds();
         if (allParentUserIds == null || allParentUserIds.isEmpty()) {
-            log.warn("沒有可發送的家長用戶（請確認基本設置已選擇每日學生手冊通知班級，且對應班級下已有家校聯絡人數據）");
+            log.warn("沒有可發送的家長用戶（請確認基礎設置已選擇每日學生手冊通知班級，且對應班級下已有家校聯絡人數據）");
             return TaskResult.success(0, 0, "無家長需發送");
         }
         log.info("獲取到家長用戶 ID 總數量: {}", allParentUserIds.size());

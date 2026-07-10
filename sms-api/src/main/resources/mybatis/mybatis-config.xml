@@ -7,7 +7,7 @@ PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
     <settings>
         <!-- 使全局的映射器啓用或禁用緩存 -->
         <setting name="cacheEnabled"             value="true"   />
-        <!-- 允許JDBC 支持自動生成主鍵 -->
+        <!-- 允許JDBC 支援自動生成主鍵 -->
         <setting name="useGeneratedKeys"         value="true"   />
         <!-- 配置默認的執行器.SIMPLE就是普通執行器;REUSE執行器會重用預處理語句(prepared statements);BATCH執行器將重用語句並執行批量更新 -->
         <setting name="defaultExecutorType"      value="SIMPLE" />

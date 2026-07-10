@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * WeCom學校部門信息管理
+ * WeCom學校部門資訊管理
  *
  */
 @RestController

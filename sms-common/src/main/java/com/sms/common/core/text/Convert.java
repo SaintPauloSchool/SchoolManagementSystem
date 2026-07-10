@@ -413,7 +413,7 @@ public class Convert
         }
         try
         {
-            // 支持科學計數法
+            // 支援科學計數法
             return new BigDecimal(valueStr.trim()).longValue();
         }
         catch (Exception e)
@@ -465,7 +465,7 @@ public class Convert
         }
         try
         {
-            // 支持科學計數法
+            // 支援科學計數法
             return new BigDecimal(valueStr.trim()).doubleValue();
         }
         catch (Exception e)
@@ -540,7 +540,7 @@ public class Convert
 
     /**
      * 轉換爲boolean<br>
-     * String支持的值爲：true、false、yes、ok、no，1,0 如果給定的值爲空，或者轉換失敗，返回默認值<br>
+     * String支援的值爲：true、false、yes、ok、no，1,0 如果給定的值爲空，或者轉換失敗，返回默認值<br>
      * 轉換失敗不會報錯
      *
      * @param value 被轉換的值

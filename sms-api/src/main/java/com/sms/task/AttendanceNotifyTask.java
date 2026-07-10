@@ -43,7 +43,7 @@ public class AttendanceNotifyTask {
             TaskResult result = attendanceNotifyHandler.processPendingNotifications();
             if (result != null) {
                 log.info(
-                    "任務執行完成: 考勤拍卡通知發送, 成功: {}, 失敗: {}, 信息: {}",
+                    "任務執行完成: 考勤拍卡通知發送, 成功: {}, 失敗: {}, 資訊: {}",
                     result.getSuccessCount(),
                     result.getFailCount(),
                     result.getMessage()

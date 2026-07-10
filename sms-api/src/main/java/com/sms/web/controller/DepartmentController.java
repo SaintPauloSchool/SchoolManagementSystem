@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * 部門信息管理
+ * 部門資訊管理
  */
 @RestController
 @RequestMapping("/system/department")

@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * 基本設置
+ * 基礎設置
  */
 @RestController
 @RequestMapping("/system/basic")

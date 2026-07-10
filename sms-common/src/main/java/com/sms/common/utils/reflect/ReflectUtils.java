@@ -33,7 +33,7 @@ public class ReflectUtils
 
     /**
      * 調用Getter方法.
-     * 支持多級，如：對象名.對象名.方法
+     * 支援多級，如：對象名.對象名.方法
      */
     @SuppressWarnings("unchecked")
     public static <E> E invokeGetter(Object obj, String propertyName)
@@ -49,7 +49,7 @@ public class ReflectUtils
 
     /**
      * 調用Setter方法, 僅匹配方法名。
-     * 支持多級，如：對象名.對象名.方法
+     * 支援多級，如：對象名.對象名.方法
      */
     public static <E> void invokeSetter(Object obj, String propertyName, E value)
     {

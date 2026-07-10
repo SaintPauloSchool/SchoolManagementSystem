@@ -5,12 +5,12 @@
         <div class="card-header">
           <span class="title">
             <el-icon><User /></el-icon>
-            學生信息管理
+            學生資訊管理
           </span>
         </div>
       </template>
 
-      <!-- 搜索欄 -->
+      <!-- 搜尋欄 -->
       <el-form :model="searchForm" ref="queryForm" :inline="true" class="search-form match-search-form">
         <el-form-item label="學生姓名">
           <el-input 
@@ -38,7 +38,7 @@
           </el-select>
         </el-form-item>
         <el-form-item class="search-actions">
-          <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
+          <el-button type="primary" :icon="Search" @click="handleSearch">搜尋</el-button>
           <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
           <el-button
             type="warning"
@@ -123,7 +123,7 @@
                 :icon="Edit"
                 @click="handleUpdateMatch(scope.row)"
               >
-                更改信息
+                更改資訊
               </el-button>
             </div>
           </template>
@@ -149,7 +149,7 @@
     <el-dialog
       draggable
       align-center
-      :title="candidatesMode === 'update' ? '更改信息 - 重新選擇家長' : '手動綁定 - 選擇企業微信學生'"
+      :title="candidatesMode === 'update' ? '更改資訊 - 重新選擇家長' : '手動綁定 - 選擇企業微信學生'"
       v-model="candidatesVisible"
       width="1200px"
       class="candidates-dialog"
@@ -169,7 +169,7 @@
           <el-form-item label="企微學生姓名">
             <el-input
               v-model="candidatesQuery.queryName"
-              placeholder="支持簡繁體姓名查詢"
+              placeholder="支援簡繁體姓名查詢"
               clearable
               style="width: 200px;"
               @keyup.enter="handleCandidatesSearch"
@@ -194,7 +194,7 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" :icon="Search" @click="handleCandidatesSearch">搜索</el-button>
+            <el-button type="primary" :icon="Search" @click="handleCandidatesSearch">搜尋</el-button>
             <el-button :icon="Refresh" @click="resetCandidatesSearch">重置</el-button>
           </el-form-item>
         </el-form>
@@ -211,7 +211,7 @@
             :row-style="{ height: '48px' }"
             :row-class-name="getCandidateRowClassName"
             :class="{ 'candidates-table--update': candidatesMode === 'update' }"
-            empty-text="未找到可選家長，可嘗試清空班級或姓名條件後重新搜索"
+            empty-text="未找到可選家長，可嘗試清空班級或姓名條件後重新搜尋"
             @selection-change="handleCandidatesSelectionChange"
             @row-click="handleCandidateRowClick"
           >
@@ -513,7 +513,7 @@ export default {
       if (!row?.id) {
         ElNotification({
           title: '無法更改',
-          message: '缺少匹配記錄，無法更正家長信息',
+          message: '缺少匹配記錄，無法更正家長資訊',
           type: 'warning',
           duration: 3000
         })
@@ -719,7 +719,7 @@ export default {
         if (res.code === 200 || res.code === 0) {
           ElNotification({
             title: '更新成功',
-            message: res.msg || '家長信息已更新',
+            message: res.msg || '家長資訊已更新',
             type: 'success',
             duration: 4000
           })
@@ -728,7 +728,7 @@ export default {
         } else {
           ElNotification({
             title: '更新失敗',
-            message: res.msg || '更正家長信息失敗，請稍後再試',
+            message: res.msg || '更正家長資訊失敗，請稍後再試',
             type: 'error',
             duration: 3000
           })
@@ -737,7 +737,7 @@ export default {
         console.error(e)
         ElNotification({
           title: '更新出錯',
-          message: e?.response?.data?.msg || e?.message || '更正家長信息失敗，請稍後再試',
+          message: e?.response?.data?.msg || e?.message || '更正家長資訊失敗，請稍後再試',
           type: 'error',
           duration: 4000
         })
