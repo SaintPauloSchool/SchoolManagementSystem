@@ -20,7 +20,6 @@ public class SysScheduledTask implements Serializable {
     private String cronExpression;
     /** 是否啟用（0停用 1啟用） */
     private String enabled;
-    private String remark;
     private Integer sortOrder;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
@@ -83,14 +82,6 @@ public class SysScheduledTask implements Serializable {
 
     public void setEnabled(String enabled) {
         this.enabled = enabled;
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark;
     }
 
     public Integer getSortOrder() {

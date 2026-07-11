@@ -1,20 +1,18 @@
 package com.sms.task;
 
 import com.sms.handler.notification.NotificationPublishHandler;
-import com.sms.handler.ScheduledTaskSupport;
-import com.sms.handler.TaskLogHelper;
+import com.sms.scheduler.ScheduledTaskSupport;
+import com.sms.handler.system.TaskLogHelper;
 import com.sms.system.constant.ScheduledTaskKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 學校通知定時發送任務
- * 每周一到周五下午 6 點執行，所有業務邏輯由 NotificationPublishHandler.sendDailySchoolNotice() 處理
  */
 @Component
 public class SchoolNoticeTask {
@@ -32,7 +30,6 @@ public class SchoolNoticeTask {
 
     private static final AtomicBoolean isExecuting = new AtomicBoolean(false);
 
-    @Scheduled(cron = "0 0 18 ? * MON-FRI")
     public void executeTask() {
         if (scheduledTaskSupport.shouldSkipForSchedule(ScheduledTaskKeys.SCHOOL_NOTICE)) {
             return;

@@ -1,20 +1,18 @@
 package com.sms.task;
 
 import com.sms.handler.wecom.WecomSyncHandler;
-import com.sms.handler.ScheduledTaskSupport;
-import com.sms.handler.TaskLogHelper;
+import com.sms.scheduler.ScheduledTaskSupport;
+import com.sms.handler.system.TaskLogHelper;
 import com.sms.system.constant.ScheduledTaskKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 企業微信獲取部門列表定時任務
- * 每天凌晨 1 點執行，所有業務邏輯由 WecomSyncHandler.syncWecomDepartmentsAndMembers() 處理
  */
 @Component
 public class WecomSchoolDepartmentTask {
@@ -32,7 +30,6 @@ public class WecomSchoolDepartmentTask {
 
     private static final AtomicBoolean isExecuting = new AtomicBoolean(false);
 
-    @Scheduled(cron = "0 0 1 * * ?")
     public void executeTask() {
         if (scheduledTaskSupport.shouldSkipForSchedule(ScheduledTaskKeys.WECOM_SCHOOL_DEPARTMENT)) {
             return;

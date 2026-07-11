@@ -19,7 +19,6 @@ public class SysScheduledTaskVO implements Serializable {
     private String methodName;
     private String cronExpression;
     private String enabled;
-    private String remark;
     private Integer sortOrder;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
@@ -82,14 +81,6 @@ public class SysScheduledTaskVO implements Serializable {
 
     public void setEnabled(String enabled) {
         this.enabled = enabled;
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark;
     }
 
     public Integer getSortOrder() {

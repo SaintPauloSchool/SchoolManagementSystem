@@ -3,7 +3,7 @@ package com.sms.handler.attendance;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.common.config.StudentProfilesProperties;
 import com.sms.framework.wechat.WechatWorkHttpClient;
-import com.sms.handler.notification.support.NotificationSchoolSendHelper;
+import com.sms.handler.notification.NotificationSchoolSendHelper;
 import com.sms.system.entity.task.TaskResult;
 import com.sms.system.entity.vo.AttendanceNotifyRowVO;
 import com.sms.system.mapper.AttendanceRecordMapper;

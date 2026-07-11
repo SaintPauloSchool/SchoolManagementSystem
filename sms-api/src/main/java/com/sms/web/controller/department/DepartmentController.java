@@ -1,4 +1,4 @@
-package com.sms.web.controller;
+package com.sms.web.controller.department;
 
 import com.sms.common.annotation.Log;
 import com.sms.common.core.controller.BaseController;

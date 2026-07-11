@@ -1,5 +1,6 @@
 package com.sms.system.service;
 
+import com.sms.system.entity.dto.SysScheduledTaskCronDTO;
 import com.sms.system.entity.dto.SysScheduledTaskStatusDTO;
 import com.sms.system.entity.vo.SysScheduledTaskVO;
 
@@ -26,7 +27,7 @@ public interface ISysScheduledTaskService {
     int updateEnabled(SysScheduledTaskStatusDTO statusDTO);
 
     /**
-     * 刷新內存緩存
+     * 更新定時任務 Cron 表達式
      */
-    void refreshCache();
+    int updateCronExpression(SysScheduledTaskCronDTO cronDTO);
 }

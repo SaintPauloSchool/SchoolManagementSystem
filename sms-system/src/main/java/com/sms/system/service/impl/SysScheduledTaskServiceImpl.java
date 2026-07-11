@@ -2,6 +2,7 @@ package com.sms.system.service.impl;
 
 import com.sms.system.entity.SysScheduledTask;
 import com.sms.system.entity.SysTaskLog;
+import com.sms.system.entity.dto.SysScheduledTaskCronDTO;
 import com.sms.system.entity.dto.SysScheduledTaskStatusDTO;
 import com.sms.system.entity.vo.SysScheduledTaskVO;
 import com.sms.system.mapper.SysScheduledTaskMapper;
@@ -13,12 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import javax.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 定時任務配置 Service 實現
@@ -33,30 +32,6 @@ public class SysScheduledTaskServiceImpl implements ISysScheduledTaskService {
 
     @Autowired
     private SysTaskLogMapper sysTaskLogMapper;
-
-    /** taskKey -> enabled */
-    private final Map<String, Boolean> enabledCache = new ConcurrentHashMap<>();
-
-    @PostConstruct
-    @Override
-    public void refreshCache() {
-        List<SysScheduledTaskVO> tasks = sysScheduledTaskMapper.selectTaskList();
-        if (tasks == null || tasks.isEmpty()) {
-            enabledCache.clear();
-            log.warn("定時任務配置為空，請確認 sys_scheduled_task 表已初始化");
-            return;
-        }
-        Map<String, Boolean> refreshed = new ConcurrentHashMap<>();
-        for (SysScheduledTaskVO task : tasks) {
-            if (task == null || !StringUtils.hasText(task.getTaskKey())) {
-                continue;
-            }
-            refreshed.put(task.getTaskKey(), "1".equals(task.getEnabled()));
-        }
-        enabledCache.clear();
-        enabledCache.putAll(refreshed);
-        log.info("定時任務啟用狀態緩存已刷新，共 {} 項", enabledCache.size());
-    }
 
     @Override
     public List<SysScheduledTaskVO> selectTaskList() {
@@ -96,12 +71,9 @@ public class SysScheduledTaskServiceImpl implements ISysScheduledTaskService {
         SysScheduledTask task = sysScheduledTaskMapper.selectByTaskKey(taskKey);
         if (task == null) {
             log.warn("定時任務配置不存在，taskKey={}", taskKey);
-            enabledCache.remove(taskKey);
             return false;
         }
-        boolean enabled = "1".equals(task.getEnabled());
-        enabledCache.put(taskKey, enabled);
-        return enabled;
+        return "1".equals(task.getEnabled());
     }
 
     @Override
@@ -121,8 +93,33 @@ public class SysScheduledTaskServiceImpl implements ISysScheduledTaskService {
 
         int rows = sysScheduledTaskMapper.updateEnabled(statusDTO.getTaskKey(), enabled);
         if (rows > 0) {
-            enabledCache.put(statusDTO.getTaskKey(), "1".equals(enabled));
             log.info("定時任務 {} 已{}", statusDTO.getTaskKey(), "1".equals(enabled) ? "啟用" : "停用");
+        }
+        return rows;
+    }
+
+    @Override
+    public int updateCronExpression(SysScheduledTaskCronDTO cronDTO) {
+        if (cronDTO == null || !StringUtils.hasText(cronDTO.getTaskKey())) {
+            throw new IllegalArgumentException("taskKey 不能為空");
+        }
+        String cronExpression = cronDTO.getCronExpression();
+        if (!StringUtils.hasText(cronExpression)) {
+            throw new IllegalArgumentException("Cron 表達式不能為空");
+        }
+        cronExpression = cronExpression.trim();
+        if (!org.springframework.scheduling.support.CronExpression.isValidExpression(cronExpression)) {
+            throw new IllegalArgumentException("Cron 表達式格式無效");
+        }
+
+        SysScheduledTask existing = sysScheduledTaskMapper.selectByTaskKey(cronDTO.getTaskKey());
+        if (existing == null) {
+            throw new IllegalArgumentException("找不到定時任務: " + cronDTO.getTaskKey());
+        }
+
+        int rows = sysScheduledTaskMapper.updateCronExpression(cronDTO.getTaskKey(), cronExpression);
+        if (rows > 0) {
+            log.info("定時器任務 {} 的 Cron 已更新為 {}", cronDTO.getTaskKey(), cronExpression);
         }
         return rows;
     }

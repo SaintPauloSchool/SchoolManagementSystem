@@ -1,4 +1,4 @@
-package com.sms.handler.notification.support;
+package com.sms.handler.notification;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;

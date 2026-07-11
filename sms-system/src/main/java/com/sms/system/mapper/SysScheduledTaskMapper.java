@@ -13,7 +13,11 @@ public interface SysScheduledTaskMapper {
 
     List<SysScheduledTaskVO> selectTaskList();
 
+    List<SysScheduledTask> selectAllTasks();
+
     SysScheduledTask selectByTaskKey(@Param("taskKey") String taskKey);
 
     int updateEnabled(@Param("taskKey") String taskKey, @Param("enabled") String enabled);
+
+    int updateCronExpression(@Param("taskKey") String taskKey, @Param("cronExpression") String cronExpression);
 }

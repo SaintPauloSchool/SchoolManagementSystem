@@ -148,8 +148,8 @@
   <el-dialog
     v-model="taskManageVisible"
     title="定時任務管理"
-    width="1200px"
-    top="4vh"
+    width="1100px"
+    top="3vh"
     class="task-manage-dialog"
     destroy-on-close
     @open="loadScheduledTasks"
@@ -159,14 +159,20 @@
       :data="scheduledTaskList"
       class="task-manage-table"
       style="width: 100%"
-      :row-style="{ height: '56px' }"
-      :cell-style="{ padding: '16px 0', fontSize: '15px' }"
-      :header-cell-style="{ background: '#f5f7fa', color: '#303133', fontSize: '15px', fontWeight: '600', padding: '14px 0' }"
+      :row-style="{ height: '52px' }"
+      :cell-style="{ padding: '14px 0', fontSize: '15px' }"
+      :header-cell-style="{ background: '#f5f7fa', color: '#303133', fontSize: '15px', fontWeight: '600', padding: '13px 0' }"
       empty-text="暫無定時任務配置"
     >
-      <el-table-column label="任務名稱" prop="taskName" min-width="200" show-overflow-tooltip />
-      <el-table-column label="Cron 表達式" prop="cronExpression" min-width="160" show-overflow-tooltip />
-      <el-table-column label="說明" prop="remark" min-width="320" show-overflow-tooltip />
+      <el-table-column label="任務名稱" prop="taskName" min-width="180" show-overflow-tooltip />
+      <el-table-column label="定時設定" min-width="260">
+        <template #default="scope">
+          <div class="cron-display">
+            <span class="cron-desc">{{ describeCron(scope.row.cronExpression) }}</span>
+            <span class="cron-text">{{ scope.row.cronExpression }}</span>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="最近執行" align="center" width="180">
         <template #default="scope">
           {{ scope.row.lastExecutionTime || '-' }}
@@ -184,7 +190,7 @@
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="自動執行" align="center" width="100" fixed="right">
+      <el-table-column label="自動執行" align="center" width="100">
         <template #default="scope">
           <el-switch
             v-model="scope.row.enabled"
@@ -195,15 +201,125 @@
           />
         </template>
       </el-table-column>
+      <el-table-column label="操作" align="center" width="100" fixed="right">
+        <template #default="scope">
+          <div class="action-buttons">
+            <el-button size="small" type="primary" :icon="Edit" @click="openCronDialog(scope.row)">
+              編輯
+            </el-button>
+          </div>
+        </template>
+      </el-table-column>
     </el-table>
+  </el-dialog>
+
+  <el-dialog
+    v-model="cronDialogVisible"
+    title="設定執行時間"
+    width="560px"
+    class="cron-edit-dialog"
+    destroy-on-close
+    @closed="resetCronDialog"
+  >
+    <el-form label-width="108px" class="cron-edit-form">
+      <el-form-item label="任務名稱">
+        <span class="cron-task-name">{{ cronEditRow?.taskName || '-' }}</span>
+      </el-form-item>
+      <el-form-item label="定時方式">
+        <el-select v-model="cronForm.type" style="width: 100%;">
+          <el-option
+            v-for="item in cronTypeOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item v-if="cronForm.type === CRON_TYPES.EVERY_N_MINUTES" label="執行間隔">
+        <el-input-number v-model="cronForm.intervalMinutes" :min="1" :max="59" />
+        <span class="form-unit">分鐘</span>
+      </el-form-item>
+
+      <el-form-item
+        v-if="[CRON_TYPES.DAILY, CRON_TYPES.WEEKDAYS, CRON_TYPES.WEEKLY].includes(cronForm.type)"
+        label="執行時間"
+      >
+        <el-time-picker
+          v-model="cronForm.time"
+          format="HH:mm"
+          value-format="HH:mm"
+          placeholder="選擇時間"
+          style="width: 100%;"
+        />
+      </el-form-item>
+
+      <el-form-item v-if="cronForm.type === CRON_TYPES.WEEKLY" label="星期">
+        <el-checkbox-group v-model="cronForm.weekDays" class="weekday-group">
+          <el-checkbox
+            v-for="item in weekdayOptions"
+            :key="item.value"
+            :label="item.value"
+          >
+            {{ item.label }}
+          </el-checkbox>
+        </el-checkbox-group>
+      </el-form-item>
+
+      <el-form-item v-if="cronForm.type === CRON_TYPES.HOURLY_RANGE" label="執行時段">
+        <div class="hour-range">
+          <el-select v-model="cronForm.startHour" style="width: 120px;">
+            <el-option
+              v-for="hour in hourOptions"
+              :key="'start-' + hour"
+              :label="`${String(hour).padStart(2, '0')}:00`"
+              :value="hour"
+            />
+          </el-select>
+          <span class="range-separator">至</span>
+          <el-select v-model="cronForm.endHour" style="width: 120px;">
+            <el-option
+              v-for="hour in hourOptions"
+              :key="'end-' + hour"
+              :label="`${String(hour).padStart(2, '0')}:00`"
+              :value="hour"
+            />
+          </el-select>
+          <span class="form-unit">每小時執行</span>
+        </div>
+      </el-form-item>
+
+      <el-form-item label="執行說明">
+        <span class="cron-preview-desc">{{ cronPreviewDesc }}</span>
+      </el-form-item>
+      <el-form-item label="Cron 表達式">
+        <code class="cron-preview-code">{{ cronPreviewExpression }}</code>
+      </el-form-item>
+    </el-form>
+
+    <template #footer>
+      <el-button @click="cronDialogVisible = false">取消</el-button>
+      <el-button type="primary" :loading="cronSaving" @click="saveCronFromDialog">保存</el-button>
+    </template>
   </el-dialog>
   </div>
 </template>
 
 <script>
 import { ElMessageBox, ElNotification } from 'element-plus'
-import { Search, Refresh, VideoPlay, Setting } from '@element-plus/icons-vue'
+import { Search, Refresh, VideoPlay, Setting, Edit } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import {
+  CRON_TYPES,
+  CRON_TYPE_OPTIONS,
+  WEEKDAY_OPTIONS,
+  buildCronExpression,
+  createDefaultCronForm,
+  describeCronExpression,
+  describeCronForm,
+  parseCronExpression,
+  validateCronForm
+} from '@/utils/cronSchedule'
 
 export default {
   name: 'SysTaskLogList',
@@ -215,6 +331,11 @@ export default {
   },
   data() {
     return {
+      Edit,
+      CRON_TYPES,
+      cronTypeOptions: CRON_TYPE_OPTIONS,
+      weekdayOptions: WEEKDAY_OPTIONS,
+      hourOptions: Array.from({ length: 24 }, (_, index) => index),
       loading: true,
       isExecuting: false,
       total: 0,
@@ -229,7 +350,19 @@ export default {
       taskOptions: [],
       taskManageVisible: false,
       taskManageLoading: false,
-      scheduledTaskList: []
+      scheduledTaskList: [],
+      cronDialogVisible: false,
+      cronEditRow: null,
+      cronForm: createDefaultCronForm(),
+      cronSaving: false
+    }
+  },
+  computed: {
+    cronPreviewExpression() {
+      return buildCronExpression(this.cronForm)
+    },
+    cronPreviewDesc() {
+      return describeCronForm(this.cronForm)
     }
   },
   created() {
@@ -245,7 +378,10 @@ export default {
         })
         if (response.code === 200 || response.code === 0) {
           const list = response.data || []
-          this.scheduledTaskList = list.map(item => ({ ...item, _updating: false }))
+          this.scheduledTaskList = list.map(item => ({
+            ...item,
+            _updating: false
+          }))
           this.taskOptions = list.map(item => ({
             label: item.taskName,
             value: `${item.taskBean}|${item.methodName || 'executeTask'}`
@@ -265,6 +401,84 @@ export default {
       if (status === '2') return '部分失敗'
       if (status === '1') return '失敗'
       return '-'
+    },
+
+    describeCron(cronExpression) {
+      return describeCronExpression(cronExpression)
+    },
+
+    openCronDialog(row) {
+      this.cronEditRow = row
+      this.cronForm = parseCronExpression(row.cronExpression)
+      this.cronDialogVisible = true
+    },
+
+    resetCronDialog() {
+      this.cronEditRow = null
+      this.cronForm = createDefaultCronForm()
+      this.cronSaving = false
+    },
+
+    async saveCronFromDialog() {
+      const validationMessage = validateCronForm(this.cronForm)
+      if (validationMessage) {
+        ElNotification({
+          title: '保存失敗',
+          message: validationMessage,
+          type: 'warning',
+          duration: 3000
+        })
+        return
+      }
+
+      const cronExpression = buildCronExpression(this.cronForm)
+      const row = this.cronEditRow
+      if (!row) {
+        return
+      }
+      if (cronExpression === row.cronExpression) {
+        this.cronDialogVisible = false
+        return
+      }
+
+      this.cronSaving = true
+      try {
+        const response = await request({
+          url: '/system/scheduledTask/cron',
+          method: 'put',
+          data: {
+            taskKey: row.taskKey,
+            cronExpression
+          }
+        })
+        if (response.code === 200 || response.code === 0) {
+          row.cronExpression = cronExpression
+          this.cronDialogVisible = false
+          ElNotification({
+            title: '保存成功',
+            message: `「${row.taskName}」已更新為 ${describeCronForm(this.cronForm)}`,
+            type: 'success',
+            duration: 3000
+          })
+        } else {
+          ElNotification({
+            title: '保存失敗',
+            message: response.msg || 'Cron 更新失敗',
+            type: 'error',
+            duration: 4000
+          })
+        }
+      } catch (error) {
+        console.error('更新 Cron 失敗', error)
+        ElNotification({
+          title: '保存失敗',
+          message: error?.response?.data?.msg || 'Cron 更新發生錯誤，請稍後再試',
+          type: 'error',
+          duration: 4000
+        })
+      } finally {
+        this.cronSaving = false
+      }
     },
 
     async handleTaskEnabledChange(row) {
@@ -577,14 +791,13 @@ export default {
 }
 
 .task-manage-dialog :deep(.el-dialog) {
-  min-height: 78vh;
   display: flex;
   flex-direction: column;
-  margin-bottom: 4vh;
+  margin-bottom: 10vh;
 }
 
 .task-manage-dialog :deep(.el-dialog__header) {
-  padding: 18px 24px;
+  padding: 18px 22px;
 }
 
 .task-manage-dialog :deep(.el-dialog__title) {
@@ -593,10 +806,8 @@ export default {
 }
 
 .task-manage-dialog :deep(.el-dialog__body) {
-  flex: 1;
-  padding: 16px 24px 24px;
-  min-height: 68vh;
-  max-height: 78vh;
+  padding: 14px 22px 22px;
+  max-height: 72vh;
   overflow-y: auto;
 }
 
@@ -606,6 +817,97 @@ export default {
 
 .task-manage-table :deep(.el-table__header .el-table__cell) {
   font-size: 15px;
+}
+
+.task-manage-table .action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.task-manage-table .action-buttons .el-button {
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 6px 12px;
+  margin: 0;
+  box-shadow: none !important;
+}
+
+.task-manage-table :deep(.el-table-fixed-column--right),
+.task-manage-table :deep(.el-table-fixed-column--left) {
+  box-shadow: none !important;
+}
+
+.task-manage-table :deep(.el-button) {
+  box-shadow: none !important;
+}
+
+.task-manage-table :deep(.el-button:hover),
+.task-manage-table :deep(.el-button:focus) {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.cron-text {
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 12px;
+  color: #909399;
+}
+
+.cron-display {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cron-desc {
+  font-size: 14px;
+  color: #303133;
+  font-weight: 500;
+}
+
+.cron-edit-form .cron-task-name {
+  color: #303133;
+  font-weight: 600;
+}
+
+.cron-edit-form .form-unit {
+  margin-left: 8px;
+  color: #909399;
+}
+
+.cron-edit-form .weekday-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.cron-edit-form .hour-range {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cron-edit-form .range-separator {
+  color: #606266;
+}
+
+.cron-preview-desc {
+  color: #303133;
+  font-weight: 500;
+}
+
+.cron-preview-code {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #f5f7fa;
+  color: #303133;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 13px;
 }
 
 .filter-section {
@@ -666,6 +968,16 @@ export default {
 .pagination-container :deep(.el-pager li.is-active) {
   background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
   color: #ffffff;
+}
+
+:deep(.el-button) {
+  box-shadow: none !important;
+}
+
+:deep(.el-button:hover),
+:deep(.el-button:focus) {
+  box-shadow: none !important;
+  transform: none !important;
 }
 </style>
 

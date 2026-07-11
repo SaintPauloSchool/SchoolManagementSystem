@@ -1,4 +1,4 @@
-package com.sms.handler.notification.support;
+package com.sms.handler.notification;
 
 import com.sms.common.utils.security.Md5Utils;
 import com.sms.system.entity.notification.Notification;

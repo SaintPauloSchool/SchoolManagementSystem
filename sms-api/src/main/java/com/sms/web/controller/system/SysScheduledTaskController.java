@@ -4,6 +4,8 @@ import com.sms.common.annotation.Log;
 import com.sms.common.core.controller.BaseController;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.enums.BusinessType;
+import com.sms.scheduler.DynamicScheduledTaskRegistrar;
+import com.sms.system.entity.dto.SysScheduledTaskCronDTO;
 import com.sms.system.entity.dto.SysScheduledTaskStatusDTO;
 import com.sms.system.entity.vo.SysScheduledTaskVO;
 import com.sms.system.service.ISysScheduledTaskService;
@@ -26,6 +28,9 @@ public class SysScheduledTaskController extends BaseController {
     @Autowired
     private ISysScheduledTaskService sysScheduledTaskService;
 
+    @Autowired
+    private DynamicScheduledTaskRegistrar dynamicScheduledTaskRegistrar;
+
     @Log(title = "查詢定時任務配置", businessType = BusinessType.SELECT)
     @GetMapping("/list")
     public AjaxResult list() {
@@ -38,6 +43,20 @@ public class SysScheduledTaskController extends BaseController {
     public AjaxResult updateStatus(@RequestBody SysScheduledTaskStatusDTO statusDTO) {
         try {
             return toAjax(sysScheduledTaskService.updateEnabled(statusDTO));
+        } catch (IllegalArgumentException e) {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    @Log(title = "更新定時任務 Cron 表達式", businessType = BusinessType.UPDATE)
+    @PutMapping("/cron")
+    public AjaxResult updateCron(@RequestBody SysScheduledTaskCronDTO cronDTO) {
+        try {
+            int rows = sysScheduledTaskService.updateCronExpression(cronDTO);
+            if (rows > 0) {
+                dynamicScheduledTaskRegistrar.reschedule(cronDTO.getTaskKey());
+            }
+            return toAjax(rows);
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }

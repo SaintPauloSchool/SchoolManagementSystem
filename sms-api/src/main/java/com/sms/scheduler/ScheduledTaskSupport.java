@@ -1,4 +1,4 @@
-package com.sms.handler;
+package com.sms.scheduler;
 
 import com.sms.system.service.ISysScheduledTaskService;
 import org.slf4j.Logger;

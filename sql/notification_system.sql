@@ -458,7 +458,6 @@ CREATE TABLE `sys_scheduled_task` (
     `method_name`     varchar(100) NOT NULL DEFAULT 'executeTask' COMMENT 'Task 方法名',
     `cron_expression` varchar(64)  NOT NULL                COMMENT 'Cron 表達式',
     `enabled`         char(1)      NOT NULL DEFAULT '0'    COMMENT '是否啟用（0停用 1啟用）',
-    `remark`          varchar(500) DEFAULT NULL            COMMENT '任務說明',
     `sort_order`      int(11)      NOT NULL DEFAULT 0      COMMENT '排序',
     `create_time`     datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
     `update_time`     datetime     DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
@@ -466,15 +465,15 @@ CREATE TABLE `sys_scheduled_task` (
     UNIQUE KEY `uk_task_key` (`task_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='定時任務配置表';
 
-INSERT INTO sys_scheduled_task (task_key, task_name, task_bean, method_name, cron_expression, enabled, remark, sort_order) VALUES
-('failed_task_notifier',       '檢查失敗任務通知',       'failedTaskNotifierTask',       'executeTask', '0 0 9 * * ?',         '0', '每天早上 9:00 檢查未處理失敗任務並通知管理員', 1),
-('department_sync',            '家校通訊錄部門數據同步', 'departmentSyncTask',           'executeTask', '0 0 0 * * ?',         '0', '每天凌晨 0:00 同步家校通訊錄部門', 2),
-('school_family_contact_sync', '家校通訊錄同步',         'schoolFamilyContactSyncTask',  'executeTask', '0 30 0 * * ?',        '0', '每天凌晨 0:30 同步家校通訊錄聯絡人', 3),
-('wecom_school_department',    '企業微信部門與成員同步', 'wecomSchoolDepartmentTask',    'executeTask', '0 0 1 * * ?',         '0', '每天凌晨 1:00 同步企微部門與成員', 4),
-('notification_reminder',      '定時提示家長回復通知',   'notificationReminderTask',     'executeTask', '0 30 9 * * ?',        '0', '每天 9:30 提醒家長回復未回覆通知', 5),
-('notification_resend',          '定時重新發送失敗通知',   'notificationResendTask',       'executeTask', '0 0 9-18 * * ?',      '0', '每天 9:00-18:00 每小時重發失敗通知', 6),
-('school_notice',              '每日學生手冊通知發送',   'schoolNoticeTask',             'executeTask', '0 0 18 ? * MON-FRI',  '0', '週一至週五 18:00 發送每日學生手冊通知', 7),
-('attendance_notify',          '考勤拍卡通知發送',       'attendanceNotifyTask',         'executeTask', '0 * * * * ?',         '1', '每分鐘掃描未通知考勤記錄並發送微信通知', 8);
+INSERT INTO sys_scheduled_task (task_key, task_name, task_bean, method_name, cron_expression, enabled, sort_order) VALUES
+('failed_task_notifier',       '檢查失敗任務通知',       'failedTaskNotifierTask',       'executeTask', '0 0 9 * * ?',         '0', 1),
+('department_sync',            '家校通訊錄部門數據同步', 'departmentSyncTask',           'executeTask', '0 0 0 * * ?',         '0', 2),
+('school_family_contact_sync', '家校通訊錄同步',         'schoolFamilyContactSyncTask',  'executeTask', '0 30 0 * * ?',        '0', 3),
+('wecom_school_department',    '企業微信部門與成員同步', 'wecomSchoolDepartmentTask',    'executeTask', '0 0 1 * * ?',         '0', 4),
+('notification_reminder',      '定時提示家長回復通知',   'notificationReminderTask',     'executeTask', '0 30 9 * * ?',        '0', 5),
+('notification_resend',          '定時重新發送失敗通知',   'notificationResendTask',       'executeTask', '0 0 9-18 * * ?',      '0', 6),
+('school_notice',              '每日學生手冊通知發送',   'schoolNoticeTask',             'executeTask', '0 0 18 ? * MON-FRI',  '0', 7),
+('attendance_notify',          '考勤拍卡通知發送',       'attendanceNotifyTask',         'executeTask', '0 * * * * ?',         '1', 8);
 -- ----------------------------
 -- 學生數據匹配表
 -- ----------------------------

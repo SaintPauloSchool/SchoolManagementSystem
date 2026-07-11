@@ -1,22 +1,20 @@
 package com.sms.task;
 
-import com.sms.handler.TaskLogHelper;
-import com.sms.handler.ScheduledTaskSupport;
+import com.sms.handler.system.TaskLogHelper;
+import com.sms.scheduler.ScheduledTaskSupport;
 import com.sms.handler.system.TaskMonitorHandler;
 import com.sms.system.constant.ScheduledTaskKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 檢查失敗任務並通知管理員
- * 每天早上 9:00 執行
  */
-@Component("failedTaskNotifierTask")
+@Component
 public class FailedTaskNotifierTask {
 
     private static final Logger log = LoggerFactory.getLogger(FailedTaskNotifierTask.class);
@@ -32,7 +30,6 @@ public class FailedTaskNotifierTask {
 
     private static final AtomicBoolean isExecuting = new AtomicBoolean(false);
 
-    @Scheduled(cron = "0 0 9 * * ?")
     public void executeTask() {
         if (scheduledTaskSupport.shouldSkipForSchedule(ScheduledTaskKeys.FAILED_TASK_NOTIFIER)) {
             return;
