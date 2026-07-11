@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
@@ -82,10 +83,15 @@ public class DynamicScheduledTaskRegistrar {
             return;
         }
         registerTask(task);
+        log.info("定時任務 {} 已重新調度，Cron={}，enabled={}", taskKey, task.getCronExpression(), task.getEnabled());
     }
 
     private void registerTask(SysScheduledTask task) {
         if (task == null || !StringUtils.hasText(task.getTaskKey())) {
+            return;
+        }
+        if (!"1".equals(task.getEnabled())) {
+            log.debug("任務 {} 已停用，跳過註冊", task.getTaskKey());
             return;
         }
         String cron = task.getCronExpression();
@@ -93,15 +99,32 @@ public class DynamicScheduledTaskRegistrar {
             log.warn("任務 {} 的 Cron 表達式無效，跳過註冊: {}", task.getTaskKey(), cron);
             return;
         }
+        String taskKey = task.getTaskKey();
         String beanName = task.getTaskBean();
         String methodName = StringUtils.hasText(task.getMethodName()) ? task.getMethodName() : DEFAULT_METHOD_NAME;
-        Runnable runnable = () -> invokeTask(beanName, methodName, task.getTaskKey());
+        Runnable runnable = () -> invokeTask(beanName, methodName, taskKey);
+        Trigger trigger = triggerContext -> {
+            SysScheduledTask current = sysScheduledTaskMapper.selectByTaskKey(taskKey);
+            if (current == null) {
+                log.warn("任務 {} 不存在，停止調度", taskKey);
+                return null;
+            }
+            if (!"1".equals(current.getEnabled())) {
+                return null;
+            }
+            String currentCron = current.getCronExpression();
+            if (!isValidCron(currentCron)) {
+                log.warn("任務 {} 的 Cron 表達式無效，停止調度: {}", taskKey, currentCron);
+                return null;
+            }
+            return new CronTrigger(currentCron.trim()).nextExecutionTime(triggerContext);
+        };
         try {
-            ScheduledFuture<?> future = taskScheduler.schedule(runnable, new CronTrigger(cron.trim()));
-            scheduledTasks.put(task.getTaskKey(), future);
-            log.info("已註冊定時任務 {}，Cron={}", task.getTaskKey(), cron.trim());
+            ScheduledFuture<?> future = taskScheduler.schedule(runnable, trigger);
+            scheduledTasks.put(taskKey, future);
+            log.info("已註冊定時任務 {}，Cron={}", taskKey, cron.trim());
         } catch (Exception e) {
-            log.error("註冊定時任務 {} 失敗，Cron={}", task.getTaskKey(), cron, e);
+            log.error("註冊定時任務 {} 失敗，Cron={}", taskKey, cron, e);
         }
     }
 
@@ -123,7 +146,7 @@ public class DynamicScheduledTaskRegistrar {
     private void cancelAll() {
         scheduledTasks.forEach((key, future) -> {
             if (future != null) {
-                future.cancel(false);
+                future.cancel(true);
             }
         });
         scheduledTasks.clear();
@@ -132,7 +155,8 @@ public class DynamicScheduledTaskRegistrar {
     private void cancel(String taskKey) {
         ScheduledFuture<?> future = scheduledTasks.remove(taskKey);
         if (future != null) {
-            future.cancel(false);
+            future.cancel(true);
+            log.info("已取消定時任務調度 taskKey={}", taskKey);
         }
     }
 

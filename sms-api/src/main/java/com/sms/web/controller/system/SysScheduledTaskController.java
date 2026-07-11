@@ -42,7 +42,11 @@ public class SysScheduledTaskController extends BaseController {
     @PutMapping("/status")
     public AjaxResult updateStatus(@RequestBody SysScheduledTaskStatusDTO statusDTO) {
         try {
-            return toAjax(sysScheduledTaskService.updateEnabled(statusDTO));
+            int rows = sysScheduledTaskService.updateEnabled(statusDTO);
+            if (rows > 0) {
+                dynamicScheduledTaskRegistrar.reschedule(statusDTO.getTaskKey());
+            }
+            return toAjax(rows);
         } catch (IllegalArgumentException e) {
             return AjaxResult.error(e.getMessage());
         }
