@@ -71,26 +71,18 @@
           </ul>
         </div>
         
-        <!-- 系統管理（僅管理員可見） -->
+        <!-- 學生相關功能管理（僅管理員可見） -->
         <div class="nav-section" v-if="isAdmin">
-          <div class="nav-section-title" @click="toggleSection('system')">
-            <el-icon><Setting /></el-icon>
-            <span v-show="!isCollapsed">系統管理</span>
+          <div class="nav-section-title" @click="toggleSection('student')">
+            <el-icon><User /></el-icon>
+            <span v-show="!isCollapsed">學生相關功能管理</span>
             <el-icon v-show="!isCollapsed" class="expand-icon">
-              <ArrowRight v-if="!expandedSections.system" />
+              <ArrowRight v-if="!expandedSections.student" />
               <ArrowDown v-else />
             </el-icon>
           </div>
           
-          <ul v-show="!isCollapsed && expandedSections.system" class="nav-list nav-sublist">
-            <li 
-              class="nav-item nav-subitem"
-              :class="{ active: activeMenu === '3-5' }"
-              @click="handleMenuSelect('3-5')"
-            >
-              <el-icon class="nav-icon"><Tools /></el-icon>
-              <span class="nav-text">基礎設置</span>
-            </li>
+          <ul v-show="!isCollapsed && expandedSections.student" class="nav-list nav-sublist">
             <li 
               class="nav-item nav-subitem"
               :class="{ active: activeMenu === '3-6' }"
@@ -117,6 +109,37 @@
             </li>
             <li 
               class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-7' }"
+              @click="handleMenuSelect('3-7')"
+            >
+              <el-icon class="nav-icon"><Clock /></el-icon>
+              <span class="nav-text">考勤機記錄查詢</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 系統管理（僅管理員可見） -->
+        <div class="nav-section" v-if="isAdmin">
+          <div class="nav-section-title" @click="toggleSection('system')">
+            <el-icon><Setting /></el-icon>
+            <span v-show="!isCollapsed">系統管理</span>
+            <el-icon v-show="!isCollapsed" class="expand-icon">
+              <ArrowRight v-if="!expandedSections.system" />
+              <ArrowDown v-else />
+            </el-icon>
+          </div>
+          
+          <ul v-show="!isCollapsed && expandedSections.system" class="nav-list nav-sublist">
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-5' }"
+              @click="handleMenuSelect('3-5')"
+            >
+              <el-icon class="nav-icon"><Tools /></el-icon>
+              <span class="nav-text">基礎設置</span>
+            </li>
+            <li 
+              class="nav-item nav-subitem"
               :class="{ active: activeMenu === '3-1' }"
               @click="handleMenuSelect('3-1')"
             >
@@ -130,24 +153,6 @@
             >
               <el-icon class="nav-icon"><Document /></el-icon>
               <span class="nav-text">定時任務日誌</span>
-            </li>
-          </ul>
-        </div>
-        
-        <!-- 佔位大類 2 -->
-        <div class="nav-section">
-          <div class="nav-section-title" @click="toggleSection('report')">
-            <el-icon><Document /></el-icon>
-            <span v-show="!isCollapsed">數據報表</span>
-            <el-icon v-show="!isCollapsed" class="expand-icon">
-              <ArrowRight v-if="!expandedSections.report" />
-              <ArrowDown v-else />
-            </el-icon>
-          </div>
-          
-          <ul v-show="!isCollapsed && expandedSections.report" class="nav-list nav-sublist">
-            <li class="nav-item-placeholder">
-              <span class="placeholder-text">功能開發中...</span>
             </li>
           </ul>
         </div>
@@ -236,6 +241,10 @@
           <ClassSectionList
             v-else-if="activeMenu === '3-6'"
           />
+
+          <AttendanceRecordList
+            v-else-if="activeMenu === '3-7'"
+          />
         </transition>
       </div>
     </main>
@@ -247,7 +256,7 @@
 
 <script>
 import { ElNotification } from 'element-plus'
-import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning, Calendar, Tools, Collection } from '@element-plus/icons-vue'
+import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning, Calendar, Tools, Collection, Clock } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
 import SchoolDepartment from './SchoolDepartment.vue'
@@ -258,6 +267,7 @@ import SysTaskLogList from './SysTaskLogList.vue'
 import StudentMatch from './StudentMatch.vue'
 import BasicSettings from './BasicSettings.vue'
 import ClassSectionList from './ClassSectionList.vue'
+import AttendanceRecordList from './AttendanceRecordList.vue'
 import request from '@/utils/request'
 
 export default {
@@ -272,7 +282,8 @@ export default {
     SysTaskLogList,
     StudentMatch,
     BasicSettings,
-    ClassSectionList
+    ClassSectionList,
+    AttendanceRecordList
   },
   data() {
     return {
@@ -328,11 +339,13 @@ export default {
     
     getInitialExpandedSections() {
       const savedMenu = this.getInitialActiveMenu()
+      const studentMenus = ['3-2', '3-4', '3-6', '3-7']
+      const systemMenus = ['3-1', '3-3', '3-5']
       return {
         homeSchool: savedMenu.startsWith('1-'),
         contact: savedMenu.startsWith('2-'),
-        system: savedMenu.startsWith('3-'),
-        report: false
+        student: studentMenus.includes(savedMenu),
+        system: systemMenus.includes(savedMenu)
       }
     },
 
@@ -341,6 +354,8 @@ export default {
         this.expandedSections.homeSchool = true
       } else if (menu.startsWith('2-')) {
         this.expandedSections.contact = true
+      } else if (['3-2', '3-4', '3-6', '3-7'].includes(menu)) {
+        this.expandedSections.student = true
       } else if (menu.startsWith('3-')) {
         this.expandedSections.system = true
       }
@@ -381,7 +396,7 @@ export default {
         if (res.code === 200 || res.code === 0) {
           this.isAdmin = res.data === true
           // 若非管理員但目前在系統管理頁，則跳回首頁
-          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2' || this.activeMenu === '3-3' || this.activeMenu === '3-4' || this.activeMenu === '3-5' || this.activeMenu === '3-6')) {
+          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2' || this.activeMenu === '3-3' || this.activeMenu === '3-4' || this.activeMenu === '3-5' || this.activeMenu === '3-6' || this.activeMenu === '3-7')) {
             this.handleMenuSelect('1-1')
           }
         }
