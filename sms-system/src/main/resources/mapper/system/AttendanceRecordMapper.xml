@@ -13,6 +13,7 @@
         <result property="personName" column="person_name"/>
         <result property="classSection" column="class_section"/>
         <result property="idName" column="id_name"/>
+        <result property="direction" column="direction"/>
         <result property="parentUserId" column="parent_user_id"/>
     </resultMap>
 
@@ -25,6 +26,7 @@
                ar.person_name,
                si.class_section,
                si.id_name,
+               ar.direction,
                m.user_id as parent_user_id
         from attendance_record ar
         inner join ${studentProfilesDatabase}.student_info si

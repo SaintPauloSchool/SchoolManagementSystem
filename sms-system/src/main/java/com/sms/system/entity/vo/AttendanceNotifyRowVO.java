@@ -18,6 +18,7 @@ public class AttendanceNotifyRowVO implements Serializable {
     private String personName;
     private String classSection;
     private String idName;
+    private String direction;
     private String parentUserId;
 
     public Long getId() {
@@ -82,6 +83,14 @@ public class AttendanceNotifyRowVO implements Serializable {
 
     public void setIdName(String idName) {
         this.idName = idName;
+    }
+
+    public String getDirection() {
+        return direction;
+    }
+
+    public void setDirection(String direction) {
+        this.direction = direction;
     }
 
     public String getParentUserId() {

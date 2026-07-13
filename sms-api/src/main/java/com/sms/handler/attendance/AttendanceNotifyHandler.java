@@ -138,7 +138,7 @@ public class AttendanceNotifyHandler {
 
     /**
      * 組裝微信通知正文。
-     * <p>格式：{@code {班別} {姓名} 在 {拍卡時間} 在 {裝置名稱} 的 {資源名稱} 拍卡}</p>
+     * <p>格式：{@code 貴子弟 {班別} {姓名} 在 {拍卡時間} {進入|離開} 聖保祿學校}</p>
      *
      * @param row 考勤記錄行（含學生班別、姓名及拍卡資訊）
      * @return 通知正文
@@ -149,13 +149,12 @@ public class AttendanceNotifyHandler {
         String accessDatetime = row.getAccessDatetime() != null
                 ? row.getAccessDatetime().format(DATETIME_FORMATTER)
                 : "";
-        String deviceName = firstNonBlank(row.getDeviceName(), "未知裝置");
-        String resourceName = firstNonBlank(row.getResourceName(), "未知位置");
+        String directionText = "1".equals(row.getDirection()) ? "離開" : "進入";
 
-        String prefix = StringUtils.hasText(classSection)
+        String studentInfo = StringUtils.hasText(classSection)
                 ? classSection + " " + studentName
                 : studentName;
-        return prefix + " 在 " + accessDatetime + " 在 " + deviceName + " 的 " + resourceName + " 拍卡";
+        return "貴子弟 " + studentInfo + " 在 " + accessDatetime + " " + directionText + " 聖保祿學校";
     }
 
     /**
