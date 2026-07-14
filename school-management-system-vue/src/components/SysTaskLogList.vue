@@ -149,14 +149,14 @@
     v-model="taskManageVisible"
     title="定時任務管理"
     width="1100px"
-    top="3vh"
+    align-center
     class="task-manage-dialog"
     destroy-on-close
     @open="loadScheduledTasks"
   >
     <el-table
       v-loading="taskManageLoading"
-      :data="scheduledTaskList"
+      :data="pagedScheduledTaskList"
       class="task-manage-table"
       style="width: 100%"
       :row-style="{ height: '52px' }"
@@ -211,6 +211,16 @@
         </template>
       </el-table-column>
     </el-table>
+    <div class="pagination-container" v-if="scheduledTaskList.length > 0">
+      <el-pagination
+        v-model:current-page="taskManagePagination.pageNum"
+        v-model:page-size="taskManagePagination.pageSize"
+        :page-sizes="[5, 10, 20]"
+        :total="scheduledTaskList.length"
+        layout="total, sizes, prev, pager, next"
+        background
+      />
+    </div>
   </el-dialog>
 
   <el-dialog
@@ -351,6 +361,10 @@ export default {
       taskManageVisible: false,
       taskManageLoading: false,
       scheduledTaskList: [],
+      taskManagePagination: {
+        pageNum: 1,
+        pageSize: 5
+      },
       cronDialogVisible: false,
       cronEditRow: null,
       cronForm: createDefaultCronForm(),
@@ -363,6 +377,12 @@ export default {
     },
     cronPreviewDesc() {
       return describeCronForm(this.cronForm)
+    },
+    pagedScheduledTaskList() {
+      const pageSize = this.taskManagePagination.pageSize
+      const pageNum = this.taskManagePagination.pageNum
+      const start = (pageNum - 1) * pageSize
+      return this.scheduledTaskList.slice(start, start + pageSize)
     }
   },
   created() {
@@ -393,6 +413,7 @@ export default {
     },
 
     openTaskManageDialog() {
+      this.taskManagePagination.pageNum = 1
       this.taskManageVisible = true
     },
 
@@ -793,7 +814,6 @@ export default {
 .task-manage-dialog :deep(.el-dialog) {
   display: flex;
   flex-direction: column;
-  margin-bottom: 10vh;
 }
 
 .task-manage-dialog :deep(.el-dialog__header) {

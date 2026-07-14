@@ -7,6 +7,16 @@
             <el-icon><Clock /></el-icon>
             考勤機記錄查詢
           </span>
+          <div class="header-actions">
+            <el-button
+              type="success"
+              :icon="Download"
+              :loading="exporting"
+              @click="handleExport"
+            >
+              導出 Excel
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -110,8 +120,8 @@
 </template>
 
 <script>
-import { Clock, Search, Refresh } from '@element-plus/icons-vue'
-import { ElNotification } from 'element-plus'
+import { Clock, Search, Refresh, Download } from '@element-plus/icons-vue'
+import { ElMessageBox, ElNotification } from 'element-plus'
 import request from '@/utils/request'
 
 export default {
@@ -121,7 +131,9 @@ export default {
     return {
       Search,
       Refresh,
+      Download,
       loading: false,
+      exporting: false,
       tableData: [],
       total: 0,
       pagination: {
@@ -151,10 +163,8 @@ export default {
       if (result === '0') return '失敗'
       return result || '-'
     },
-    buildQueryParams() {
+    buildFilterParams() {
       const params = {
-        pageNum: this.pagination.currentPage,
-        pageSize: this.pagination.pageSize,
         idNameQuery: this.searchForm.idNameQuery,
         classSectionQuery: this.searchForm.classSectionQuery,
         classNumQuery: this.searchForm.classNumQuery,
@@ -165,6 +175,13 @@ export default {
         params.accessDateEnd = this.searchForm.accessDateRange[1]
       }
       return params
+    },
+    buildQueryParams() {
+      return {
+        pageNum: this.pagination.currentPage,
+        pageSize: this.pagination.pageSize,
+        ...this.buildFilterParams()
+      }
     },
     async loadList() {
       this.loading = true
@@ -203,6 +220,61 @@ export default {
         accessDateRange: null
       }
       this.handleSearch()
+    },
+    async handleExport() {
+      try {
+        await ElMessageBox.confirm(
+          this.total > 0
+            ? `將按當前篩選條件導出共 ${this.total} 條考勤記錄，是否繼續？`
+            : '將按當前篩選條件導出考勤記錄，是否繼續？',
+          '導出確認',
+          {
+            confirmButtonText: '確定導出',
+            cancelButtonText: '取消',
+            type: 'info'
+          }
+        )
+      } catch {
+        return
+      }
+
+      this.exporting = true
+      try {
+        const response = await request({
+          url: '/system/student/attendance/export',
+          method: 'get',
+          params: this.buildFilterParams(),
+          responseType: 'blob',
+          timeout: 120000
+        })
+        const blob = new Blob([response], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = '考勤機記錄.xlsx'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+        ElNotification({
+          title: '導出成功',
+          message: '考勤機記錄已導出',
+          type: 'success',
+          duration: 3000
+        })
+      } catch (error) {
+        console.error(error)
+        ElNotification({
+          title: '導出失敗',
+          message: '考勤記錄導出失敗，請稍後再試',
+          type: 'error',
+          duration: 4000
+        })
+      } finally {
+        this.exporting = false
+      }
     }
   }
 }
@@ -222,6 +294,12 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .title {

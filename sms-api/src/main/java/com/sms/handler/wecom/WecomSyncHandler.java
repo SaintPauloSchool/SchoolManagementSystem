@@ -110,7 +110,7 @@ public class WecomSyncHandler {
 
     /**
      * 同步企業微信部門與成員數據
-     * 由 WecomSchoolDepartmentTask 調用（每日凌晨 1 點）
+     * 由 WecomSchoolDepartmentTask 調用（每日凌晨 1 點 30 分）
      */
     public TaskResult syncWecomDepartmentsAndMembers() {
         log.info("開始同步企業微信部門與成員數據");
