@@ -154,6 +154,15 @@
               <el-icon class="nav-icon"><Document /></el-icon>
               <span class="nav-text">定時任務日誌</span>
             </li>
+            <li
+              v-if="isSuperAdmin"
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-8' }"
+              @click="handleMenuSelect('3-8')"
+            >
+              <el-icon class="nav-icon"><UserFilled /></el-icon>
+              <span class="nav-text">管理員設置</span>
+            </li>
           </ul>
         </div>
       </nav>
@@ -245,6 +254,10 @@
           <AttendanceRecordList
             v-else-if="activeMenu === '3-7'"
           />
+
+          <AdminSettings
+            v-else-if="activeMenu === '3-8' && isSuperAdmin"
+          />
         </transition>
       </div>
     </main>
@@ -256,7 +269,7 @@
 
 <script>
 import { ElNotification } from 'element-plus'
-import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning, Calendar, Tools, Collection, Clock } from '@element-plus/icons-vue'
+import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, UserFilled, OfficeBuilding, Warning, Calendar, Tools, Collection, Clock } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
 import SchoolDepartment from './SchoolDepartment.vue'
@@ -268,6 +281,7 @@ import StudentMatch from './StudentMatch.vue'
 import BasicSettings from './BasicSettings.vue'
 import ClassSectionList from './ClassSectionList.vue'
 import AttendanceRecordList from './AttendanceRecordList.vue'
+import AdminSettings from './AdminSettings.vue'
 import request from '@/utils/request'
 
 export default {
@@ -283,7 +297,9 @@ export default {
     StudentMatch,
     BasicSettings,
     ClassSectionList,
-    AttendanceRecordList
+    AttendanceRecordList,
+    AdminSettings,
+    UserFilled
   },
   data() {
     return {
@@ -304,6 +320,7 @@ export default {
       isMobileMenuOpen: false,
       isMobile: false,
       isAdmin: false,
+      isSuperAdmin: false,
       expandedSections: this.getInitialExpandedSections(),
       menuItems: [
         { index: '1-1', title: '發佈通知', icon: 'Edit' },
@@ -340,7 +357,7 @@ export default {
     getInitialExpandedSections() {
       const savedMenu = this.getInitialActiveMenu()
       const studentMenus = ['3-2', '3-4', '3-6', '3-7']
-      const systemMenus = ['3-1', '3-3', '3-5']
+      const systemMenus = ['3-1', '3-3', '3-5', '3-8']
       return {
         homeSchool: savedMenu.startsWith('1-'),
         contact: savedMenu.startsWith('2-'),
@@ -394,9 +411,25 @@ export default {
       try {
         const res = await request({ url: '/system/admin/checkCurrentUser', method: 'get' })
         if (res.code === 200 || res.code === 0) {
-          this.isAdmin = res.data === true
-          // 若非管理員但目前在系統管理頁，則跳回首頁
-          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2' || this.activeMenu === '3-3' || this.activeMenu === '3-4' || this.activeMenu === '3-5' || this.activeMenu === '3-6' || this.activeMenu === '3-7')) {
+          const data = res.data
+          // 兼容舊版 boolean 與新版 { isAdmin, isSuperAdmin }
+          if (typeof data === 'boolean') {
+            this.isAdmin = data
+            this.isSuperAdmin = false
+          } else if (data && typeof data === 'object') {
+            this.isAdmin = data.isAdmin === true
+            this.isSuperAdmin = data.isSuperAdmin === true
+          } else {
+            this.isAdmin = false
+            this.isSuperAdmin = false
+          }
+          const adminMenus = ['3-1', '3-2', '3-3', '3-4', '3-5', '3-6', '3-7', '3-8']
+          // 非管理員不可進系統管理 / 學生管理相關頁
+          if (!this.isAdmin && adminMenus.includes(this.activeMenu)) {
+            this.handleMenuSelect('1-1')
+          }
+          // 管理員設置僅超級管理員可進
+          if (this.activeMenu === '3-8' && !this.isSuperAdmin) {
             this.handleMenuSelect('1-1')
           }
         }

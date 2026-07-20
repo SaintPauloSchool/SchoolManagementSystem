@@ -17,7 +17,7 @@
                 <span class="tab-label"><el-icon><School /></el-icon> WeCom老師通訊錄</span>
               </template>
             </el-tab-pane>
-            <el-tab-pane name="custom">
+            <el-tab-pane v-if="!wecomOnly" name="custom">
               <template #label>
                 <span class="tab-label"><el-icon><Menu /></el-icon> 自定義老師通訊錄</span>
               </template>
@@ -64,7 +64,7 @@
           </el-tree>
         </div>
 
-        <div v-show="activeTab === 'custom'" class="tree-container">
+        <div v-show="!wecomOnly && activeTab === 'custom'" class="tree-container">
           <div v-if="customLoading" class="loading">
             <el-icon class="is-loading"><Loading /></el-icon>
             <span>加載中...</span>
@@ -183,6 +183,11 @@ export default {
     title: {
       type: String,
       default: '選擇教職員工'
+    },
+    /** 僅顯示 WeCom 老師通訊錄（隱藏自定義通訊錄） */
+    wecomOnly: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['update:visible', 'confirm'],
@@ -260,8 +265,11 @@ export default {
     visible(newVal) {
       if (newVal) {
         this.searchKeyword = ''
+        this.activeTab = 'wecom'
         this.loadData()
-        this.loadCustomData()
+        if (!this.wecomOnly) {
+          this.loadCustomData()
+        }
         this.$nextTick(() => {
           this.initSelectedTree()
         })
@@ -380,6 +388,7 @@ export default {
         name: staff.name || '',
         position: staff.position || '',
         type: staff.type === 2 ? 2 : 1,
+        staffUserId: staff.staffUserId || staff.userid || null,
         sourceDeptId: staff.sourceDeptId ?? null,
         sourceDeptName: staff.sourceDeptName ?? null,
         sourceDeptType: staff.sourceDeptType ?? null
@@ -396,7 +405,9 @@ export default {
         id: type === 2 ? Math.abs(node.id) : node.id,
         name: node.name,
         position: node.position || '',
-        type
+        type,
+        // WeCom userid（寫入 sys_admin.user_id）；自定義通訊錄可能為空
+        staffUserId: node.staffUserId || node.userid || null
       }
       if (sourceDept) {
         item.sourceDeptId = sourceDept.id
