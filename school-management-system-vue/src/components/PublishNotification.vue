@@ -24,7 +24,7 @@
             @next="handleNext"
           />
           <SendSettingsForm
-            v-if="currentStep === 1"
+            v-show="currentStep === 1"
             ref="sendFormRef"
             :form-data="formData"
             :submitting="submitting"
@@ -181,6 +181,9 @@ export default {
         questions: []
       }
       this.currentStep = 0
+      this.$nextTick(() => {
+        this.$refs.sendFormRef?.resetForm()
+      })
     },
     
     formatDate(date) {

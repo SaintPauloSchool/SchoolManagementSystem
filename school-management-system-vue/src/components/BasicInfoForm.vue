@@ -307,10 +307,21 @@ export default {
       this.$refs.formRef.validate((valid) => {
         if (valid) {
           this.syncAttachmentUrls()
+          const {
+            receivers,
+            ccs,
+            replyDeadline,
+            reminderTime
+          } = this.formData
           Object.assign(this.formData, this.localFormData)
           this.formData.attachmentUrls = JSON.parse(
             JSON.stringify(this.localFormData.attachmentUrls || [])
           )
+          // 保留發送設置步驟已填寫的資料，避免覆蓋選人結果
+          this.formData.receivers = receivers || []
+          this.formData.ccs = ccs || []
+          this.formData.replyDeadline = replyDeadline ?? null
+          this.formData.reminderTime = reminderTime ?? null
           this.$emit('next')
         } else {
           ElNotification({ title: '請完善資訊', message: '請先完善基本資訊再進行下一步', type: 'warning', duration: 3000 })

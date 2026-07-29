@@ -256,8 +256,13 @@ export default {
   watch: {
     formData: {
       handler(newVal) {
-        this.localFormData = { ...newVal }
-        this.initSelectedData()
+        this.localFormData = {
+          ...this.localFormData,
+          replyDeadline: newVal.replyDeadline ?? null,
+          reminderTime: newVal.reminderTime ?? null,
+          receivers: newVal.receivers || [],
+          ccs: newVal.ccs || []
+        }
       },
       deep: true
     }
@@ -267,6 +272,9 @@ export default {
   },
   methods: {
     initSelectedData() {
+      this.selectedStudents = []
+      this.selectedCcStaff = []
+
       if (this.localFormData.receivers) {
         this.localFormData.receivers.forEach(receiver => {
           if (receiver.receiveType !== '1' && receiver.receiveType !== '2') {
@@ -277,12 +285,14 @@ export default {
             const parsed = JSON.parse(receiver.receiveData)
             const names = receiver.receiveNames || []
 
-            const pushStudent = (parentUserId, studentId, departmentId, schoolDepartmentId, name) => {
+            const pushStudent = (parentUserId, studentId, departmentId, schoolDepartmentId, name, sourceDeptId, sourceDeptName) => {
               const item = {
                 parentUserId,
                 studentId: studentId || '',
                 departmentId: departmentId || null,
                 schoolDepartmentId: schoolDepartmentId || null,
+                sourceDeptId: sourceDeptId || null,
+                sourceDeptName: sourceDeptName || '',
                 name: name || '',
                 type
               }
@@ -308,10 +318,12 @@ export default {
                   entry.studentId,
                   entry.departmentId,
                   entry.schoolDepartmentId,
-                  matchedName
+                  matchedName,
+                  entry.sourceDeptId,
+                  entry.sourceDeptName
                 )
               } else if (typeof entry === 'string') {
-                pushStudent(entry, '', null, null, names[index] || '')
+                pushStudent(entry, '', null, null, names[index] || '', null, '')
               }
             })
           } catch (e) {
@@ -330,8 +342,14 @@ export default {
             const parsed = JSON.parse(cc.ccData)
             const names = cc.ccNames || []
 
-            const pushStaff = (id, name) => {
-              const item = { id, name: name || '', type }
+            const pushStaff = (id, name, sourceDeptId, sourceDeptName) => {
+              const item = {
+                id,
+                name: name || '',
+                type,
+                sourceDeptId: sourceDeptId || null,
+                sourceDeptName: sourceDeptName || ''
+              }
               if (!this.selectedCcStaff.some(s => s.id === id && (s.type || 1) === type)) {
                 this.selectedCcStaff.push(item)
               }
@@ -341,7 +359,18 @@ export default {
               return
             }
 
-            parsed.forEach((id, index) => pushStaff(id, names[index]))
+            parsed.forEach((entry, index) => {
+              if (entry && typeof entry === 'object' && entry.id != null) {
+                pushStaff(
+                  entry.id,
+                  entry.name || names[index] || '',
+                  entry.sourceDeptId,
+                  entry.sourceDeptName
+                )
+              } else {
+                pushStaff(entry, names[index] || '', null, '')
+              }
+            })
           } catch (e) {
             console.error('解析抄送對象數據失敗:', e)
           }
@@ -435,7 +464,9 @@ export default {
                 .map(s => ({
                   parentUserId: s.parentUserId,
                   studentId: s.studentId || '',
-                  departmentId: s.departmentId || null
+                  departmentId: s.departmentId || null,
+                  sourceDeptId: s.sourceDeptId || null,
+                  sourceDeptName: s.sourceDeptName || ''
                 }))
             )
           })
@@ -450,7 +481,9 @@ export default {
                   parentUserId: s.parentUserId,
                   studentId: s.studentId || '',
                   departmentId: s.departmentId || null,
-                  schoolDepartmentId: s.schoolDepartmentId || s.sourceDeptId || null
+                  schoolDepartmentId: s.schoolDepartmentId || s.sourceDeptId || null,
+                  sourceDeptId: s.sourceDeptId || null,
+                  sourceDeptName: s.sourceDeptName || ''
                 }))
             )
           })
