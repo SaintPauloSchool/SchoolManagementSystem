@@ -293,13 +293,16 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     }
 
     /**
-     * 遞歸剪枝：保留與權限部門相關的節點
-     * 規則：
-     *  - 如果當前節點本身在權限集合中 → 保留該節點及其所有子節點
-     *  - 否則，遞歸過濾子節點，如果子節點中有保留的節點則當前節點也保留
+     * 遞歸剪枝：僅保留用戶有直接權限的班級及其家長聯絡人。
+     * <p>規則：
+     * <ul>
+     *   <li>班級（type=1）：僅當部門 ID 在權限集合中時保留，並保留其下已掛載的家長葉子</li>
+     *   <li>年級/學段等父節點：一律遞歸過濾子節點；僅當過濾後仍有子節點時作為路徑保留</li>
+     *   <li>父級管理員身份不再繼承整棵子樹，避免勾選「2025」等大類時選中無權限班級</li>
+     * </ul>
      *
-     * @param nodes      待過濾的節點列表
-     * @param adminIds   有權限的部門 ID 集合
+     * @param nodes    待過濾的節點列表
+     * @param adminIds 有權限的部門 ID 集合
      * @return 過濾後的節點列表
      */
     private List<SysDepartmentVO> filterTree(List<SysDepartmentVO> nodes, Set<Long> adminIds) {
@@ -312,19 +315,20 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
                 continue;
             }
 
-            if (adminIds.contains(node.getId())) {
-                // 當前節點有權限，直接保留（子節點全部保留，無需繼續過濾）
-                result.add(node);
-            } else {
-                // 遞歸過濾子節點
-                List<SysDepartmentVO> filteredChildren = filterTree(node.getChildren(), adminIds);
-                if (!filteredChildren.isEmpty()) {
-                    // 有子節點保留，則當前節點也保留（作爲路徑節點），並替換子節點列表
-                    SysDepartmentVO copy = shallowCopyDeptVo(node);
-                    copy.setChildren(filteredChildren);
-                    result.add(copy);
+            // 班級節點：僅保留用戶有直接權限的班級（含已掛載家長聯絡人）
+            if (node.getType() != null && node.getType() == TYPE_CLASS) {
+                if (adminIds.contains(node.getId())) {
+                    result.add(node);
                 }
-                // 否則該節點及其子樹均無權限，丟棄
+                continue;
+            }
+
+            // 年級/學段等：遞歸剪枝，不因父級在權限集中而保留全部子樹
+            List<SysDepartmentVO> filteredChildren = filterTree(node.getChildren(), adminIds);
+            if (!filteredChildren.isEmpty()) {
+                SysDepartmentVO copy = shallowCopyDeptVo(node);
+                copy.setChildren(filteredChildren);
+                result.add(copy);
             }
         }
         return result;
