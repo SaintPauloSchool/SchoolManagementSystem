@@ -78,7 +78,7 @@ public @interface Excel
     public String defaultValue() default "";
 
     /**
-     * 提示信息
+     * 提示資訊
      */
     public String prompt() default "";
 
@@ -108,7 +108,7 @@ public @interface Excel
     public boolean isExport() default true;
 
     /**
-     * 另一個類中的屬性名稱,支持多級獲取,以小數點隔開
+     * 另一個類中的屬性名稱,支援多級獲取,以小數點隔開
      */
     public String targetAttr() default "";
 

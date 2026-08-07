@@ -3,7 +3,7 @@ package com.sms.framework.web.domain.server;
 import com.sms.common.utils.Arith;
 
 /**
- * CPU相關信息
+ * CPU相關資訊
  *
  */
 public class Cpu

@@ -16,31 +16,6 @@
         </template>
       
         <div class="receivers-section">
-          <!-- 班級選擇 -->
-          <el-form-item label="選擇班級">
-            <div class="selection-item">
-              <el-button 
-                type="primary" 
-                @click="openClassSelector"
-                plain
-              >
-                已選擇 {{ selectedClasses.length }} 個班級
-                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <div v-if="selectedClasses.length > 0" class="selected-tags">
-                <el-tag
-                  v-for="cls in selectedClasses"
-                  :key="cls.id"
-                  closable
-                  @close="removeClass(cls)"
-                  class="tag-item"
-                >
-                  {{ cls.name }}
-                </el-tag>
-              </div>
-            </div>
-          </el-form-item>
-      
           <!-- 學生/家長選擇 -->
           <el-form-item label="選擇學生/家長">
             <div class="selection-item">
@@ -54,13 +29,15 @@
               </el-button>
               <div v-if="selectedStudents.length > 0" class="selected-tags">
                 <el-tag
-                  v-for="student in selectedStudents"
-                  :key="`${student.type || 1}-${student.id}-${student.departmentId}`"
+                  v-for="group in selectedStudentsDisplayGroups"
+                  :key="group.key"
                   closable
-                  @close="removeStudent(student)"
+                  :type="group.isDepartment ? 'warning' : undefined"
+                  @close="group.isDepartment ? removeDepartmentGroup(group) : removeStudent(group.student)"
                   class="tag-item"
+                  :class="{ 'dept-tag-item': group.isDepartment }"
                 >
-                  {{ student.name }}
+                  {{ group.isDepartment ? `${group.name}（${group.count} 人）` : (group.student?.name || '') }}
                 </el-tag>
               </div>
             </div>
@@ -91,38 +68,15 @@
               </el-button>
               <div v-if="selectedCcStaff.length > 0" class="selected-tags">
                 <el-tag
-                  v-for="staff in selectedCcStaff"
-                  :key="staff.id"
+                  v-for="group in selectedCcStaffDisplayGroups"
+                  :key="group.key"
                   closable
-                  @close="removeCcStaff(staff)"
+                  :type="group.isDepartment ? 'warning' : undefined"
+                  @close="group.isDepartment ? removeCcDepartmentGroup(group) : removeCcStaff(group.staff)"
                   class="tag-item"
+                  :class="{ 'dept-tag-item': group.isDepartment }"
                 >
-                  {{ staff.name }}
-                </el-tag>
-              </div>
-            </div>
-          </el-form-item>
-
-          <!-- 抄送教職工群組 -->
-          <el-form-item label="抄送教職工群組">
-            <div class="selection-item">
-              <el-button 
-                type="primary" 
-                @click="openCcDirectorySelector"
-                plain
-              >
-                已抄送 {{ selectedCcDirectory.length }} 個通訊錄
-                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <div v-if="selectedCcDirectory.length > 0" class="selected-tags">
-                <el-tag
-                  v-for="dir in selectedCcDirectory"
-                  :key="dir.id"
-                  closable
-                  @close="removeCcDirectory(dir)"
-                  class="tag-item"
-                >
-                  {{ dir.name }}
+                  {{ group.isDepartment ? `${group.name}（${group.count} 人）` : group.name }}
                 </el-tag>
               </div>
             </div>
@@ -179,12 +133,6 @@
     </el-form>
 
     <!-- 選擇器對話框 -->
-    <ClassSelectorDialog
-      v-model:visible="classSelectorVisible"
-      :selected-classes="selectedClasses"
-      @confirm="handleClassSelect"
-    />
-
     <StudentSelectorDialog
       v-model:visible="studentSelectorVisible"
       :selected-students="selectedStudents"
@@ -199,31 +147,21 @@
       title="選擇抄送教職工"
       @confirm="handleCcStaffSelect"
     />
-
-    <DirectorySelectorDialog
-      v-model:visible="directorySelectorVisible"
-      :selected-directories="selectedCcDirectory"
-      @confirm="handleDirectorySelect"
-    />
   </div>
 </template>
 
 <script>
 import { ElNotification } from 'element-plus'
 import { ArrowDown, ArrowLeft, Promotion, User, Message, Setting } from '@element-plus/icons-vue'
-import ClassSelectorDialog from './selectors/ClassSelectorDialog.vue'
 import StudentSelectorDialog from './selectors/StudentSelectorDialog.vue'
 import StaffSelectorDialog from './selectors/StaffSelectorDialog.vue'
-import DirectorySelectorDialog from './selectors/DirectorySelectorDialog.vue'
 import dayjs from 'dayjs'
 
 export default {
   name: 'SendSettingsForm',
   components: {
-    ClassSelectorDialog,
     StudentSelectorDialog,
-    StaffSelectorDialog,
-    DirectorySelectorDialog
+    StaffSelectorDialog
   },
   props: {
     formData: {
@@ -240,28 +178,91 @@ export default {
     return {
       localFormData: { ...this.formData },
       
-      classSelectorVisible: false,
       studentSelectorVisible: false,
       ccStaffSelectorVisible: false,
-      directorySelectorVisible: false,
       
-      selectedClasses: [],
       selectedStudents: [],
-      selectedCcStaff: [],
-      selectedCcDirectory: []
+      selectedCcStaff: []
     }
   },
   computed: {
-    // 獲取當前發布日期（通知創建時間）
     publishDate() {
       return this.localFormData.createTime || new Date()
+    },
+    selectedStudentsDisplayGroups() {
+      const deptGroups = new Map()
+      const individuals = []
+
+      this.selectedStudents.forEach(student => {
+        const groupDeptId = student.type === 2
+          ? (student.schoolDepartmentId ?? student.sourceDeptId)
+          : student.sourceDeptId
+        if (groupDeptId != null) {
+          const key = `dept_${student.type || 1}_${groupDeptId}`
+          if (!deptGroups.has(key)) {
+            deptGroups.set(key, {
+              key,
+              isDepartment: true,
+              name: student.sourceDeptName || '部門',
+              sourceDeptId: groupDeptId,
+              type: student.type || 1,
+              count: 0
+            })
+          }
+          deptGroups.get(key).count += 1
+        } else {
+          individuals.push({
+            key: `person_${student.type || 1}_${student.parentUserId || student.id}_${student.departmentId || ''}`,
+            isDepartment: false,
+            name: student.name || '',
+            student
+          })
+        }
+      })
+
+      return [...Array.from(deptGroups.values()), ...individuals]
+    },
+    selectedCcStaffDisplayGroups() {
+      const deptGroups = new Map()
+      const individuals = []
+
+      this.selectedCcStaff.forEach(staff => {
+        if (staff.sourceDeptId != null) {
+          const key = `dept_${staff.type || 1}_${staff.sourceDeptId}`
+          if (!deptGroups.has(key)) {
+            deptGroups.set(key, {
+              key,
+              isDepartment: true,
+              name: staff.sourceDeptName || '部門',
+              sourceDeptId: staff.sourceDeptId,
+              type: staff.type || 1,
+              count: 0
+            })
+          }
+          deptGroups.get(key).count += 1
+        } else if (staff.name?.trim()) {
+          individuals.push({
+            key: `person_${staff.type || 1}_${staff.id}`,
+            isDepartment: false,
+            name: staff.name,
+            staff
+          })
+        }
+      })
+
+      return [...Array.from(deptGroups.values()), ...individuals]
     }
   },
   watch: {
     formData: {
       handler(newVal) {
-        this.localFormData = { ...newVal }
-        this.initSelectedData()
+        this.localFormData = {
+          ...this.localFormData,
+          replyDeadline: newVal.replyDeadline ?? null,
+          reminderTime: newVal.reminderTime ?? null,
+          receivers: newVal.receivers || [],
+          ccs: newVal.ccs || []
+        }
       },
       deep: true
     }
@@ -271,46 +272,60 @@ export default {
   },
   methods: {
     initSelectedData() {
+      this.selectedStudents = []
+      this.selectedCcStaff = []
+
       if (this.localFormData.receivers) {
         this.localFormData.receivers.forEach(receiver => {
+          if (receiver.receiveType !== '1' && receiver.receiveType !== '2') {
+            return
+          }
           try {
-            if (receiver.receiveType === '1') {
-               if (receiver.receiveData) {
-                  const dataArr = JSON.parse(receiver.receiveData);
-                  dataArr.forEach(group => {
-                     const ids = group.receive_ids || [];
-                     const names = group.receive_names || [];
-                     const type = group.type || 1;
-                     ids.forEach((id, index) => {
-                        const item = { id: id, name: names[index] || '', type: type };
-                        if (!this.selectedClasses.some(c => c.id === id)) {
-                           this.selectedClasses.push(item);
-                        }
-                     });
-                  });
-               }
-            } else if (receiver.receiveType === '2') {
-               if (receiver.receiveData) {
-                  const dataArr = JSON.parse(receiver.receiveData);
-                  dataArr.forEach(group => {
-                     const ids = group.receive_ids || [];
-                     const names = group.receive_names || [];
-                     const departmentIds = group.department_ids || [];
-                     const type = group.type || 1;
-                     ids.forEach((id, index) => {
-                       const item = {
-                         id: id,
-                         name: names[index] || '',
-                         departmentId: departmentIds[index] || null,
-                         type: type
-                       }
-                       if (!this.selectedStudents.some(s => s.id === id && s.departmentId === item.departmentId)) {
-                         this.selectedStudents.push(item)
-                       }
-                     });
-                  });
-               }
+            const type = receiver.receiveType === '2' ? 2 : 1
+            const parsed = JSON.parse(receiver.receiveData)
+            const names = receiver.receiveNames || []
+
+            const pushStudent = (parentUserId, studentId, departmentId, schoolDepartmentId, name, sourceDeptId, sourceDeptName) => {
+              const item = {
+                parentUserId,
+                studentId: studentId || '',
+                departmentId: departmentId || null,
+                schoolDepartmentId: schoolDepartmentId || null,
+                sourceDeptId: sourceDeptId || null,
+                sourceDeptName: sourceDeptName || '',
+                name: name || '',
+                type
+              }
+              if (!this.selectedStudents.some(s =>
+                s.parentUserId === parentUserId
+                && (s.type || 1) === type
+                && (s.departmentId || null) === (departmentId || null)
+                && (s.studentId || '') === (studentId || '')
+              )) {
+                this.selectedStudents.push(item)
+              }
             }
+
+            if (!Array.isArray(parsed)) {
+              return
+            }
+
+            parsed.forEach((entry, index) => {
+              if (entry && typeof entry === 'object' && entry.parentUserId) {
+                const matchedName = names[index] || ''
+                pushStudent(
+                  entry.parentUserId,
+                  entry.studentId,
+                  entry.departmentId,
+                  entry.schoolDepartmentId,
+                  matchedName,
+                  entry.sourceDeptId,
+                  entry.sourceDeptName
+                )
+              } else if (typeof entry === 'string') {
+                pushStudent(entry, '', null, null, names[index] || '', null, '')
+              }
+            })
           } catch (e) {
             console.error('解析接收對象數據失敗:', e)
           }
@@ -319,29 +334,42 @@ export default {
 
       if (this.localFormData.ccs) {
         this.localFormData.ccs.forEach(cc => {
+          if (cc.ccType !== '1' && cc.ccType !== '2') {
+            return
+          }
           try {
-            const ccDataArr = JSON.parse(cc.ccData)
-            
-            ccDataArr.forEach(group => {
-              const ids = group.cc_ids || []
-              const names = group.cc_names || []
-              const type = group.type || 1
-              
-              ids.forEach((id, index) => {
-                const item = { id: id, name: names[index] || '', type: type }
-                switch(cc.ccType) {
-                  case '1':
-                    if (!this.selectedCcStaff.some(s => s.id === id)) {
-                      this.selectedCcStaff.push(item)
-                    }
-                    break
-                  case '2':
-                    if (!this.selectedCcDirectory.some(d => d.id === id)) {
-                      this.selectedCcDirectory.push(item)
-                    }
-                    break
-                }
-              })
+            const type = cc.ccType === '2' ? 2 : 1
+            const parsed = JSON.parse(cc.ccData)
+            const names = cc.ccNames || []
+
+            const pushStaff = (id, name, sourceDeptId, sourceDeptName) => {
+              const item = {
+                id,
+                name: name || '',
+                type,
+                sourceDeptId: sourceDeptId || null,
+                sourceDeptName: sourceDeptName || ''
+              }
+              if (!this.selectedCcStaff.some(s => s.id === id && (s.type || 1) === type)) {
+                this.selectedCcStaff.push(item)
+              }
+            }
+
+            if (!Array.isArray(parsed)) {
+              return
+            }
+
+            parsed.forEach((entry, index) => {
+              if (entry && typeof entry === 'object' && entry.id != null) {
+                pushStaff(
+                  entry.id,
+                  entry.name || names[index] || '',
+                  entry.sourceDeptId,
+                  entry.sourceDeptName
+                )
+              } else {
+                pushStaff(entry, names[index] || '', null, '')
+              }
             })
           } catch (e) {
             console.error('解析抄送對象數據失敗:', e)
@@ -352,8 +380,7 @@ export default {
 
     validate() {
       return new Promise((resolve, reject) => {
-        const hasReceivers = this.selectedClasses.length > 0 || 
-                           this.selectedStudents.length > 0
+        const hasReceivers = this.selectedStudents.length > 0
         
         if (!hasReceivers) {
           ElNotification({ title: "提示", message: '請至少選擇一個接收對象', type: "warning", duration: 3000 })
@@ -399,10 +426,8 @@ export default {
     },
 
     resetForm() {
-      this.selectedClasses = []
       this.selectedStudents = []
       this.selectedCcStaff = []
-      this.selectedCcDirectory = []
       this.localFormData = {
         receivers: [],
         ccs: [],
@@ -425,117 +450,62 @@ export default {
 
     syncData() {
       const receivers = []
-      
-      if (this.selectedClasses.length > 0) {
-        const type1Classes = this.selectedClasses.filter(c => c.type === 1 || !c.type);
-        const type2Classes = this.selectedClasses.filter(c => c.type === 2);
-        
-        const receiveDataPayload = [];
-        if (type1Classes.length > 0) {
-           receiveDataPayload.push({
-               receive_ids: type1Classes.map(c => c.id),
-               type: 1,
-               receive_names: type1Classes.map(c => c.name)
-           });
-        }
-        if (type2Classes.length > 0) {
-           receiveDataPayload.push({
-               receive_ids: type2Classes.map(c => c.id),
-               type: 2,
-               receive_names: type2Classes.map(c => c.name)
-           });
-        }
 
-        receivers.push({
-          receiveType: '1',
-          receiveData: JSON.stringify(receiveDataPayload)
-        })
-      }
-      
       if (this.selectedStudents.length > 0) {
-        const type1Students = this.selectedStudents.filter(s => s.type === 1 || !s.type);
-        const type2Students = this.selectedStudents.filter(s => s.type === 2);
-        
-        const studentPayload = [];
+        const type1Students = this.selectedStudents.filter(s => s.type === 1 || !s.type)
+        const type2Students = this.selectedStudents.filter(s => s.type === 2)
+
         if (type1Students.length > 0) {
-           studentPayload.push({
-               receive_ids: type1Students.map(s => s.id),
-               department_ids: type1Students.map(s => s.departmentId || null),
-               type: 1,
-               receive_names: type1Students.map(s => s.name)
-           });
+          receivers.push({
+            receiveType: '1',
+            receiveData: JSON.stringify(
+              type1Students
+                .filter(s => s.parentUserId)
+                .map(s => ({
+                  parentUserId: s.parentUserId,
+                  studentId: s.studentId || '',
+                  departmentId: s.departmentId || null,
+                  sourceDeptId: s.sourceDeptId || null,
+                  sourceDeptName: s.sourceDeptName || ''
+                }))
+            )
+          })
         }
         if (type2Students.length > 0) {
-           studentPayload.push({
-               receive_ids: type2Students.map(s => s.id),
-               department_ids: type2Students.map(s => s.departmentId || null),
-               type: 2,
-               receive_names: type2Students.map(s => s.name)
-           });
+          receivers.push({
+            receiveType: '2',
+            receiveData: JSON.stringify(
+              type2Students
+                .filter(s => s.parentUserId)
+                .map(s => ({
+                  parentUserId: s.parentUserId,
+                  studentId: s.studentId || '',
+                  departmentId: s.departmentId || null,
+                  schoolDepartmentId: s.schoolDepartmentId || s.sourceDeptId || null,
+                  sourceDeptId: s.sourceDeptId || null,
+                  sourceDeptName: s.sourceDeptName || ''
+                }))
+            )
+          })
         }
-
-        receivers.push({
-          receiveType: '2',
-          receiveData: JSON.stringify(studentPayload)
-        })
       }
       
       const ccs = []
-      
-      // 處理 WeCom 老師通訊錄 (type=1) 和自定義老師通訊錄 (type=2)
+
       if (this.selectedCcStaff.length > 0) {
         const type1Staff = this.selectedCcStaff.filter(s => s.type === 1 || !s.type)
         const type2Staff = this.selectedCcStaff.filter(s => s.type === 2)
-        
-        const staffPayload = []
+
         if (type1Staff.length > 0) {
-          staffPayload.push({
-            cc_ids: type1Staff.map(s => s.id),
-            type: 1,
-            cc_names: type1Staff.map(s => s.name)
+          ccs.push({
+            ccType: '1',
+            ccData: JSON.stringify(type1Staff.map(s => s.id))
           })
         }
         if (type2Staff.length > 0) {
-          staffPayload.push({
-            cc_ids: type2Staff.map(s => s.id),
-            type: 2,
-            cc_names: type2Staff.map(s => s.name)
-          })
-        }
-        
-        if (staffPayload.length > 0) {
-          ccs.push({
-            ccType: '1',
-            ccData: JSON.stringify(staffPayload)
-          })
-        }
-      }
-      
-      // 處理 WeCom 學校通訊錄 (type=1) 和自定義學校通訊錄 (type=2)
-      if (this.selectedCcDirectory.length > 0) {
-        const type1Dirs = this.selectedCcDirectory.filter(d => d.type === 1 || !d.type)
-        const type2Dirs = this.selectedCcDirectory.filter(d => d.type === 2)
-        
-        const dirPayload = []
-        if (type1Dirs.length > 0) {
-          dirPayload.push({
-            cc_ids: type1Dirs.map(d => d.id),
-            type: 1,
-            cc_names: type1Dirs.map(d => d.name)
-          })
-        }
-        if (type2Dirs.length > 0) {
-          dirPayload.push({
-            cc_ids: type2Dirs.map(d => d.id),
-            type: 2,
-            cc_names: type2Dirs.map(d => d.name)
-          })
-        }
-        
-        if (dirPayload.length > 0) {
           ccs.push({
             ccType: '2',
-            ccData: JSON.stringify(dirPayload)
+            ccData: JSON.stringify(type2Staff.map(s => s.id))
           })
         }
       }
@@ -546,24 +516,12 @@ export default {
       Object.assign(this.formData, this.localFormData)
     },
 
-    openClassSelector() {
-      this.classSelectorVisible = true
-    },
-
     openStudentSelector() {
       this.studentSelectorVisible = true
     },
 
     openCcStaffSelector() {
       this.ccStaffSelectorVisible = true
-    },
-
-    openCcDirectorySelector() {
-      this.directorySelectorVisible = true
-    },
-
-    handleClassSelect(classes) {
-      this.selectedClasses = classes
     },
 
     handleStudentSelect(students) {
@@ -574,21 +532,11 @@ export default {
       this.selectedCcStaff = staff
     },
 
-    handleDirectorySelect(directories) {
-      this.selectedCcDirectory = directories
-    },
-
-    removeClass(cls) {
-      const index = this.selectedClasses.findIndex(c => c.id === cls.id)
-      if (index > -1) {
-        this.selectedClasses.splice(index, 1)
-      }
-    },
-
     removeStudent(student) {
       const index = this.selectedStudents.findIndex(s =>
-        s.id === student.id
+        s.parentUserId === student.parentUserId
         && s.departmentId === student.departmentId
+        && (s.studentId || '') === (student.studentId || '')
         && (s.type || 1) === (student.type || 1)
       )
       if (index > -1) {
@@ -596,18 +544,28 @@ export default {
       }
     },
 
+    removeDepartmentGroup(group) {
+      this.selectedStudents = this.selectedStudents.filter(student => {
+        const studentDeptId = student.type === 2
+          ? (student.schoolDepartmentId ?? student.sourceDeptId)
+          : student.sourceDeptId
+        return studentDeptId !== group.sourceDeptId
+      })
+    },
+
     removeCcStaff(staff) {
-      const index = this.selectedCcStaff.findIndex(s => s.id === staff.id)
+      const index = this.selectedCcStaff.findIndex(s =>
+        s.id === staff.id && (s.type || 1) === (staff.type || 1)
+      )
       if (index > -1) {
         this.selectedCcStaff.splice(index, 1)
       }
     },
 
-    removeCcDirectory(dir) {
-      const index = this.selectedCcDirectory.findIndex(d => d.id === dir.id)
-      if (index > -1) {
-        this.selectedCcDirectory.splice(index, 1)
-      }
+    removeCcDepartmentGroup(group) {
+      this.selectedCcStaff = this.selectedCcStaff.filter(
+        staff => !(staff.sourceDeptId === group.sourceDeptId && (staff.type || 1) === group.type)
+      )
     },
 
     disabledDate(date) {
@@ -652,7 +610,7 @@ export default {
   margin-bottom: 20px;
 }
 
-/* 選擇區域布局 */
+/* 選擇區域佈局 */
 .receivers-section,
 .cc-section {
   display: flex;
@@ -680,7 +638,7 @@ export default {
   margin: 4px 0;
 }
 
-/* 發送選項布局 */
+/* 發送選項佈局 */
 .send-options {
   display: flex;
   flex-direction: column;

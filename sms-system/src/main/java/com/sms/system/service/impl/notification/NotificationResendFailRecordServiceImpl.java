@@ -83,17 +83,6 @@ public class NotificationResendFailRecordServiceImpl implements INotificationRes
     }
 
     @Override
-    public List<NotificationResendFailRecord> selectByNotificationId(Long notificationId) {
-        return notificationResendFailRecordMapper.selectByNotificationId(notificationId);
-    }
-
-    /**
-     * 查詢所有放棄重發通知的用戶ID
-     *
-     * @param notificationId 通知ID
-     * @return 放棄重發通知的用戶ID列表
-     */
-    @Override
     public Set<String> selectAbandonedUserIds(Long notificationId) {
         // 查詢所有失敗的記錄
         List<NotificationResendFailRecord> records = notificationResendFailRecordMapper.selectByNotificationId(notificationId);

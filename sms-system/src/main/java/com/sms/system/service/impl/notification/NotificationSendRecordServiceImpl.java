@@ -33,7 +33,7 @@ public class NotificationSendRecordServiceImpl implements INotificationSendRecor
     }
 
     /**
-     * 查詢通知發送統計信息（強類型 VO）
+     * 查詢通知發送統計資訊（強類型 VO）
      *
      * @param notificationId 通知ID
      * @return 發送統計 VO

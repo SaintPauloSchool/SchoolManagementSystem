@@ -64,7 +64,7 @@ spring:
     encoding: utf-8
     # 禁用緩存
     cache: false
-  # 資源信息
+  # 資源資訊
   messages:
     # 國際化資源文件路徑
     basename: static/i18n/messages
@@ -89,7 +89,7 @@ spring:
 
 # MyBatis
 mybatis:
-  # 搜索指定包別名
+  # 搜尋指定包別名
   typeAliasesPackage: com.sms.**.entity,com.sms.**.domain
   # 配置 mapper 的掃描，找到所有的 mapper.xml 映射文件
   mapperLocations: classpath*:mapper/**/*Mapper.xml

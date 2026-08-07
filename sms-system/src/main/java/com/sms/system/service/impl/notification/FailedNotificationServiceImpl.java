@@ -60,7 +60,7 @@ public class FailedNotificationServiceImpl implements IFailedNotificationService
             return null;
         }
 
-        // 2. 查詢對應的通知信息
+        // 2. 查詢對應的通知資訊
         Notification notification = notificationMapper.selectById(sendRecord.getNotificationId());
         if (notification == null || !"1".equals(notification.getStatus())) {
             return null;
@@ -73,8 +73,8 @@ public class FailedNotificationServiceImpl implements IFailedNotificationService
     /**
      * 構建失敗通知詳情VO
      *
-     * @param notification 通知信息
-     * @param sendRecord   發送記錄信息
+     * @param notification 通知資訊
+     * @param sendRecord   發送記錄資訊
      * @return 詳情VO
      */
     private static FailedNotificationDetailVO getFailedNotificationDetailVO(Notification notification, NotificationSendRecord sendRecord) {

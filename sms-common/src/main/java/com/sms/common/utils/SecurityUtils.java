@@ -119,7 +119,7 @@ public class SecurityUtils
      */
     public static void setSysUser(SysUser user)
     {
-        // 在Spring Security中，用戶信息通過認證過程設置
+        // 在Spring Security中，用戶資訊通過認證過程設置
         // 這裡留空或根據具體需求實現
     }
 }

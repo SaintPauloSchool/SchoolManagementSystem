@@ -36,17 +36,17 @@ public interface SysSchoolDepartmentMapper {
     int deleteByIds(@Param("ids") Long[] ids);
 
     /**
-     * 插入部門信息
+     * 插入部門資訊
      *
-     * @param department 部門信息
+     * @param department 部門資訊
      * @return 結果
      */
     int insertDepartment(SysSchoolDepartment department);
 
     /**
-     * 修改部門信息
+     * 修改部門資訊
      *
-     * @param department 部門信息
+     * @param department 部門資訊
      * @return 結果
      */
     int updateDepartment(SysSchoolDepartment department);
@@ -55,7 +55,7 @@ public interface SysSchoolDepartmentMapper {
      * 根據 ID 查詢部門
      *
      * @param id 部門 ID
-     * @return 部門信息
+     * @return 部門資訊
      */
     SysSchoolDepartment selectById(Long id);
 

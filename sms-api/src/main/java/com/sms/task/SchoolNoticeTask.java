@@ -1,18 +1,18 @@
 package com.sms.task;
 
 import com.sms.handler.notification.NotificationPublishHandler;
-import com.sms.handler.TaskLogHelper;
+import com.sms.scheduler.ScheduledTaskSupport;
+import com.sms.handler.system.TaskLogHelper;
+import com.sms.system.constant.ScheduledTaskKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 學校通知定時發送任務
- * 每周一到周五下午 6 點執行，所有業務邏輯由 NotificationPublishHandler.sendDailySchoolNotice() 處理
  */
 @Component
 public class SchoolNoticeTask {
@@ -25,26 +25,28 @@ public class SchoolNoticeTask {
     @Autowired
     private TaskLogHelper taskLogHelper;
 
+    @Autowired
+    private ScheduledTaskSupport scheduledTaskSupport;
+
     private static final AtomicBoolean isExecuting = new AtomicBoolean(false);
 
-    /**
-     * 每周一到周五下午 6 點執行（北京時間）
-     */
-    @Scheduled(cron = "0 0 18 ? * MON-FRI")
     public void executeTask() {
+        if (scheduledTaskSupport.shouldSkipForSchedule(ScheduledTaskKeys.SCHOOL_NOTICE)) {
+            return;
+        }
         if (!isExecuting.compareAndSet(false, true)) {
-            log.info("每日學校通知發送任務已在執行中，跳過本次執行");
+            log.info("每日學生手冊通知發送任務已在執行中，跳過本次執行");
             return;
         }
         try {
             taskLogHelper.executeAndLog(
-                    "每日學校通知發送",
+                    "每日學生手冊通知發送",
                     "notificationPublishHandler",
                     "sendDailySchoolNotice",
                     () -> notificationPublishHandler.sendDailySchoolNotice()
             );
         } catch (Exception e) {
-            log.error("執行每日學校通知發送發生異常", e);
+            log.error("執行每日學生手冊通知發送發生異常", e);
         } finally {
             isExecuting.set(false);
         }

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sms.system.mapper.AttendanceRecordMapper">
+
+    <resultMap type="com.sms.system.entity.vo.AttendanceNotifyRowVO" id="AttendanceNotifyRowVOResult">
+        <result property="id" column="id"/>
+        <result property="employeeId" column="employee_id"/>
+        <result property="accessDatetime" column="access_datetime"/>
+        <result property="deviceName" column="device_name"/>
+        <result property="resourceName" column="resource_name"/>
+        <result property="personName" column="person_name"/>
+        <result property="classSection" column="class_section"/>
+        <result property="idName" column="id_name"/>
+        <result property="direction" column="direction"/>
+        <result property="parentUserId" column="parent_user_id"/>
+    </resultMap>
+
+    <resultMap type="com.sms.system.entity.vo.AttendanceRecordListVO" id="AttendanceRecordListVOResult">
+        <result property="id" column="id"/>
+        <result property="employeeId" column="employee_id"/>
+        <result property="accessDatetime" column="access_datetime"/>
+        <result property="accessResult" column="access_result"/>
+        <result property="deviceName" column="device_name"/>
+        <result property="resourceName" column="resource_name"/>
+        <result property="cardReaderName" column="card_reader_name"/>
+        <result property="personName" column="person_name"/>
+        <result property="direction" column="direction"/>
+        <result property="cardNumber" column="card_number"/>
+        <result property="classSection" column="class_section"/>
+        <result property="classNum" column="class_num"/>
+        <result property="idName" column="id_name"/>
+    </resultMap>
+
+    <select id="selectPendingNotifyRows" resultMap="AttendanceNotifyRowVOResult">
+        select ar.id,
+               ar.employee_id,
+               ar.access_datetime,
+               ar.device_name,
+               ar.resource_name,
+               ar.person_name,
+               si.class_section,
+               si.id_name,
+               ar.direction,
+               m.user_id as parent_user_id
+        from attendance_record ar
+        inner join ${studentProfilesDatabase}.student_info si
+            on si.student_id collate utf8mb4_unicode_ci = ar.employee_id
+        inner join sys_student_match m
+            on m.student_id collate utf8mb4_unicode_ci = ar.employee_id
+        where ar.is_notified = '0'
+          and ar.employee_id is not null
+          and ar.employee_id != ''
+          and m.user_id is not null
+          and m.user_id != ''
+        order by ar.id asc
+        limit #{limit}
+    </select>
+
+    <select id="selectAttendanceRecordList" resultMap="AttendanceRecordListVOResult">
+        select ar.id,
+               ar.employee_id,
+               ar.access_datetime,
+               ar.access_result,
+               ar.device_name,
+               ar.resource_name,
+               ar.card_reader_name,
+               ar.person_name,
+               ar.direction,
+               ar.card_number,
+               si.class_section,
+               si.class_num,
+               si.id_name
+        from attendance_record ar
+        left join ${studentProfilesDatabase}.student_info si
+            on si.student_id collate utf8mb4_unicode_ci = ar.employee_id
+        <where>
+            <if test="query != null and query.idNameQuery != null and query.idNameQuery != ''">
+                and si.id_name like concat('%', #{query.idNameQuery}, '%')
+            </if>
+            <if test="query != null and query.classSectionQuery != null and query.classSectionQuery != ''">
+                and si.class_section like concat('%', #{query.classSectionQuery}, '%')
+            </if>
+            <if test="query != null and query.classNumQuery != null and query.classNumQuery != ''">
+                and si.class_num like concat('%', #{query.classNumQuery}, '%')
+            </if>
+            <if test="query != null and query.employeeIdQuery != null and query.employeeIdQuery != ''">
+                and ar.employee_id like concat('%', #{query.employeeIdQuery}, '%')
+            </if>
+            <if test="query != null and query.accessDateBegin != null and query.accessDateBegin != ''">
+                and ar.access_date &gt;= #{query.accessDateBegin}
+            </if>
+            <if test="query != null and query.accessDateEnd != null and query.accessDateEnd != ''">
+                and ar.access_date &lt;= #{query.accessDateEnd}
+            </if>
+        </where>
+        order by ar.access_datetime desc, ar.id desc
+    </select>
+
+    <update id="markNotified">
+        update attendance_record
+        set is_notified = '1'
+        where id = #{id}
+          and is_notified = '0'
+    </update>
+
+</mapper>

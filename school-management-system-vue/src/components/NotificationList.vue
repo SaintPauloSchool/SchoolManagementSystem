@@ -8,10 +8,10 @@
         <el-tag type="info" size="small" class="count-tag">
           {{ pagination.total }} 條記錄
         </el-tag>
-        <!-- 搜索框和發布時間篩選 -->
+        <!-- 搜尋框和發佈時間篩選 -->
         <el-input
             v-model="searchQuery"
-            placeholder="搜索通知標題或發送人..."
+            placeholder="搜尋通知標題或發送人..."
             clearable
             prefix-icon="Search"
             class="search-input"
@@ -201,7 +201,7 @@ export default {
       // 直接使用後端返回的分頁數據，不做前端切片
       let result = [...this.notifications]
 
-      // 搜索過濾（僅在前端過濾當前頁數據）
+      // 搜尋過濾（僅在前端過濾當前頁數據）
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase()
         result = result.filter(n =>
@@ -371,7 +371,7 @@ export default {
   }
 }
 
-/* ===== 列表頭部（含搜索） ===== */
+/* ===== 列表頭部（含搜尋） ===== */
 .list-header {
   display: flex;
   justify-content: space-between;
@@ -417,7 +417,7 @@ export default {
   flex-shrink: 0;
 }
 
-/* 搜索框 */
+/* 搜尋框 */
 .search-input {
   flex: 1;
   max-width: 320px;

@@ -5,20 +5,19 @@ import java.util.Date;
 
 /**
  * 學生數據匹配表 sys_student_match
- * <p>僅保存已匹配成功的記錄，未匹配學籍資料來自 student_profiles 庫。</p>
+ * <p>學生與家長為多對多：同一 student_id 可對應多條記錄（每位家長聯絡人一條，以 parent_user_id + student_user_id 唯一定位）。</p>
  */
 public class SysStudentMatch implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long id;
-    private String studentProfileNum;
-    private String studentUserIdWecom;
-    private String studentNameWecom;
-    /** 匹配狀態 (0: 未匹配, 1: 自動匹配, 2: 手動匹配) */
-    private String matchStatus;
-    /** 企微同步狀態 (0: 未同步, 1: 成功, 2: 失敗) */
-    private String syncStatus;
-    private String errorMsg;
+    /** 學生 ID（關聯 student_profiles.student_info.student_id） */
+    private String studentId;
+    /** 家校通訊錄家長 user_id（parent_user_id） */
+    private String userId;
+    /** 家校通訊錄學生 user_id（關聯 sys_school_family_contact.student_user_id） */
+    private String studentUserId;
+    private Integer matchStatus;
     private Date createTime;
     private Date updateTime;
 
@@ -30,52 +29,36 @@ public class SysStudentMatch implements Serializable {
         this.id = id;
     }
 
-    public String getStudentProfileNum() {
-        return studentProfileNum;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setStudentProfileNum(String studentProfileNum) {
-        this.studentProfileNum = studentProfileNum;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
-    public String getStudentUserIdWecom() {
-        return studentUserIdWecom;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setStudentUserIdWecom(String studentUserIdWecom) {
-        this.studentUserIdWecom = studentUserIdWecom;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
-    public String getStudentNameWecom() {
-        return studentNameWecom;
+    public String getStudentUserId() {
+        return studentUserId;
     }
 
-    public void setStudentNameWecom(String studentNameWecom) {
-        this.studentNameWecom = studentNameWecom;
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
     }
 
-    public String getMatchStatus() {
+    public Integer getMatchStatus() {
         return matchStatus;
     }
 
-    public void setMatchStatus(String matchStatus) {
+    public void setMatchStatus(Integer matchStatus) {
         this.matchStatus = matchStatus;
-    }
-
-    public String getSyncStatus() {
-        return syncStatus;
-    }
-
-    public void setSyncStatus(String syncStatus) {
-        this.syncStatus = syncStatus;
-    }
-
-    public String getErrorMsg() {
-        return errorMsg;
-    }
-
-    public void setErrorMsg(String errorMsg) {
-        this.errorMsg = errorMsg;
     }
 
     public Date getCreateTime() {

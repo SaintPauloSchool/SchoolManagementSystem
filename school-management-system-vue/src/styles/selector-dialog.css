@@ -4,6 +4,63 @@
   padding: 0;
 }
 
+/* 學生/家長選擇器 — 現代化彈框（class 掛在 .el-dialog 根節點） */
+.el-dialog.student-selector-modern {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.el-dialog.student-selector-modern .el-dialog__header {
+  padding: 26px 36px 24px;
+  margin: 0;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-bottom: 1px solid #bfdbfe;
+}
+
+.el-dialog.student-selector-modern .el-dialog__title {
+  color: #1e40af;
+  font-size: 20px;
+  font-weight: 700;
+  gap: 14px;
+  line-height: 1.4;
+}
+
+.el-dialog.student-selector-modern .el-dialog__title::before {
+  height: 24px;
+  margin-right: 2px;
+}
+
+.el-dialog.student-selector-modern .el-dialog__headerbtn {
+  top: 26px;
+  right: 28px;
+  width: 36px;
+  height: 36px;
+}
+
+.el-dialog.student-selector-modern .el-dialog__headerbtn .el-dialog__close {
+  color: #64748b;
+  font-size: 18px;
+}
+
+.el-dialog.student-selector-modern .el-dialog__headerbtn:hover .el-dialog__close {
+  color: #1e40af;
+}
+
+.el-dialog.student-selector-modern .el-dialog__body {
+  padding: 24px 28px 16px;
+  background: #f3f4f6;
+}
+
+.el-dialog.student-selector-modern .el-dialog__footer {
+  padding: 16px 28px 24px;
+  background: #f3f4f6;
+}
+
+.student-selector-modern .modern-footer {
+  padding: 0;
+  background: transparent;
+}
+
 .selector-wrapper {
   display: flex;
   height: 500px;
@@ -306,6 +363,16 @@
   border-radius: 6px;
   margin-bottom: 4px;
   transition: all 0.3s;
+}
+
+.student-selector-dialog .el-tree-node:has(.student-row) > .el-tree-node__content {
+  height: auto;
+  padding: 2px 4px;
+  background: transparent !important;
+}
+
+.student-selector-dialog .el-tree-node:has(.student-row) > .el-tree-node__content:hover {
+  background: transparent !important;
 }
 
 .class-selector-dialog .el-tree-node__content:hover,

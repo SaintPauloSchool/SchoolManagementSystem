@@ -3,7 +3,7 @@ package com.sms.framework.web.domain.server;
 import com.sms.common.utils.Arith;
 
 /**
- * 內存相關信息
+ * 內存相關資訊
  *
  */
 public class Mem

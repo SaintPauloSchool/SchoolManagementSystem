@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sms.system.mapper.SysConfigMapper">
+
+    <resultMap type="com.sms.system.entity.SysConfig" id="SysConfigResult">
+        <result property="id" column="id"/>
+        <result property="configKey" column="config_key"/>
+        <result property="configName" column="config_name"/>
+        <result property="configValue" column="config_value"/>
+        <result property="configGroup" column="config_group"/>
+        <result property="valueType" column="value_type"/>
+        <result property="remark" column="remark"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="selectByConfigKey" resultMap="SysConfigResult">
+        select id, config_key, config_name, config_value, config_group, value_type,
+               remark, create_by, create_time, update_by, update_time
+        from sys_config
+        where config_key = #{configKey}
+        limit 1
+    </select>
+
+    <insert id="insertConfig" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_config (
+            config_key, config_name, config_value, config_group, value_type, remark, create_by, create_time
+        ) values (
+            #{configKey}, #{configName}, #{configValue}, #{configGroup}, #{valueType}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateConfigValue">
+        update sys_config
+        set config_value = #{configValue},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where config_key = #{configKey}
+    </update>
+</mapper>

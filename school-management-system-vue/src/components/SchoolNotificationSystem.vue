@@ -71,6 +71,53 @@
           </ul>
         </div>
         
+        <!-- 學生相關功能管理（僅管理員可見） -->
+        <div class="nav-section" v-if="isAdmin">
+          <div class="nav-section-title" @click="toggleSection('student')">
+            <el-icon><User /></el-icon>
+            <span v-show="!isCollapsed">學生相關功能管理</span>
+            <el-icon v-show="!isCollapsed" class="expand-icon">
+              <ArrowRight v-if="!expandedSections.student" />
+              <ArrowDown v-else />
+            </el-icon>
+          </div>
+          
+          <ul v-show="!isCollapsed && expandedSections.student" class="nav-list nav-sublist">
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-6' }"
+              @click="handleMenuSelect('3-6')"
+            >
+              <el-icon class="nav-icon"><Collection /></el-icon>
+              <span class="nav-text">班級對照表</span>
+            </li>
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-4' }"
+              @click="handleMenuSelect('3-4')"
+            >
+              <el-icon class="nav-icon"><User /></el-icon>
+              <span class="nav-text">學生資訊管理</span>
+            </li>
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-2' }"
+              @click="handleMenuSelect('3-2')"
+            >
+              <el-icon class="nav-icon"><Calendar /></el-icon>
+              <span class="nav-text">行事曆管理</span>
+            </li>
+            <li 
+              class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-7' }"
+              @click="handleMenuSelect('3-7')"
+            >
+              <el-icon class="nav-icon"><Clock /></el-icon>
+              <span class="nav-text">考勤機記錄查詢</span>
+            </li>
+          </ul>
+        </div>
+
         <!-- 系統管理（僅管理員可見） -->
         <div class="nav-section" v-if="isAdmin">
           <div class="nav-section-title" @click="toggleSection('system')">
@@ -85,19 +132,19 @@
           <ul v-show="!isCollapsed && expandedSections.system" class="nav-list nav-sublist">
             <li 
               class="nav-item nav-subitem"
+              :class="{ active: activeMenu === '3-5' }"
+              @click="handleMenuSelect('3-5')"
+            >
+              <el-icon class="nav-icon"><Tools /></el-icon>
+              <span class="nav-text">基礎設置</span>
+            </li>
+            <li 
+              class="nav-item nav-subitem"
               :class="{ active: activeMenu === '3-1' }"
               @click="handleMenuSelect('3-1')"
             >
               <el-icon class="nav-icon"><Warning /></el-icon>
               <span class="nav-text">查詢失敗通知</span>
-            </li>
-            <li 
-              class="nav-item nav-subitem"
-              :class="{ active: activeMenu === '3-2' }"
-              @click="handleMenuSelect('3-2')"
-            >
-              <el-icon class="nav-icon"><Calendar /></el-icon>
-              <span class="nav-text">行事曆管理</span>
             </li>
             <li 
               class="nav-item nav-subitem"
@@ -107,31 +154,14 @@
               <el-icon class="nav-icon"><Document /></el-icon>
               <span class="nav-text">定時任務日誌</span>
             </li>
-            <li 
+            <li
+              v-if="isSuperAdmin"
               class="nav-item nav-subitem"
-              :class="{ active: activeMenu === '3-4' }"
-              @click="handleMenuSelect('3-4')"
+              :class="{ active: activeMenu === '3-8' }"
+              @click="handleMenuSelect('3-8')"
             >
-              <el-icon class="nav-icon"><User /></el-icon>
-              <span class="nav-text">學生信息管理</span>
-            </li>
-          </ul>
-        </div>
-        
-        <!-- 佔位大類 2 -->
-        <div class="nav-section">
-          <div class="nav-section-title" @click="toggleSection('report')">
-            <el-icon><Document /></el-icon>
-            <span v-show="!isCollapsed">數據報表</span>
-            <el-icon v-show="!isCollapsed" class="expand-icon">
-              <ArrowRight v-if="!expandedSections.report" />
-              <ArrowDown v-else />
-            </el-icon>
-          </div>
-          
-          <ul v-show="!isCollapsed && expandedSections.report" class="nav-list nav-sublist">
-            <li class="nav-item-placeholder">
-              <span class="placeholder-text">功能開發中...</span>
+              <el-icon class="nav-icon"><UserFilled /></el-icon>
+              <span class="nav-text">管理員設置</span>
             </li>
           </ul>
         </div>
@@ -208,9 +238,25 @@
             v-else-if="activeMenu === '3-3'"
           />
           
-          <!-- 學生信息管理 -->
+          <!-- 學生資訊管理 -->
           <StudentMatch
             v-else-if="activeMenu === '3-4'"
+          />
+
+          <BasicSettings
+            v-else-if="activeMenu === '3-5'"
+          />
+
+          <ClassSectionList
+            v-else-if="activeMenu === '3-6'"
+          />
+
+          <AttendanceRecordList
+            v-else-if="activeMenu === '3-7'"
+          />
+
+          <AdminSettings
+            v-else-if="activeMenu === '3-8' && isSuperAdmin"
           />
         </transition>
       </div>
@@ -223,7 +269,7 @@
 
 <script>
 import { ElNotification } from 'element-plus'
-import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, OfficeBuilding, Warning, Calendar } from '@element-plus/icons-vue'
+import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, UserFilled, OfficeBuilding, Warning, Calendar, Tools, Collection, Clock } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
 import SchoolDepartment from './SchoolDepartment.vue'
@@ -232,6 +278,10 @@ import FailedNotificationList from './FailedNotificationList.vue'
 import CalendarEventList from './CalendarEventList.vue'
 import SysTaskLogList from './SysTaskLogList.vue'
 import StudentMatch from './StudentMatch.vue'
+import BasicSettings from './BasicSettings.vue'
+import ClassSectionList from './ClassSectionList.vue'
+import AttendanceRecordList from './AttendanceRecordList.vue'
+import AdminSettings from './AdminSettings.vue'
 import request from '@/utils/request'
 
 export default {
@@ -244,7 +294,12 @@ export default {
     FailedNotificationList,
     CalendarEventList,
     SysTaskLogList,
-    StudentMatch
+    StudentMatch,
+    BasicSettings,
+    ClassSectionList,
+    AttendanceRecordList,
+    AdminSettings,
+    UserFilled
   },
   data() {
     return {
@@ -265,6 +320,7 @@ export default {
       isMobileMenuOpen: false,
       isMobile: false,
       isAdmin: false,
+      isSuperAdmin: false,
       expandedSections: this.getInitialExpandedSections(),
       menuItems: [
         { index: '1-1', title: '發佈通知', icon: 'Edit' },
@@ -299,21 +355,26 @@ export default {
     },
     
     getInitialExpandedSections() {
-      // 從 sessionStorage 獲取上次菜單展開狀態
-      const savedSections = sessionStorage.getItem('expandedSections')
-      if (savedSections) {
-        try {
-          return JSON.parse(savedSections)
-        } catch (e) {
-          console.error('解析菜單展開狀態失敗:', e)
-        }
-      }
-      // 默認狀態：家校通知展開，其他摺疊
+      const savedMenu = this.getInitialActiveMenu()
+      const studentMenus = ['3-2', '3-4', '3-6', '3-7']
+      const systemMenus = ['3-1', '3-3', '3-5', '3-8']
       return {
-        homeSchool: true,
-        contact: false,
-        system: false,
-        report: false
+        homeSchool: savedMenu.startsWith('1-'),
+        contact: savedMenu.startsWith('2-'),
+        student: studentMenus.includes(savedMenu),
+        system: systemMenus.includes(savedMenu)
+      }
+    },
+
+    expandSectionForMenu(menu) {
+      if (menu.startsWith('1-')) {
+        this.expandedSections.homeSchool = true
+      } else if (menu.startsWith('2-')) {
+        this.expandedSections.contact = true
+      } else if (['3-2', '3-4', '3-6', '3-7'].includes(menu)) {
+        this.expandedSections.student = true
+      } else if (menu.startsWith('3-')) {
+        this.expandedSections.system = true
       }
     },
     
@@ -325,7 +386,6 @@ export default {
         // 切換到抄送我的並加載背後列表數據
         this.handleMenuSelect('1-2');
         this.expandedSections.homeSchool = true;
-        this.saveExpandedSections();
         
         // 使用 nextTick 確保 NotificationList 元件已渲染
         this.$nextTick(() => {
@@ -338,10 +398,6 @@ export default {
       }
     },
     
-    saveExpandedSections() {
-      // 保存菜單展開狀態到 sessionStorage
-      sessionStorage.setItem('expandedSections', JSON.stringify(this.expandedSections))
-    },
     loadInitialData() {
       // 根據當前激活的菜單加載對應的數據
       if (this.activeMenu === '1-2') {
@@ -355,9 +411,25 @@ export default {
       try {
         const res = await request({ url: '/system/admin/checkCurrentUser', method: 'get' })
         if (res.code === 200 || res.code === 0) {
-          this.isAdmin = res.data === true
-          // 若非管理員但目前在系統管理頁，則跳回首頁
-          if (!this.isAdmin && (this.activeMenu === '3-1' || this.activeMenu === '3-2' || this.activeMenu === '3-3' || this.activeMenu === '3-4')) {
+          const data = res.data
+          // 兼容舊版 boolean 與新版 { isAdmin, isSuperAdmin }
+          if (typeof data === 'boolean') {
+            this.isAdmin = data
+            this.isSuperAdmin = false
+          } else if (data && typeof data === 'object') {
+            this.isAdmin = data.isAdmin === true
+            this.isSuperAdmin = data.isSuperAdmin === true
+          } else {
+            this.isAdmin = false
+            this.isSuperAdmin = false
+          }
+          const adminMenus = ['3-1', '3-2', '3-3', '3-4', '3-5', '3-6', '3-7', '3-8']
+          // 非管理員不可進系統管理 / 學生管理相關頁
+          if (!this.isAdmin && adminMenus.includes(this.activeMenu)) {
+            this.handleMenuSelect('1-1')
+          }
+          // 管理員設置僅超級管理員可進
+          if (this.activeMenu === '3-8' && !this.isSuperAdmin) {
             this.handleMenuSelect('1-1')
           }
         }
@@ -390,12 +462,12 @@ export default {
         this.isCollapsed = false
       }
       this.expandedSections[sectionName] = !this.expandedSections[sectionName]
-      this.saveExpandedSections() // 保存展開狀態
     },
     
     handleMenuSelect(index) {
       this.activeMenu = index
       this.saveActiveMenu(index) // 保存菜單選擇
+      this.expandSectionForMenu(index)
       if (this.isMobile) {
         this.isMobileMenuOpen = false
       }

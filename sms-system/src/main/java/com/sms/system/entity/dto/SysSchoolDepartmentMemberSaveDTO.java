@@ -10,9 +10,13 @@ public class SysSchoolDepartmentMemberSaveDTO implements Serializable {
 
     private String userid;
     private String name;
+    /** 自定義部門節點 ID（sys_school_department.id） */
+    private Long schoolDepartmentId;
+    /** 真實班級/部門 ID（選人時 sys_department.id，家校通訊錄必填） */
     private Long departmentId;
     private String openUserid;
-    private String studentUserId;
+    /** 學籍 student_id（家校通訊錄成員必填） */
+    private String studentId;
 
     public String getUserid() {
         return userid;
@@ -28,6 +32,14 @@ public class SysSchoolDepartmentMemberSaveDTO implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Long getSchoolDepartmentId() {
+        return schoolDepartmentId;
+    }
+
+    public void setSchoolDepartmentId(Long schoolDepartmentId) {
+        this.schoolDepartmentId = schoolDepartmentId;
     }
 
     public Long getDepartmentId() {
@@ -46,11 +58,11 @@ public class SysSchoolDepartmentMemberSaveDTO implements Serializable {
         this.openUserid = openUserid;
     }
 
-    public String getStudentUserId() {
-        return studentUserId;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setStudentUserId(String studentUserId) {
-        this.studentUserId = studentUserId;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 }

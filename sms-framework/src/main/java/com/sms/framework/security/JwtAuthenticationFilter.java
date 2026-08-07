@@ -41,14 +41,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = getToken(request);
         
         if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // 從數據庫查詢 token 信息
+            // 從數據庫查詢 token 資訊
             SysToken sysToken = sysTokenMapper.selectByToken(token);
             
             // 驗證 token 是否存在並且未過期
             if (sysToken != null && !sysToken.isExpired()) {
                 // 安全驗證：校園系統只能由員工 (userType == 2) 訪問
                 if (sysToken.getUserType() != null && sysToken.getUserType() == 2) {
-                    // 加載用戶信息
+                    // 加載用戶資訊
                     LoginUser loginUser = (LoginUser) userDetailsService.loadUserBySysToken(sysToken);
                     
                     if (loginUser != null) {

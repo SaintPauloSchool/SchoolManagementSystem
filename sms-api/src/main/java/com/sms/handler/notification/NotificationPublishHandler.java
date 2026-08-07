@@ -5,18 +5,18 @@ import com.sms.framework.wechat.WechatWorkHttpClient;
 import com.sms.system.entity.task.TaskResult;
 import com.sms.system.entity.dto.NotificationQueryDTO;
 import com.sms.system.entity.notification.*;
-import com.sms.handler.notification.support.NotificationCcSendHelper;
-import com.sms.handler.notification.support.NotificationMessageContentHelper;
-import com.sms.handler.notification.support.NotificationSchoolSendHelper;
-import com.sms.system.entity.notification.receiver.ResolvedReceiversSnapshot;
+import com.sms.handler.notification.NotificationCcSendHelper;
+import com.sms.handler.notification.NotificationMessageContentHelper;
+import com.sms.handler.notification.NotificationSchoolSendHelper;
+import com.sms.system.entity.vo.ResolvedReceiversVO;
+import com.sms.system.entity.notification.receiver.NotificationReceiverStats;
 import com.sms.system.entity.vo.ParentStudentMessageInfo;
 import com.sms.system.entity.vo.UnrepliedStudentVO;
 import com.sms.system.entity.vo.NotificationVO;
 import com.sms.system.service.notification.*;
 import com.sms.common.utils.bean.BeanCopyUtils;
 import com.sms.system.service.INotificationMessageService;
-import com.sms.system.service.ISysDepartmentParentBindingService;
-import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
+import com.sms.system.service.ISysSchoolFamilyContactService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,10 +79,7 @@ public class NotificationPublishHandler {
     private INotificationMessageService notificationMessageService;
 
     @Autowired
-    private ISysDepartmentParentBindingService departmentParentBindingService;
-
-    @Autowired
-    private SysSchoolDepartmentMemberMapper schoolDepartmentMemberMapper;
+    private ISysSchoolFamilyContactService schoolFamilyContactService;
 
     // =========================================================================
     // A. Public 入口方法 (Public API)
@@ -117,36 +114,22 @@ public class NotificationPublishHandler {
      * @throws IllegalStateException 未解析出有效接收者時拋出
      */
     public void publishToWechat(Notification notification, List<NotificationReceiver> receivers) {
-        // 1. 將 receive_data 解析為家長 userid、綁定關係、部門映射等發送所需數據
-        ResolvedReceiversSnapshot receiversSnapshot = ResolvedReceiversSnapshot.from(
-                notificationReceiverService.resolveReceivers(receivers, true));
+        ResolvedReceiversVO resolved = notificationReceiverService.resolveReceivers(receivers, true);
 
-        if (!receiversSnapshot.hasAnyReceiver()) {
+        if (!resolved.hasAnyReceiver()) {
             log.warn("未找到有效的微信收件人進行通知 {}", notification.getNotificationId());
             throw new IllegalStateException("未解析出有效的微信接收者");
         }
 
-        // 2. 企微選人時有 bindings，可生成「班級名 + 學生名」的個性化正文；自定義家校則為空，走批量通用內容
         List<ParentStudentMessageInfo> messageInfos =
-                notificationMessageService.buildMessageInfos(receiversSnapshot.getBindings());
+                notificationMessageService.buildMessageInfos(
+                        resolved.getReceiverTargets(), resolved.getRelations());
 
-        // 3. 調用企微家校通知 API（有 bindings 逐條個性化發送，否則按家長 userid 批量發送）
         SendResult sendResult = schoolSendHelper.sendWithPersonalization(
-                notification,
-                receiversSnapshot.getParentUserIds(),
-                receiversSnapshot.getStudentUserIds(),
-                receiversSnapshot.getPartyIds(),
-                messageInfos);
+                notification, resolved.getParentUserIds(), messageInfos);
 
-        // 4. 寫入發送記錄與閱讀記錄（含 student_user_id，供後續統計與關聯查詢）
         notificationPublishRecordService.savePublishRecords(
-                notification,
-                receiversSnapshot.getStudentUserIds(),
-                sendResult,
-                receiversSnapshot.getBindings(),
-                receiversSnapshot.getParentUserIds(),
-                receiversSnapshot.getStudentDepartmentIds(),
-                receiversSnapshot.getParentStudentUserIds());
+                notification, sendResult, resolved.getReceiverTargets());
     }
 
     /**
@@ -176,19 +159,12 @@ public class NotificationPublishHandler {
             return;
         }
 
-        // 1. 查詢並解析原通知的接收者
         List<NotificationReceiver> receivers = loadReceivers(originalNotification.getNotificationId());
-        ResolvedReceiversSnapshot receiversSnapshot = ResolvedReceiversSnapshot.from(
-                notificationReceiverService.resolveReceivers(receivers, false));
-
+        ResolvedReceiversVO resolved = notificationReceiverService.resolveReceivers(receivers, false);
         String recallContent = messageContentHelper.buildRecallContent(originalNotification);
 
-        if (receiversSnapshot.hasAnyReceiver()) {
-            schoolSendHelper.sendRecallInBatches(
-                    receiversSnapshot.getParentUserIds(),
-                    receiversSnapshot.getStudentUserIds(),
-                    receiversSnapshot.getPartyIds(),
-                    recallContent);
+        if (resolved.hasAnyReceiver()) {
+            schoolSendHelper.sendRecallInBatches(resolved.getParentUserIds(), recallContent);
         }
 
         Set<String> ccUserIds = ccSendHelper.resolveCcRecipientUserIds(
@@ -210,7 +186,7 @@ public class NotificationPublishHandler {
         // 1. 查詢原始通知
         Notification notification = loadNotificationEntity(notificationId);
         if (notification == null) {
-            throw new IllegalStateException("未找到通知信息");
+            throw new IllegalStateException("未找到通知資訊");
         }
 
         // 2. 檢查是否超過回復截止時間
@@ -270,10 +246,10 @@ public class NotificationPublishHandler {
 
         // 6. 爲每個未回復的學生發送提醒通知
         for (UnrepliedStudentVO student : unrepliedStudents) {
-            String studentUserId = student.getStudentUserId();
+            String studentId = student.getStudentId();
             List<String> parentUserIdList = student.getParentUserIds();
 
-            if (studentUserId == null || parentUserIdList == null || parentUserIdList.isEmpty()) {
+            if (studentId == null || parentUserIdList == null || parentUserIdList.isEmpty()) {
                 continue;
             }
 
@@ -287,7 +263,7 @@ public class NotificationPublishHandler {
                 // 建立提醒記錄
                 reminderRecords.add(buildReminderRecord(
                         notificationId, sendRecord.getSendRecordId(),
-                        studentUserId, parentUserIdsStr, now, sendSuccess ? "1" : "2"));
+                        studentId, parentUserIdsStr, now, sendSuccess ? "1" : "2"));
 
                 if (sendSuccess) {
                     successCount++;
@@ -295,13 +271,13 @@ public class NotificationPublishHandler {
                     failCount++;
                 }
             } catch (Exception e) {
-                log.error("發送提醒通知失敗，學生ID: {}", studentUserId, e);
+                log.error("發送提醒通知失敗，學生ID: {}", studentId, e);
                 failCount++;
 
                 // 即使失敗也建立記錄
                 reminderRecords.add(buildReminderRecord(
                         notificationId, sendRecord.getSendRecordId(),
-                        studentUserId, parentUserIdsStr, now, "2"));
+                        studentId, parentUserIdsStr, now, "2"));
             }
         }
 
@@ -314,7 +290,7 @@ public class NotificationPublishHandler {
         result.put("successCount", successCount);
         result.put("failCount", failCount);
 
-        // 根據發送結果生成不同的提示信息
+        // 根據發送結果生成不同的提示資訊
         if (failCount == 0) {
             // 全部成功
             result.put("message", String.format("提醒發送成功，共發送 %d 個學生", successCount));
@@ -343,7 +319,7 @@ public class NotificationPublishHandler {
         // 1. 查詢原始通知
         Notification notification = loadNotificationEntity(notificationId);
         if (notification == null) {
-            throw new IllegalStateException("未找到通知信息");
+            throw new IllegalStateException("未找到通知資訊");
         }
 
         // 2. 查詢發送記錄
@@ -374,78 +350,37 @@ public class NotificationPublishHandler {
 
         log.info("開始重新發送失敗通知，共 {} 條失敗記錄", failedRecords.size());
 
-        // 5. 按用戶類型分組失敗記錄（自定義家校成員舊數據可能被誤標為學生，需改走家長通道）
-        Set<String> customHomeSchoolParentUserids = resolveCustomHomeSchoolParentUserids(failedRecords);
+        // 5. 收集需重發的家長 userid（user_type=1 學生/家長）
         Set<String> failedParentIdSet = new LinkedHashSet<>();
-        Set<String> failedStudentIdSet = new LinkedHashSet<>();
         for (NotificationUserReadRecord record : failedRecords) {
             if (record.getUserId() == null || record.getUserId().trim().isEmpty()) {
                 continue;
             }
-            String userId = record.getUserId().trim();
-            if ("2".equals(record.getUserType()) || customHomeSchoolParentUserids.contains(userId)) {
-                failedParentIdSet.add(userId);
-            } else if ("1".equals(record.getUserType())) {
-                failedStudentIdSet.add(userId);
+            if ("1".equals(record.getUserType())) {
+                failedParentIdSet.add(record.getUserId().trim());
             }
         }
         List<String> failedParentIds = new ArrayList<>(failedParentIdSet);
-        List<String> failedStudentIds = new ArrayList<>(failedStudentIdSet);
-
-        if (!customHomeSchoolParentUserids.isEmpty()) {
-            log.info("重發時識別到 {} 個自定義家校成員改走家長通道", customHomeSchoolParentUserids.size());
-        }
 
         // 6. 重新發送
         Set<String> overallSuccessUserIds = new HashSet<>();
         Map<String, String> allFailedUserReasons = new HashMap<>();
 
-        // 重新發送家長消息
         if (!failedParentIds.isEmpty()) {
             SendResult parentResult = schoolSendHelper.sendInBatches(
-                    notification, failedParentIds, Collections.emptyList(), Collections.emptyList());
+                    notification, failedParentIds);
             overallSuccessUserIds.addAll(parentResult.getSuccessUserIds());
             if (parentResult.getFailedUserReasons() != null) {
                 allFailedUserReasons.putAll(parentResult.getFailedUserReasons());
             }
         }
 
-        // 重新發送學生消息
-        if (!failedStudentIds.isEmpty()) {
-            SendResult studentResult = schoolSendHelper.sendInBatches(
-                    notification, Collections.emptyList(), failedStudentIds, Collections.emptyList());
-            overallSuccessUserIds.addAll(studentResult.getSuccessUserIds());
-            if (studentResult.getFailedUserReasons() != null) {
-                allFailedUserReasons.putAll(studentResult.getFailedUserReasons());
-            }
-        }
-
-        // 7. 以學生爲維度統計成功/失敗數
-        Map<String, Set<String>> studentToUsersMap = new HashMap<>();
-        for (NotificationUserReadRecord record : failedRecords) {
-            String studentId = record.getStudentUserId();
-            if (studentId == null || studentId.trim().isEmpty()) {
-                studentId = record.getUserId();
-            }
-            studentToUsersMap.computeIfAbsent(studentId, k -> new HashSet<>()).add(record.getUserId());
-        }
-
-        int successCount = 0;
-        int failCount = 0;
-        for (Map.Entry<String, Set<String>> entry : studentToUsersMap.entrySet()) {
-            boolean anySuccess = false;
-            for (String uid : entry.getValue()) {
-                if (overallSuccessUserIds.contains(uid)) {
-                    anySuccess = true;
-                    break;
-                }
-            }
-            if (anySuccess) {
-                successCount++;
-            } else {
-                failCount++;
-            }
-        }
+        // 7. 以學籍 student_id 為維度統計成功/失敗數
+        Map<String, Set<String>> studentToParentsMap =
+                NotificationReceiverStats.groupParentsByStudentFromReadRecords(failedRecords);
+        int[] counts = NotificationReceiverStats.countStudentResults(studentToParentsMap, overallSuccessUserIds);
+        int successCount = counts[0];
+        int failCount = counts[1];
 
         // 8. 持久化重發結果
         notificationPublishRecordService.saveResendRecords(
@@ -453,7 +388,7 @@ public class NotificationPublishHandler {
                 allFailedUserReasons, isAutoTask, successCount);
 
         // 9. 構建返回結果
-        result.put("resendCount", studentToUsersMap.size());
+        result.put("resendCount", studentToParentsMap.size());
         result.put("successCount", successCount);
         result.put("failCount", failCount);
 
@@ -473,54 +408,33 @@ public class NotificationPublishHandler {
     }
 
     /**
-     * 識別被誤標為學生的自定義家校通訊錄家長（舊發送記錄 userType=1）
-     */
-    private Set<String> resolveCustomHomeSchoolParentUserids(List<NotificationUserReadRecord> failedRecords) {
-        List<String> candidateUserids = failedRecords.stream()
-                .filter(record -> "1".equals(record.getUserType()))
-                .map(NotificationUserReadRecord::getUserId)
-                .filter(userId -> userId != null && !userId.trim().isEmpty())
-                .map(String::trim)
-                .distinct()
-                .collect(Collectors.toList());
-        if (candidateUserids.isEmpty()) {
-            return Collections.emptySet();
-        }
-        List<String> matchedUserids = schoolDepartmentMemberMapper.selectHomeSchoolUseridsByUserids(candidateUserids);
-        if (matchedUserids == null || matchedUserids.isEmpty()) {
-            return Collections.emptySet();
-        }
-        return new HashSet<>(matchedUserids);
-    }
-
-    /**
-     * 每日學校通知發送主方法
+     * 每日學生手冊通知發送主方法
      * 由 SchoolNoticeTask 調用（每周一至周五下午 6 點）
      */
     public TaskResult sendDailySchoolNotice() {
         log.info("開始執行學校通知發送任務");
-        // 獲取所有家長用戶 ID
-        List<String> allParentUserIds = departmentParentBindingService.getAllParentUserIds();
+        // 按基礎設置中配置的學段，查詢該學段下家長 userid
+        List<String> allParentUserIds = schoolFamilyContactService.getAllParentUserIds();
         if (allParentUserIds == null || allParentUserIds.isEmpty()) {
-            log.warn("沒有家長用戶 ID，跳過發送");
+            log.warn("沒有可發送的家長用戶（請確認基礎設置已選擇每日學生手冊通知班級，且對應班級下已有家校聯絡人數據）");
             return TaskResult.success(0, 0, "無家長需發送");
         }
         log.info("獲取到家長用戶 ID 總數量: {}", allParentUserIds.size());
 
         int totalBatches = NotificationSchoolSendHelper.calcBatchCount(
                 allParentUserIds.size(),
-                NotificationSchoolSendHelper.PARENT_STUDENT_BATCH_SIZE);
+                NotificationSchoolSendHelper.PARENT_BATCH_SIZE);
         log.info("需要分 {} 批發送，每批最多 {} 個家長", totalBatches,
-                NotificationSchoolSendHelper.PARENT_STUDENT_BATCH_SIZE);
+                NotificationSchoolSendHelper.PARENT_BATCH_SIZE);
 
         int successCount = 0;
         int failCount = 0;
         StringBuilder errorMsg = new StringBuilder();
 
-        for (int i = 0; i < allParentUserIds.size(); i += NotificationSchoolSendHelper.PARENT_STUDENT_BATCH_SIZE) {
-            int endIndex = Math.min(i + NotificationSchoolSendHelper.PARENT_STUDENT_BATCH_SIZE, allParentUserIds.size());
+        for (int i = 0; i < allParentUserIds.size(); i += NotificationSchoolSendHelper.PARENT_BATCH_SIZE) {
+            int endIndex = Math.min(i + NotificationSchoolSendHelper.PARENT_BATCH_SIZE, allParentUserIds.size());
             List<String> batchList = allParentUserIds.subList(i, endIndex);
-            int batchNumber = (i / NotificationSchoolSendHelper.PARENT_STUDENT_BATCH_SIZE) + 1;
+            int batchNumber = (i / NotificationSchoolSendHelper.PARENT_BATCH_SIZE) + 1;
 
             log.info("開始發送第 {}/{} 批，本批家長數量: {}", batchNumber, totalBatches, batchList.size());
 
@@ -599,7 +513,7 @@ public class NotificationPublishHandler {
         }
 
         if (failCount > 0) {
-            return new TaskResult(remindCount, failCount, "定時提示家長回復通知部分失敗: " + errorMsg.toString());
+            return new TaskResult(remindCount, failCount, "定時提示家長回復通知部分失敗: " + errorMsg);
         }
 
         log.info("定時提示家長回復通知任務執行完成，共處理 {} 個通知", remindCount);
@@ -664,12 +578,12 @@ public class NotificationPublishHandler {
      * @param status 提醒發送狀態（1=成功，2=失敗）
      */
     private NotificationReminderRecord buildReminderRecord(Long notificationId, Long sendRecordId,
-                                                           String studentUserId, String parentUserIdsStr,
+                                                           String studentId, String parentUserIdsStr,
                                                            LocalDateTime now, String status) {
         NotificationReminderRecord record = new NotificationReminderRecord();
         record.setNotificationId(notificationId);
         record.setSendRecordId(sendRecordId);
-        record.setStudentUserId(studentUserId);
+        record.setStudentId(studentId);
         record.setParentUserIds(parentUserIdsStr);
         record.setRemindSendTime(now);
         record.setRemindSendStatus(status);

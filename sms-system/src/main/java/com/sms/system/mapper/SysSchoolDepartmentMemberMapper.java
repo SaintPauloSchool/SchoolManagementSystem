@@ -51,6 +51,11 @@ public interface SysSchoolDepartmentMemberMapper {
     int batchInsertMembers(@Param("members") List<SysSchoolDepartmentMember> members);
 
     /**
+     * 根據 userid 批量查詢家校通訊錄成員（type=2）
+     */
+    List<SysSchoolDepartmentMember> selectMembersByUserids(@Param("userids") List<String> userids);
+
+    /**
      * 查詢屬於自定義家校通訊錄（type=2）的成員 userid
      */
     List<String> selectHomeSchoolUseridsByUserids(@Param("userids") List<String> userids);

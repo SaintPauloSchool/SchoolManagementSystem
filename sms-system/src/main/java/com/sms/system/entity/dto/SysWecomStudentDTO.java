@@ -17,6 +17,9 @@ public class SysWecomStudentDTO implements Serializable {
     /** 班級關鍵字 */
     private String queryClass;
 
+    /** 當前綁定的學籍 student_id（手動匹配時用於排除已綁定的家長） */
+    private String studentId;
+
     /** 姓名繁體（服務層轉換，供 SQL 使用） */
     private String queryNameTraditional;
 
@@ -45,6 +48,14 @@ public class SysWecomStudentDTO implements Serializable {
 
     public void setQueryClass(String queryClass) {
         this.queryClass = queryClass;
+    }
+
+    public String getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
     public String getQueryNameTraditional() {

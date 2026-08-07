@@ -5,15 +5,13 @@ import com.sms.web.controller.base.AdminBaseController;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.core.page.TableDataInfo;
 import com.sms.common.enums.BusinessType;
-import com.sms.handler.system.StudentMatchHandler;
-import com.sms.system.entity.dto.SysStudentMatchBindDTO;
+import com.sms.system.entity.dto.SysStudentMatchBatchBindDTO;
 import com.sms.system.entity.dto.SysStudentMatchDTO;
-import com.sms.system.entity.dto.SysStudentMatchDeleteDTO;
 import com.sms.system.entity.dto.SysStudentMatchSyncDataDTO;
-import com.sms.system.entity.dto.SysStudentMatchSyncDTO;
+import com.sms.system.entity.dto.SysStudentMatchUpdateDTO;
 import com.sms.system.entity.dto.SysWecomStudentDTO;
+import com.sms.system.entity.vo.SysSchoolFamilyContactVO;
 import com.sms.system.entity.vo.SysStudentMatchOperationResultVO;
-import com.sms.system.entity.vo.SysStudentMatchSyncResultVO;
 import com.sms.system.entity.vo.SysStudentMatchVO;
 import com.sms.system.entity.vo.StudentPhotoVO;
 import com.sms.system.service.IStudentPhotoService;
@@ -22,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,8 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 學生數據匹配與更名 控制層
- * <p>入參：DTO；出參：VO</p>
+ * 學生數據匹配
  */
 @RestController
 @RequestMapping("/system/student/match")
@@ -41,9 +39,6 @@ public class SysStudentMatchController extends AdminBaseController {
 
     @Autowired
     private ISysStudentMatchService sysStudentMatchService;
-
-    @Autowired
-    private StudentMatchHandler studentMatchHandler;
 
     @Autowired
     private IStudentPhotoService studentPhotoService;
@@ -76,7 +71,9 @@ public class SysStudentMatchController extends AdminBaseController {
         if (isNotAdmin()) {
             return getDataTable(new ArrayList<>());
         }
-        return sysStudentMatchService.selectWecomCandidates(wecomStudentDTO);
+        startPage();
+        List<SysSchoolFamilyContactVO> wecomCandidateList = sysStudentMatchService.selectWecomCandidates(wecomStudentDTO);
+        return getDataTable(wecomCandidateList);
     }
 
     @Log(title = "獲取學生照片", businessType = BusinessType.SELECT)
@@ -98,24 +95,23 @@ public class SysStudentMatchController extends AdminBaseController {
     }
 
     @Log(title = "手動綁定學生匹配", businessType = BusinessType.UPDATE)
-    @PostMapping("/bind")
-    public AjaxResult bind(@RequestBody SysStudentMatchBindDTO studentMatchBindDTO) {
+    @PostMapping("/bindBatch")
+    public AjaxResult bindBatch(@RequestBody SysStudentMatchBatchBindDTO batchBindDTO) {
         if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
-        SysStudentMatchOperationResultVO resultVO = sysStudentMatchService.bindStudent(studentMatchBindDTO);
+        SysStudentMatchOperationResultVO resultVO = sysStudentMatchService.bindStudents(batchBindDTO);
         return AjaxResult.from(resultVO.isSuccess(), resultVO.getMessage());
     }
 
-    @Log(title = "同步姓名至企業微信", businessType = BusinessType.UPDATE)
-    @PostMapping("/sync")
-    public AjaxResult sync(@RequestBody SysStudentMatchSyncDTO studentMatchSyncDTO) {
+    @Log(title = "更正學生匹配家長資訊", businessType = BusinessType.UPDATE)
+    @PutMapping("/update")
+    public AjaxResult update(@RequestBody SysStudentMatchUpdateDTO updateDTO) {
         if (isNotAdmin()) {
             return AjaxResult.error("無權限訪問");
         }
-        studentMatchSyncDTO.setOperName(getUsername());
-        SysStudentMatchSyncResultVO resultVO = studentMatchHandler.syncStudentNames(studentMatchSyncDTO);
-        return AjaxResult.success(resultVO.getMessage(), resultVO);
+        SysStudentMatchOperationResultVO resultVO = sysStudentMatchService.updateStudentMatch(updateDTO);
+        return AjaxResult.from(resultVO.isSuccess(), resultVO.getMessage());
     }
 
     @Log(title = "同步對照數據", businessType = BusinessType.UPDATE)
@@ -132,15 +128,5 @@ public class SysStudentMatchController extends AdminBaseController {
         } catch (Exception e) {
             return AjaxResult.error("數據同步比對失敗：" + e.getMessage());
         }
-    }
-
-    @Log(title = "批量刪除學生匹配記錄", businessType = BusinessType.DELETE)
-    @PostMapping("/delete")
-    public AjaxResult delete(@RequestBody SysStudentMatchDeleteDTO studentMatchDeleteDTO) {
-        if (isNotAdmin()) {
-            return AjaxResult.error("無權限訪問");
-        }
-        SysStudentMatchOperationResultVO resultVO = sysStudentMatchService.deleteSysStudentMatchByIds(studentMatchDeleteDTO);
-        return AjaxResult.from(resultVO.isSuccess(), resultVO.getMessage());
     }
 }

@@ -9,7 +9,7 @@ import java.util.List;
 public interface ISysDepartmentAdminService {
 
     /**
-     * 批量保存部門管理員信息（處理新增和更新）
+     * 批量保存部門管理員資訊（處理新增和更新）
      *
      * @param admins 部門管理員列表
      */

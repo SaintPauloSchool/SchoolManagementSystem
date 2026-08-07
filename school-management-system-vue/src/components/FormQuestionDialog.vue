@@ -1149,7 +1149,7 @@ export default {
       }
       
       if (!this.hasOptionType(this.selectedQuestion.type)) {
-        ElNotification({ title: '題型不支持', message: '該題型不需要設置跳轉規則', type: 'warning', duration: 3000 })
+        ElNotification({ title: '題型不支援', message: '該題型不需要設置跳轉規則', type: 'warning', duration: 3000 })
         return
       }
       

@@ -5,13 +5,13 @@ import java.util.List;
 /**
  * 通知詳情 VO
  * <p>
- * 聚合通知基本信息、接收/抄送對象、問題列表以及發送/閱讀統計，
+ * 聚合通知基本資訊、接收/抄送對象、問題列表以及發送/閱讀統計，
  * 作為 {@code GET /system/notification/{id}} 接口的完整響應體。
  * </p>
  */
 public class NotificationDetailVO {
 
-    /** 通知基本信息 */
+    /** 通知基本資訊 */
     private NotificationVO notification;
 
     /** 接收對象列表 */

@@ -33,7 +33,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     public UserDetails loadUserBySysToken(SysToken sysToken) {
-        // 生成用戶信息
+        // 生成用戶資訊
         SysUser user = new SysUser();
         // openUserId 存放企業微信原始字串 Controller 透過 getOpenUserId() 取得
         user.setOpenUserId(sysToken.getUserId());
@@ -65,7 +65,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     /**
-     * 獲取用戶權限信息
+     * 獲取用戶權限資訊
      */
     public Collection<? extends GrantedAuthority> getUserPermissions(SysUser user) {
         List<GrantedAuthority> authorities = new ArrayList<>();

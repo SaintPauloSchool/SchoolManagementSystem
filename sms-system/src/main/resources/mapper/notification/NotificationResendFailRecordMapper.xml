@@ -9,8 +9,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="notificationId"  column="notification_id" />
         <result property="sendRecordId"    column="send_record_id"  />
         <result property="userId"          column="user_id"         />
-        <result property="userType"        column="user_type"       />
-        <result property="studentUserId"   column="student_user_id" />
+        <result property="studentId"       column="student_id"      />
         <result property="failReason1"     column="fail_reason_1"   />
         <result property="failMessage1"    column="fail_message_1"  />
         <result property="failReason2"     column="fail_reason_2"   />
@@ -23,18 +22,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="updateTime"      column="update_time"     />
     </resultMap>
 
-    <!-- 新增重發失敗記錄 -->
     <insert id="insert" parameterType="com.sms.system.entity.notification.NotificationResendFailRecord"
             useGeneratedKeys="true" keyProperty="id">
         insert into notification_resend_fail_record
-        (notification_id, send_record_id, user_id, user_type, student_user_id,
+        (notification_id, send_record_id, user_id, student_id,
          fail_reason_1, fail_message_1, fail_reason_2, fail_message_2, fail_reason_3, fail_message_3, fail_count, status, create_time, update_time)
         values
-        (#{notificationId}, #{sendRecordId}, #{userId}, #{userType}, #{studentUserId},
+        (#{notificationId}, #{sendRecordId}, #{userId}, #{studentId},
          #{failReason1}, #{failMessage1}, #{failReason2}, #{failMessage2}, #{failReason3}, #{failMessage3}, #{failCount}, #{status}, #{createTime}, #{updateTime})
     </insert>
 
-    <!-- 更新重發失敗記錄 -->
     <update id="updateById" parameterType="com.sms.system.entity.notification.NotificationResendFailRecord">
         update notification_resend_fail_record
         <set>
@@ -51,29 +48,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{id}
     </update>
 
-    <!-- 根據通知ID查詢所有重發失敗記錄 -->
     <select id="selectByNotificationId" resultMap="ResendFailRecordResult">
-        select id, notification_id, send_record_id, user_id, user_type, student_user_id,
+        select id, notification_id, send_record_id, user_id, student_id,
                fail_reason_1, fail_message_1, fail_reason_2, fail_message_2, fail_reason_3, fail_message_3, fail_count, status, create_time, update_time
         from notification_resend_fail_record
         where notification_id = #{notificationId}
     </select>
 
-    <!-- 根據發送記錄ID查詢重發失敗記錄 -->
     <select id="selectBySendRecordId" resultMap="ResendFailRecordResult">
-        select id, notification_id, send_record_id, user_id, user_type, student_user_id,
+        select id, notification_id, send_record_id, user_id, student_id,
                fail_reason_1, fail_message_1, fail_reason_2, fail_message_2, fail_reason_3, fail_message_3, fail_count, status, create_time, update_time
         from notification_resend_fail_record
         where send_record_id = #{sendRecordId}
     </select>
 
-    <!-- 直接返回 VO，用於分頁查詢 -->
     <select id="selectBySendRecordIdVO" resultType="com.sms.system.entity.vo.ResendFailRecordVO">
         select r.id,
                r.user_id as userId,
-               r.user_type as userType,
-               r.student_user_id as studentUserId,
-               ps.student_name as studentName,
+               r.student_id as studentId,
+               si.id_name as studentName,
                ps.relation_desc as relation,
                r.fail_count as failCount,
                r.status,
@@ -86,13 +79,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                r.create_time as createTime,
                r.update_time as updateTime
         from notification_resend_fail_record r
-        left join sys_parent_student_relation ps on r.user_id = ps.parent_user_id and r.student_user_id = ps.student_user_id
+        left join sys_school_family_contact ps
+            on r.user_id collate utf8mb4_unicode_ci = ps.parent_user_id collate utf8mb4_unicode_ci
+            and r.student_id is not null
+        left join student_profiles.student_info si
+            on r.student_id collate utf8mb4_unicode_ci = si.student_id
         where r.send_record_id = #{sendRecordId}
     </select>
 
-    <!-- 根據通知ID和用戶ID查詢單條記錄 -->
     <select id="selectByNotificationIdAndUserId" resultMap="ResendFailRecordResult">
-        select id, notification_id, send_record_id, user_id, user_type, student_user_id,
+        select id, notification_id, send_record_id, user_id, student_id,
                fail_reason_1, fail_message_1, fail_reason_2, fail_message_2, fail_reason_3, fail_message_3, fail_count, status, create_time, update_time
         from notification_resend_fail_record
         where notification_id = #{notificationId}

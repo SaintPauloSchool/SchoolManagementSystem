@@ -1,4 +1,3 @@
-export const APP_BASE_PATH = import.meta.env.VITE_APP_BASE_PATH || '/school-management-system/'
 export const API_BASE_PATH = import.meta.env.VITE_API_BASE_PATH || '/sms-api'
 export const PROFILE_BASE_PATH = `${API_BASE_PATH}/profile`
 
