@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sms.system.mapper.SysSchoolFamilyContactMapper">
+    
+    <resultMap type="com.sms.system.entity.SysSchoolFamilyContact" id="SysSchoolFamilyContactResult">
+        <result property="id" column="id"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="parentUserId" column="parent_user_id"/>
+        <result property="studentUserId" column="student_user_id"/>
+        <result property="studentName" column="student_name"/>
+        <result property="relationDesc" column="relation_desc"/>
+        <result property="mobile" column="mobile"/>
+        <result property="externalUserid" column="external_userid"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <resultMap type="com.sms.system.entity.vo.SysSchoolFamilyContactVO" id="SysSchoolFamilyContactVOResult">
+        <result property="id" column="id"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="parentUserId" column="parent_user_id"/>
+        <result property="studentUserId" column="student_user_id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="studentName" column="student_name"/>
+        <result property="mobile" column="mobile"/>
+        <result property="relationDesc" column="relation_desc"/>
+        <result property="classCodeWecom" column="class_code_wecom"/>
+    </resultMap>
+
+    <sql id="selectColumns">
+        id, department_id, parent_user_id, student_user_id, student_name, relation_desc, mobile, external_userid, create_time, update_time
+    </sql>
+
+    <select id="selectByParentUserIds" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+        WHERE parent_user_id IN
+        <foreach collection="parentUserIds" item="parentUserId" open="(" separator="," close=")">
+            #{parentUserId}
+        </foreach>
+    </select>
+
+    <select id="selectByIds" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="selectByParentAndStudentUserIds" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+        WHERE parent_user_id IN
+        <foreach collection="parentUserIds" item="parentUserId" open="(" separator="," close=")">
+            #{parentUserId}
+        </foreach>
+        AND student_user_id IN
+        <foreach collection="studentUserIds" item="studentUserId" open="(" separator="," close=")">
+            #{studentUserId}
+        </foreach>
+    </select>
+
+    <select id="selectByDepartmentId" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+        WHERE department_id = #{departmentId}
+    </select>
+
+    <select id="selectByDepartmentIds" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+        WHERE department_id IN
+        <foreach collection="departmentIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="selectByStudentUserIds" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+        WHERE student_user_id IN
+        <foreach collection="studentUserIds" item="studentUserId" open="(" separator="," close=")">
+            #{studentUserId}
+        </foreach>
+    </select>
+
+    <select id="selectParentUserIdsByDepartmentIds" resultType="java.lang.String">
+        SELECT DISTINCT r.parent_user_id
+        FROM sys_school_family_contact r
+        WHERE r.department_id IN
+        <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
+            #{departmentId}
+        </foreach>
+          AND r.parent_user_id IS NOT NULL AND r.parent_user_id != ''
+    </select>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO sys_school_family_contact (
+            department_id, parent_user_id, student_user_id, student_name, relation_desc, mobile, external_userid, create_time, update_time
+        ) VALUES
+        <foreach collection="contacts" item="item" separator=",">
+            (#{item.departmentId}, #{item.parentUserId}, #{item.studentUserId}, #{item.studentName}, #{item.relationDesc}, #{item.mobile}, #{item.externalUserid}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+    </insert>
+
+    <update id="updateContact" parameterType="com.sms.system.entity.SysSchoolFamilyContact">
+        UPDATE sys_school_family_contact
+        <set>
+            <if test="studentName != null">student_name = #{studentName},</if>
+            <if test="relationDesc != null">relation_desc = #{relationDesc},</if>
+            <if test="mobile != null">mobile = #{mobile},</if>
+            <if test="externalUserid != null">external_userid = #{externalUserid},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteBatch" parameterType="java.util.List">
+        DELETE FROM sys_school_family_contact
+        WHERE
+        <foreach collection="contacts" item="item" separator="OR">
+            (parent_user_id = #{item.parentUserId} AND student_user_id = #{item.studentUserId} AND department_id = #{item.departmentId})
+        </foreach>
+    </delete>
+
+    <delete id="deleteBatchByIds">
+        DELETE FROM sys_school_family_contact
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectAllContacts" resultMap="SysSchoolFamilyContactResult">
+        SELECT <include refid="selectColumns"/>
+        FROM sys_school_family_contact
+    </select>
+
+    <select id="selectSchoolFamilyContactWithClassList" resultMap="SysSchoolFamilyContactVOResult">
+        SELECT DISTINCT
+            r.parent_user_id AS parent_user_id,
+            r.student_user_id AS student_user_id,
+            r.student_name AS student_name,
+            r.mobile AS mobile,
+            r.relation_desc AS relation_desc,
+            cs.class_section_sp AS class_code_wecom
+        FROM sys_school_family_contact r
+        INNER JOIN sys_department d ON r.department_id = d.id
+        INNER JOIN class_section cs ON d.name = cs.class_section_dsedj
+        ORDER BY r.student_name ASC
+    </select>
+
+    <select id="selectWecomCandidates" parameterType="com.sms.system.entity.dto.SysWecomStudentDTO"
+            resultMap="SysSchoolFamilyContactVOResult">
+        SELECT DISTINCT
+            r.parent_user_id AS parent_user_id,
+            r.student_user_id AS student_user_id,
+            r.student_name AS student_name,
+            r.mobile AS mobile,
+            r.relation_desc AS relation_desc,
+            cs.class_section_sp AS class_code_wecom
+        FROM sys_school_family_contact r
+        INNER JOIN sys_department d ON r.department_id = d.id
+        INNER JOIN class_section cs ON d.name = cs.class_section_dsedj
+        WHERE r.parent_user_id IS NOT NULL AND r.parent_user_id != ''
+        <if test="queryNameTraditional != null and queryNameTraditional != ''">
+            AND (
+                r.student_name LIKE concat('%', #{queryNameTraditional}, '%')
+                OR r.student_name LIKE concat('%', #{queryNameSimplified}, '%')
+            )
+        </if>
+        <if test="queryMobile != null and queryMobile != ''">
+            AND r.mobile LIKE concat('%', #{queryMobile}, '%')
+        </if>
+        <if test="queryClass != null and queryClass != ''">
+            AND LOWER(cs.class_section_sp) LIKE concat('%', LOWER(#{queryClass}), '%')
+        </if>
+        <choose>
+            <when test="studentId != null and studentId != ''">
+                AND NOT EXISTS (
+                    SELECT 1 FROM sys_student_match m
+                    WHERE m.student_id COLLATE utf8mb4_unicode_ci = #{studentId}
+                      AND m.user_id = r.parent_user_id
+                      AND m.student_user_id = r.student_user_id
+                )
+            </when>
+            <otherwise>
+                AND NOT EXISTS (
+                    SELECT 1 FROM sys_student_match m
+                    WHERE m.user_id = r.parent_user_id
+                      AND m.student_user_id = r.student_user_id
+                )
+            </otherwise>
+        </choose>
+        ORDER BY r.student_name ASC
+    </select>
+
+    <select id="selectMatchedContactsByDepartmentIds" resultMap="SysSchoolFamilyContactVOResult">
+        SELECT DISTINCT
+            sfc.id,
+            sfc.department_id,
+            sfc.parent_user_id,
+            sfc.student_user_id,
+            m.student_id AS student_id,
+            sfc.student_name,
+            sfc.relation_desc,
+            sfc.mobile,
+            sfc.create_time,
+            sfc.update_time
+        FROM sys_school_family_contact sfc
+        INNER JOIN sys_department d ON sfc.department_id = d.id AND d.type = 1
+        INNER JOIN class_section cs ON d.name = cs.class_section_dsedj
+        INNER JOIN ${studentProfilesDatabase}.student_info si
+            ON si.class_section COLLATE utf8mb4_unicode_ci = cs.class_section_sp COLLATE utf8mb4_unicode_ci
+        INNER JOIN sys_student_match m
+            ON m.student_id COLLATE utf8mb4_unicode_ci = si.student_id COLLATE utf8mb4_unicode_ci
+            AND m.user_id = sfc.parent_user_id
+            AND m.student_user_id = sfc.student_user_id
+        WHERE sfc.department_id IN
+        <foreach collection="departmentIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+</mapper>

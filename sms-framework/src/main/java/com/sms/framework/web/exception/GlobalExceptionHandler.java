@@ -48,14 +48,14 @@ public class GlobalExceptionHandler
     }*/
 
     /**
-     * 請求方式不支持
+     * 請求方式不支援
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public AjaxResult handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException e,
             HttpServletRequest request)
     {
         String requestURI = request.getRequestURI();
-        log.error("請求地址'{}',不支持'{}'請求", requestURI, e.getMethod());
+        log.error("請求地址'{}',不支援'{}'請求", requestURI, e.getMethod());
         return AjaxResult.error(e.getMessage());
     }
 

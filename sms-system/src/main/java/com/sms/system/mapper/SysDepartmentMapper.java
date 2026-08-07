@@ -19,7 +19,7 @@ public interface SysDepartmentMapper {
     List<SysDepartment> selectAll();
 
     /**
-     * 批量保存部門信息
+     * 批量保存部門資訊
      * @param departments 部門列表
      */
     void batchInsertDepartments(@Param("list") List<SysDepartment> departments);

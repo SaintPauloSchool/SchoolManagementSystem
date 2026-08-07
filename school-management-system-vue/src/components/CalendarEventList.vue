@@ -18,7 +18,7 @@
         </div>
       </template>
 
-      <!-- 搜索欄 -->
+      <!-- 搜尋欄 -->
       <el-form :model="searchForm" ref="queryForm" :inline="true" class="search-form">
         <el-form-item label="行事標題">
           <el-input v-model="searchForm.title" placeholder="請輸入行事標題" clearable @keyup.enter="handleSearch" />
@@ -35,7 +35,7 @@
           <el-date-picker v-model="searchForm.eventDate" type="date" placeholder="請選擇行事日期" value-format="YYYY-MM-DD" clearable />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
+          <el-button type="primary" :icon="Search" @click="handleSearch">搜尋</el-button>
           <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
         </el-form-item>
       </el-form>

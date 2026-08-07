@@ -55,7 +55,7 @@ public class AsyncFactory
     *//**
      * 操作日誌記錄
      * 
-     * @param operLog 操作日誌信息
+     * @param operLog 操作日誌資訊
      * @return 任務task
      *//*
     public static TimerTask recordOper(final SysOperLog operLog)
@@ -73,7 +73,7 @@ public class AsyncFactory
     }
 
     *//**
-     * 記錄登錄信息
+     * 記錄登錄資訊
      * 
      * @param username 用戶名
      * @param status 狀態
@@ -97,7 +97,7 @@ public class AsyncFactory
                 s.append(LogUtils.getBlock(username));
                 s.append(LogUtils.getBlock(status));
                 s.append(LogUtils.getBlock(message));
-                // 打印信息到日誌
+                // 打印資訊到日誌
                 sys_user_logger.info(s.toString(), args);
                 // 獲取客戶端操作系統
                 String os = userAgent.getOperatingSystem().getName();

@@ -8,13 +8,80 @@
         <result property="id" column="id"/>
         <result property="classSectionDsedj" column="class_section_dsedj"/>
         <result property="classSectionSp" column="class_section_sp"/>
+        <result property="division" column="division"/>
     </resultMap>
 
-    <select id="selectByDsedjName" resultMap="ClassSectionResult">
-        select id, class_section_dsedj, class_section_sp
+    <sql id="selectClassSectionVo">
+        select id, class_section_dsedj, class_section_sp, division
         from class_section
+    </sql>
+
+    <select id="selectByDsedjName" resultMap="ClassSectionResult">
+        <include refid="selectClassSectionVo"/>
         where class_section_dsedj = #{classSectionDsedj}
         limit 1
     </select>
+
+    <select id="selectDuplicateList" resultMap="ClassSectionResult">
+        <include refid="selectClassSectionVo"/>
+        where class_section_dsedj = #{classSectionDsedj}
+          and class_section_sp = #{classSectionSp}
+        <if test="excludeId != null">
+            and id != #{excludeId}
+        </if>
+        limit 1
+    </select>
+
+    <select id="selectClassSectionById" parameterType="Long" resultMap="ClassSectionResult">
+        <include refid="selectClassSectionVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectClassSectionList" parameterType="com.sms.system.entity.ClassSection" resultMap="ClassSectionResult">
+        <include refid="selectClassSectionVo"/>
+        <where>
+            <if test="classSectionDsedj != null and classSectionDsedj != ''">
+                and class_section_dsedj like concat('%', #{classSectionDsedj}, '%')
+            </if>
+            <if test="classSectionSp != null and classSectionSp != ''">
+                and class_section_sp like concat('%', #{classSectionSp}, '%')
+            </if>
+            <if test="division != null">
+                and division = #{division}
+            </if>
+        </where>
+        order by division asc, class_section_sp asc
+    </select>
+
+    <insert id="insertClassSection" parameterType="com.sms.system.entity.ClassSection" useGeneratedKeys="true" keyProperty="id">
+        insert into class_section
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="classSectionDsedj != null and classSectionDsedj != ''">class_section_dsedj,</if>
+            <if test="classSectionSp != null and classSectionSp != ''">class_section_sp,</if>
+            <if test="division != null">division,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="classSectionDsedj != null and classSectionDsedj != ''">#{classSectionDsedj},</if>
+            <if test="classSectionSp != null and classSectionSp != ''">#{classSectionSp},</if>
+            <if test="division != null">#{division},</if>
+        </trim>
+    </insert>
+
+    <update id="updateClassSection" parameterType="com.sms.system.entity.ClassSection">
+        update class_section
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="classSectionDsedj != null and classSectionDsedj != ''">class_section_dsedj = #{classSectionDsedj},</if>
+            <if test="classSectionSp != null and classSectionSp != ''">class_section_sp = #{classSectionSp},</if>
+            <if test="division != null">division = #{division},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteClassSectionByIds" parameterType="Long">
+        delete from class_section where id in
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
 
 </mapper>

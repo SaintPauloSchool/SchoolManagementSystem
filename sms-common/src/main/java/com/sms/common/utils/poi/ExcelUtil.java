@@ -941,8 +941,8 @@ public class ExcelUtil<T>
      * 根據Excel註解創建表格列樣式
      * 
      * @param styles 自定義樣式列表
-     * @param field  屬性列信息
-     * @param excel  註解信息
+     * @param field  屬性列資訊
+     * @param excel  註解資訊
      */
     public void annotationDataStyles(Map<String, CellStyle> styles, Field field, Excel excel)
     {
@@ -984,7 +984,7 @@ public class ExcelUtil<T>
     {
         // 創建列
         Cell cell = row.createCell(column);
-        // 寫入列信息
+        // 寫入列資訊
         cell.setCellValue(attr.name());
         setDataValidation(attr, row, column);
         cell.setCellStyle(styles.get(StringUtils.format("header_{}_{}", attr.headerColor(), attr.headerBackgroundColor())));
@@ -1001,11 +1001,11 @@ public class ExcelUtil<T>
     }
 
     /**
-     * 設置單元格信息
+     * 設置單元格資訊
      * 
      * @param value 單元格值
      * @param attr 註解相關
-     * @param cell 單元格信息
+     * @param cell 單元格資訊
      */
     public void setCellVo(Object value, Excel attr, Cell cell)
     {
@@ -1109,7 +1109,7 @@ public class ExcelUtil<T>
             }
             else
             {
-                // 提示信息或只能選擇不能輸入的列內容.
+                // 提示資訊或只能選擇不能輸入的列內容.
                 setPromptOrValidation(sheet, comboArray, attr.prompt(), 1, 100, column, column);
             }
         }
@@ -1206,7 +1206,7 @@ public class ExcelUtil<T>
         DataValidation dataValidation = helper.createValidation(constraint, regions);
         if (StringUtils.isNotEmpty(promptContent))
         {
-            // 如果設置了提示信息則鼠標放上去提示
+            // 如果設置了提示資訊則鼠標放上去提示
             dataValidation.createPromptBox("", promptContent);
             dataValidation.setShowPromptBox(true);
         }
@@ -1255,7 +1255,7 @@ public class ExcelUtil<T>
         DataValidation dataValidation = helper.createValidation(constraint, regions);
         if (StringUtils.isNotEmpty(promptContent))
         {
-            // 如果設置了提示信息則鼠標放上去提示
+            // 如果設置了提示資訊則鼠標放上去提示
             dataValidation.createPromptBox("", promptContent);
             dataValidation.setShowPromptBox(true);
         }
@@ -1398,7 +1398,7 @@ public class ExcelUtil<T>
     }
 
     /**
-     * 合計統計信息
+     * 合計統計資訊
      */
     private void addStatisticsData(Integer index, String text, Excel entity)
     {
@@ -1530,7 +1530,7 @@ public class ExcelUtil<T>
     }
 
     /**
-     * 獲取字段註解信息
+     * 獲取字段註解資訊
      */
     public List<Object[]> getFields()
     {
@@ -1569,7 +1569,7 @@ public class ExcelUtil<T>
     }
 
     /**
-     * 添加字段信息
+     * 添加字段資訊
      */
     public void addField(List<Object[]> fields, Field field)
     {

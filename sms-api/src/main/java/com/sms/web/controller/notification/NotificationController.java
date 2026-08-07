@@ -131,7 +131,7 @@ public class NotificationController extends BaseController {
         notificationSaveDTO.setSenderName(getUsername());
 
         try {
-            if (notificationService.save(notificationSaveDTO)) {
+            if (notificationService.save(notificationSaveDTO, getUsername())) {
                 if ("1".equals(notificationSaveDTO.getStatus())) {
                     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                         @Override
@@ -194,7 +194,7 @@ public class NotificationController extends BaseController {
             }
 
             // 2. 執行資料庫更新
-            boolean success = notificationService.recallNotification(notificationId);
+            boolean success = notificationService.recallNotification(notificationId, getUsername());
             if (success) {
                 // 3. 異步發送撤回微信通知
                 CompletableFuture.runAsync(() -> {

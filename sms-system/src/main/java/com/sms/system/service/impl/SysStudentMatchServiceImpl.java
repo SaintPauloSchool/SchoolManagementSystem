@@ -2,13 +2,11 @@ package com.sms.system.service.impl;
 
 import com.github.houbb.opencc4j.util.ZhConverterUtil;
 import com.sms.common.config.StudentProfilesProperties;
-import com.sms.common.core.page.PageDomain;
-import com.sms.common.core.page.TableDataInfo;
-import com.sms.common.core.page.TableSupport;
 import com.sms.system.entity.SysStudentMatch;
+import com.sms.system.enums.StudentMatchStatus;
 import com.sms.system.entity.dto.*;
 import com.sms.system.entity.vo.*;
-import com.sms.system.mapper.SysParentStudentRelationMapper;
+import com.sms.system.mapper.SysSchoolFamilyContactMapper;
 import com.sms.system.mapper.SysStudentMatchMapper;
 import com.sms.system.service.ISysStudentMatchService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +19,6 @@ import java.util.stream.Collectors;
 
 /**
  * 學生數據匹配 Service 實現類
- * <p>學籍資料來自 student_profiles.student_info；匹配結果僅寫入 sys_student_match 中已匹配記錄。</p>
  */
 @Service
 public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
@@ -30,60 +27,25 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
     private SysStudentMatchMapper sysStudentMatchMapper;
 
     @Autowired
-    private SysParentStudentRelationMapper parentStudentRelationMapper;
+    private SysSchoolFamilyContactMapper schoolFamilyContactMapper;
 
     @Autowired
     private StudentProfilesProperties studentProfilesProperties;
 
-    /** 取得學籍庫庫名，供跨庫 SQL 使用 */
+    /**
+     *  獲取學籍庫
+     *
+     * @return 學籍庫
+     */
     private String studentProfilesDatabase() {
         return studentProfilesProperties.getDatabase();
     }
 
-    /** 根據匹配記錄 ID 查詢詳情（含學籍資料） */
-    private SysStudentMatchVO getMatchVOById(Long matchId) {
-        return sysStudentMatchMapper.selectStudentMatchVOById(matchId, studentProfilesDatabase());
-    }
-
-    /** 根據學生個人編號查詢已存在的匹配記錄 ID */
-    private Long findMatchIdByProfileNum(String studentProfileNum) {
-        if (!StringUtils.hasText(studentProfileNum)) {
-            return null;
-        }
-        return sysStudentMatchMapper.selectMatchIdByProfileNum(
-                new SysStudentMatchProfileNumDTO(studentProfileNum.trim()));
-    }
-
     /**
-     * 保存已匹配記錄：有 id 則按主鍵更新，否則按 student_profile_num 新增或覆蓋
-     */
-    private boolean saveMatchedRecord(SysStudentMatch studentMatch) {
-        if (studentMatch == null || !StringUtils.hasText(studentMatch.getStudentProfileNum())) {
-            return false;
-        }
-        studentMatch.setStudentProfileNum(studentMatch.getStudentProfileNum().trim());
-        if (studentMatch.getId() != null) {
-            return sysStudentMatchMapper.updateStudentMatch(studentMatch) > 0;
-        }
-        if (studentMatch.getSyncStatus() == null) {
-            studentMatch.setSyncStatus("0");
-        }
-        return sysStudentMatchMapper.saveOrUpdateStudentMatch(studentMatch) > 0;
-    }
-
-    /** 將查詢姓名轉為簡繁體，供企微候選列表篩選使用 */
-    private void prepareWecomNameQuery(SysWecomStudentDTO wecomStudentDTO) {
-        if (wecomStudentDTO == null || !StringUtils.hasText(wecomStudentDTO.getQueryName())) {
-            return;
-        }
-        String queryName = wecomStudentDTO.getQueryName().trim();
-        wecomStudentDTO.setQueryName(queryName);
-        wecomStudentDTO.setQueryNameTraditional(ZhConverterUtil.toTraditional(queryName));
-        wecomStudentDTO.setQueryNameSimplified(ZhConverterUtil.toSimple(queryName));
-    }
-
-    /**
-     * 查詢學生匹配列表（關聯學籍庫與匹配表）
+     * 查詢學生匹配列表。
+     *
+     * @param studentMatchDTO 學生姓名、班級等查詢條件
+     * @return 已匹配或待匹配的學生匹配 VO 列表
      */
     @Override
     public List<SysStudentMatchVO> selectSysStudentMatchList(SysStudentMatchDTO studentMatchDTO) {
@@ -91,7 +53,10 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
     }
 
     /**
-     * 查詢未匹配學生列表（學籍庫有資料、匹配表無記錄）
+     * 查詢未匹配學生列表。
+     *
+     * @param studentMatchDTO 學生姓名、班級等查詢條件
+     * @return 未匹配學生 VO 列表
      */
     @Override
     public List<SysStudentMatchVO> selectUnmatchedList(SysStudentMatchDTO studentMatchDTO) {
@@ -99,240 +64,179 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
     }
 
     /**
-     * 查詢企微學生候選列表：載入家長學生關係後在業務層篩選、分頁
+     * 查詢企微學生候選列表（手動匹配時選擇企微側學生/家長）。
+     *
+     * @param wecomStudentDTO 姓名、手機、班級、當前學籍 studentId（排除已綁定家長）等條件
+     * @return 企微家校聯絡人候選 VO 列表
      */
     @Override
-    public TableDataInfo selectWecomCandidates(SysWecomStudentDTO wecomStudentDTO) {
+    public List<SysSchoolFamilyContactVO> selectWecomCandidates(SysWecomStudentDTO wecomStudentDTO) {
         SysWecomStudentDTO query = wecomStudentDTO != null ? wecomStudentDTO : new SysWecomStudentDTO();
-        prepareWecomNameQuery(query);
 
-        Set<String> matchedUserIds = new HashSet<>(sysStudentMatchMapper.selectMatchedWecomUserIds());
-        List<SysParentStudentRelationVO> filtered = dedupeWecomStudents(parentStudentRelationMapper.selectParentStudentRelationWithClassList())
-                .stream()
-                .filter(student -> StringUtils.hasText(student.getStudentUserId()))
-                .filter(student -> !matchedUserIds.contains(student.getStudentUserId()))
-                .filter(student -> matchesWecomCandidate(student, query))
-                .sorted(Comparator.comparing(SysParentStudentRelationVO::getStudentName, Comparator.nullsLast(String::compareToIgnoreCase)))
-                .collect(Collectors.toList());
+        // 姓名：trim 並生成繁/簡體關鍵字，供 Mapper SQL LIKE 匹配
+        if (StringUtils.hasText(query.getQueryName())) {
+            String queryName = query.getQueryName().trim();
+            query.setQueryName(queryName);
+            query.setQueryNameTraditional(ZhConverterUtil.toTraditional(queryName));
+            query.setQueryNameSimplified(ZhConverterUtil.toSimple(queryName));
+        }
+        if (StringUtils.hasText(query.getQueryMobile())) {
+            query.setQueryMobile(query.getQueryMobile().trim());
+        }
+        if (StringUtils.hasText(query.getQueryClass())) {
+            query.setQueryClass(query.getQueryClass().trim());
+        }
+        if (StringUtils.hasText(query.getStudentId())) {
+            query.setStudentId(query.getStudentId().trim());
+        }
 
-        PageDomain pageDomain = TableSupport.buildPageRequest();
-        int pageNum = pageDomain.getPageNum() != null ? pageDomain.getPageNum() : 1;
-        int pageSize = pageDomain.getPageSize() != null ? pageDomain.getPageSize() : 10;
-        int total = filtered.size();
-        int fromIndex = Math.max((pageNum - 1) * pageSize, 0);
-        List<SysParentStudentRelationVO> pageRows = fromIndex >= total
-                ? Collections.emptyList()
-                : filtered.subList(fromIndex, Math.min(fromIndex + pageSize, total));
-
-        TableDataInfo data = new TableDataInfo();
-        data.setCode(0);
-        data.setRows(pageRows);
-        data.setTotal(total);
-        return data;
+        return schoolFamilyContactMapper.selectWecomCandidates(query);
     }
 
-    /** 按企微 studentUserId 去重，保留首次出現的記錄 */
-    private List<SysParentStudentRelationVO> dedupeWecomStudents(List<SysParentStudentRelationVO> source) {
-        if (source == null || source.isEmpty()) {
-            return Collections.emptyList();
+    /**
+     * 手動綁定學籍與企微家長（單條或多條，底層批量寫庫）。
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public SysStudentMatchOperationResultVO bindStudents(SysStudentMatchBatchBindDTO batchBindDTO) {
+        if (batchBindDTO == null
+                || !StringUtils.hasText(batchBindDTO.getStudentId())
+                || batchBindDTO.getBindings() == null
+                || batchBindDTO.getBindings().isEmpty()) {
+            return SysStudentMatchOperationResultVO.failure("綁定參數無效");
         }
-        Map<String, SysParentStudentRelationVO> studentMap = new LinkedHashMap<>();
-        for (SysParentStudentRelationVO item : source) {
-            if (!StringUtils.hasText(item.getStudentUserId())) {
+
+        String studentId = batchBindDTO.getStudentId().trim();
+        LinkedHashSet<String> uniqueBindingKeys = new LinkedHashSet<>();
+        List<SysStudentMatch> matches = new ArrayList<>();
+        for (SysStudentMatchBindItemDTO binding : batchBindDTO.getBindings()) {
+            if (binding == null
+                    || !StringUtils.hasText(binding.getParentUserId())
+                    || !StringUtils.hasText(binding.getStudentUserId())) {
                 continue;
             }
-            studentMap.putIfAbsent(item.getStudentUserId(), item);
-        }
-        return new ArrayList<>(studentMap.values());
-    }
-
-    /** 判斷企微候選學生是否符合姓名、手機、班級篩選條件 */
-    private boolean matchesWecomCandidate(SysParentStudentRelationVO student, SysWecomStudentDTO wecomStudentDTO) {
-        if (!matchesWecomName(student, wecomStudentDTO)) {
-            return false;
-        }
-        if (StringUtils.hasText(wecomStudentDTO.getQueryMobile())) {
-            String mobile = student.getMobile();
-            if (!StringUtils.hasText(mobile) || !mobile.contains(wecomStudentDTO.getQueryMobile().trim())) {
-                return false;
+            String parentUserId = binding.getParentUserId().trim();
+            String studentUserId = binding.getStudentUserId().trim();
+            String bindingKey = parentUserId + "|" + studentUserId;
+            if (!uniqueBindingKeys.add(bindingKey)) {
+                continue;
             }
+            SysStudentMatch studentMatch = new SysStudentMatch();
+            studentMatch.setStudentId(studentId);
+            studentMatch.setUserId(parentUserId);
+            studentMatch.setStudentUserId(studentUserId);
+            studentMatch.setMatchStatus(StudentMatchStatus.MANUAL.getCode());
+            matches.add(studentMatch);
         }
-        if (StringUtils.hasText(wecomStudentDTO.getQueryClass())) {
-            String classCode = student.getClassCodeWecom();
-            String queryClass = wecomStudentDTO.getQueryClass().trim();
-            if (!StringUtils.hasText(classCode)
-                    || !classCode.toLowerCase(Locale.ROOT).contains(queryClass.toLowerCase(Locale.ROOT))) {
-                return false;
-            }
+        if (matches.isEmpty()) {
+            return SysStudentMatchOperationResultVO.failure("未選擇有效家長");
         }
-        return true;
-    }
 
-    /** 判斷企微學生姓名是否匹配查詢關鍵字（支持簡繁體） */
-    private boolean matchesWecomName(SysParentStudentRelationVO student, SysWecomStudentDTO wecomStudentDTO) {
-        if (!StringUtils.hasText(wecomStudentDTO.getQueryNameTraditional())) {
-            return true;
+        int affected = batchSaveStudentMatches(matches);
+        if (affected <= 0) {
+            return SysStudentMatchOperationResultVO.failure("綁定失敗");
         }
-        String studentName = student.getStudentName();
-        if (!StringUtils.hasText(studentName)) {
-            return false;
-        }
-        String nameTraditional = ZhConverterUtil.toTraditional(studentName.trim());
-        String nameSimplified = ZhConverterUtil.toSimple(studentName.trim());
-        return nameTraditional.contains(wecomStudentDTO.getQueryNameTraditional())
-                || nameSimplified.contains(wecomStudentDTO.getQueryNameSimplified());
+        return SysStudentMatchOperationResultVO.success(
+                String.format("成功綁定 %d 位家長", affected),
+                affected
+        );
     }
 
     /**
-     * 手動綁定學籍學生與企微學生，寫入匹配記錄（matchStatus=2）
+     * 更正已匹配記錄的家長 user_id。
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public SysStudentMatchOperationResultVO bindStudent(SysStudentMatchBindDTO studentMatchBindDTO) {
-        if (studentMatchBindDTO == null
-                || !StringUtils.hasText(studentMatchBindDTO.getStudentUserIdWecom())) {
-            return SysStudentMatchOperationResultVO.failure(
-                    "參數錯誤，請確認 matchId / studentProfileNum 和 studentUserIdWecom 是否為空");
+    public SysStudentMatchOperationResultVO updateStudentMatch(SysStudentMatchUpdateDTO updateDTO) {
+        if (updateDTO == null
+                || updateDTO.getId() == null
+                || !StringUtils.hasText(updateDTO.getUserId())
+                || !StringUtils.hasText(updateDTO.getStudentUserId())) {
+            return SysStudentMatchOperationResultVO.failure("更新參數無效");
         }
 
-        Long matchId = studentMatchBindDTO.getMatchId();
-        String studentProfileNum = studentMatchBindDTO.getStudentProfileNum();
-        if (matchId == null && !StringUtils.hasText(studentProfileNum)) {
-            return SysStudentMatchOperationResultVO.failure(
-                    "參數錯誤，請確認 matchId / studentProfileNum 和 studentUserIdWecom 是否為空");
+        SysStudentMatch existing = sysStudentMatchMapper.selectStudentMatchById(updateDTO.getId());
+        if (existing == null || !StringUtils.hasText(existing.getStudentId())) {
+            return SysStudentMatchOperationResultVO.failure("匹配記錄不存在");
+        }
+        Integer matchStatus = existing.getMatchStatus();
+        if (matchStatus == null
+                || (matchStatus != StudentMatchStatus.AUTO.getCode()
+                && matchStatus != StudentMatchStatus.MANUAL.getCode())) {
+            return SysStudentMatchOperationResultVO.failure("僅支援更正已匹配成功的記錄");
         }
 
-        if (!StringUtils.hasText(studentProfileNum) && matchId != null) {
-            SysStudentMatchVO matchVO = getMatchVOById(matchId);
-            studentProfileNum = resolveProfileNum(matchVO);
-        }
-        if (!StringUtils.hasText(studentProfileNum)) {
-            return SysStudentMatchOperationResultVO.failure("綁定失敗，缺少學生個人編號");
-        }
-        if (matchId == null) {
-            matchId = findMatchIdByProfileNum(studentProfileNum);
+        String newUserId = updateDTO.getUserId().trim();
+        String newStudentUserId = updateDTO.getStudentUserId().trim();
+        if (newUserId.equals(existing.getUserId()) && newStudentUserId.equals(existing.getStudentUserId())) {
+            return SysStudentMatchOperationResultVO.failure("新家長與當前綁定相同，無需更新");
         }
 
-        String studentUserIdWecom = studentMatchBindDTO.getStudentUserIdWecom().trim();
-        List<SysParentStudentRelationVO> wecomStudents = parentStudentRelationMapper.selectParentStudentRelationWithClassList();
-        String studentNameWecom = studentUserIdWecom;
-        for (SysParentStudentRelationVO wecomStudent : wecomStudents) {
-            if (studentUserIdWecom.equals(wecomStudent.getStudentUserId())) {
-                studentNameWecom = wecomStudent.getStudentName();
-                break;
-            }
-        }
-        if (!StringUtils.hasText(studentNameWecom)) {
-            studentNameWecom = studentUserIdWecom;
+        if (sysStudentMatchMapper.countStudentMatchByStudentAndContactExceptId(
+                existing.getStudentId().trim(), newUserId, newStudentUserId, existing.getId()) > 0) {
+            return SysStudentMatchOperationResultVO.failure("該家長聯絡人已綁定此學生，請選擇其他家長");
         }
 
-        SysStudentMatch studentMatch = new SysStudentMatch();
-        studentMatch.setId(matchId);
-        studentMatch.setStudentProfileNum(studentProfileNum);
-        studentMatch.setStudentUserIdWecom(studentUserIdWecom);
-        studentMatch.setStudentNameWecom(studentNameWecom);
-        studentMatch.setMatchStatus("2");
-        studentMatch.setSyncStatus("0");
+        SysStudentMatch toUpdate = new SysStudentMatch();
+        toUpdate.setId(existing.getId());
+        toUpdate.setUserId(newUserId);
+        toUpdate.setStudentUserId(newStudentUserId);
+        toUpdate.setMatchStatus(StudentMatchStatus.MANUAL.getCode());
 
-        boolean saved = saveMatchedRecord(studentMatch);
-        return saved
-                ? SysStudentMatchOperationResultVO.success("綁定成功")
-                : SysStudentMatchOperationResultVO.failure("綁定失敗");
+        if (sysStudentMatchMapper.updateStudentMatchContact(toUpdate) <= 0) {
+            return SysStudentMatchOperationResultVO.failure("更新失敗");
+        }
+        return SysStudentMatchOperationResultVO.success("家長資訊已更新", 1);
     }
 
-    /**
-     * 查詢待同步至企微的匹配記錄（排除已同步成功的）
-     */
-    @Override
-    public List<SysStudentMatchVO> getPendingListForSync(SysStudentMatchSyncDTO studentMatchSyncDTO) {
-        List<SysStudentMatchVO> result = new ArrayList<>();
-        if (studentMatchSyncDTO == null || studentMatchSyncDTO.getMatchIds() == null) {
-            return result;
-        }
-        for (Long matchId : studentMatchSyncDTO.getMatchIds()) {
-            SysStudentMatchVO matchVO = getMatchVOById(matchId);
-            if (matchVO != null && !"1".equals(matchVO.getSyncStatus())) {
-                result.add(matchVO);
-            }
-        }
-        return result;
-    }
 
     /**
-     * 查詢企微學生與部門的綁定映射（studentUserId → departmentId 列表）
-     */
-    @Override
-    public SysStudentMatchDeptMapVO getStudentDeptMap(SysStudentMatchDeptQueryDTO sysStudentMatchDeptQueryDTO) {
-        SysStudentMatchDeptMapVO deptMapVO = new SysStudentMatchDeptMapVO();
-        if (sysStudentMatchDeptQueryDTO == null
-                || sysStudentMatchDeptQueryDTO.getStudentUserIds() == null
-                || sysStudentMatchDeptQueryDTO.getStudentUserIds().isEmpty()) {
-            return deptMapVO;
-        }
-
-        Map<String, List<Long>> deptMap = new HashMap<>();
-        List<SysStudentMatchDeptItemVO> bindings =
-                sysStudentMatchMapper.selectStudentDeptBindings(sysStudentMatchDeptQueryDTO);
-        if (bindings != null) {
-            for (SysStudentMatchDeptItemVO binding : bindings) {
-                if (binding.getStudentUserId() != null && binding.getDepartmentId() != null) {
-                    deptMap.computeIfAbsent(binding.getStudentUserId(), k -> new ArrayList<>())
-                           .add(binding.getDepartmentId());
-                }
-            }
-        }
-        deptMapVO.setStudentDeptMap(deptMap);
-        return deptMapVO;
-    }
-
-    /**
-     * 保存單條企微同步結果；同步成功時一併更新家長學生關係表中的企微姓名
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void saveOneSyncResult(SysStudentMatchSyncRecordDTO syncRecordDTO) {
-        if (syncRecordDTO == null || syncRecordDTO.getMatchId() == null) {
-            return;
-        }
-
-        SysStudentMatch studentMatch = new SysStudentMatch();
-        studentMatch.setId(syncRecordDTO.getMatchId());
-        studentMatch.setSyncStatus(syncRecordDTO.getSyncStatus());
-        studentMatch.setErrorMsg(syncRecordDTO.getErrorMsg());
-        sysStudentMatchMapper.updateStudentMatch(studentMatch);
-
-        if ("1".equals(syncRecordDTO.getSyncStatus())
-                && StringUtils.hasText(syncRecordDTO.getStudentUserIdWecom())
-                && StringUtils.hasText(syncRecordDTO.getSyncTargetName())) {
-            SysWecomStudentNameUpdateDTO sysWecomStudentNameUpdateDTO = new SysWecomStudentNameUpdateDTO();
-            sysWecomStudentNameUpdateDTO.setStudentUserId(syncRecordDTO.getStudentUserIdWecom());
-            sysWecomStudentNameUpdateDTO.setStudentName(syncRecordDTO.getSyncTargetName().trim());
-            sysStudentMatchMapper.updateWecomStudentName(sysWecomStudentNameUpdateDTO);
-        }
-    }
-
-    /**
-     * 自動比對未匹配學籍與企微學生（優先學生證編號，其次班級+姓名），寫入匹配記錄（matchStatus=1）
+     * 同步對照數據：按班級 + 姓名自動比對學籍與企微家校通訊錄，寫入匹配記錄。
+     *
+     * @param syncDataDTO 同步請求（{@code operName} 由控制層注入，當前僅作審計預留）
+     * @return 同步結果，含成功匹配筆數
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public SysStudentMatchOperationResultVO syncData(SysStudentMatchSyncDataDTO syncDataDTO) {
-
-        List<SysStudentMatchVO> unmatchedList = sysStudentMatchMapper.selectUnmatchedList(
-                new SysStudentMatchDTO(), studentProfilesDatabase());
-        if (unmatchedList == null || unmatchedList.isEmpty()) {
-            return SysStudentMatchOperationResultVO.success("暫無未匹配的學生數據，無需執行數據同步匹配！");
+        // 查詢全部學籍學生（每位學生一條，便於為每位家長分別寫入匹配記錄）
+        List<SysStudentMatchVO> allStudents = sysStudentMatchMapper.selectAllStudentsForMatch(
+                studentProfilesDatabase());
+        if (allStudents == null || allStudents.isEmpty()) {
+            return SysStudentMatchOperationResultVO.success("暫無學籍學生數據，無需執行數據同步匹配！");
         }
 
-        List<SysParentStudentRelationVO> wecomStudents = parentStudentRelationMapper.selectParentStudentRelationWithClassList();
-        if (wecomStudents == null || wecomStudents.isEmpty()) {
-            return SysStudentMatchOperationResultVO.success("本地關係表中未找到企微學生數據，無法執行自動比對！");
+        // 查詢本地家校通訊錄企微學生數據
+        List<SysSchoolFamilyContactVO> contacts = schoolFamilyContactMapper.selectSchoolFamilyContactWithClassList();
+        if (contacts == null || contacts.isEmpty()) {
+            return SysStudentMatchOperationResultVO.success("本地家校通訊錄中未找到企微學生數據，無法執行自動比對！");
         }
 
-        int matchedCount = 0;
-        for (SysStudentMatchVO matchVO : unmatchedList) {
-            String profileNum = resolveProfileNum(matchVO);
-            if (profileNum == null) {
+        // 已存在的 (student_id, parent_user_id, student_user_id) 組合，避免重複寫入
+        Set<String> existingPairKeys = new HashSet<>();
+        List<SysStudentMatchVO> existingMatches = sysStudentMatchMapper.selectSysStudentMatchList(
+                new SysStudentMatchDTO(), studentProfilesDatabase()
+        );
+        if (existingMatches != null) {
+            for (SysStudentMatchVO matchVO : existingMatches) {
+                if (matchVO.getId() != null
+                        && StringUtils.hasText(matchVO.getStudentId())
+                        && StringUtils.hasText(matchVO.getUserId())
+                        && StringUtils.hasText(matchVO.getStudentUserId())) {
+                    existingPairKeys.add(
+                            matchVO.getStudentId().trim() + "|"
+                                    + matchVO.getUserId().trim() + "|"
+                                    + matchVO.getStudentUserId().trim()
+                    );
+                }
+            }
+        }
+
+        // 逐條比對學籍與家校通訊錄：班級 + 姓名一致則為每位家長各寫一條匹配記錄
+        List<SysStudentMatch> toInsert = new ArrayList<>();
+        for (SysStudentMatchVO matchVO : allStudents) {
+            String studentId = resolveStudentId(matchVO);
+            if (studentId == null) {
                 continue;
             }
 
@@ -343,85 +247,77 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
             }
             String idNameTraditional = ZhConverterUtil.toTraditional(idName);
 
-            Optional<SysParentStudentRelationVO> matchedOpt = Optional.empty();
-            String dsejIdClean = getDsejStudentIdClean(matchVO);
-            if (!dsejIdClean.isEmpty()) {
-                matchedOpt = wecomStudents.stream().filter(wecomStudent -> {
-                    String wecomUserId = wecomStudent.getStudentUserId();
-                    return wecomUserId != null && wecomUserId.trim().equalsIgnoreCase(dsejIdClean);
-                }).findFirst();
-            }
-
-            if (!matchedOpt.isPresent()) {
-                matchedOpt = wecomStudents.stream().filter(wecomStudent -> {
-                    String wecomClass = wecomStudent.getClassCodeWecom();
-                    String wecomName = wecomStudent.getStudentName();
-                    if (wecomClass == null || wecomName == null) {
-                        return false;
-                    }
-                    if (!wecomClass.trim().equalsIgnoreCase(classSection)) {
-                        return false;
-                    }
-                    String wecomNameTraditional = ZhConverterUtil.toTraditional(wecomName.trim());
-                    return wecomNameTraditional.equals(idNameTraditional);
-                }).findFirst();
-            }
-
-            if (matchedOpt.isPresent()) {
-                SysParentStudentRelationVO wecomStudent = matchedOpt.get();
-                SysStudentMatch studentMatch = new SysStudentMatch();
-                studentMatch.setStudentProfileNum(profileNum);
-                studentMatch.setStudentUserIdWecom(wecomStudent.getStudentUserId());
-                studentMatch.setStudentNameWecom(wecomStudent.getStudentName());
-                studentMatch.setMatchStatus("1");
-                studentMatch.setSyncStatus("0");
-                if (saveMatchedRecord(studentMatch)) {
-                    matchedCount++;
+            // 在家校通訊錄中查找班級、姓名一致的所有家長（同一學生可有多位家長）
+            List<SysSchoolFamilyContactVO> matchedContacts = contacts.stream().filter(contact -> {
+                String contactClass = contact.getClassCodeWecom();
+                String contactName = contact.getStudentName();
+                if (!StringUtils.hasText(contact.getParentUserId())
+                        || contactClass == null || contactName == null) {
+                    return false;
                 }
+                if (!contactClass.trim().equalsIgnoreCase(classSection)) {
+                    return false;
+                }
+                String contactNameTraditional = ZhConverterUtil.toTraditional(contactName.trim());
+                return contactNameTraditional.equals(idNameTraditional);
+            }).collect(Collectors.toList());
+
+            for (SysSchoolFamilyContactVO contact : matchedContacts) {
+                if (!StringUtils.hasText(contact.getStudentUserId())) {
+                    continue;
+                }
+                String parentUserId = contact.getParentUserId().trim();
+                String studentUserId = contact.getStudentUserId().trim();
+                String pairKey = studentId + "|" + parentUserId + "|" + studentUserId;
+                if (existingPairKeys.contains(pairKey)) {
+                    continue;
+                }
+                SysStudentMatch studentMatch = new SysStudentMatch();
+                studentMatch.setStudentId(studentId);
+                studentMatch.setUserId(parentUserId);
+                studentMatch.setStudentUserId(studentUserId);
+                studentMatch.setMatchStatus(StudentMatchStatus.AUTO.getCode());
+                toInsert.add(studentMatch);
+                existingPairKeys.add(pairKey);
             }
         }
 
+        int matchedCount = batchSaveStudentMatches(toInsert);
+
         return SysStudentMatchOperationResultVO.success(
-                String.format("同步數據對照完成！共成功自動匹配 %d 筆數據，請勾選已匹配記錄並點擊「同步至企業微信」進行同步更名。", matchedCount),
+                String.format("同步數據對照完成！共成功自動匹配 %d 筆數據", matchedCount),
                 matchedCount);
     }
 
     /**
-     * 批量刪除已匹配記錄
+     * 批量寫入匹配記錄，每批最多 500 條，避免單次 SQL 過大。
      */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public SysStudentMatchOperationResultVO deleteSysStudentMatchByIds(SysStudentMatchDeleteDTO studentMatchDeleteDTO) {
-        if (studentMatchDeleteDTO == null
-                || studentMatchDeleteDTO.getMatchIds() == null
-                || studentMatchDeleteDTO.getMatchIds().isEmpty()) {
-            return SysStudentMatchOperationResultVO.failure("請選擇要刪除的匹配記錄！");
+    private int batchSaveStudentMatches(List<SysStudentMatch> matches) {
+        if (matches == null || matches.isEmpty()) {
+            return 0;
         }
-        int rows = sysStudentMatchMapper.deleteSysStudentMatchByIds(studentMatchDeleteDTO);
-        return rows > 0
-                ? SysStudentMatchOperationResultVO.success("刪除成功", rows)
-                : SysStudentMatchOperationResultVO.failure("刪除失敗");
+        int matchedCount = 0;
+        int batchSize = 500;
+        for (int i = 0; i < matches.size(); i += batchSize) {
+            List<SysStudentMatch> subList = matches.subList(i, Math.min(i + batchSize, matches.size()));
+            if (sysStudentMatchMapper.batchSaveOrUpdateStudentMatch(subList) > 0) {
+                matchedCount += subList.size();
+            }
+        }
+        return matchedCount;
     }
 
-    /** 從 VO 解析學生個人編號（優先 studentProfileNum，其次 studentProfileNumber） */
-    private String resolveProfileNum(SysStudentMatchVO matchVO) {
-        if (matchVO == null) {
+    /**
+     * 從匹配 VO 解析學生id
+     *
+     * @param matchVO 學生匹配 VO
+     * @return 學籍 student_id，無效時為 null
+     */
+    private String resolveStudentId(SysStudentMatchVO matchVO) {
+        if (matchVO == null || !StringUtils.hasText(matchVO.getStudentId())) {
             return null;
         }
-        if (StringUtils.hasText(matchVO.getStudentProfileNum())) {
-            return matchVO.getStudentProfileNum().trim();
-        }
-        if (matchVO.getStudentProfileNumber() != null) {
-            return String.valueOf(matchVO.getStudentProfileNumber());
-        }
-        return null;
+        return matchVO.getStudentId().trim();
     }
 
-    /** 取得去除橫線後的學生證編號，用於與企微 UserID 比對 */
-    private String getDsejStudentIdClean(SysStudentMatchVO matchVO) {
-        if (matchVO == null || matchVO.getDsejStudentId() == null) {
-            return "";
-        }
-        return matchVO.getDsejStudentId().replace("-", "").trim();
-    }
 }

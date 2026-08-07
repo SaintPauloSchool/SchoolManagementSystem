@@ -68,7 +68,7 @@ public class Md5Utils
      * 加密敏感 ID（如學生用戶 ID）
      * 將原始 ID 與鹽值組合後進行 MD5 加密
      *
-     * @param originalId 原始 ID（如 studentUserId）
+     * @param originalId 原始 ID（如 student_id）
      * @param salt 鹽值
      * @return 加密後的字符串（32位 MD5 哈希值）
      */

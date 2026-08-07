@@ -24,11 +24,11 @@ public class NotificationCc implements Serializable {
     @TableField("notification_id")
     private Long notificationId;
 
-    /** 抄送類型（1教職員工 2學校通訊錄） */
+    /** 抄送來源類型 */
     @TableField("cc_type")
     private String ccType;
 
-    /** 抄送數據(JSON格式)，格式：[{"cc_ids": [1,2], "type": 1, "cc_names": ["聖保祿學校-054"]}]，其中 type 1代表wecom的，type 2代表自定義的 */
+    /** 抄送成員 ID 列表（JSON 數組），如 [1,2,3] */
     @TableField("cc_data")
     private String ccData;
 

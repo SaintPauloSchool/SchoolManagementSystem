@@ -74,16 +74,26 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
         LocalDateTime now = LocalDateTime.now();
         List<SysSchoolDepartmentMember> sysSchoolDepartmentMemberList = new ArrayList<>();
         for (SysSchoolDepartmentMemberSaveDTO sysSchoolDepartmentMemberSaveDTO : sysSchoolDepartmentMemberBatchSaveDTO.getMembers()) {
+            if (sysSchoolDepartmentMemberSaveDTO.getSchoolDepartmentId() == null) {
+                throw new ServiceException("成員必須指定所屬自定義部門");
+            }
             if (Integer.valueOf(2).equals(defaultType)
-                    && !StringUtils.hasText(sysSchoolDepartmentMemberSaveDTO.getStudentUserId())) {
+                    && !StringUtils.hasText(sysSchoolDepartmentMemberSaveDTO.getStudentId())) {
                 String memberName = sysSchoolDepartmentMemberSaveDTO.getName();
                 throw new ServiceException(String.format(
-                        "自定義家校成員必須關聯學生：%s",
+                        "自定義家校成員必須關聯學籍 student_id：%s",
+                        StringUtils.hasText(memberName) ? memberName : sysSchoolDepartmentMemberSaveDTO.getUserid()));
+            }
+            if (Integer.valueOf(2).equals(defaultType)
+                    && sysSchoolDepartmentMemberSaveDTO.getDepartmentId() == null) {
+                String memberName = sysSchoolDepartmentMemberSaveDTO.getName();
+                throw new ServiceException(String.format(
+                        "自定義家校成員必須關聯真實班級部門 ID：%s",
                         StringUtils.hasText(memberName) ? memberName : sysSchoolDepartmentMemberSaveDTO.getUserid()));
             }
             SysSchoolDepartmentMember sysSchoolDepartmentMember = BeanCopyUtils.copy(sysSchoolDepartmentMemberSaveDTO, SysSchoolDepartmentMember.class);
-            if (StringUtils.hasText(sysSchoolDepartmentMemberSaveDTO.getStudentUserId())) {
-                sysSchoolDepartmentMember.setStudentUserId(sysSchoolDepartmentMemberSaveDTO.getStudentUserId().trim());
+            if (StringUtils.hasText(sysSchoolDepartmentMemberSaveDTO.getStudentId())) {
+                sysSchoolDepartmentMember.setStudentId(sysSchoolDepartmentMemberSaveDTO.getStudentId().trim());
             }
             sysSchoolDepartmentMember.setType(defaultType);
             sysSchoolDepartmentMember.setCreateTime(now);
@@ -91,22 +101,25 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
             sysSchoolDepartmentMemberList.add(sysSchoolDepartmentMember);
         }
         
-        List<Long> departmentIds = sysSchoolDepartmentMemberList.stream()
-                .map(SysSchoolDepartmentMember::getDepartmentId)
+        List<Long> schoolDepartmentIds = sysSchoolDepartmentMemberList.stream()
+                .map(SysSchoolDepartmentMember::getSchoolDepartmentId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
 
-        List<SysSchoolDepartmentMember> existingMembers = memberMapper.selectMembersByDepartmentIds(departmentIds);
+        List<SysSchoolDepartmentMember> existingMembers = memberMapper.selectMembersByDepartmentIds(schoolDepartmentIds);
 
         List<SysSchoolDepartmentMember> toInsert = sysSchoolDepartmentMemberList.stream()
-                .filter(m -> existingMembers.stream().noneMatch(exist -> 
-                        exist.getDepartmentId().equals(m.getDepartmentId()) && 
-                        exist.getUserid().equals(m.getUserid())
+                .filter(m -> existingMembers.stream().noneMatch(exist ->
+                        Objects.equals(exist.getSchoolDepartmentId(), m.getSchoolDepartmentId())
+                                && exist.getUserid().equals(m.getUserid())
+                                && Objects.equals(exist.getStudentId(), m.getStudentId())
                 ))
                 .collect(Collectors.collectingAndThen(
                         Collectors.toCollection(() -> new TreeSet<>(
-                                Comparator.comparing(m -> m.getDepartmentId() + "_" + m.getUserid())
+                                Comparator.comparing(m -> m.getSchoolDepartmentId() + "_"
+                                        + m.getUserid() + "_"
+                                        + (m.getStudentId() != null ? m.getStudentId() : ""))
                         )), ArrayList::new));
 
         if (toInsert.isEmpty()) {

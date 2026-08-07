@@ -1,23 +1,18 @@
 package com.sms.system.service;
 
-import com.sms.system.entity.dto.SysStudentMatchBindDTO;
+import com.sms.system.entity.dto.SysStudentMatchBatchBindDTO;
 import com.sms.system.entity.dto.SysStudentMatchDTO;
-import com.sms.system.entity.dto.SysStudentMatchDeleteDTO;
-import com.sms.system.entity.dto.SysStudentMatchDeptQueryDTO;
 import com.sms.system.entity.dto.SysStudentMatchSyncDataDTO;
-import com.sms.system.entity.dto.SysStudentMatchSyncDTO;
-import com.sms.system.entity.dto.SysStudentMatchSyncRecordDTO;
-import com.sms.common.core.page.TableDataInfo;
+import com.sms.system.entity.dto.SysStudentMatchUpdateDTO;
 import com.sms.system.entity.dto.SysWecomStudentDTO;
-import com.sms.system.entity.vo.SysStudentMatchDeptMapVO;
+import com.sms.system.entity.vo.SysSchoolFamilyContactVO;
 import com.sms.system.entity.vo.SysStudentMatchOperationResultVO;
 import com.sms.system.entity.vo.SysStudentMatchVO;
 
 import java.util.List;
 
 /**
- * 學生數據匹配 業務層介面
- * <p>入參：DTO；出參：VO</p>
+ * 學生數據匹配
  */
 public interface ISysStudentMatchService {
 
@@ -32,37 +27,22 @@ public interface ISysStudentMatchService {
     List<SysStudentMatchVO> selectUnmatchedList(SysStudentMatchDTO studentMatchDTO);
 
     /**
-     * 查詢企微學生候選列表（業務層篩選與分頁）
+     * 查詢企微學生候選列表（篩選條件在 SQL，分頁由 Controller startPage 觸發）
      */
-    TableDataInfo selectWecomCandidates(SysWecomStudentDTO wecomStudentDTO);
+    List<SysSchoolFamilyContactVO> selectWecomCandidates(SysWecomStudentDTO wecomStudentDTO);
 
     /**
-     * 手動綁定學生匹配
+     * 手動綁定學生匹配（支援單條或多條家長，底層批量寫庫）
      */
-    SysStudentMatchOperationResultVO bindStudent(SysStudentMatchBindDTO studentMatchBindDTO);
+    SysStudentMatchOperationResultVO bindStudents(SysStudentMatchBatchBindDTO batchBindDTO);
 
     /**
-     * 查詢待同步的匹配記錄列表
+     * 更正已匹配記錄的家長 user_id（單條更新）
      */
-    List<SysStudentMatchVO> getPendingListForSync(SysStudentMatchSyncDTO studentMatchSyncDTO);
-
-    /**
-     * 查詢學生所屬部門映射
-     */
-    SysStudentMatchDeptMapVO getStudentDeptMap(SysStudentMatchDeptQueryDTO sysStudentMatchDeptQueryDTO);
-
-    /**
-     * 保存單條同步結果
-     */
-    void saveOneSyncResult(SysStudentMatchSyncRecordDTO syncRecordDTO);
+    SysStudentMatchOperationResultVO updateStudentMatch(SysStudentMatchUpdateDTO updateDTO);
 
     /**
      * 同步對照數據（自動比對綁定）
      */
     SysStudentMatchOperationResultVO syncData(SysStudentMatchSyncDataDTO syncDataDTO);
-
-    /**
-     * 批量刪除學生匹配記錄
-     */
-    SysStudentMatchOperationResultVO deleteSysStudentMatchByIds(SysStudentMatchDeleteDTO studentMatchDeleteDTO);
 }

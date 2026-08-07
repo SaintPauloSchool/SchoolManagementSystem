@@ -28,9 +28,9 @@ public class NotificationReminderRecord implements Serializable {
     @TableField("send_record_id")
     private Long sendRecordId;
 
-    /** 學生用戶ID */
-    @TableField("student_user_id")
-    private String studentUserId;
+    /** 學籍 student_id（student_profiles.student_info.student_id） */
+    @TableField("student_id")
+    private String studentId;
 
     /** 未回復的家長用戶ID列表(JSON格式) */
     @TableField("parent_user_ids")
@@ -50,7 +50,6 @@ public class NotificationReminderRecord implements Serializable {
     @TableField("create_time")
     private LocalDateTime createTime;
 
-    // Getters and Setters
     public Long getReminderId() {
         return reminderId;
     }
@@ -75,12 +74,12 @@ public class NotificationReminderRecord implements Serializable {
         this.sendRecordId = sendRecordId;
     }
 
-    public String getStudentUserId() {
-        return studentUserId;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setStudentUserId(String studentUserId) {
-        this.studentUserId = studentUserId;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
     public String getParentUserIds() {
@@ -121,7 +120,7 @@ public class NotificationReminderRecord implements Serializable {
                 "reminderId=" + reminderId +
                 ", notificationId=" + notificationId +
                 ", sendRecordId=" + sendRecordId +
-                ", studentUserId='" + studentUserId + '\'' +
+                ", studentId='" + studentId + '\'' +
                 ", parentUserIds='" + parentUserIds + '\'' +
                 ", remindSendTime=" + remindSendTime +
                 ", remindSendStatus='" + remindSendStatus + '\'' +

@@ -60,7 +60,7 @@ public class LoginUser implements UserDetails {
     private Collection<? extends GrantedAuthority> authorities;
 
     /**
-     * 用戶信息
+     * 用戶資訊
      */
     private SysUser user;
 

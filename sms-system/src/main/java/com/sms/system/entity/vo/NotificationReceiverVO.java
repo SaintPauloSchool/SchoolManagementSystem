@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 通知接收對象 VO
@@ -15,6 +16,10 @@ public class NotificationReceiverVO implements Serializable {
     private Long notificationId;
     private String receiveType;
     private String receiveData;
+    /** 展示用姓名列表（按 receive_data 逐項解析，非持久化字段） */
+    private List<String> receiveNames;
+    /** 按部門平鋪分組（展示用，非持久化字段） */
+    private List<NotificationReceiverDeptGroupVO> receiveDeptGroups;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
@@ -49,6 +54,22 @@ public class NotificationReceiverVO implements Serializable {
 
     public void setReceiveData(String receiveData) {
         this.receiveData = receiveData;
+    }
+
+    public List<String> getReceiveNames() {
+        return receiveNames;
+    }
+
+    public void setReceiveNames(List<String> receiveNames) {
+        this.receiveNames = receiveNames;
+    }
+
+    public List<NotificationReceiverDeptGroupVO> getReceiveDeptGroups() {
+        return receiveDeptGroups;
+    }
+
+    public void setReceiveDeptGroups(List<NotificationReceiverDeptGroupVO> receiveDeptGroups) {
+        this.receiveDeptGroups = receiveDeptGroups;
     }
 
     public LocalDateTime getCreateTime() {

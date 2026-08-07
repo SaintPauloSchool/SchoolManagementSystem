@@ -338,7 +338,7 @@ public class IpUtils
     /**
      * 校驗ip是否符合過濾串規則
      * 
-     * @param filter 過濾IP列表,支持後綴'*'通配,支持網段如:`10.10.10.1-10.10.10.99`
+     * @param filter 過濾IP列表,支援後綴'*'通配,支援網段如:`10.10.10.1-10.10.10.99`
      * @param ip 校驗IP地址
      * @return boolean 結果
      */

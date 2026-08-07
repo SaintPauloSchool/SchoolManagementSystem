@@ -86,4 +86,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         WHERE (status = '1' OR status = '2') AND is_processed = '0'
     </select>
 
+    <select id="selectLatestLogPerTask" resultMap="SysTaskLogResult">
+        select l.log_id, l.task_name, l.execution_time, l.status
+        from sys_task_log l
+        inner join (
+            select task_name, max(log_id) as max_log_id
+            from sys_task_log
+            group by task_name
+        ) latest on l.log_id = latest.max_log_id
+    </select>
+
 </mapper>

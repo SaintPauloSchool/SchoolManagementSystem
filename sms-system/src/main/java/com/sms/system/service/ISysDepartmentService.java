@@ -1,6 +1,6 @@
 package com.sms.system.service;
 
-import com.sms.system.entity.SysDepartment;
+import com.alibaba.fastjson.JSONObject;
 import com.sms.system.entity.vo.SysDepartmentVO;
 
 import java.util.List;
@@ -12,17 +12,7 @@ import java.util.List;
 public interface ISysDepartmentService {
 
     /**
-     * 根據管理員權限獲取班級樹形結構（僅返回該用戶有權管理的部門）
-     * 通過 sys_department_admin 查詢用戶管理的部門 ID，再過濾完整樹
-     *
-     * @param openUserId 企業微信 userid（當前登錄用戶）
-     * @return 過濾後的學校層級樹形結構
-     */
-    List<SysDepartmentVO> getClassTreeByAdmin(String openUserId);
-
-    /**
-     * 根據管理員權限獲取班級樹形結構（帶家長學生關係）
-     * 在 getClassTreeByAdmin 的基礎上爲 type=1 的班級加載家長學生關係數據
+     * 獲取家校通訊錄樹（帶家長學生關係），按 sys_config 配置的學段構建。
      *
      * @param openUserId 企業微信 userid（當前登錄用戶）
      * @return 過濾後的帶家長學生關係的樹形結構
@@ -30,23 +20,26 @@ public interface ISysDepartmentService {
     List<SysDepartmentVO> getClassTreeWithParentsByAdmin(String openUserId);
 
     /**
-     * 批量保存部門信息
+     * 獲取基礎設置所配置學段下的班級部門 ID（type=1）。
      *
-     * @param departments 部門列表
-     */
-    void batchSaveDepartments(List<SysDepartment> departments);
-
-    /**
-     * 獲取班級部門 ID
-     *
-     * @return 班級部門 ID 列表
+     * @return 班級部門 ID 列表；未配置學段或學段無班級時返回空列表
      */
     List<Long> getClassDepartmentId();
+
+    /**
+     * 獲取學段樹（僅到 type=3）
+     */
+    List<SysDepartmentVO> getSegmentTree();
+
+    /**
+     * 獲取每日學生手冊通知班級選擇樹（學校→校區→學段→年級→班級，含 type=1）
+     */
+    List<SysDepartmentVO> getDailyNoticeClassTree();
 
     /**
      * 同步企業微信家校通訊錄部門與管理員數據
      * @param departmentJson 微信接口返回的部門 JSON 數據
      */
-    void syncSchoolDepartmentData(com.alibaba.fastjson.JSONObject departmentJson);
+    void syncSchoolDepartmentData(JSONObject departmentJson);
 }
 

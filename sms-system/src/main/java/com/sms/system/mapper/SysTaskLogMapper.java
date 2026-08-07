@@ -40,4 +40,11 @@ public interface SysTaskLogMapper {
      * @return 數量
      */
     int countFailedUnprocessedTasks();
+
+    /**
+     * 查詢每個任務最近一次執行日誌
+     *
+     * @return 任務日誌集合
+     */
+    List<SysTaskLog> selectLatestLogPerTask();
 }

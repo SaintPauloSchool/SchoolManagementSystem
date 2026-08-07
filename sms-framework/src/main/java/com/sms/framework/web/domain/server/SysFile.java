@@ -1,7 +1,7 @@
 package com.sms.framework.web.domain.server;
 
 /**
- * 系統文件相關信息
+ * 系統文件相關資訊
  *
  */
 public class SysFile

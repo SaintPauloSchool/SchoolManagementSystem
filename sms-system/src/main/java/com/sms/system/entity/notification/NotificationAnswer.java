@@ -28,17 +28,13 @@ public class NotificationAnswer implements Serializable {
     @TableField("question_id")
     private Long questionId;
 
-    /** 用戶ID（parentUserId） */
+    /** 用戶ID（parentUserId，僅學生/家長回答） */
     @TableField("user_id")
     private String userId;
 
-    /** 用戶類型（1 學生 2 家長 3 教師） */
-    @TableField("user_type")
-    private String userType;
-
-    /** 學生用戶ID */
-    @TableField("student_user_id")
-    private String studentUserId;
+    /** 學籍 student_id（student_profiles.student_info.student_id） */
+    @TableField("student_id")
+    private String studentId;
 
     /** 答案數據（JSON格式） */
     @TableField("answer_data")
@@ -81,20 +77,12 @@ public class NotificationAnswer implements Serializable {
         this.userId = userId;
     }
 
-    public String getUserType() {
-        return userType;
+    public String getStudentId() {
+        return studentId;
     }
 
-    public void setUserType(String userType) {
-        this.userType = userType;
-    }
-
-    public String getStudentUserId() {
-        return studentUserId;
-    }
-
-    public void setStudentUserId(String studentUserId) {
-        this.studentUserId = studentUserId;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
     public String getAnswerData() {

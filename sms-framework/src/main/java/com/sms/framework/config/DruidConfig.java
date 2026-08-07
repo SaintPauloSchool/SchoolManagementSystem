@@ -118,7 +118,7 @@ public class DruidConfig
                 response.resetBuffer();
                 // 獲取common.js
                 String text = Utils.readFromResource(filePath);
-                // 正則替換banner, 除去底部的廣告信息
+                // 正則替換banner, 除去底部的廣告資訊
                 response.getWriter().write(text);
             }
 

@@ -39,7 +39,7 @@ public interface ISysSchoolDepartmentService {
     /**
      * 新增部門
      *
-     * @param sysSchoolDepartmentSaveDTO 部門信息
+     * @param sysSchoolDepartmentSaveDTO 部門資訊
      * @return 結果
      */
     int insertSysSchoolDepartment(SysSchoolDepartmentSaveDTO sysSchoolDepartmentSaveDTO);
@@ -47,7 +47,7 @@ public interface ISysSchoolDepartmentService {
     /**
      * 修改部門
      *
-     * @param sysSchoolDepartmentSaveDTO 部門信息
+     * @param sysSchoolDepartmentSaveDTO 部門資訊
      * @return 結果
      */
     int updateSysSchoolDepartment(SysSchoolDepartmentSaveDTO sysSchoolDepartmentSaveDTO);

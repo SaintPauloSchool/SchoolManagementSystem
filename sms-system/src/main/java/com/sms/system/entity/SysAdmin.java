@@ -20,13 +20,17 @@ public class SysAdmin implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    /** 用戶ID（關聯token表的user_id） */
+    /** 用戶ID（關聯token表的user_id / WeCom userid） */
     @TableField("user_id")
     private String userId;
 
     /** 管理員姓名 */
     @TableField("admin_name")
     private String adminName;
+
+    /** 類型（0超級管理員 1管理員） */
+    @TableField("type")
+    private String type;
 
     /** 狀態（0正常 1停用） */
     @TableField("status")
@@ -46,7 +50,6 @@ public class SysAdmin implements Serializable {
     @TableField("remark")
     private String remark;
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -69,6 +72,14 @@ public class SysAdmin implements Serializable {
 
     public void setAdminName(String adminName) {
         this.adminName = adminName;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getStatus() {
@@ -109,6 +120,7 @@ public class SysAdmin implements Serializable {
                 "id=" + id +
                 ", userId='" + userId + '\'' +
                 ", adminName='" + adminName + '\'' +
+                ", type='" + type + '\'' +
                 ", status='" + status + '\'' +
                 ", createTime=" + createTime +
                 ", updateTime=" + updateTime +

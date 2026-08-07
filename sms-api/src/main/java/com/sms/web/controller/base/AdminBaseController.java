@@ -20,4 +20,13 @@ public abstract class AdminBaseController extends BaseController {
     protected boolean isAdmin() {
         return !isNotAdmin();
     }
+
+    /** 非超級管理員（含未登入、普通管理員、停用） */
+    protected boolean isNotSuperAdmin() {
+        return sysAdminService.isNotSuperAdmin(getOpenUserId());
+    }
+
+    protected boolean isSuperAdmin() {
+        return !isNotSuperAdmin();
+    }
 }

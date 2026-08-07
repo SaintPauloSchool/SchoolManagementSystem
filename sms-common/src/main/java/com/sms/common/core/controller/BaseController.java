@@ -231,7 +231,7 @@ public class BaseController
     }
 
     /**
-     * 獲取用戶緩存信息
+     * 獲取用戶緩存資訊
      */
     public SysUser getSysUser()
     {
@@ -239,7 +239,7 @@ public class BaseController
     }
 
     /**
-     * 設置用戶緩存信息
+     * 設置用戶緩存資訊
      */
     public void setSysUser(SysUser user)
     {
@@ -254,7 +254,7 @@ public class BaseController
         SysUser user = getSysUser();
         if (user == null)
         {
-            throw new IllegalStateException("未登錄或用戶信息不存在，請檢查 Token 是否有效");
+            throw new IllegalStateException("未登錄或用戶資訊不存在，請檢查 Token 是否有效");
         }
         return user.getUserId();
     }
@@ -267,7 +267,7 @@ public class BaseController
         SysUser user = getSysUser();
         if (user == null)
         {
-            throw new IllegalStateException("未登錄或用戶信息不存在，請檢查 Token 是否有效");
+            throw new IllegalStateException("未登錄或用戶資訊不存在，請檢查 Token 是否有效");
         }
         return user.getLoginName();
     }
@@ -280,7 +280,7 @@ public class BaseController
         SysUser user = getSysUser();
         if (user == null)
         {
-            throw new IllegalStateException("未登錄或用戶信息不存在，請檢查 Token 是否有效");
+            throw new IllegalStateException("未登錄或用戶資訊不存在，請檢查 Token 是否有效");
         }
         return user.getUserName();
     }
@@ -293,7 +293,7 @@ public class BaseController
         SysUser user = getSysUser();
         if (user == null)
         {
-            throw new IllegalStateException("未登錄或用戶信息不存在，請檢查 Token 是否有效");
+            throw new IllegalStateException("未登錄或用戶資訊不存在，請檢查 Token 是否有效");
         }
         return user.getUserType();
     }
@@ -306,7 +306,7 @@ public class BaseController
         SysUser user = getSysUser();
         if (user == null)
         {
-            throw new IllegalStateException("未登錄或用戶信息不存在，請檢查 Token 是否有效");
+            throw new IllegalStateException("未登錄或用戶資訊不存在，請檢查 Token 是否有效");
         }
         return user.getOpenUserId();
     }

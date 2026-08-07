@@ -21,14 +21,6 @@ public interface IWecomSchoolDepartmentService {
     List<WecomSchoolDepartmentVO> getWecomSchoolDepartmentTreeWithMembers();
 
     /**
-     * 獲取學校部門樹形結構（僅部門，不含人員）
-     * 只返回部門層級結構，不包含人員數據
-     *
-     * @return 僅部門的樹形結構
-     */
-    List<WecomSchoolDepartmentVO> getWecomSchoolDepartmentTree();
-
-    /**
      * 同步企業微信部門資料
      * @param result 微信接口返回的部門數據
      */

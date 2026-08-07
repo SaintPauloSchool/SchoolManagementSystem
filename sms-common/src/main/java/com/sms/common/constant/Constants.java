@@ -3,7 +3,7 @@ package com.sms.common.constant;
 import java.util.Locale;
 
 /**
- * 通用常量信息
+ * 通用常量資訊
  *
  */
 public class Constants

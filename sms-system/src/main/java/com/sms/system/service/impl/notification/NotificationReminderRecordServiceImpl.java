@@ -18,24 +18,6 @@ public class NotificationReminderRecordServiceImpl implements INotificationRemin
     @Autowired
     private NotificationReminderRecordMapper notificationReminderRecordMapper;
 
-    /**
-     * 新增提醒記錄
-     *
-     * @param reminderRecord 提醒記錄
-     * @return 結果
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public int save(NotificationReminderRecord reminderRecord) {
-        return notificationReminderRecordMapper.insert(reminderRecord);
-    }
-
-    /**
-     * 批量新增提醒記錄
-     *
-     * @param list 提醒記錄列表
-     * @return 結果
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int batchSave(List<NotificationReminderRecord> list) {
@@ -43,16 +25,5 @@ public class NotificationReminderRecordServiceImpl implements INotificationRemin
             return 0;
         }
         return notificationReminderRecordMapper.batchInsert(list);
-    }
-
-    /**
-     * 根據通知ID查詢提醒記錄列表
-     *
-     * @param notificationId 通知ID
-     * @return 提醒記錄列表
-     */
-    @Override
-    public List<NotificationReminderRecord> selectByNotificationId(Long notificationId) {
-        return notificationReminderRecordMapper.selectByNotificationId(notificationId);
     }
 }

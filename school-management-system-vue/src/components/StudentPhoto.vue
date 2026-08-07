@@ -30,7 +30,36 @@
 import { User, Loading } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
+/** profileNumber -> { url, refs }，多行共用同一照片時引用計數，避免卸載時誤 revoke 緩存 */
 const photoCache = new Map()
+
+function acquireCachedPhoto(profileNumber) {
+  const entry = photoCache.get(profileNumber)
+  if (!entry) {
+    return null
+  }
+  entry.refs += 1
+  return entry.url
+}
+
+function putCachedPhoto(profileNumber, url) {
+  photoCache.set(profileNumber, { url, refs: 1 })
+}
+
+function releaseCachedPhoto(profileNumber) {
+  if (!profileNumber) {
+    return
+  }
+  const entry = photoCache.get(profileNumber)
+  if (!entry) {
+    return
+  }
+  entry.refs -= 1
+  if (entry.refs <= 0) {
+    URL.revokeObjectURL(entry.url)
+    photoCache.delete(profileNumber)
+  }
+}
 
 export default {
   name: 'StudentPhoto',
@@ -49,7 +78,7 @@ export default {
     return {
       photoSrc: '',
       loading: false,
-      objectUrl: ''
+      cacheKey: ''
     }
   },
   computed: {
@@ -85,27 +114,29 @@ export default {
     }
   },
   beforeUnmount() {
-    this.revokeObjectUrl()
+    this.releaseCurrentPhoto()
   },
   methods: {
-    revokeObjectUrl() {
-      if (this.objectUrl) {
-        URL.revokeObjectURL(this.objectUrl)
-        this.objectUrl = ''
+    releaseCurrentPhoto() {
+      if (this.cacheKey) {
+        releaseCachedPhoto(this.cacheKey)
+        this.cacheKey = ''
       }
+      this.photoSrc = ''
     },
     async loadPhoto() {
-      this.revokeObjectUrl()
-      this.photoSrc = ''
+      this.releaseCurrentPhoto()
+      this.loading = false
 
       const profileNumber = this.normalizedProfileNumber
       if (!/^[0-9]{1,20}$/.test(profileNumber)) {
-        this.loading = false
         return
       }
 
-      if (photoCache.has(profileNumber)) {
-        this.photoSrc = photoCache.get(profileNumber)
+      const cachedUrl = acquireCachedPhoto(profileNumber)
+      if (cachedUrl) {
+        this.cacheKey = profileNumber
+        this.photoSrc = cachedUrl
         return
       }
 
@@ -118,9 +149,12 @@ export default {
           silentError: true
         })
         if (blob && blob.size > 0 && blob.type && blob.type.startsWith('image/')) {
+          if (this.normalizedProfileNumber !== profileNumber) {
+            return
+          }
           const objectUrl = URL.createObjectURL(blob)
-          photoCache.set(profileNumber, objectUrl)
-          this.objectUrl = objectUrl
+          putCachedPhoto(profileNumber, objectUrl)
+          this.cacheKey = profileNumber
           this.photoSrc = objectUrl
         }
       } catch (e) {

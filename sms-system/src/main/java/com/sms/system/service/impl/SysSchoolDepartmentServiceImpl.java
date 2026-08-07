@@ -40,8 +40,12 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
      */
     @Override
     public List<SysSchoolDepartmentVO> getSysSchoolDepartmentTree(Integer type) {
-        return BeanCopyUtils.copyTree(buildDepartmentTree(type), SysSchoolDepartmentVO.class,
-                SysSchoolDepartment::getChildren, SysSchoolDepartmentVO::setChildren);
+        return BeanCopyUtils.copyTree(
+                buildDepartmentTree(type),
+                SysSchoolDepartmentVO.class,
+                SysSchoolDepartment::getChildren,
+                SysSchoolDepartmentVO::setChildren
+        );
     }
 
     /**
@@ -76,11 +80,11 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
                     SysSchoolDepartment::getChildren, SysSchoolDepartmentVO::setChildren);
         }
 
-        // 4. 按部門分組
+        // 4. 按自定義部門節點分組
         Map<Long, List<SysSchoolDepartmentMember>> membersByDeptMap = members.stream()
                 .filter(Objects::nonNull)
-                .filter(m -> m.getDepartmentId() != null)
-                .collect(Collectors.groupingBy(SysSchoolDepartmentMember::getDepartmentId));
+                .filter(m -> m.getSchoolDepartmentId() != null)
+                .collect(Collectors.groupingBy(SysSchoolDepartmentMember::getSchoolDepartmentId));
 
         // 5. 將成員附加到對應部門的 children 目錄下
         for (SysSchoolDepartment dept : allDepartments) {
@@ -118,7 +122,8 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
         node.setName(member.getName());
         node.setIsLeaf(true);
         node.setClassDepartmentId(member.getDepartmentId());
-        node.setStudentUserId(member.getStudentUserId());
+        node.setStudentId(member.getStudentId());
+        node.setParentUserId(member.getUserid());
         return node;
     }
 
@@ -272,63 +277,6 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
             if (child.getId() != null) {
                 collectDepartmentIdsToDelete(child.getId(), allDepartments, idsToCollect);
             }
-        }
-    }
-
-    /**
-     * 遞歸獲取 Sys 部門及其所有子孫部門的 ID（自動查詢部門數據）
-     *
-     * @param departmentIds 部門 ID 列表
-     * @param type 部門類型（1 學校部門通訊錄, 2 家校通訊錄）
-     * @return 所有部門 ID 列表（包括傳入的部門及其所有子孫部門）
-     */
-    public List<Long> resolveAllDescendantDepartmentIdsByType(List<Long> departmentIds, Integer type) {
-        // 如果傳入的部門 ID 列表為空，則返回空列表
-        if (departmentIds == null || departmentIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        // 1. 查詢所有 Sys 部門信息
-        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll(type);
-
-        // 對每個傳入的部門 ID，遞歸查找其所有子孫部門
-        Set<Long> allDepartmentIds = new HashSet<>(departmentIds);
-        for (Long deptId : departmentIds) {
-            collectAllDescendantDepartmentIds(deptId, allDepartments, allDepartmentIds);
-        }
-
-        return new ArrayList<>(allDepartmentIds);
-    }
-
-    /**
-     * 遞歸收集某個部門的所有子孫部門 ID
-     *
-     * @param parentId 父部門 ID
-     * @param allDepartments 所有部門列表
-     * @param allDepartmentIds 收集結果的集合
-     */
-    private void collectAllDescendantDepartmentIds(Long parentId, List<SysSchoolDepartment> allDepartments, Set<Long> allDepartmentIds) {
-        if (parentId == null || allDepartments == null) {
-            return;
-        }
-
-        // 找到所有直接子部門
-        List<SysSchoolDepartment> children = allDepartments.stream()
-                .filter(Objects::nonNull)
-                .filter(dept -> dept.getParentId() != null)
-                .filter(dept -> dept.getParentId().longValue() == parentId)
-                .collect(Collectors.toList());
-
-        for (SysSchoolDepartment child : children) {
-            if (child.getId() == null) {
-                continue;
-            }
-
-            // 添加子部門 ID
-            allDepartmentIds.add(child.getId());
-            
-            // 繼續遞歸查找孫部門
-            collectAllDescendantDepartmentIds(child.getId(), allDepartments, allDepartmentIds);
         }
     }
 }

@@ -24,11 +24,11 @@ public class NotificationReceiver implements Serializable {
     @TableField("notification_id")
     private Long notificationId;
 
-    /** 接收類型（1 班級 2 學生/家長） */
+    /** 接收來源類型（1 WeCom家校通訊錄，2 自定義家校通訊錄） */
     @TableField("receive_type")
     private String receiveType;
 
-    /** 接收數據來源集合(存儲多源JSON) */
+    /** 接收家長 parentUserId 列表（JSON 數組），如 ["userid1","userid2"] */
     @TableField("receive_data")
     private String receiveData;
 

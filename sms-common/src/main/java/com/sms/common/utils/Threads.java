@@ -63,7 +63,7 @@ public class Threads
     }
 
     /**
-     * 打印線程異常信息
+     * 打印線程異常資訊
      */
     public static void printException(Runnable r, Throwable t)
     {

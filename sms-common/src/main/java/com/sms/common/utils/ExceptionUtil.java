@@ -5,13 +5,13 @@ import java.io.StringWriter;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
- * 錯誤信息處理類。
+ * 錯誤資訊處理類。
  *
  */
 public class ExceptionUtil
 {
     /**
-     * 獲取exception的詳細錯誤信息。
+     * 獲取exception的詳細錯誤資訊。
      */
     public static String getExceptionMessage(Throwable e)
     {

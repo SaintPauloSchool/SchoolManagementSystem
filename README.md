@@ -1,6 +1,6 @@
 # 校園管理系統
 
-一個完整的校園管理系統，支持通知發佈、問題設置、靈活的接收對象配置等功能。
+一個完整的校園管理系統，支援通知發佈、問題設置、靈活的接收對象配置等功能。
 
 ## 項目特點
 
@@ -9,7 +9,7 @@
 ✅ **豐富的交互功能和用戶體驗**  
 ✅ **現代簡約風格界面設計**  
 ✅ **完善的響應式佈局**
-✅ **企業微信集成支持**
+✅ **企業微信整合支援**
 
 ## 系統功能
 
@@ -22,15 +22,15 @@
 - 通知標題和正文編輯
 - 發送人自動填充（當前登錄用戶，不可修改）
 - 跳轉連結設置（選填）
-- 附件/圖片上傳（支持多種格式）
-- 問題設置（多種題型支持）
+- 附件/圖片上傳（支援多種格式）
+- 問題設置（多種題型支援）
 
-### ❓ 問題類型支持
+### ❓ 問題類型支援
 1. **單選題** - 提供多個選項，用戶只能選擇一個
 2. **多選題** - 提供多個選項，用戶可以選擇多個
 3. **填空題** - 用戶輸入文本回答
 4. **附件上傳** - 用戶上傳文件作為回答
-5. **邏輯表單** - 支持複雜的問卷結構和條件分支邏輯
+5. **邏輯表單** - 支援複雜的問卷結構和條件分支邏輯
 
 ### 📤 發送設置
 - **接收對象配置**：
@@ -44,10 +44,10 @@
     - 回覆截止時間設置
 
 ### 👥 組織架構管理
-- **部門管理**：支持學校、學段、年級、班級等多級架構
+- **部門管理**：支援學校、學段、年級、班級等多級架構
 - **家校通訊錄**：管理學生、家長關係
-- **學校部門通訊錄**：管理教職員工信息
-- **企業微信集成**：同步企業微信組織架構
+- **學校部門通訊錄**：管理教職員工資訊
+- **企業微信整合**：同步企業微信組織架構
 
 ## 技術架構
 
@@ -78,13 +78,12 @@
 - `user_notification_read` - 用戶閱讀狀態表
 - `notification_answer` - 回答表
 - `sys_department` - 部門表
-- `sys_parent_student_relation` - 家長學生關係表
-- `sys_department_parent_binding` - 部門家長綁定表
+- `sys_school_family_contact` - 家校通訊錄聯絡人表 (School Family Contact)
 - `wecom_school_department` - 企業微信學校部門表
 - `wecom_school_department_member` - 企業微信部門成員表
 - `sys_school_department` - 系統學校部門表
 - `sys_school_department_member` - 系統學校部門成員表
-- `class_section` - 課程班級表
+- `class_section` - 班級對照表
 - `sys_token` - Token 表
 
 ## 快速開始
@@ -239,7 +238,7 @@ SchoolManagementSystem/
 │       ├── entity/                         # 實體類
 │       │   ├── notification/              # 通知相關實體
 │       │   ├── SysDepartment.java
-│       │   ├── SysParentStudentRelation.java
+│       │   ├── SysSchoolFamilyContact.java
 │       │   ├── WecomSchoolDepartment.java
 │       │   └── SysSchoolDepartment.java
 │       ├── mapper/                        # Mapper 接口
@@ -255,7 +254,7 @@ SchoolManagementSystem/
 │       │   ├── SchoolNotificationSystem.vue    # 主系統組件
 │       │   ├── NotificationList.vue            # 通知列表
 │       │   ├── PublishNotification.vue         # 發佈通知
-│       │   ├── BasicInfoForm.vue               # 基本信息表單
+│       │   ├── BasicInfoForm.vue               # 基本資訊表單
 │       │   ├── SendSettingsForm.vue            # 發送設置表單
 │       │   ├── FormQuestionDialog.vue          # 問題對話框
 │       │   ├── HomeSchoolContacts.vue          # 家校通訊錄
@@ -283,7 +282,7 @@ SchoolManagementSystem/
 ## 測試
 
 ```bash
-# 運行集成測試
+# 運行整合測試
 cd sp-api
 mvn test
 ```
@@ -330,7 +329,7 @@ mvn test
 
 ## 注意事項
 
-1. 確保數據庫字符集為 utf8mb4 以支持 emoji
+1. 確保數據庫字符集為 utf8mb4 以支援 emoji
 2. 文件上傳大小限制為 10MB
 3. 通知狀態：0-草稿，1-已發佈，2-已撤回
 4. 前端組件採用模塊化設計，便於維護和擴展
@@ -338,7 +337,7 @@ mvn test
 6. 推薦使用現代瀏覽器 (Chrome 90+, Firefox 88+, Safari 14+)
 7. 最佳體驗寬度 > 1200px
 
-## 瀏覽器支持
+## 瀏覽器支援
 
 - Chrome 90+
 - Firefox 88+

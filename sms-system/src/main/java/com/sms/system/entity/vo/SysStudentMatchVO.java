@@ -11,12 +11,9 @@ public class SysStudentMatchVO implements Serializable {
 
     // ── sys_student_match ──
     private Long id;
-    private String studentProfileNum;
-    private String studentUserIdWecom;
-    private String studentNameWecom;
-    private String matchStatus;
-    private String syncStatus;
-    private String errorMsg;
+    private String userId;
+    private String studentUserId;
+    private Integer matchStatus;
     private Date createTime;
     private Date updateTime;
 
@@ -31,6 +28,11 @@ public class SysStudentMatchVO implements Serializable {
     private String idName;
     private String dsejStudentId;
 
+    // ── sys_school_family_contact ──
+    private String contactStudentName;
+    private String relationDesc;
+    private String classCodeWecom;
+
     public Long getId() {
         return id;
     }
@@ -39,52 +41,28 @@ public class SysStudentMatchVO implements Serializable {
         this.id = id;
     }
 
-    public String getStudentProfileNum() {
-        return studentProfileNum;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setStudentProfileNum(String studentProfileNum) {
-        this.studentProfileNum = studentProfileNum;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
-    public String getStudentUserIdWecom() {
-        return studentUserIdWecom;
+    public String getStudentUserId() {
+        return studentUserId;
     }
 
-    public void setStudentUserIdWecom(String studentUserIdWecom) {
-        this.studentUserIdWecom = studentUserIdWecom;
+    public void setStudentUserId(String studentUserId) {
+        this.studentUserId = studentUserId;
     }
 
-    public String getStudentNameWecom() {
-        return studentNameWecom;
-    }
-
-    public void setStudentNameWecom(String studentNameWecom) {
-        this.studentNameWecom = studentNameWecom;
-    }
-
-    public String getMatchStatus() {
+    public Integer getMatchStatus() {
         return matchStatus;
     }
 
-    public void setMatchStatus(String matchStatus) {
+    public void setMatchStatus(Integer matchStatus) {
         this.matchStatus = matchStatus;
-    }
-
-    public String getSyncStatus() {
-        return syncStatus;
-    }
-
-    public void setSyncStatus(String syncStatus) {
-        this.syncStatus = syncStatus;
-    }
-
-    public String getErrorMsg() {
-        return errorMsg;
-    }
-
-    public void setErrorMsg(String errorMsg) {
-        this.errorMsg = errorMsg;
     }
 
     public Date getCreateTime() {
@@ -173,5 +151,29 @@ public class SysStudentMatchVO implements Serializable {
 
     public void setDsejStudentId(String dsejStudentId) {
         this.dsejStudentId = dsejStudentId;
+    }
+
+    public String getContactStudentName() {
+        return contactStudentName;
+    }
+
+    public void setContactStudentName(String contactStudentName) {
+        this.contactStudentName = contactStudentName;
+    }
+
+    public String getRelationDesc() {
+        return relationDesc;
+    }
+
+    public void setRelationDesc(String relationDesc) {
+        this.relationDesc = relationDesc;
+    }
+
+    public String getClassCodeWecom() {
+        return classCodeWecom;
+    }
+
+    public void setClassCodeWecom(String classCodeWecom) {
+        this.classCodeWecom = classCodeWecom;
     }
 }

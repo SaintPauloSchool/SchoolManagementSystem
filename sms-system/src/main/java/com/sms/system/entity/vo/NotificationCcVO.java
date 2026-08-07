@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 通知抄送對象 VO
@@ -15,6 +16,11 @@ public class NotificationCcVO implements Serializable {
     private Long notificationId;
     private String ccType;
     private String ccData;
+
+    /** 由 cc_data 中的成員 ID 解析出的名稱列表（非數據庫字段） */
+    private List<String> ccNames;
+    /** 按部門平鋪分組（展示用，非持久化字段） */
+    private List<NotificationReceiverDeptGroupVO> ccDeptGroups;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
@@ -49,6 +55,22 @@ public class NotificationCcVO implements Serializable {
 
     public void setCcData(String ccData) {
         this.ccData = ccData;
+    }
+
+    public List<String> getCcNames() {
+        return ccNames;
+    }
+
+    public void setCcNames(List<String> ccNames) {
+        this.ccNames = ccNames;
+    }
+
+    public List<NotificationReceiverDeptGroupVO> getCcDeptGroups() {
+        return ccDeptGroups;
+    }
+
+    public void setCcDeptGroups(List<NotificationReceiverDeptGroupVO> ccDeptGroups) {
+        this.ccDeptGroups = ccDeptGroups;
     }
 
     public LocalDateTime getCreateTime() {
