@@ -21,27 +21,19 @@ public class SysConfigServiceImpl implements ISysConfigService {
     private SysConfigMapper sysConfigMapper;
 
     /**
-     * 讀取基礎設置中配置的家校通訊錄學段部門 ID（type=3）。
-     *
-     * @return 學段部門 ID，無效配置時返回 null
+     * 讀取基礎設置中配置的家校通訊錄學段部門 ID 列表（type=3）。
+     * <p>兼容舊數據：配置值為單個數字時解析為單元素列表。</p>
      */
     @Override
-    public Long getAddressBookSegmentDepartmentId() {
+    public List<Long> getAddressBookSegmentDepartmentIds() {
         SysConfig config = sysConfigMapper.selectByConfigKey(SysConfigKeys.ADDRESS_BOOK_SEGMENT_DEPT_ID);
-        if (config == null || !StringUtils.hasText(config.getConfigValue())) {
-            return null;
-        }
-        try {
-            return Long.parseLong(config.getConfigValue().trim());
-        } catch (NumberFormatException ex) {
-            return null;
-        }
+        return parseIdList(config != null ? config.getConfigValue() : null);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveAddressBookSegmentDepartmentId(Long segmentDepartmentId, String updateBy) {
-        String configValue = segmentDepartmentId != null ? String.valueOf(segmentDepartmentId) : "";
+    public void saveAddressBookSegmentDepartmentIds(List<Long> segmentDepartmentIds, String updateBy) {
+        String configValue = formatIdList(segmentDepartmentIds);
 
         SysConfig existing = sysConfigMapper.selectByConfigKey(SysConfigKeys.ADDRESS_BOOK_SEGMENT_DEPT_ID);
         if (existing == null) {
@@ -50,8 +42,8 @@ public class SysConfigServiceImpl implements ISysConfigService {
             config.setConfigName("家校通訊錄學段");
             config.setConfigValue(configValue);
             config.setConfigGroup("addressbook");
-            config.setValueType("number");
-            config.setRemark("type=3 學段部門 ID，指定家校通訊錄使用的學段數據");
+            config.setValueType("string");
+            config.setRemark("type=3 學段部門 ID 列表（逗號分隔），指定家校通訊錄使用的學段數據");
             config.setCreateBy(updateBy);
             sysConfigMapper.insertConfig(config);
             return;

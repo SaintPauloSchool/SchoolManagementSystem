@@ -50,7 +50,7 @@ public class SysBasicSettingController extends AdminBaseController {
             return AjaxResult.error("無權限");
         }
         AddressBookSegmentSettingDTO dto = new AddressBookSegmentSettingDTO();
-        dto.setSegmentDepartmentId(sysConfigService.getAddressBookSegmentDepartmentId());
+        dto.setSegmentDepartmentIds(sysConfigService.getAddressBookSegmentDepartmentIds());
         return AjaxResult.success(dto);
     }
 
@@ -61,9 +61,8 @@ public class SysBasicSettingController extends AdminBaseController {
         if (isNotAdmin()) {
             return AjaxResult.error("無權限");
         }
-        sysConfigService.saveAddressBookSegmentDepartmentId(
-                settingDTO != null ? settingDTO.getSegmentDepartmentId() : null,
-                getOpenUserId());
+        List<Long> ids = settingDTO != null ? settingDTO.getSegmentDepartmentIds() : null;
+        sysConfigService.saveAddressBookSegmentDepartmentIds(ids, getOpenUserId());
         return AjaxResult.success("保存成功");
     }
 

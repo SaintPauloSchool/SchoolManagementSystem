@@ -22,21 +22,21 @@
           </span>
           <span class="settings-tab-text">
             <span class="settings-tab-title">家校通訊錄學段</span>
-            <span class="settings-tab-desc">指定家校通訊錄使用的學段</span>
+            <span class="settings-tab-desc">可多選學段，合併作為家校通訊錄範圍</span>
           </span>
         </button>
         <button
           type="button"
           class="settings-tab"
           :class="{ active: activeTab === 'dailyNotice' }"
-          @click="activeTab = 'dailyNotice'"
+          @click="switchToDailyNotice"
         >
           <span class="settings-tab-icon notice">
             <el-icon><Bell /></el-icon>
           </span>
           <span class="settings-tab-text">
             <span class="settings-tab-title">每日學生手冊通知</span>
-            <span class="settings-tab-desc">指定每日學生手冊通知發送的班級範圍</span>
+            <span class="settings-tab-desc">依家校通訊錄已選學段顯示可配置班級</span>
           </span>
         </button>
       </div>
@@ -54,7 +54,7 @@
                   <span class="tree-node">
                     <el-checkbox
                       v-if="Number(data.type) === 3"
-                      :model-value="segmentCheckedIds.includes(data.id)"
+                      :model-value="segmentCheckedSet.has(data.id)"
                       class="tree-node-checkbox"
                       @click.stop
                       @change="checked => handleSegmentCheckboxChange(data, checked)"
@@ -69,16 +69,18 @@
 
             <div class="saved-panel">
               <div class="saved-panel-title">目前已保存</div>
-              <div v-if="!savedSegmentInfo" class="saved-empty">尚未保存學段配置</div>
+              <div v-if="savedSegmentItems.length === 0" class="saved-empty">尚未保存學段配置</div>
               <div v-else class="saved-content">
-                <div class="saved-item">
-                  <span class="saved-label">學段名稱</span>
-                  <span class="saved-value">{{ savedSegmentInfo.name }}</span>
-                </div>
-                <div v-if="savedSegmentInfo.path" class="saved-path">{{ savedSegmentInfo.path }}</div>
+                <div class="saved-summary">共 {{ savedSegmentItems.length }} 個學段</div>
+                <ul class="saved-list">
+                  <li v-for="item in savedSegmentItems" :key="item.id" class="saved-list-item">
+                    <div class="saved-value">{{ item.name }}</div>
+                    <div v-if="item.path" class="saved-path">{{ item.path }}</div>
+                  </li>
+                </ul>
               </div>
               <div
-                v-if="savedSegmentInfo && segmentSelectionChanged"
+                v-if="segmentSelectionChanged"
                 class="saved-pending-tip"
               >
                 左側選擇已變更，請點擊「保存配置」後才會生效
@@ -87,6 +89,9 @@
           </div>
 
           <div class="action-bar">
+            <span v-if="segmentCheckedIds.length > 0" class="action-selected-tip">
+              已選 {{ segmentCheckedIds.length }} 個學段
+            </span>
             <el-button type="primary" :loading="segmentSaving" @click="handleSaveSegment">保存配置</el-button>
             <el-button @click="loadSegmentData">重新載入</el-button>
           </div>
@@ -125,7 +130,9 @@
 
             <div class="saved-panel">
               <div class="saved-panel-title">目前已保存</div>
-              <div v-if="savedDailyNoticeItems.length === 0" class="saved-empty">尚未保存班級配置</div>
+              <div v-if="savedDailyNoticeItems.length === 0" class="saved-empty">
+                {{ dailyNoticeTree.length === 0 ? '請先在「家校通訊錄學段」保存學段後再配置班級' : '尚未保存班級配置' }}
+              </div>
               <div v-else class="saved-content">
                 <div class="saved-summary">共 {{ savedDailyNoticeItems.length }} 個班級</div>
                 <ul class="saved-list">
@@ -173,7 +180,7 @@ export default {
       dailyNoticeSaving: false,
       segmentTree: [],
       segmentCheckedIds: [],
-      savedSegmentId: null,
+      savedSegmentIds: [],
       dailyNoticeTree: [],
       dailyNoticeCheckedIds: [],
       savedClassDepartmentIds: [],
@@ -187,16 +194,18 @@ export default {
     dailyNoticeCheckedSet() {
       return new Set(this.dailyNoticeCheckedIds)
     },
-    savedSegmentInfo() {
-      if (this.savedSegmentId == null) {
-        return null
-      }
-      const node = this.findNodeById(this.segmentTree, this.savedSegmentId)
-      return {
-        id: this.savedSegmentId,
-        name: node?.name || '未知學段',
-        path: this.buildNodePath(this.segmentTree, this.savedSegmentId)
-      }
+    segmentCheckedSet() {
+      return new Set(this.segmentCheckedIds)
+    },
+    savedSegmentItems() {
+      return (this.savedSegmentIds || []).map(id => {
+        const node = this.findNodeById(this.segmentTree, id)
+        return {
+          id,
+          name: node?.name || '未知學段',
+          path: this.buildNodePath(this.segmentTree, id)
+        }
+      })
     },
     savedDailyNoticeItems() {
       return (this.savedClassDepartmentIds || []).map(id => {
@@ -209,8 +218,12 @@ export default {
       })
     },
     segmentSelectionChanged() {
-      const currentId = this.segmentCheckedIds[0] ?? null
-      return currentId !== this.savedSegmentId
+      const saved = [...(this.savedSegmentIds || [])].sort((a, b) => a - b)
+      const current = [...this.segmentCheckedIds].sort((a, b) => a - b)
+      if (saved.length !== current.length) {
+        return true
+      }
+      return saved.some((id, index) => id !== current[index])
     },
     dailyNoticeSelectionChanged() {
       const saved = [...(this.savedClassDepartmentIds || [])].sort((a, b) => a - b)
@@ -237,15 +250,27 @@ export default {
           this.segmentTree = treeRes.data || []
         }
         if (scopeRes.code === 200 || scopeRes.code === 0) {
-          const id = scopeRes.data?.segmentDepartmentId
-          this.savedSegmentId = id != null ? Number(id) : null
-          this.segmentCheckedIds = this.savedSegmentId != null ? [this.savedSegmentId] : []
+          const ids = scopeRes.data?.segmentDepartmentIds
+          // 兼容舊接口單個 segmentDepartmentId
+          if (Array.isArray(ids)) {
+            this.savedSegmentIds = ids.map(id => Number(id))
+          } else if (scopeRes.data?.segmentDepartmentId != null) {
+            this.savedSegmentIds = [Number(scopeRes.data.segmentDepartmentId)]
+          } else {
+            this.savedSegmentIds = []
+          }
+          this.segmentCheckedIds = [...this.savedSegmentIds]
         }
       } catch (e) {
         console.error(e)
       } finally {
         this.segmentLoading = false
       }
+    },
+
+    switchToDailyNotice() {
+      this.activeTab = 'dailyNotice'
+      this.loadDailyNoticeData()
     },
 
     async loadDailyNoticeData() {
@@ -261,7 +286,9 @@ export default {
         if (settingRes.code === 200 || settingRes.code === 0) {
           const ids = settingRes.data?.classDepartmentIds || []
           this.savedClassDepartmentIds = ids.map(id => Number(id))
-          this.dailyNoticeCheckedIds = [...this.savedClassDepartmentIds]
+          // 僅保留仍落在當前學段樹內的班級勾選
+          const allowedIds = new Set(this.collectClassIdsFromTree(this.dailyNoticeTree))
+          this.dailyNoticeCheckedIds = this.savedClassDepartmentIds.filter(id => allowedIds.has(id))
         }
       } catch (e) {
         console.error(e)
@@ -270,14 +297,30 @@ export default {
       }
     },
 
+    collectClassIdsFromTree(nodes, result = []) {
+      for (const node of nodes || []) {
+        if (!node) continue
+        if (Number(node.type) === 1 && node.id != null) {
+          result.push(Number(node.id))
+        }
+        if (node.children?.length) {
+          this.collectClassIdsFromTree(node.children, result)
+        }
+      }
+      return result
+    },
+
     handleSegmentCheckboxChange(data, checked) {
       if (Number(data.type) !== 3) {
         return
       }
+      const id = data.id
       if (checked) {
-        this.segmentCheckedIds = [data.id]
+        if (!this.segmentCheckedIds.includes(id)) {
+          this.segmentCheckedIds = [...this.segmentCheckedIds, id]
+        }
       } else {
-        this.segmentCheckedIds = []
+        this.segmentCheckedIds = this.segmentCheckedIds.filter(item => item !== id)
       }
     },
 
@@ -360,20 +403,25 @@ export default {
     },
 
     async handleSaveSegment() {
-      if (this.segmentCheckedIds.length === 0) {
-        ElNotification({ title: '提示', message: '請選擇一個學段', type: 'warning', duration: 3000 })
-        return
-      }
       this.segmentSaving = true
       try {
         const res = await request({
           url: '/system/basic/addressBook/segmentSetting',
           method: 'post',
-          data: { segmentDepartmentId: this.segmentCheckedIds[0] }
+          data: { segmentDepartmentIds: this.segmentCheckedIds }
         })
         if (res.code === 200 || res.code === 0) {
-          this.savedSegmentId = this.segmentCheckedIds[0] ?? null
-          ElNotification({ title: '保存成功', message: '學段設置已保存', type: 'success', duration: 3000 })
+          this.savedSegmentIds = [...this.segmentCheckedIds]
+          ElNotification({
+            title: '保存成功',
+            message: this.segmentCheckedIds.length > 0
+              ? `已保存 ${this.segmentCheckedIds.length} 個學段`
+              : '學段設置已清空',
+            type: 'success',
+            duration: 3000
+          })
+          // 學段變更後刷新每日通知班級樹範圍
+          this.loadDailyNoticeData()
         }
       } catch (e) {
         console.error(e)
