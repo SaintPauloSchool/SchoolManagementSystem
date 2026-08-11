@@ -70,14 +70,23 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
             return Collections.emptyList();
         }
 
-        // 2. 讀取基礎設置中配置的學段部門（type=3）
-        Long segmentDepartmentId = sysConfigService.getAddressBookSegmentDepartmentId();
-        if (segmentDepartmentId == null) {
+        // 2. 讀取基礎設置中配置的學段部門列表（type=3，支援多選）
+        List<Long> segmentDepartmentIds = sysConfigService.getAddressBookSegmentDepartmentIds();
+        if (segmentDepartmentIds == null || segmentDepartmentIds.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 3. 以學段為根，構建 學段→年級→班級 部門樹
-        List<SysDepartmentVO> addressBookTree = getAddressBookDeptTree(segmentDepartmentId);
+        // 3. 以各學段為根分別構建 學段→年級→班級 樹，再合併
+        List<SysDepartmentVO> addressBookTree = new ArrayList<>();
+        for (Long segmentDepartmentId : segmentDepartmentIds) {
+            if (segmentDepartmentId == null) {
+                continue;
+            }
+            List<SysDepartmentVO> segmentTree = getAddressBookDeptTree(segmentDepartmentId);
+            if (segmentTree != null && !segmentTree.isEmpty()) {
+                addressBookTree.addAll(segmentTree);
+            }
+        }
         if (addressBookTree.isEmpty()) {
             return Collections.emptyList();
         }
@@ -413,16 +422,27 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
 
     /**
      * 查詢基礎設置所配置學段下的班級部門 ID（type=1）。
+     * <p>支援多學段：合併所有已選學段下的班級 ID 並去重。</p>
      *
      * @return 班級部門 ID 列表，未配置學段或無班級時返回空列表
      */
     @Override
     public List<Long> getClassDepartmentId() {
-        Long segmentDepartmentId = sysConfigService.getAddressBookSegmentDepartmentId();
-        if (segmentDepartmentId == null) {
+        List<Long> segmentDepartmentIds = sysConfigService.getAddressBookSegmentDepartmentIds();
+        if (segmentDepartmentIds == null || segmentDepartmentIds.isEmpty()) {
             return Collections.emptyList();
         }
-        return getClassDepartmentIdsUnderSegment(segmentDepartmentId);
+        List<Long> classIds = new ArrayList<>();
+        for (Long segmentDepartmentId : segmentDepartmentIds) {
+            if (segmentDepartmentId == null) {
+                continue;
+            }
+            classIds.addAll(getClassDepartmentIdsUnderSegment(segmentDepartmentId));
+        }
+        return classIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**
@@ -545,10 +565,45 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
 
     /**
      * 獲取每日學生手冊通知班級選擇樹（含 type=1 班級節點）。
+     * <p>僅展示「家校通訊錄學段」已配置學段下的年級／班級；未配置學段時返回空樹。</p>
      */
     @Override
     public List<SysDepartmentVO> getDailyNoticeClassTree() {
-        return buildBasicSettingDepartmentTree(true);
+        List<Long> segmentIds = sysConfigService.getAddressBookSegmentDepartmentIds();
+        if (segmentIds == null || segmentIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<SysDepartmentVO> fullTree = buildBasicSettingDepartmentTree(true);
+        return filterDailyNoticeTreeBySegments(fullTree, new HashSet<>(segmentIds));
+    }
+
+    /**
+     * 按已配置學段剪枝每日通知班級樹：僅保留選中學段及其子樹，上級學校／校區作路徑保留。
+     */
+    private List<SysDepartmentVO> filterDailyNoticeTreeBySegments(List<SysDepartmentVO> nodes, Set<Long> segmentIds) {
+        if (nodes == null || nodes.isEmpty() || segmentIds == null || segmentIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<SysDepartmentVO> result = new ArrayList<>();
+        for (SysDepartmentVO node : nodes) {
+            if (node == null) {
+                continue;
+            }
+            Integer type = node.getType();
+            if (type != null && type == TYPE_SCHOOL_SEGMENT) {
+                if (segmentIds.contains(node.getId())) {
+                    result.add(node);
+                }
+                continue;
+            }
+            List<SysDepartmentVO> filteredChildren = filterDailyNoticeTreeBySegments(node.getChildren(), segmentIds);
+            if (!filteredChildren.isEmpty()) {
+                SysDepartmentVO copy = shallowCopyDeptVo(node);
+                copy.setChildren(filteredChildren);
+                result.add(copy);
+            }
+        }
+        return result;
     }
 
     /**
