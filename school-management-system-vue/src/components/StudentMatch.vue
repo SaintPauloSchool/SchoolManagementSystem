@@ -84,7 +84,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="企微班級" min-width="100" align="center" show-overflow-tooltip>
+        <el-table-column label="企微班級" min-width="140" align="center" show-overflow-tooltip>
           <template #default="scope">
             <span v-if="scope.row.classCodeWecom">{{ scope.row.classCodeWecom }}</span>
             <span v-else class="text-placeholder">-</span>
@@ -224,10 +224,10 @@
                 </span>
               </template>
             </el-table-column>
-            <el-table-column prop="classCodeWecom" label="企微班級代碼" min-width="120" align="center">
+            <el-table-column prop="classCodeWecom" label="企微班級" min-width="140" align="center" show-overflow-tooltip>
               <template #default="scope">
                 <span v-if="scope.row.classCodeWecom">{{ scope.row.classCodeWecom }}</span>
-                <span v-else class="text-placeholder">未對照班級</span>
+                <span v-else class="text-placeholder">-</span>
               </template>
             </el-table-column>
             <el-table-column prop="mobile" label="家長手機號" min-width="160" align="center" show-overflow-tooltip />

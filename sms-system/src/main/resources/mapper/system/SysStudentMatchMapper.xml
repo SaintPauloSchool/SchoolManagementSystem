@@ -30,10 +30,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                r.student_user_id,
                max(r.student_name) as student_name,
                max(r.relation_desc) as relation_desc,
-               max(cs.class_section_sp) as class_code_wecom
+               max(d.name) as class_code_wecom
         from sys_school_family_contact r
         inner join sys_department d on r.department_id = d.id
-        left join class_section cs on d.name = cs.class_section_dsedj
         group by r.parent_user_id, r.student_user_id
     </sql>
 

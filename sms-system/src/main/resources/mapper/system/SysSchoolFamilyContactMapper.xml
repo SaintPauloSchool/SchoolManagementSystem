@@ -161,7 +161,7 @@
             r.student_name AS student_name,
             r.mobile AS mobile,
             r.relation_desc AS relation_desc,
-            cs.class_section_sp AS class_code_wecom
+            d.name AS class_code_wecom
         FROM sys_school_family_contact r
         INNER JOIN sys_department d ON r.department_id = d.id
         INNER JOIN class_section cs ON d.name = cs.class_section_dsedj
@@ -176,7 +176,10 @@
             AND r.mobile LIKE concat('%', #{queryMobile}, '%')
         </if>
         <if test="queryClass != null and queryClass != ''">
-            AND LOWER(cs.class_section_sp) LIKE concat('%', LOWER(#{queryClass}), '%')
+            AND (
+                LOWER(cs.class_section_sp) LIKE concat('%', LOWER(#{queryClass}), '%')
+                OR LOWER(d.name) LIKE concat('%', LOWER(#{queryClass}), '%')
+            )
         </if>
         <choose>
             <when test="studentId != null and studentId != ''">
