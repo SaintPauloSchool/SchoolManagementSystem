@@ -240,27 +240,6 @@ CREATE TABLE sys_department (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='部門表';
 
 -- ----------------------------
--- 家校通訊錄表
--- ----------------------------
-DROP TABLE IF EXISTS sys_department_parent_binding;
-DROP TABLE IF EXISTS sys_parent_student_relation;
-DROP TABLE IF EXISTS sys_school_family_contact;
-CREATE TABLE sys_school_family_contact (
-                                             id                  BIGINT          NOT NULL AUTO_INCREMENT    COMMENT '主鍵 ID',
-                                             department_id       BIGINT          NOT NULL                   COMMENT '部門 ID',
-                                             parent_user_id      VARCHAR(64)     NOT NULL                   COMMENT '家長用戶 ID',
-                                             student_user_id     VARCHAR(64)     NOT NULL                   COMMENT '學生用戶 ID',
-                                             student_name        VARCHAR(100)    DEFAULT NULL               COMMENT '學生姓名',
-                                             relation_desc       VARCHAR(50)     DEFAULT '家長'             COMMENT '關係描述',
-                                             mobile              VARCHAR(20)     DEFAULT NULL               COMMENT '家長手機號',
-                                             external_userid     VARCHAR(64)     DEFAULT NULL               COMMENT '家長外部用戶 ID',
-                                             create_time         DATETIME        DEFAULT NULL               COMMENT '創建時間',
-                                             update_time         DATETIME        DEFAULT NULL               COMMENT '更新時間',
-                                             PRIMARY KEY (id),
-                                             UNIQUE KEY uk_parent_student_dept (parent_user_id, student_user_id, department_id)
-) ENGINE=InnoDB AUTO_INCREMENT=1 COLLATE=utf8mb4_0900_ai_ci COMMENT='家校通訊錄表';
-
--- ----------------------------
 -- 班級對照表
 -- ----------------------------
 DROP TABLE IF EXISTS class_section;
