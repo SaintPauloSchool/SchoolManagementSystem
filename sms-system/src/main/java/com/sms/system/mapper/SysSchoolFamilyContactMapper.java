@@ -83,7 +83,7 @@ public interface SysSchoolFamilyContactMapper {
     int batchInsert(@Param("contacts") List<SysSchoolFamilyContact> contacts);
 
     /**
-     * 更新聯絡人可變欄位（姓名、關係、手機、外部 ID 等）
+     * 更新聯絡人可變欄位（班級部門、姓名、關係、手機、外部 ID 等）
      *
      * @param contact 含主鍵及待更新欄位的聯絡人
      * @return 影響行數

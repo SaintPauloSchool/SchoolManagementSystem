@@ -109,6 +109,7 @@
     <update id="updateContact" parameterType="com.sms.system.entity.SysSchoolFamilyContact">
         UPDATE sys_school_family_contact
         <set>
+            <if test="departmentId != null">department_id = #{departmentId},</if>
             <if test="studentName != null">student_name = #{studentName},</if>
             <if test="relationDesc != null">relation_desc = #{relationDesc},</if>
             <if test="mobile != null">mobile = #{mobile},</if>
