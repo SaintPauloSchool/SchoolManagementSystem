@@ -2022,17 +2022,12 @@ export default {
         }
       }
     
-      // 先關閉對話框，再發送保存事件，避免數據丟失
-      this.$emit('update:visible', false)
-      
-      // 使用 nextTick 確保對話框關閉後再發送數據
-      this.$nextTick(() => {
-        this.$emit('save', {
-          questionnaire: this.questionnaireData,
-          questions: this.questionList
-        })
-        ElNotification({ title: '保存成功', message: '表單問題已成功保存', type: 'success', duration: 3000 })
+      // 先寫回父層再關閉，避免關閉後保存失敗仍提示成功
+      this.$emit('save', {
+        questionnaire: this.questionnaireData,
+        questions: JSON.parse(JSON.stringify(this.questionList))
       })
+      this.$emit('update:visible', false)
     },
   }
 }
