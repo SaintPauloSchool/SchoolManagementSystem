@@ -176,7 +176,12 @@ export default {
   emits: ['prev', 'submit'],
   data() {
     return {
-      localFormData: { ...this.formData },
+      localFormData: {
+        receivers: this.formData?.receivers || [],
+        ccs: this.formData?.ccs || [],
+        replyDeadline: this.formData?.replyDeadline ?? null,
+        reminderTime: this.formData?.reminderTime ?? null
+      },
       
       studentSelectorVisible: false,
       ccStaffSelectorVisible: false,
@@ -512,8 +517,12 @@ export default {
       
       this.localFormData.receivers = receivers
       this.localFormData.ccs = ccs
-      
-      Object.assign(this.formData, this.localFormData)
+
+      // 只回寫發送設置相關欄位，避免用掛載時的空 title/content 覆蓋基本資訊
+      this.formData.receivers = receivers
+      this.formData.ccs = ccs
+      this.formData.replyDeadline = this.localFormData.replyDeadline ?? null
+      this.formData.reminderTime = this.localFormData.reminderTime ?? null
     },
 
     openStudentSelector() {
