@@ -11,12 +11,17 @@ import java.util.List;
 public interface SysDepartmentAdminMapper {
 
     /**
-     * 根據企業微信 userid 查詢該用戶管理的所有部門管理員記錄
+     * 根據企業微信 userid 查詢該用戶的部門管理員記錄
      *
      * @param userid 企業微信 userid
      * @return 部門管理員記錄列表
      */
     List<SysDepartmentAdmin> selectByUserid(@Param("userid") String userid);
+
+    /**
+     * 查詢全部部門管理員
+     */
+    List<SysDepartmentAdmin> selectAll();
 
     /**
      * 根據部門ID和userid查詢
@@ -39,4 +44,9 @@ public interface SysDepartmentAdminMapper {
      * @return 結果
      */
     int updateByDepartmentIdAndUserid(SysDepartmentAdmin admin);
+
+    /**
+     * 按主鍵批量刪除
+     */
+    int deleteBatchByIds(@Param("ids") List<Long> ids);
 }

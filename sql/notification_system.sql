@@ -432,37 +432,37 @@ CREATE TABLE `sys_task_log` (
 -- ----------------------------
 DROP TABLE IF EXISTS sys_scheduled_task;
 CREATE TABLE `sys_scheduled_task` (
-    `id`              bigint(20)   NOT NULL AUTO_INCREMENT COMMENT '主鍵',
-    `task_key`        varchar(64)  NOT NULL                COMMENT '任務唯一標識',
-    `task_name`       varchar(100) NOT NULL                COMMENT '任務名稱',
-    `task_bean`       varchar(100) NOT NULL                COMMENT 'Spring Task Bean 名稱（手動觸發用）',
-    `method_name`     varchar(100) NOT NULL DEFAULT 'executeTask' COMMENT 'Task 方法名',
-    `cron_expression` varchar(64)  NOT NULL                COMMENT 'Cron 表達式',
-    `enabled`         char(1)      NOT NULL DEFAULT '0'    COMMENT '是否啟用（0停用 1啟用）',
-    `sort_order`      int(11)      NOT NULL DEFAULT 0      COMMENT '排序',
-    `create_time`     datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
-    `update_time`     datetime     DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_task_key` (`task_key`)
+                                      `id`              bigint(20)   NOT NULL AUTO_INCREMENT COMMENT '主鍵',
+                                      `task_key`        varchar(64)  NOT NULL                COMMENT '任務唯一標識',
+                                      `task_name`       varchar(100) NOT NULL                COMMENT '任務名稱',
+                                      `task_bean`       varchar(100) NOT NULL                COMMENT 'Spring Task Bean 名稱（手動觸發用）',
+                                      `method_name`     varchar(100) NOT NULL DEFAULT 'executeTask' COMMENT 'Task 方法名',
+                                      `cron_expression` varchar(64)  NOT NULL                COMMENT 'Cron 表達式',
+                                      `enabled`         char(1)      NOT NULL DEFAULT '0'    COMMENT '是否啟用（0停用 1啟用）',
+                                      `sort_order`      int(11)      NOT NULL DEFAULT 0      COMMENT '排序',
+                                      `create_time`     datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+                                      `update_time`     datetime     DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+                                      PRIMARY KEY (`id`),
+                                      UNIQUE KEY `uk_task_key` (`task_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='定時任務配置表';
 
 INSERT INTO sys_scheduled_task (task_key, task_name, task_bean, method_name, cron_expression, enabled, sort_order) VALUES
-('failed_task_notifier',       '檢查失敗任務通知',       'failedTaskNotifierTask',       'executeTask', '0 0 9 * * ?',         '0', 1),
-('department_sync',            '家校通訊錄部門數據同步', 'departmentSyncTask',           'executeTask', '0 0 0 * * ?',         '0', 2),
-('school_family_contact_sync', '家校通訊錄同步',         'schoolFamilyContactSyncTask',  'executeTask', '0 30 0 * * ?',        '0', 3),
-('student_match_sync',         '學生數據自動匹配',       'studentMatchSyncTask',         'executeTask', '0 0 1 * * ?',         '0', 4),
-('wecom_school_department',    '企業微信部門與成員同步', 'wecomSchoolDepartmentTask',    'executeTask', '0 30 1 * * ?',        '0', 5),
-('notification_reminder',      '定時提示家長回復通知',   'notificationReminderTask',     'executeTask', '0 30 9 * * ?',        '0', 6),
-('notification_resend',          '定時重新發送失敗通知',   'notificationResendTask',       'executeTask', '0 0 9-18 * * ?',      '0', 7),
-('school_notice',              '每日學生手冊通知發送',   'schoolNoticeTask',             'executeTask', '0 0 18 ? * MON-FRI',  '0', 8),
-('attendance_notify',          '考勤拍卡通知發送',       'attendanceNotifyTask',         'executeTask', '0 * * * * ?',         '1', 9);
+                                                                                                                       ('failed_task_notifier',       '檢查失敗任務通知',       'failedTaskNotifierTask',       'executeTask', '0 0 9 * * ?',         '0', 1),
+                                                                                                                       ('department_sync',            '家校通訊錄部門數據同步', 'departmentSyncTask',           'executeTask', '0 0 0 * * ?',         '0', 2),
+                                                                                                                       ('school_family_contact_sync', '家校通訊錄同步',         'schoolFamilyContactSyncTask',  'executeTask', '0 30 0 * * ?',        '0', 3),
+                                                                                                                       ('student_match_sync',         '學生數據自動匹配',       'studentMatchSyncTask',         'executeTask', '0 0 1 * * ?',         '0', 4),
+                                                                                                                       ('wecom_school_department',    '企業微信部門與成員同步', 'wecomSchoolDepartmentTask',    'executeTask', '0 30 1 * * ?',        '0', 5),
+                                                                                                                       ('notification_reminder',      '定時提示家長回復通知',   'notificationReminderTask',     'executeTask', '0 30 9 * * ?',        '0', 6),
+                                                                                                                       ('notification_resend',          '定時重新發送失敗通知',   'notificationResendTask',       'executeTask', '0 0 9-18 * * ?',      '0', 7),
+                                                                                                                       ('school_notice',              '每日學生手冊通知發送',   'schoolNoticeTask',             'executeTask', '0 0 18 ? * MON-FRI',  '0', 8),
+                                                                                                                       ('attendance_notify',          '考勤拍卡通知發送',       'attendanceNotifyTask',         'executeTask', '0 * * * * ?',         '1', 9);
 -- ----------------------------
 -- 學生數據匹配表
 -- ----------------------------
 DROP TABLE IF EXISTS sys_student_match;
 CREATE TABLE IF NOT EXISTS sys_student_match (
-    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主鍵 ID',
-    student_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '學生 ID（關聯 student_profiles.student_info.student_id）',
+                                                 id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主鍵 ID',
+                                                 student_id VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '學生 ID（關聯 student_profiles.student_info.student_id）',
     user_id VARCHAR(64) NOT NULL COMMENT '家校通訊錄家長 user_id（parent_user_id）',
     student_user_id VARCHAR(64) NOT NULL COMMENT '家校通訊錄學生 user_id（關聯 sys_school_family_contact.student_user_id）',
     match_status INT NOT NULL COMMENT '匹配狀態 (1: 自動匹配成功, 2: 手動匹配成功)',
@@ -470,25 +470,42 @@ CREATE TABLE IF NOT EXISTS sys_student_match (
     update_time DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     PRIMARY KEY (id),
     UNIQUE KEY uk_student_contact (student_id, user_id, student_user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生數據匹配表（學生與家長多對多）';
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生數據匹配表（學生與家長多對多）';
 -- ----------------------------
+-- 家校通訊錄表
+-- ----------------------------
+DROP TABLE IF EXISTS sys_school_family_contact;
+CREATE TABLE `sys_school_family_contact` (
+                                             `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主鍵 ID',
+                                             `department_id` bigint NOT NULL COMMENT '部門 ID',
+                                             `parent_user_id` varchar(64) NOT NULL COMMENT '家長用戶 ID',
+                                             `student_user_id` varchar(64) NOT NULL COMMENT '學生用戶 ID',
+                                             `student_name` varchar(100) DEFAULT NULL COMMENT '學生姓名',
+                                             `relation_desc` varchar(50) DEFAULT '家長' COMMENT '關係描述',
+                                             `mobile` varchar(20) DEFAULT NULL COMMENT '家長手機號',
+                                             `external_userid` varchar(64) DEFAULT NULL COMMENT '家長外部用戶 ID',
+                                             `create_time` datetime DEFAULT NULL COMMENT '創建時間',
+                                             `update_time` datetime DEFAULT NULL COMMENT '更新時間',
+                                             PRIMARY KEY (`id`),
+                                             UNIQUE KEY `uk_parent_student_dept` (`parent_user_id`,`student_user_id`,`department_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='家校通訊錄表'
 -- 系統公用配置表
 -- ----------------------------
 DROP TABLE IF EXISTS sys_config;
 CREATE TABLE sys_config (
-    id              BIGINT          NOT NULL AUTO_INCREMENT    COMMENT '主鍵 ID',
-    config_key      VARCHAR(100)    NOT NULL                   COMMENT '配置鍵（唯一）',
-    config_name     VARCHAR(200)    NOT NULL                   COMMENT '配置名稱',
-    config_value    TEXT                                       COMMENT '配置值',
-    config_group    VARCHAR(50)     DEFAULT 'default'          COMMENT '配置分組',
-    value_type      VARCHAR(20)     DEFAULT 'string'           COMMENT '值類型：string/number/boolean/json',
-    remark          VARCHAR(500)    DEFAULT NULL               COMMENT '備註',
-    create_by       VARCHAR(64)     DEFAULT ''                 COMMENT '創建者',
-    create_time     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
-    update_by       VARCHAR(64)     DEFAULT ''                 COMMENT '更新者',
-    update_time     DATETIME        DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_config_key (config_key)
+                            id              BIGINT          NOT NULL AUTO_INCREMENT    COMMENT '主鍵 ID',
+                            config_key      VARCHAR(100)    NOT NULL                   COMMENT '配置鍵（唯一）',
+                            config_name     VARCHAR(200)    NOT NULL                   COMMENT '配置名稱',
+                            config_value    TEXT                                       COMMENT '配置值',
+                            config_group    VARCHAR(50)     DEFAULT 'default'          COMMENT '配置分組',
+                            value_type      VARCHAR(20)     DEFAULT 'string'           COMMENT '值類型：string/number/boolean/json',
+                            remark          VARCHAR(500)    DEFAULT NULL               COMMENT '備註',
+                            create_by       VARCHAR(64)     DEFAULT ''                 COMMENT '創建者',
+                            create_time     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+                            update_by       VARCHAR(64)     DEFAULT ''                 COMMENT '更新者',
+                            update_time     DATETIME        DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+                            PRIMARY KEY (id),
+                            UNIQUE KEY uk_config_key (config_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系統公用配置表';
 -- ----------------------------
 -- 學生考勤記錄表

@@ -21,6 +21,11 @@
         WHERE userid = #{userid}
     </select>
 
+    <select id="selectAll" resultMap="SysDepartmentAdminResult">
+        SELECT id, department_id, userid, type, subject, create_time, update_time
+        FROM sys_department_admin
+    </select>
+
     <select id="selectByDepartmentIdAndUserid" resultMap="SysDepartmentAdminResult">
         SELECT id, department_id, userid, type, subject, create_time, update_time
         FROM sys_department_admin
@@ -45,5 +50,13 @@
         </set>
         WHERE department_id = #{departmentId} AND userid = #{userid}
     </update>
+
+    <delete id="deleteBatchByIds">
+        DELETE FROM sys_department_admin
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
 
 </mapper>
