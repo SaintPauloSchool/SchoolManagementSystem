@@ -507,33 +507,31 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
                 // 批量保存部門數據
                 batchSaveDepartments(departmentsToSave);
 
-                // 3. 批量保存部門管理員數據
+                // 3. 差量同步部門管理員：僅增/改/刪變化項，保留未變行的原 id
+                List<Long> syncedDepartmentIds = new ArrayList<>();
                 List<SysDepartmentAdmin> allAdmins = new ArrayList<>();
                 for (int i = 0; i < departmentsArray.size(); i++) {
                     JSONObject deptObj = departmentsArray.getJSONObject(i);
+                    Long departmentId = deptObj.getLong("id");
+                    if (departmentId != null) {
+                        syncedDepartmentIds.add(departmentId);
+                    }
+
                     JSONArray adminsArray = deptObj.getJSONArray("department_admins");
-
-                    if (adminsArray != null && !adminsArray.isEmpty()) {
-                        Long departmentId = deptObj.getLong("id");
-
-                        for (int j = 0; j < adminsArray.size(); j++) {
-                            JSONObject adminObj = adminsArray.getJSONObject(j);
-
-                            SysDepartmentAdmin admin = new SysDepartmentAdmin();
-                            admin.setDepartmentId(departmentId);
-                            admin.setUserid(adminObj.getString("userid"));
-                            admin.setType(adminObj.getInteger("type"));
-                            admin.setSubject(adminObj.getString("subject"));
-
-                            allAdmins.add(admin);
-                        }
+                    if (adminsArray == null || adminsArray.isEmpty() || departmentId == null) {
+                        continue;
+                    }
+                    for (int j = 0; j < adminsArray.size(); j++) {
+                        JSONObject adminObj = adminsArray.getJSONObject(j);
+                        SysDepartmentAdmin admin = new SysDepartmentAdmin();
+                        admin.setDepartmentId(departmentId);
+                        admin.setUserid(adminObj.getString("userid"));
+                        admin.setType(adminObj.getInteger("type"));
+                        admin.setSubject(adminObj.getString("subject"));
+                        allAdmins.add(admin);
                     }
                 }
-
-                // 批量保存部門管理員資訊
-                if (!allAdmins.isEmpty()) {
-                    departmentAdminService.batchSaveDepartmentAdmins(allAdmins);
-                }
+                departmentAdminService.syncDepartmentAdminsFromWecom(allAdmins, syncedDepartmentIds);
             }
         }
     }
