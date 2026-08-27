@@ -556,7 +556,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 }
             }
         }
-        List<SysSchoolDepartment> schoolDepartmentsType1 = schoolDepartmentMapper.selectAll(1);
+        List<SysSchoolDepartment> schoolDepartmentsType1 = schoolDepartmentMapper.selectAll(1, null);
         if (schoolDepartmentsType1 != null) {
             for (SysSchoolDepartment department : schoolDepartmentsType1) {
                 if (department.getId() != null) {
@@ -564,7 +564,7 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 }
             }
         }
-        List<SysSchoolDepartment> schoolDepartmentsType2 = schoolDepartmentMapper.selectAll(2);
+        List<SysSchoolDepartment> schoolDepartmentsType2 = schoolDepartmentMapper.selectAll(2, null);
         if (schoolDepartmentsType2 != null) {
             for (SysSchoolDepartment department : schoolDepartmentsType2) {
                 if (department.getId() != null) {

@@ -324,6 +324,7 @@ CREATE TABLE sys_school_department (
                                        order_num           INT(11)         DEFAULT NULL                    COMMENT '在父部門中的次序值',
                                        department_leader   TEXT            DEFAULT NULL                    COMMENT '部門負責人的 UserID（JSON 數組字符串）',
                                        type                TINYINT(1)      DEFAULT 1                       COMMENT '類型：1-學校部門通訊錄，2-家校通訊錄',
+                                       owner_userid        VARCHAR(64)     DEFAULT NULL                    COMMENT '擁有者企微 userid',
                                        create_time         DATETIME        DEFAULT CURRENT_TIMESTAMP       COMMENT '創建時間',
                                        update_time         DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
                                        PRIMARY KEY (id)

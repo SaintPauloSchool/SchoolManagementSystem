@@ -430,7 +430,7 @@ public class NotificationReceiverServiceImpl implements INotificationReceiverSer
             return nameMap;
         }
         if (receiveType == NotificationReceiverType.CUSTOM) {
-            List<SysSchoolDepartment> departments = schoolDepartmentMapper.selectAll(2);
+            List<SysSchoolDepartment> departments = schoolDepartmentMapper.selectAll(2, null);
             if (departments != null) {
                 for (SysSchoolDepartment department : departments) {
                     if (department != null && department.getId() != null && department.getName() != null
