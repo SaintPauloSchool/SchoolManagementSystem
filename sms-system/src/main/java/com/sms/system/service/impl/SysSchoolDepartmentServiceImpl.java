@@ -1,5 +1,6 @@
 package com.sms.system.service.impl;
 
+import com.sms.common.exception.ServiceException;
 import com.sms.common.utils.bean.BeanCopyUtils;
 import com.sms.system.entity.SysSchoolDepartment;
 import com.sms.system.entity.SysSchoolDepartmentMember;
@@ -11,8 +12,10 @@ import com.sms.system.service.ISysSchoolDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.text.Collator;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,31 +38,23 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
     @Autowired
     private SysSchoolDepartmentMemberMapper schoolDepartmentMemberMapper;
 
-    /**
-     * 獲取學校部門樹形結構（僅部門，不含人員）
-     */
     @Override
-    public List<SysSchoolDepartmentVO> getSysSchoolDepartmentTree(Integer type) {
+    public List<SysSchoolDepartmentVO> getSysSchoolDepartmentTree(Integer type, String ownerUserid) {
         return BeanCopyUtils.copyTree(
-                buildDepartmentTree(type),
+                buildDepartmentTree(type, ownerUserid),
                 SysSchoolDepartmentVO.class,
                 SysSchoolDepartment::getChildren,
                 SysSchoolDepartmentVO::setChildren
         );
     }
 
-    /**
-     * 獲取學校部門樹形結構（包含人員作爲葉子節點）
-     */
     @Override
-    public List<SysSchoolDepartmentVO> getSysSchoolDepartmentTreeWithMembers(Integer type) {
-        // 1. 獲取基礎部門樹
-        List<SysSchoolDepartment> rootNodes = buildDepartmentTree(type);
+    public List<SysSchoolDepartmentVO> getSysSchoolDepartmentTreeWithMembers(Integer type, String ownerUserid) {
+        List<SysSchoolDepartment> rootNodes = buildDepartmentTree(type, ownerUserid);
         if (rootNodes == null || rootNodes.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 2. 收集所有部門節點
         List<SysSchoolDepartment> allDepartments = new ArrayList<>();
         collectAllDepartments(rootNodes, allDepartments);
 
@@ -73,20 +68,17 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
                     SysSchoolDepartment::getChildren, SysSchoolDepartmentVO::setChildren);
         }
 
-        // 3. 批量查詢所有部門成員
         List<SysSchoolDepartmentMember> members = schoolDepartmentMemberMapper.selectMembersByDepartmentIds(departmentIds);
         if (members == null || members.isEmpty()) {
             return BeanCopyUtils.copyTree(rootNodes, SysSchoolDepartmentVO.class,
                     SysSchoolDepartment::getChildren, SysSchoolDepartmentVO::setChildren);
         }
 
-        // 4. 按自定義部門節點分組
         Map<Long, List<SysSchoolDepartmentMember>> membersByDeptMap = members.stream()
                 .filter(Objects::nonNull)
                 .filter(m -> m.getSchoolDepartmentId() != null)
                 .collect(Collectors.groupingBy(SysSchoolDepartmentMember::getSchoolDepartmentId));
 
-        // 5. 將成員附加到對應部門的 children 目錄下
         for (SysSchoolDepartment dept : allDepartments) {
             List<SysSchoolDepartmentMember> deptMembers = membersByDeptMap.get(dept.getId());
             if (deptMembers != null && !deptMembers.isEmpty()) {
@@ -106,7 +98,9 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
     }
 
     private void collectAllDepartments(List<SysSchoolDepartment> nodes, List<SysSchoolDepartment> allDepartments) {
-        if (nodes == null) return;
+        if (nodes == null) {
+            return;
+        }
         for (SysSchoolDepartment node : nodes) {
             if (node != null) {
                 allDepartments.add(node);
@@ -117,7 +111,6 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
 
     private SysSchoolDepartment convertMemberToNode(SysSchoolDepartmentMember member) {
         SysSchoolDepartment node = new SysSchoolDepartment();
-        // 使用負數 ID 防止跟部門 ID 衝突
         node.setId(-member.getId());
         node.setName(member.getName());
         node.setIsLeaf(true);
@@ -142,32 +135,21 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
         }
     }
 
-    /**
-     * 構建部門樹形結構
-     */
-    private List<SysSchoolDepartment> buildDepartmentTree(Integer type) {
-        // 1. 查詢所有部門數據
-        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll(type);
-        
+    private List<SysSchoolDepartment> buildDepartmentTree(Integer type, String ownerUserid) {
+        if (!StringUtils.hasText(ownerUserid)) {
+            return Collections.emptyList();
+        }
+        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll(type, ownerUserid.trim());
         if (allDepartments == null || allDepartments.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 2. 構建父子關係映射
         Map<Long, List<SysSchoolDepartment>> childrenMap = buildChildrenMap(allDepartments);
-
-        // 3. 找到根節點（parentId 爲 null 或 0）
         List<SysSchoolDepartment> rootNodes = getRootNodes(allDepartments);
-
-        // 4. 遞歸構建樹形結構
         buildTree(rootNodes, childrenMap);
-
         return rootNodes;
     }
 
-    /**
-     * 構建父子關係映射
-     */
     private Map<Long, List<SysSchoolDepartment>> buildChildrenMap(List<SysSchoolDepartment> allDepartments) {
         return allDepartments.stream()
                 .filter(Objects::nonNull)
@@ -176,18 +158,12 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
                 ));
     }
 
-    /**
-     * 獲取根節點列表
-     */
     private List<SysSchoolDepartment> getRootNodes(List<SysSchoolDepartment> allDepartments) {
         return allDepartments.stream()
                 .filter(dept -> Optional.ofNullable(dept.getParentId()).orElse(0) == 0)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 遞歸構建樹形結構
-     */
     private void buildTree(List<SysSchoolDepartment> nodes, Map<Long, List<SysSchoolDepartment>> childrenMap) {
         nodes.stream()
                 .filter(Objects::nonNull)
@@ -201,78 +177,102 @@ public class SysSchoolDepartmentServiceImpl implements ISysSchoolDepartmentServi
                 });
     }
 
-    /**
-     * 根據 ID 刪除學校部門
-     * 同時刪除該部門下的所有子部門和成員
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int deleteSysSchoolDepartmentById(Long id) {
-        // 1. 先查詢目標部門，取得它的 type
+    public int deleteSysSchoolDepartmentById(Long id, String ownerUserid) {
+        assertOwnedBy(id, ownerUserid);
+
         SysSchoolDepartment targetDept = schoolDepartmentMapper.selectById(id);
         if (targetDept == null) {
             return 0;
         }
-        
-        // 2. 只查詢相同 type 的部門，避免將所有不同類型的部門資料也一起拉進記憶體
-        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll(targetDept.getType());
+
+        List<SysSchoolDepartment> allDepartments = schoolDepartmentMapper.selectAll(
+                targetDept.getType(), ownerUserid.trim());
         if (allDepartments == null || allDepartments.isEmpty()) {
             return 0;
         }
 
-        // 3. 收集需要刪除的部門 ID（包括自身和所有子部門）
         List<Long> departmentIdsToDelete = new ArrayList<>();
         collectDepartmentIdsToDelete(id, allDepartments, departmentIdsToDelete);
-
         if (departmentIdsToDelete.isEmpty()) {
             return 0;
         }
 
-        // 3. 批量刪除部門
         int result = schoolDepartmentMapper.deleteByIds(departmentIdsToDelete.toArray(new Long[0]));
-
-        // 4. 刪除相關部門成員（通過部門 ID 關聯的成員）
         for (Long deptId : departmentIdsToDelete) {
             schoolDepartmentMemberMapper.deleteByDepartmentId(deptId);
         }
-
         return result;
     }
 
-    /**
-     * 新增部門
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int insertSysSchoolDepartment(SysSchoolDepartmentSaveDTO sysSchoolDepartmentSaveDTO) {
+    public int insertSysSchoolDepartment(SysSchoolDepartmentSaveDTO sysSchoolDepartmentSaveDTO, String ownerUserid) {
+        if (!StringUtils.hasText(ownerUserid)) {
+            throw new ServiceException("無法識別當前用戶，請重新登入");
+        }
+        if (sysSchoolDepartmentSaveDTO == null
+                || !StringUtils.hasText(sysSchoolDepartmentSaveDTO.getName())) {
+            throw new ServiceException("部門名稱不能為空");
+        }
+
+        Integer parentId = sysSchoolDepartmentSaveDTO.getParentId();
+        if (parentId != null && parentId > 0) {
+            assertOwnedBy(parentId.longValue(), ownerUserid);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
         SysSchoolDepartment sysSchoolDepartment = BeanCopyUtils.copy(sysSchoolDepartmentSaveDTO, SysSchoolDepartment.class);
+        sysSchoolDepartment.setOwnerUserid(ownerUserid.trim());
+        sysSchoolDepartment.setCreateTime(now);
+        sysSchoolDepartment.setUpdateTime(now);
         return schoolDepartmentMapper.insertDepartment(sysSchoolDepartment);
     }
 
-    /**
-     * 修改部門
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int updateSysSchoolDepartment(SysSchoolDepartmentSaveDTO sysSchoolDepartmentSaveDTO) {
+    public int updateSysSchoolDepartment(SysSchoolDepartmentSaveDTO sysSchoolDepartmentSaveDTO, String ownerUserid) {
+        if (sysSchoolDepartmentSaveDTO == null || sysSchoolDepartmentSaveDTO.getId() == null) {
+            throw new ServiceException("部門 ID 不能為空");
+        }
+        assertOwnedBy(sysSchoolDepartmentSaveDTO.getId(), ownerUserid);
+
+        Integer parentId = sysSchoolDepartmentSaveDTO.getParentId();
+        if (parentId != null && parentId > 0) {
+            assertOwnedBy(parentId.longValue(), ownerUserid);
+        }
+
         SysSchoolDepartment sysSchoolDepartment = BeanCopyUtils.copy(sysSchoolDepartmentSaveDTO, SysSchoolDepartment.class);
+        sysSchoolDepartment.setUpdateTime(LocalDateTime.now());
         return schoolDepartmentMapper.updateDepartment(sysSchoolDepartment);
     }
 
-    /**
-     * 遞歸收集需要刪除的部門 ID
-     */
-    private  void collectDepartmentIdsToDelete(Long parentId, List<SysSchoolDepartment> allDepartments,
-                                               List<Long> idsToCollect) {
+    @Override
+    public void assertOwnedBy(Long departmentId, String ownerUserid) {
+        if (departmentId == null) {
+            throw new ServiceException("部門 ID 不能為空");
+        }
+        if (!StringUtils.hasText(ownerUserid)) {
+            throw new ServiceException("無法識別當前用戶，請重新登入");
+        }
+        SysSchoolDepartment dept = schoolDepartmentMapper.selectById(departmentId);
+        if (dept == null) {
+            throw new ServiceException("部門不存在或已被刪除");
+        }
+        if (!StringUtils.hasText(dept.getOwnerUserid())
+                || !ownerUserid.trim().equals(dept.getOwnerUserid().trim())) {
+            throw new ServiceException("無權操作此部門，僅擁有者可管理");
+        }
+    }
+
+    private void collectDepartmentIdsToDelete(Long parentId, List<SysSchoolDepartment> allDepartments,
+                                              List<Long> idsToCollect) {
         idsToCollect.add(parentId);
-        
-        // 找到所有以當前部門爲父部門的子部門
         List<SysSchoolDepartment> children = allDepartments.stream()
                 .filter(dept -> dept != null && dept.getParentId() != null)
                 .filter(dept -> dept.getParentId().longValue() == parentId)
                 .collect(Collectors.toList());
-        
-        // 遞歸處理子部門
         for (SysSchoolDepartment child : children) {
             if (child.getId() != null) {
                 collectDepartmentIdsToDelete(child.getId(), allDepartments, idsToCollect);

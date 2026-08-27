@@ -13,27 +13,20 @@ import java.util.List;
 public interface ISysSchoolDepartmentMemberService {
 
     /**
-     * 批量查詢多個部門的成員列表
-     *
-     * @param sysSchoolDepartmentMemberQueryDTO 查詢條件
-     * @return 成員列表
+     * 批量查詢多個部門的成員列表（僅擁有者可查）
      */
-    List<SysSchoolDepartmentMemberVO> getMembersByDepartmentIds(SysSchoolDepartmentMemberQueryDTO sysSchoolDepartmentMemberQueryDTO);
+    List<SysSchoolDepartmentMemberVO> getMembersByDepartmentIds(
+            SysSchoolDepartmentMemberQueryDTO sysSchoolDepartmentMemberQueryDTO,
+            String ownerUserid);
 
     /**
-     * 根據 ID 刪除部門成員
-     *
-     * @param id 成員 ID
-     * @return 影響行數
+     * 根據 ID 刪除部門成員（僅擁有者可刪）
      */
-    int deleteMemberById(Long id);
+    int deleteMemberById(Long id, String ownerUserid);
 
     /**
-     * 批量添加部門成員
-     *
-     * @param sysSchoolDepartmentMemberBatchSaveDTO 批量新增請求
-     * @return 影響行數
+     * 批量添加部門成員（僅擁有者可加）
      */
-    int batchAddMembers(SysSchoolDepartmentMemberBatchSaveDTO sysSchoolDepartmentMemberBatchSaveDTO);
-
+    int batchAddMembers(SysSchoolDepartmentMemberBatchSaveDTO sysSchoolDepartmentMemberBatchSaveDTO,
+                        String ownerUserid);
 }

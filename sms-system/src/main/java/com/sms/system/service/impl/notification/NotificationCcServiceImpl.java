@@ -242,7 +242,7 @@ public class NotificationCcServiceImpl implements INotificationCcService {
         if (departmentIds == null || departmentIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        List<SysSchoolDepartment> departments = schoolDepartmentMapper.selectAll(1);
+        List<SysSchoolDepartment> departments = schoolDepartmentMapper.selectAll(1, null);
         if (departments == null || departments.isEmpty()) {
             return Collections.emptyMap();
         }
