@@ -12,18 +12,22 @@
         <result property="orderNum" column="order_num"/>
         <result property="departmentLeader" column="department_leader"/>
         <result property="type" column="type"/>
+        <result property="ownerUserid" column="owner_userid"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
-    <!-- 查詢所有部門 -->
+    <!-- 查詢當前用戶擁有的部門 -->
     <select id="selectAll" resultMap="SysSchoolDepartmentResult">
-        SELECT id, parent_id, name, name_en, order_num, 
-               department_leader, type, create_time, update_time
+        SELECT id, parent_id, name, name_en, order_num,
+               department_leader, type, owner_userid, create_time, update_time
         FROM sys_school_department
         <where>
             <if test="type != null">
                 AND type = #{type}
+            </if>
+            <if test="ownerUserid != null and ownerUserid != ''">
+                AND owner_userid = #{ownerUserid}
             </if>
         </where>
         ORDER BY order_num ASC
@@ -53,6 +57,7 @@
             <if test="orderNum != null">order_num,</if>
             <if test="departmentLeader != null and departmentLeader != ''">department_leader,</if>
             <if test="type != null">type,</if>
+            <if test="ownerUserid != null and ownerUserid != ''">owner_userid,</if>
             create_time,
             update_time
         ) VALUES (
@@ -62,12 +67,13 @@
             <if test="orderNum != null">#{orderNum},</if>
             <if test="departmentLeader != null and departmentLeader != ''">#{departmentLeader},</if>
             <if test="type != null">#{type},</if>
+            <if test="ownerUserid != null and ownerUserid != ''">#{ownerUserid},</if>
             #{createTime},
             #{updateTime}
         )
     </insert>
 
-    <!-- 修改部門資訊 -->
+    <!-- 修改部門資訊（不更新 owner_userid） -->
     <update id="updateDepartment" parameterType="com.sms.system.entity.SysSchoolDepartment">
         UPDATE sys_school_department
         <set>
@@ -84,8 +90,8 @@
 
     <!-- 根據 ID 查詢部門 -->
     <select id="selectById" parameterType="Long" resultMap="SysSchoolDepartmentResult">
-        SELECT id, parent_id, name, name_en, order_num, 
-               department_leader, type, create_time, update_time
+        SELECT id, parent_id, name, name_en, order_num,
+               department_leader, type, owner_userid, create_time, update_time
         FROM sys_school_department
         WHERE id = #{id}
     </select>

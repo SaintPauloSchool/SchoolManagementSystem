@@ -35,6 +35,9 @@ public class SysSchoolDepartment implements Serializable {
     /** 類型：1-學校部門通訊錄，2-家校通訊錄 */
     private Integer type;
 
+    /** 擁有者企微 userid（僅擁有者可見／可管理） */
+    private String ownerUserid;
+
     /** 創建時間 */
     private LocalDateTime createTime;
 
@@ -112,6 +115,14 @@ public class SysSchoolDepartment implements Serializable {
         this.type = type;
     }
 
+    public String getOwnerUserid() {
+        return ownerUserid;
+    }
+
+    public void setOwnerUserid(String ownerUserid) {
+        this.ownerUserid = ownerUserid;
+    }
+
     public LocalDateTime getCreateTime() {
         return createTime;
     }
@@ -178,6 +189,7 @@ public class SysSchoolDepartment implements Serializable {
             .append("orderNum", getOrderNum())
             .append("departmentLeader", getDepartmentLeader())
             .append("type", getType())
+            .append("ownerUserid", getOwnerUserid())
             .append("createTime", getCreateTime())
             .append("updateTime", getUpdateTime())
             .append("children", getChildren())

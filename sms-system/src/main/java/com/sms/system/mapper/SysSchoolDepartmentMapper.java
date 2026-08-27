@@ -12,12 +12,13 @@ import java.util.List;
 public interface SysSchoolDepartmentMapper {
 
     /**
-     * 查詢所有學校部門（按排序值排序）
+     * 查詢當前用戶擁有的學校部門（按排序值排序）
      *
-     * @param type 部門類型（1 學校部門 2 家校通訊錄）
+     * @param type         部門類型（1 學校部門 2 家校通訊錄）
+     * @param ownerUserid  擁有者企微 userid
      * @return 學校部門集合
      */
-    List<SysSchoolDepartment> selectAll(@Param("type") Integer type);
+    List<SysSchoolDepartment> selectAll(@Param("type") Integer type, @Param("ownerUserid") String ownerUserid);
 
     /**
      * 根據 ID 刪除學校部門

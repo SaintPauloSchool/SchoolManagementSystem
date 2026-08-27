@@ -17,6 +17,7 @@ public class SysSchoolDepartmentVO implements Serializable {
     private Integer orderNum;
     private String departmentLeader;
     private Integer type;
+    private String ownerUserid;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private List<SysSchoolDepartmentVO> children;
@@ -79,6 +80,14 @@ public class SysSchoolDepartmentVO implements Serializable {
 
     public void setType(Integer type) {
         this.type = type;
+    }
+
+    public String getOwnerUserid() {
+        return ownerUserid;
+    }
+
+    public void setOwnerUserid(String ownerUserid) {
+        this.ownerUserid = ownerUserid;
     }
 
     public LocalDateTime getCreateTime() {

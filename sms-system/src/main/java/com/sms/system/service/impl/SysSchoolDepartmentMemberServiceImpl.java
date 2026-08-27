@@ -9,6 +9,7 @@ import com.sms.system.entity.dto.SysSchoolDepartmentMemberSaveDTO;
 import com.sms.system.entity.vo.SysSchoolDepartmentMemberVO;
 import com.sms.system.mapper.SysSchoolDepartmentMemberMapper;
 import com.sms.system.service.ISysSchoolDepartmentMemberService;
+import com.sms.system.service.ISysSchoolDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,50 +34,65 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
     @Autowired
     private SysSchoolDepartmentMemberMapper memberMapper;
 
-    /**
-     * 批量查詢多個部門的成員列表
-     */
+    @Autowired
+    private ISysSchoolDepartmentService schoolDepartmentService;
+
     @Override
-    public List<SysSchoolDepartmentMemberVO> getMembersByDepartmentIds(SysSchoolDepartmentMemberQueryDTO sysSchoolDepartmentMemberQueryDTO) {
-        if (sysSchoolDepartmentMemberQueryDTO == null || sysSchoolDepartmentMemberQueryDTO.getDepartmentIds() == null || sysSchoolDepartmentMemberQueryDTO.getDepartmentIds().isEmpty()) {
+    public List<SysSchoolDepartmentMemberVO> getMembersByDepartmentIds(
+            SysSchoolDepartmentMemberQueryDTO sysSchoolDepartmentMemberQueryDTO,
+            String ownerUserid) {
+        if (sysSchoolDepartmentMemberQueryDTO == null
+                || sysSchoolDepartmentMemberQueryDTO.getDepartmentIds() == null
+                || sysSchoolDepartmentMemberQueryDTO.getDepartmentIds().isEmpty()) {
             return Collections.emptyList();
         }
-        List<SysSchoolDepartmentMember> sysSchoolDepartmentMemberList = memberMapper.selectMembersByDepartmentIds(sysSchoolDepartmentMemberQueryDTO.getDepartmentIds());
+        for (Long departmentId : sysSchoolDepartmentMemberQueryDTO.getDepartmentIds()) {
+            schoolDepartmentService.assertOwnedBy(departmentId, ownerUserid);
+        }
+        List<SysSchoolDepartmentMember> sysSchoolDepartmentMemberList =
+                memberMapper.selectMembersByDepartmentIds(sysSchoolDepartmentMemberQueryDTO.getDepartmentIds());
         if (sysSchoolDepartmentMemberList == null || sysSchoolDepartmentMemberList.isEmpty()) {
             return Collections.emptyList();
         }
         return BeanCopyUtils.copyList(sysSchoolDepartmentMemberList, SysSchoolDepartmentMemberVO.class);
     }
 
-    /**
-     * 根據 ID 刪除部門成員
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int deleteMemberById(Long id) {
+    public int deleteMemberById(Long id, String ownerUserid) {
         if (id == null) {
             return 0;
         }
+        List<SysSchoolDepartmentMember> members = memberMapper.selectMembersByIds(Collections.singletonList(id));
+        if (members == null || members.isEmpty() || members.get(0) == null) {
+            return 0;
+        }
+        schoolDepartmentService.assertOwnedBy(members.get(0).getSchoolDepartmentId(), ownerUserid);
         return memberMapper.deleteMemberById(id);
     }
 
-    /**
-     * 批量添加部門成員 (自動過濾該部門下已存在的 userid)
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int batchAddMembers(SysSchoolDepartmentMemberBatchSaveDTO sysSchoolDepartmentMemberBatchSaveDTO) {
-        if (sysSchoolDepartmentMemberBatchSaveDTO == null || sysSchoolDepartmentMemberBatchSaveDTO.getMembers() == null || sysSchoolDepartmentMemberBatchSaveDTO.getMembers().isEmpty()) {
+    public int batchAddMembers(SysSchoolDepartmentMemberBatchSaveDTO sysSchoolDepartmentMemberBatchSaveDTO,
+                               String ownerUserid) {
+        if (sysSchoolDepartmentMemberBatchSaveDTO == null
+                || sysSchoolDepartmentMemberBatchSaveDTO.getMembers() == null
+                || sysSchoolDepartmentMemberBatchSaveDTO.getMembers().isEmpty()) {
             return 0;
         }
 
-        Integer defaultType = sysSchoolDepartmentMemberBatchSaveDTO.getType() != null ? sysSchoolDepartmentMemberBatchSaveDTO.getType() : 1;
+        Integer defaultType = sysSchoolDepartmentMemberBatchSaveDTO.getType() != null
+                ? sysSchoolDepartmentMemberBatchSaveDTO.getType() : 1;
         LocalDateTime now = LocalDateTime.now();
         List<SysSchoolDepartmentMember> sysSchoolDepartmentMemberList = new ArrayList<>();
-        for (SysSchoolDepartmentMemberSaveDTO sysSchoolDepartmentMemberSaveDTO : sysSchoolDepartmentMemberBatchSaveDTO.getMembers()) {
+        for (SysSchoolDepartmentMemberSaveDTO sysSchoolDepartmentMemberSaveDTO
+                : sysSchoolDepartmentMemberBatchSaveDTO.getMembers()) {
             if (sysSchoolDepartmentMemberSaveDTO.getSchoolDepartmentId() == null) {
                 throw new ServiceException("成員必須指定所屬自定義部門");
             }
+            schoolDepartmentService.assertOwnedBy(
+                    sysSchoolDepartmentMemberSaveDTO.getSchoolDepartmentId(), ownerUserid);
+
             if (Integer.valueOf(2).equals(defaultType)
                     && !StringUtils.hasText(sysSchoolDepartmentMemberSaveDTO.getStudentId())) {
                 String memberName = sysSchoolDepartmentMemberSaveDTO.getName();
@@ -91,7 +107,8 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
                         "自定義家校成員必須關聯真實班級部門 ID：%s",
                         StringUtils.hasText(memberName) ? memberName : sysSchoolDepartmentMemberSaveDTO.getUserid()));
             }
-            SysSchoolDepartmentMember sysSchoolDepartmentMember = BeanCopyUtils.copy(sysSchoolDepartmentMemberSaveDTO, SysSchoolDepartmentMember.class);
+            SysSchoolDepartmentMember sysSchoolDepartmentMember =
+                    BeanCopyUtils.copy(sysSchoolDepartmentMemberSaveDTO, SysSchoolDepartmentMember.class);
             if (StringUtils.hasText(sysSchoolDepartmentMemberSaveDTO.getStudentId())) {
                 sysSchoolDepartmentMember.setStudentId(sysSchoolDepartmentMemberSaveDTO.getStudentId().trim());
             }
@@ -100,14 +117,15 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
             sysSchoolDepartmentMember.setUpdateTime(now);
             sysSchoolDepartmentMemberList.add(sysSchoolDepartmentMember);
         }
-        
+
         List<Long> schoolDepartmentIds = sysSchoolDepartmentMemberList.stream()
                 .map(SysSchoolDepartmentMember::getSchoolDepartmentId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
 
-        List<SysSchoolDepartmentMember> existingMembers = memberMapper.selectMembersByDepartmentIds(schoolDepartmentIds);
+        List<SysSchoolDepartmentMember> existingMembers =
+                memberMapper.selectMembersByDepartmentIds(schoolDepartmentIds);
 
         List<SysSchoolDepartmentMember> toInsert = sysSchoolDepartmentMemberList.stream()
                 .filter(m -> existingMembers.stream().noneMatch(exist ->
@@ -129,5 +147,4 @@ public class SysSchoolDepartmentMemberServiceImpl implements ISysSchoolDepartmen
         memberMapper.batchInsertMembers(toInsert);
         return sysSchoolDepartmentMemberList.size();
     }
-
 }
