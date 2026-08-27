@@ -432,10 +432,11 @@ export default {
             type: '5',
             title: saveData.questionnaire?.title || '問卷調查',
             description: saveData.questionnaire?.description || '',
-            questionnaireData: saveData.questionnaire, // 保存完整的問卷數據
-            questions: saveData.questions || [] // 保存所有子問題
+            questionnaireData: saveData.questionnaire,
+            questions: JSON.parse(JSON.stringify(saveData.questions || []))
           }
-          this.$set(this.localFormData.questions, index, formQuestion)
+          // Vue 3 無 $set，直接賦值即可保持響應式
+          this.localFormData.questions.splice(index, 1, formQuestion)
           ElNotification({ title: '更新成功', message: '表單問題已成功更新', type: 'success', duration: 3000 })
         }
       } else {
@@ -446,19 +447,15 @@ export default {
           type: '5',
           title: saveData.questionnaire?.title || '問卷調查',
           description: saveData.questionnaire?.description || '',
-          questionnaireData: saveData.questionnaire, // 保存完整的問卷數據
-          questions: saveData.questions || [] // 保存所有子問題
+          questionnaireData: saveData.questionnaire,
+          questions: JSON.parse(JSON.stringify(saveData.questions || []))
         }
         this.localFormData.questions.push(newQuestion)
         ElNotification({ title: '添加成功', message: '表單問題已成功添加', type: 'success', duration: 3000 })
       }
       
-      // 直接同步到父組件，使用深拷貝避免引用問題
-      // 注意：這裡不會觸發 watch，因爲 showFormQuestionDialog 還是 true
-      this.$nextTick(() => {
-        this.formData.questions = JSON.parse(JSON.stringify(this.localFormData.questions))
-      })
-      
+      // 同步到父組件（深拷貝），再關閉對話框
+      this.formData.questions = JSON.parse(JSON.stringify(this.localFormData.questions))
       this.editingFormQuestion = null
       this.showFormQuestionDialog = false
     },
