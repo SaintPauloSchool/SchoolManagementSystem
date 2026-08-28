@@ -36,6 +36,11 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     private static final int TYPE_CAMPUS = 4;     // 校區
     private static final int TYPE_SCHOOL = 5;     // 學校
 
+    /** sys_department_admin.type：向下繼承子班級可見範圍的管理員類型 */
+    private static final int ADMIN_TYPE_CAMPUS = 1;       // 校區負責人
+    private static final int ADMIN_TYPE_GRADE = 2;        // 年級負責人
+    private static final int ADMIN_TYPE_SEGMENT = 5;      // 學段負責人
+
     @Autowired
     private SysDepartmentMapper departmentMapper;
 
@@ -64,8 +69,8 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
      */
     @Override
     public List<SysDepartmentVO> getClassTreeWithParentsByAdmin(String openUserId) {
-        // 1. 獲取當前用戶可管理的部門 ID（sys_department_admin）
-        Set<Long> adminDeptIds = getAdminDepartmentIds(openUserId);
+        // 1. 解析可見班級 ID（年級/學段/校區負責人向下繼承；班主任/任課僅直接班級）
+        Set<Long> adminDeptIds = getEffectiveClassAdminIds(openUserId);
         if (adminDeptIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -99,28 +104,86 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     }
 
     /**
-     * 查詢當前用戶在企微家校通訊錄中可管理的部門 ID 集合。
-     *
-     * @param openUserId 企業微信 userid（當前登錄用戶）
-     * @return 可管理部門 ID 集合；無記錄時返回空集合
+     * 將 sys_department_admin 授權解析為選人樹可見的班級 ID 集合。
+     * <p>年級/學段/校區負責人向下繼承其下所有班級；班主任/任課老師僅限直接授權的班級。</p>
      */
-    private Set<Long> getAdminDepartmentIds(String openUserId) {
+    private Set<Long> getEffectiveClassAdminIds(String openUserId) {
         if (openUserId == null || openUserId.isEmpty()) {
             return Collections.emptySet();
         }
-        // 查詢該用戶在 sys_department_admin 中的管理記錄
         List<SysDepartmentAdmin> adminRecords = departmentAdminMapper.selectByUserid(openUserId);
         if (adminRecords == null || adminRecords.isEmpty()) {
             return Collections.emptySet();
         }
-        // 提取部門 ID（可能含學段、年級、班級等不同層級）
-        Set<Long> ids = new HashSet<>();
-        for (SysDepartmentAdmin record : adminRecords) {
-            if (record.getDepartmentId() != null) {
-                ids.add(record.getDepartmentId());
+
+        List<SysDepartment> allDepartments = departmentMapper.selectAll();
+        if (allDepartments == null || allDepartments.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        Map<Long, SysDepartment> deptById = new HashMap<>();
+        Map<Long, List<SysDepartment>> childrenByParentId = new HashMap<>();
+        for (SysDepartment dept : allDepartments) {
+            if (dept == null || dept.getId() == null) {
+                continue;
+            }
+            deptById.put(dept.getId(), dept);
+            if (dept.getParentId() != null) {
+                childrenByParentId
+                        .computeIfAbsent(dept.getParentId().longValue(), ignored -> new ArrayList<>())
+                        .add(dept);
             }
         }
-        return ids;
+
+        Set<Long> effectiveClassIds = new HashSet<>();
+        for (SysDepartmentAdmin record : adminRecords) {
+            if (record.getDepartmentId() == null) {
+                continue;
+            }
+            SysDepartment dept = deptById.get(record.getDepartmentId());
+            if (dept == null) {
+                continue;
+            }
+            if (inheritsDescendantClasses(record.getType())) {
+                if (dept.getType() != null && dept.getType() == TYPE_CLASS) {
+                    effectiveClassIds.add(dept.getId());
+                } else {
+                    collectDescendantClassIds(dept.getId(), childrenByParentId, effectiveClassIds);
+                }
+            } else if (dept.getType() != null && dept.getType() == TYPE_CLASS) {
+                effectiveClassIds.add(dept.getId());
+            }
+        }
+        return effectiveClassIds;
+    }
+
+    /** 校區/年級/學段負責人可見其下全部班級 */
+    private boolean inheritsDescendantClasses(Integer adminType) {
+        if (adminType == null) {
+            return false;
+        }
+        return adminType == ADMIN_TYPE_CAMPUS
+                || adminType == ADMIN_TYPE_GRADE
+                || adminType == ADMIN_TYPE_SEGMENT;
+    }
+
+    private void collectDescendantClassIds(Long parentId,
+                                           Map<Long, List<SysDepartment>> childrenByParentId,
+                                           Set<Long> result) {
+        List<SysDepartment> children = childrenByParentId.get(parentId);
+        if (children == null || children.isEmpty()) {
+            return;
+        }
+        for (SysDepartment child : children) {
+            if (child == null || child.getId() == null) {
+                continue;
+            }
+            if (child.getType() != null && child.getType() == TYPE_CLASS) {
+                result.add(child.getId());
+            } else {
+                collectDescendantClassIds(child.getId(), childrenByParentId, result);
+            }
+        }
     }
 
     /**
@@ -302,16 +365,16 @@ public class SysDepartmentServiceImpl implements ISysDepartmentService {
     }
 
     /**
-     * 遞歸剪枝：僅保留用戶有直接權限的班級及其家長聯絡人。
+     * 遞歸剪枝：僅保留用戶可見的班級及其家長聯絡人。
      * <p>規則：
      * <ul>
-     *   <li>班級（type=1）：僅當部門 ID 在權限集合中時保留，並保留其下已掛載的家長葉子</li>
-     *   <li>年級/學段等父節點：一律遞歸過濾子節點；僅當過濾後仍有子節點時作為路徑保留</li>
-     *   <li>父級管理員身份不再繼承整棵子樹，避免勾選「2025」等大類時選中無權限班級</li>
+     *   <li>班級（type=1）：僅當班級 ID 在 {@link #getEffectiveClassAdminIds} 解析出的集合中時保留</li>
+     *   <li>年級/學段等父節點：遞歸過濾子節點，僅當過濾後仍有子節點時作為路徑保留</li>
+     *   <li>班主任/任課老師僅保留直接授權班級；年級/學段/校區負責人可見其下全部班級</li>
      * </ul>
      *
      * @param nodes    待過濾的節點列表
-     * @param adminIds 有權限的部門 ID 集合
+     * @param adminIds 可見班級 ID 集合（已按管理員類型展開）
      * @return 過濾後的節點列表
      */
     private List<SysDepartmentVO> filterTree(List<SysDepartmentVO> nodes, Set<Long> adminIds) {
