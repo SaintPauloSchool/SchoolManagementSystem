@@ -4,20 +4,20 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 批量新增管理員結果 VO
+ * 批量新增用戶角色結果 VO
  */
-public class SysAdminBatchInsertResultVO implements Serializable {
+public class SysUserRoleBatchInsertResultVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private Integer successCount;
+    private int successCount;
     private List<String> skipped;
     private String message;
 
-    public Integer getSuccessCount() {
+    public int getSuccessCount() {
         return successCount;
     }
 
-    public void setSuccessCount(Integer successCount) {
+    public void setSuccessCount(int successCount) {
         this.successCount = successCount;
     }
 

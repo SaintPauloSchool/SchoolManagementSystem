@@ -72,7 +72,7 @@
         </div>
         
         <!-- 學生相關功能管理（僅管理員可見） -->
-        <div class="nav-section" v-if="isAdmin">
+        <div class="nav-section" v-if="hasUserRole">
           <div class="nav-section-title" @click="toggleSection('student')">
             <el-icon><User /></el-icon>
             <span v-show="!isCollapsed">學生相關功能管理</span>
@@ -119,7 +119,7 @@
         </div>
 
         <!-- 系統管理（僅管理員可見） -->
-        <div class="nav-section" v-if="isAdmin">
+        <div class="nav-section" v-if="hasUserRole">
           <div class="nav-section-title" @click="toggleSection('system')">
             <el-icon><Setting /></el-icon>
             <span v-show="!isCollapsed">系統管理</span>
@@ -155,13 +155,13 @@
               <span class="nav-text">定時任務日誌</span>
             </li>
             <li
-              v-if="isSuperAdmin"
+              v-if="hasSuperUserRole"
               class="nav-item nav-subitem"
               :class="{ active: activeMenu === '3-8' }"
               @click="handleMenuSelect('3-8')"
             >
               <el-icon class="nav-icon"><UserFilled /></el-icon>
-              <span class="nav-text">管理員設置</span>
+              <span class="nav-text">用戶角色設置</span>
             </li>
           </ul>
         </div>
@@ -255,8 +255,8 @@
             v-else-if="activeMenu === '3-7'"
           />
 
-          <AdminSettings
-            v-else-if="activeMenu === '3-8' && isSuperAdmin"
+          <UserRoleSettings
+            v-else-if="activeMenu === '3-8' && hasSuperUserRole"
           />
         </transition>
       </div>
@@ -281,7 +281,7 @@ import StudentMatch from './StudentMatch.vue'
 import BasicSettings from './BasicSettings.vue'
 import ClassSectionList from './ClassSectionList.vue'
 import AttendanceRecordList from './AttendanceRecordList.vue'
-import AdminSettings from './AdminSettings.vue'
+import UserRoleSettings from './UserRoleSettings.vue'
 import request from '@/utils/request'
 
 export default {
@@ -298,7 +298,7 @@ export default {
     BasicSettings,
     ClassSectionList,
     AttendanceRecordList,
-    AdminSettings,
+    UserRoleSettings,
     UserFilled
   },
   data() {
@@ -319,8 +319,8 @@ export default {
       isCollapsed: false,
       isMobileMenuOpen: false,
       isMobile: false,
-      isAdmin: false,
-      isSuperAdmin: false,
+      hasUserRole: false,
+      hasSuperUserRole: false,
       expandedSections: this.getInitialExpandedSections(),
       menuItems: [
         { index: '1-1', title: '發佈通知', icon: 'Edit' },
@@ -334,7 +334,7 @@ export default {
     window.addEventListener('resize', this.handleResize)
     // 根據當前激活的菜單加載對應數據
     this.loadInitialData()
-    this.checkAdminStatus()
+    this.checkUserRoleStatus()
     this.checkPendingNotice()
   },
   beforeUnmount() {
@@ -407,34 +407,31 @@ export default {
       }
       // 其他菜單無需加載數據
     },
-    async checkAdminStatus() {
+    async checkUserRoleStatus() {
       try {
-        const res = await request({ url: '/system/admin/checkCurrentUser', method: 'get' })
+        const res = await request({ url: '/system/userRole/checkCurrentUser', method: 'get' })
         if (res.code === 200 || res.code === 0) {
           const data = res.data
-          // 兼容舊版 boolean 與新版 { isAdmin, isSuperAdmin }
           if (typeof data === 'boolean') {
-            this.isAdmin = data
-            this.isSuperAdmin = false
+            this.hasUserRole = data
+            this.hasSuperUserRole = false
           } else if (data && typeof data === 'object') {
-            this.isAdmin = data.isAdmin === true
-            this.isSuperAdmin = data.isSuperAdmin === true
+            this.hasUserRole = data.hasUserRole === true
+            this.hasSuperUserRole = data.hasSuperUserRole === true
           } else {
-            this.isAdmin = false
-            this.isSuperAdmin = false
+            this.hasUserRole = false
+            this.hasSuperUserRole = false
           }
-          const adminMenus = ['3-1', '3-2', '3-3', '3-4', '3-5', '3-6', '3-7', '3-8']
-          // 非管理員不可進系統管理 / 學生管理相關頁
-          if (!this.isAdmin && adminMenus.includes(this.activeMenu)) {
+          const userRoleMenus = ['3-1', '3-2', '3-3', '3-4', '3-5', '3-6', '3-7', '3-8']
+          if (!this.hasUserRole && userRoleMenus.includes(this.activeMenu)) {
             this.handleMenuSelect('1-1')
           }
-          // 管理員設置僅超級管理員可進
-          if (this.activeMenu === '3-8' && !this.isSuperAdmin) {
+          if (this.activeMenu === '3-8' && !this.hasSuperUserRole) {
             this.handleMenuSelect('1-1')
           }
         }
       } catch (e) {
-        console.error('管理員身份查詢失敗:', e)
+        console.error('用戶角色查詢失敗:', e)
       }
     },
     

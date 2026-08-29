@@ -8,7 +8,7 @@ import com.sms.system.entity.dto.DailyNoticeClassSettingDTO;
 import com.sms.system.entity.vo.SysDepartmentVO;
 import com.sms.system.service.ISysConfigService;
 import com.sms.system.service.ISysDepartmentService;
-import com.sms.web.controller.base.AdminBaseController;
+import com.sms.web.controller.base.SysUserRoleBaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,7 +23,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/system/basic")
-public class SysBasicSettingController extends AdminBaseController {
+public class SysBasicSettingController extends SysUserRoleBaseController {
 
     @Autowired
     private ISysDepartmentService departmentService;
@@ -35,7 +35,7 @@ public class SysBasicSettingController extends AdminBaseController {
     @Log(title = "查詢學段樹", businessType = BusinessType.SELECT)
     @GetMapping("/addressBook/segmentTree")
     public AjaxResult segmentTree() {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限");
         }
         List<SysDepartmentVO> tree = departmentService.getSegmentTree();
@@ -46,7 +46,7 @@ public class SysBasicSettingController extends AdminBaseController {
     @Log(title = "查詢家校通訊錄學段設置", businessType = BusinessType.SELECT)
     @GetMapping("/addressBook/segmentSetting")
     public AjaxResult getAddressBookSegmentSetting() {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限");
         }
         AddressBookSegmentSettingDTO dto = new AddressBookSegmentSettingDTO();
@@ -58,7 +58,7 @@ public class SysBasicSettingController extends AdminBaseController {
     @Log(title = "保存家校通訊錄學段設置", businessType = BusinessType.UPDATE)
     @PostMapping("/addressBook/segmentSetting")
     public AjaxResult saveAddressBookSegmentSetting(@RequestBody AddressBookSegmentSettingDTO settingDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限");
         }
         List<Long> ids = settingDTO != null ? settingDTO.getSegmentDepartmentIds() : null;
@@ -70,7 +70,7 @@ public class SysBasicSettingController extends AdminBaseController {
     @Log(title = "查詢每日通知班級樹", businessType = BusinessType.SELECT)
     @GetMapping("/dailyNotice/classTree")
     public AjaxResult dailyNoticeClassTree() {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限");
         }
         List<SysDepartmentVO> tree = departmentService.getDailyNoticeClassTree();
@@ -81,7 +81,7 @@ public class SysBasicSettingController extends AdminBaseController {
     @Log(title = "查詢每日通知班級設置", businessType = BusinessType.SELECT)
     @GetMapping("/dailyNotice/classSetting")
     public AjaxResult getDailyNoticeClassSetting() {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限");
         }
         DailyNoticeClassSettingDTO dto = new DailyNoticeClassSettingDTO();
@@ -93,7 +93,7 @@ public class SysBasicSettingController extends AdminBaseController {
     @Log(title = "保存每日通知班級設置", businessType = BusinessType.UPDATE)
     @PostMapping("/dailyNotice/classSetting")
     public AjaxResult saveDailyNoticeClassSetting(@RequestBody DailyNoticeClassSettingDTO settingDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限");
         }
         List<Long> ids = settingDTO != null ? settingDTO.getClassDepartmentIds() : null;

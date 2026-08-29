@@ -35,9 +35,9 @@
         <el-input
           v-model="localFormData.senderName"
           disabled
-          placeholder="系統自動填充當前登錄用戶"
+          :placeholder="senderLoading ? '正在獲取發送人資訊…' : ''"
         />
-        <div class="form-tip">發送人默認為當前登錄用戶，不可修改</div>
+        <div class="form-tip">發送人由系統自動設定，不可修改</div>
       </el-form-item>
 
       <!-- 跳轉連結 -->
@@ -157,6 +157,7 @@ import { ElNotification } from 'element-plus'
 import {API_BASE_PATH, normalizeProfileUrl} from '@/utils/deployment'
 import MD5 from 'crypto-js/md5'
 import settings from '@/config/settings'
+import request from '@/utils/request'
 
 export default {
   name: 'BasicInfoForm',
@@ -178,6 +179,7 @@ export default {
       uploadHeaders: {},
       showFormQuestionDialog: false,
       editingFormQuestion: null,
+      senderLoading: false,
       rules: {
         title: [
           { required: true, message: '請輸入通知標題', trigger: 'blur' },
@@ -210,8 +212,31 @@ export default {
   },
   mounted() {
     this.initFileList()
+    this.loadSenderName()
   },
   methods: {
+    async loadSenderName() {
+      this.senderLoading = true
+      try {
+        const response = await request({
+          url: '/system/userRole/checkCurrentUser',
+          method: 'get'
+        })
+        if (response.code === 200 || response.code === 0) {
+          const senderName = response.data?.senderName
+            || this.$store?.state?.user?.username
+            || ''
+          this.localFormData.senderName = senderName
+          this.formData.senderName = senderName
+        }
+      } catch (error) {
+        const fallback = this.$store?.state?.user?.username || ''
+        this.localFormData.senderName = fallback
+        this.formData.senderName = fallback
+      } finally {
+        this.senderLoading = false
+      }
+    },
     /** 合併 el-upload 回傳列表與本地 fileList，保留已上傳文件的 _originalUrl 等自定義欄位 */
     mergeFileList(incomingList) {
       const existingByUid = new Map(

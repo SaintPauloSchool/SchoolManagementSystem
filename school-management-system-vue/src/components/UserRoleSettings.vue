@@ -1,11 +1,11 @@
 <template>
-  <div class="admin-settings">
+  <div class="user-role-settings">
     <el-card class="box-card" shadow="never">
       <template #header>
         <div class="card-header">
           <span class="title">
             <el-icon><UserFilled /></el-icon>
-            管理員設置
+            用戶角色設置
           </span>
           <div class="header-actions">
             <el-button
@@ -17,7 +17,7 @@
             >
               批量刪除
             </el-button>
-            <el-button type="primary" :icon="Plus" @click="openSelector">新增管理員</el-button>
+            <el-button type="primary" :icon="Plus" @click="openSelector">新增用戶角色</el-button>
           </div>
         </div>
       </template>
@@ -25,8 +25,8 @@
       <el-form :model="searchForm" :inline="true" class="search-form">
         <el-form-item label="姓名">
           <el-input
-            v-model="searchForm.adminName"
-            placeholder="請輸入管理員姓名"
+            v-model="searchForm.userName"
+            placeholder="請輸入姓名"
             clearable
             @keyup.enter="handleSearch"
           />
@@ -35,6 +35,7 @@
           <el-select v-model="searchForm.type" placeholder="全部" clearable style="width: 140px">
             <el-option label="超級管理員" value="0" />
             <el-option label="管理員" value="1" />
+            <el-option label="其他" value="2" />
           </el-select>
         </el-form-item>
         <el-form-item label="狀態">
@@ -59,11 +60,12 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="48" align="center" />
-        <el-table-column prop="adminName" label="姓名" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="userName" label="姓名" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="senderDisplayName" label="對外顯示名稱" min-width="140" show-overflow-tooltip />
         <el-table-column prop="type" label="類型" width="120" align="center">
           <template #default="scope">
-            <el-tag :type="scope.row.type === '0' ? 'danger' : 'primary'" size="small" effect="light">
-              {{ scope.row.type === '0' ? '超級管理員' : '管理員' }}
+            <el-tag :type="typeTagType(scope.row.type)" size="small" effect="light">
+              {{ typeLabel(scope.row.type) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -103,17 +105,25 @@
     <!-- 新增：設定類型後選人 -->
     <el-dialog
       v-model="addDialogVisible"
-      title="新增管理員"
+      title="新增用戶角色"
       width="480px"
       append-to-body
       @closed="resetAddForm"
     >
       <el-form label-width="100px">
-        <el-form-item label="管理員類型">
+        <el-form-item label="類型">
           <el-radio-group v-model="addForm.type">
             <el-radio label="1">管理員</el-radio>
             <el-radio label="0">超級管理員</el-radio>
+            <el-radio label="2">其他</el-radio>
           </el-radio-group>
+        </el-form-item>
+        <el-form-item label="對外顯示名稱">
+          <el-input
+            v-model="addForm.senderDisplayName"
+            placeholder="如：小學教務處；留空則使用登錄名"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="備註">
           <el-input v-model="addForm.remark" type="textarea" :rows="2" placeholder="選填" />
@@ -145,15 +155,23 @@
     </el-dialog>
 
     <!-- 修改 -->
-    <el-dialog v-model="editDialogVisible" title="修改管理員" width="480px" append-to-body>
-      <el-form ref="editFormRef" :model="editForm" :rules="editRules" label-width="100px">
+    <el-dialog v-model="editDialogVisible" title="修改用戶角色" width="480px" append-to-body>
+      <el-form ref="editFormRef" :model="editForm" :rules="editRules" label-width="110px">
         <el-form-item label="姓名">
-          <el-input v-model="editForm.adminName" disabled />
+          <el-input v-model="editForm.userName" disabled />
+        </el-form-item>
+        <el-form-item label="對外顯示名稱">
+          <el-input
+            v-model="editForm.senderDisplayName"
+            placeholder="如：小學教務處；留空則使用登錄名"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="類型" prop="type">
           <el-radio-group v-model="editForm.type">
             <el-radio label="1">管理員</el-radio>
             <el-radio label="0">超級管理員</el-radio>
+            <el-radio label="2">其他</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="狀態" prop="status">
@@ -174,7 +192,7 @@
 
     <StaffSelectorDialog
       v-model:visible="selectorVisible"
-      title="選擇管理員 — WeCom 老師通訊錄"
+      title="選擇用戶 — WeCom 老師通訊錄"
       :selected-staff="pendingStaff"
       :wecom-only="true"
       @confirm="handleStaffConfirm"
@@ -189,7 +207,7 @@ import request from '@/utils/request'
 import StaffSelectorDialog from './selectors/StaffSelectorDialog.vue'
 
 export default {
-  name: 'AdminSettings',
+  name: 'UserRoleSettings',
   components: { UserFilled, StaffSelectorDialog },
   data() {
     return {
@@ -208,13 +226,14 @@ export default {
         pageSize: 10
       },
       searchForm: {
-        adminName: '',
+        userName: '',
         type: '',
         status: ''
       },
       addDialogVisible: false,
       addForm: {
         type: '1',
+        senderDisplayName: '',
         remark: ''
       },
       pendingStaff: [],
@@ -222,10 +241,11 @@ export default {
       editDialogVisible: false,
       editForm: {
         id: null,
-        adminName: '',
+        userName: '',
         userId: '',
         type: '1',
         status: '0',
+        senderDisplayName: '',
         remark: ''
       },
       editRules: {
@@ -238,12 +258,22 @@ export default {
     this.loadList()
   },
   methods: {
+    typeLabel(type) {
+      if (type === '0') return '超級管理員'
+      if (type === '2') return '其他'
+      return '管理員'
+    },
+    typeTagType(type) {
+      if (type === '0') return 'danger'
+      if (type === '2') return 'warning'
+      return 'primary'
+    },
     handleSearch() {
       this.pagination.currentPage = 1
       this.loadList()
     },
     resetSearch() {
-      this.searchForm = { adminName: '', type: '', status: '' }
+      this.searchForm = { userName: '', type: '', status: '' }
       this.handleSearch()
     },
     handleSelectionChange(rows) {
@@ -253,12 +283,12 @@ export default {
       this.loading = true
       try {
         const response = await request({
-          url: '/system/admin/list',
+          url: '/system/userRole/list',
           method: 'get',
           params: {
             pageNum: this.pagination.currentPage,
             pageSize: this.pagination.pageSize,
-            adminName: this.searchForm.adminName || undefined,
+            userName: this.searchForm.userName || undefined,
             type: this.searchForm.type || undefined,
             status: this.searchForm.status || undefined
           }
@@ -289,13 +319,13 @@ export default {
       }
     },
     openSelector() {
-      this.addForm = { type: '1', remark: '' }
+      this.addForm = { type: '1', senderDisplayName: '', remark: '' }
       this.pendingStaff = []
       this.addDialogVisible = true
     },
     resetAddForm() {
       this.pendingStaff = []
-      this.addForm = { type: '1', remark: '' }
+      this.addForm = { type: '1', senderDisplayName: '', remark: '' }
     },
     handleStaffConfirm(staffList) {
       // WeCom 老師通訊錄（type=1），保留全部已選成員供預覽
@@ -303,7 +333,7 @@ export default {
         .filter(s => s && s.type !== 2 && s.type !== '2')
         .map(s => ({
           id: s.id,
-          name: s.name || s.adminName || '未命名',
+          name: s.name || s.userName || '未命名',
           type: 1,
           staffUserId: s.staffUserId || s.userid || s.userId || '',
           sourceDeptId: s.sourceDeptId ?? null,
@@ -332,15 +362,17 @@ export default {
       this.submitting = true
       try {
         const response = await request({
-          url: '/system/admin/batch',
+          url: '/system/userRole/batch',
           method: 'post',
           data: {
             type: this.addForm.type,
+            senderDisplayName: this.addForm.senderDisplayName || null,
             remark: this.addForm.remark || null,
-            admins: this.pendingStaff.map(s => ({
+            userRoles: this.pendingStaff.map(s => ({
               userId: s.staffUserId,
-              adminName: s.name,
-              type: this.addForm.type
+              userName: s.name,
+              type: this.addForm.type,
+              senderDisplayName: this.addForm.senderDisplayName || null
             }))
           }
         })
@@ -376,10 +408,11 @@ export default {
     handleEdit(row) {
       this.editForm = {
         id: row.id,
-        adminName: row.adminName,
+        userName: row.userName,
         userId: row.userId,
         type: row.type || '1',
         status: row.status || '0',
+        senderDisplayName: row.senderDisplayName || '',
         remark: row.remark || ''
       }
       this.editDialogVisible = true
@@ -388,14 +421,15 @@ export default {
       this.submitting = true
       try {
         const response = await request({
-          url: '/system/admin',
+          url: '/system/userRole',
           method: 'put',
           data: {
             id: this.editForm.id,
             type: this.editForm.type,
             status: this.editForm.status,
             remark: this.editForm.remark,
-            adminName: this.editForm.adminName
+            userName: this.editForm.userName,
+            senderDisplayName: this.editForm.senderDisplayName
           }
         })
         if (response.code === 200 || response.code === 0) {
@@ -422,14 +456,14 @@ export default {
       }
     },
     handleDelete(row) {
-      ElMessageBox.confirm(`確定刪除管理員「${row.adminName || row.userId}」嗎？`, '刪除確認', {
+      ElMessageBox.confirm(`確定刪除用戶角色「${row.userName || row.userId}」嗎？`, '刪除確認', {
         confirmButtonText: '確定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async () => {
         try {
           const response = await request({
-            url: `/system/admin/${row.id}`,
+            url: `/system/userRole/${row.id}`,
             method: 'delete'
           })
           if (response.code === 200 || response.code === 0) {
@@ -458,8 +492,8 @@ export default {
         ElNotification({ title: '提示', message: '請至少選擇一條記錄', type: 'warning', duration: 3000 })
         return
       }
-      const names = this.selectedRows.map(r => r.adminName || r.userId).join('、')
-      ElMessageBox.confirm(`確定刪除以下 ${this.selectedRows.length} 位管理員？\n${names}`, '批量刪除', {
+      const names = this.selectedRows.map(r => r.userName || r.userId).join('、')
+      ElMessageBox.confirm(`確定刪除以下 ${this.selectedRows.length} 位用戶角色？\n${names}`, '批量刪除', {
         confirmButtonText: '確定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -467,7 +501,7 @@ export default {
         try {
           const ids = this.selectedRows.map(r => r.id).join(',')
           const response = await request({
-            url: `/system/admin/${ids}`,
+            url: `/system/userRole/${ids}`,
             method: 'delete'
           })
           if (response.code === 200 || response.code === 0) {
@@ -496,7 +530,7 @@ export default {
 </script>
 
 <style scoped>
-.admin-settings {
+.user-role-settings {
   padding: 0;
 }
 

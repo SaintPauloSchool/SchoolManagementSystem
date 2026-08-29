@@ -1,22 +1,16 @@
 package com.sms.system.entity.dto;
 
 /**
- * 修改管理員
+ * 修改用戶角色
  */
-public class SysAdminUpdateDTO {
+public class SysUserRoleUpdateDTO {
 
     private Long id;
-
-    /** 類型（0超級管理員 1管理員） */
+    /** 類型（0超級管理員 1管理員 2其他） */
     private String type;
-
-    /** 狀態（0正常 1停用） */
     private String status;
-
-    /** 管理員姓名 */
-    private String adminName;
-
-    /** 備註 */
+    private String userName;
+    private String senderDisplayName;
     private String remark;
 
     public Long getId() {
@@ -43,12 +37,20 @@ public class SysAdminUpdateDTO {
         this.status = status;
     }
 
-    public String getAdminName() {
-        return adminName;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setAdminName(String adminName) {
-        this.adminName = adminName;
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getSenderDisplayName() {
+        return senderDisplayName;
+    }
+
+    public void setSenderDisplayName(String senderDisplayName) {
+        this.senderDisplayName = senderDisplayName;
     }
 
     public String getRemark() {
