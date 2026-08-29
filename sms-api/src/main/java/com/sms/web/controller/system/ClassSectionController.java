@@ -8,7 +8,7 @@ import com.sms.system.entity.ClassSection;
 import com.sms.system.entity.dto.ClassSectionQueryDTO;
 import com.sms.system.entity.dto.ClassSectionSaveDTO;
 import com.sms.system.service.IClassSectionService;
-import com.sms.web.controller.base.AdminBaseController;
+import com.sms.web.controller.base.SysUserRoleBaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +20,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/system/basic/classSection")
-public class ClassSectionController extends AdminBaseController {
+public class ClassSectionController extends SysUserRoleBaseController {
 
     @Autowired
     private IClassSectionService classSectionService;
@@ -28,7 +28,7 @@ public class ClassSectionController extends AdminBaseController {
     @Log(title = "查詢班級對照列表", businessType = BusinessType.SELECT)
     @GetMapping("/list")
     public TableDataInfo list(ClassSectionQueryDTO queryDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return getDataTable(new ArrayList<>());
         }
         startPage();
@@ -39,7 +39,7 @@ public class ClassSectionController extends AdminBaseController {
     @Log(title = "查詢班級對照詳情", businessType = BusinessType.SELECT)
     @GetMapping("/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         return AjaxResult.success(classSectionService.selectClassSectionById(id));
@@ -48,7 +48,7 @@ public class ClassSectionController extends AdminBaseController {
     @Log(title = "新增班級對照", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody ClassSectionSaveDTO saveDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         return toAjax(classSectionService.insertClassSection(saveDTO));
@@ -57,7 +57,7 @@ public class ClassSectionController extends AdminBaseController {
     @Log(title = "修改班級對照", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody ClassSectionSaveDTO saveDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         return toAjax(classSectionService.updateClassSection(saveDTO));
@@ -66,7 +66,7 @@ public class ClassSectionController extends AdminBaseController {
     @Log(title = "刪除班級對照", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         return toAjax(classSectionService.deleteClassSectionByIds(ids));

@@ -7,7 +7,7 @@ import com.sms.common.utils.poi.ExcelUtil;
 import com.sms.system.entity.dto.AttendanceRecordQueryDTO;
 import com.sms.system.entity.vo.AttendanceRecordListVO;
 import com.sms.system.service.IAttendanceRecordService;
-import com.sms.web.controller.base.AdminBaseController;
+import com.sms.web.controller.base.SysUserRoleBaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +24,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/system/student/attendance")
-public class AttendanceRecordController extends AdminBaseController {
+public class AttendanceRecordController extends SysUserRoleBaseController {
 
     @Autowired
     private IAttendanceRecordService attendanceRecordService;
@@ -32,7 +32,7 @@ public class AttendanceRecordController extends AdminBaseController {
     @Log(title = "查詢考勤機記錄列表", businessType = BusinessType.SELECT)
     @GetMapping("/list")
     public TableDataInfo list(AttendanceRecordQueryDTO queryDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return getDataTable(new ArrayList<>());
         }
         startPage();
@@ -43,7 +43,7 @@ public class AttendanceRecordController extends AdminBaseController {
     @Log(title = "導出考勤機記錄", businessType = BusinessType.EXPORT)
     @GetMapping("/export")
     public void export(AttendanceRecordQueryDTO queryDTO, HttpServletResponse response) throws Exception {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }

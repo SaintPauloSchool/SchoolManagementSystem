@@ -406,7 +406,7 @@ export default {
         name: node.name,
         position: node.position || '',
         type,
-        // WeCom userid（寫入 sys_admin.user_id）；自定義通訊錄可能為空
+        // WeCom userid（寫入 sys_user_role.user_id）；自定義通訊錄可能為空
         staffUserId: node.staffUserId || node.userid || null
       }
       if (sourceDept) {
