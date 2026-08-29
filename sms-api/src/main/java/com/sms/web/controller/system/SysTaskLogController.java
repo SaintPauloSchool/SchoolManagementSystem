@@ -15,7 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Method;
@@ -38,6 +40,10 @@ public class SysTaskLogController extends BaseController {
 
     @Autowired
     private ScheduledTaskSupport scheduledTaskSupport;
+
+    @Autowired
+    @Qualifier("threadPoolTaskExecutor")
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     @Log(title = "查詢定時任務日誌", businessType = BusinessType.SELECT)
     @GetMapping("/list")
@@ -63,16 +69,22 @@ public class SysTaskLogController extends BaseController {
             Method method = bean.getClass().getDeclaredMethod(methodName);
             method.setAccessible(true);
 
-            log.info("手動執行任務開始 - Bean: {}, Method: {}", beanName, methodName);
+            log.info("手動執行任務已提交 - Bean: {}, Method: {}", beanName, methodName);
 
-            scheduledTaskSupport.markManualTrigger();
-            try {
-                method.invoke(bean);
-            } finally {
-                scheduledTaskSupport.clearManualTrigger();
-            }
+            threadPoolTaskExecutor.execute(() -> {
+                scheduledTaskSupport.markManualTrigger();
+                try {
+                    log.info("手動執行任務開始 - Bean: {}, Method: {}", beanName, methodName);
+                    method.invoke(bean);
+                    log.info("手動執行任務完成 - Bean: {}, Method: {}", beanName, methodName);
+                } catch (Exception e) {
+                    log.error("手動執行任務異常 - Bean: {}, Method: {}", beanName, methodName, e);
+                } finally {
+                    scheduledTaskSupport.clearManualTrigger();
+                }
+            });
 
-            return AjaxResult.success("任務觸發成功，請稍後查看日誌");
+            return AjaxResult.success("任務已提交執行，請稍後查看日誌");
         } catch (NoSuchBeanDefinitionException e) {
             log.error("手動執行任務失敗，找不到 Bean: {}", beanName, e);
             return AjaxResult.error("找不到對應的處理器: " + beanName);
