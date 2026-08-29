@@ -96,7 +96,6 @@ export default {
       try {
         this.submitting = true
         this.formData.senderId = this.$store?.state?.user?.userId || null
-        this.formData.senderName = this.$store?.state?.user?.username || '當前用戶'
         this.formData.status = '1'
         
         // 準備提交數據
@@ -183,6 +182,7 @@ export default {
       this.currentStep = 0
       this.$nextTick(() => {
         this.$refs.sendFormRef?.resetForm()
+        this.$refs.basicFormRef?.loadSenderName()
       })
     },
     

@@ -3,7 +3,7 @@ package com.sms.handler.system;
 import com.alibaba.fastjson.JSONObject;
 import com.sms.framework.wechat.WechatWorkHttpClient;
 import com.sms.system.entity.task.TaskResult;
-import com.sms.system.mapper.SysAdminMapper;
+import com.sms.system.mapper.SysUserRoleMapper;
 import com.sms.system.service.ISysTaskLogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +27,7 @@ public class TaskMonitorHandler {
     private ISysTaskLogService sysTaskLogService;
 
     @Autowired
-    private SysAdminMapper sysAdminMapper;
+    private SysUserRoleMapper sysUserRoleMapper;
 
     @Autowired
     private WechatWorkHttpClient wechatWorkHttpClient;
@@ -46,12 +46,12 @@ public class TaskMonitorHandler {
             log.info("發現未處理的失敗任務數量: {}", failedCount);
             
             // 獲取管理員列表
-            List<String> adminUserIds = sysAdminMapper.selectAdminUserIds();
-            if (CollectionUtils.isEmpty(adminUserIds)) {
+            List<String> userRoleUserIds = sysUserRoleMapper.selectActiveUserIds();
+            if (CollectionUtils.isEmpty(userRoleUserIds)) {
                 return TaskResult.fail(0, 1, "發現失敗任務，但找不到可通知的管理員");
             }
             
-            String toUser = String.join("|", adminUserIds);
+            String toUser = String.join("|", userRoleUserIds);
             
             // 組合通知內容
             String content = "您有失敗的定時器任務未處理請查看\n\n目前未處理的失敗任務數量：" + failedCount + "筆，請登入系統日誌進行確認與處理。";
@@ -68,7 +68,7 @@ public class TaskMonitorHandler {
             try {
                 JSONObject result = wechatWorkHttpClient.sendAppMessage(message);
                 if (result != null && result.getInteger("errcode") == 0) {
-                    return TaskResult.success(1, 0, "已發送失敗任務通知給 " + adminUserIds.size() + " 位管理員");
+                    return TaskResult.success(1, 0, "已發送失敗任務通知給 " + userRoleUserIds.size() + " 位用戶角色");
                 } else {
                     String errmsg = result != null ? result.getString("errmsg") : "返回結果為空";
                     return TaskResult.fail(0, 1, "發送失敗任務通知失敗: " + errmsg);

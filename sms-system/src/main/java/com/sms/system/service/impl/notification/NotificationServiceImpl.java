@@ -1,7 +1,7 @@
 package com.sms.system.service.impl.notification;
 
 import com.sms.common.utils.bean.BeanCopyUtils;
-import com.sms.system.entity.SysAdmin;
+import com.sms.system.entity.SysUserRole;
 import com.sms.system.entity.dto.NotificationCcSaveDTO;
 import com.sms.system.entity.dto.NotificationQueryDTO;
 import com.sms.system.entity.dto.NotificationQuestionSaveDTO;
@@ -10,7 +10,7 @@ import com.sms.system.entity.dto.NotificationSaveDTO;
 import com.sms.system.entity.notification.Notification;
 import com.sms.system.entity.notification.NotificationReceiver;
 import com.sms.system.entity.vo.NotificationVO;
-import com.sms.system.mapper.SysAdminMapper;
+import com.sms.system.mapper.SysUserRoleMapper;
 import com.sms.system.mapper.notification.NotificationMapper;
 import com.sms.system.service.notification.INotificationCcService;
 import com.sms.system.service.notification.INotificationQuestionService;
@@ -47,7 +47,7 @@ public class NotificationServiceImpl implements INotificationService {
     private INotificationQuestionService notificationQuestionService;
 
     @Autowired
-    private SysAdminMapper sysAdminMapper;
+    private SysUserRoleMapper sysUserRoleMapper;
 
     /**
      * 查詢通知列表
@@ -77,16 +77,16 @@ public class NotificationServiceImpl implements INotificationService {
         String openUserId = notificationQueryDTO.getOpenUserId();
 
         // 判斷當前用戶是否為管理員
-        boolean isAdmin = false;
+        boolean hasUserRole = false;
         if (openUserId != null && !openUserId.trim().isEmpty()) {
-            SysAdmin admin = sysAdminMapper.selectByUserId(openUserId);
-            if (admin != null && "0".equals(admin.getStatus())) {
-                isAdmin = true;
+            SysUserRole userRole = sysUserRoleMapper.selectByUserId(openUserId);
+            if (userRole != null && "0".equals(userRole.getStatus())) {
+                hasUserRole = true;
             }
         }
 
         Set<Long> notificationIds;
-        if (isAdmin) {
+        if (hasUserRole) {
             // 管理員：返回所有已發佈通知
             Notification adminQuery = new Notification();
             adminQuery.setStatus("1");

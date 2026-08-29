@@ -15,7 +15,7 @@ import com.sms.system.entity.vo.NotificationDetailVO;
 import com.sms.system.entity.vo.NotificationVO;
 import com.sms.system.entity.vo.ResendFailRecordVO;
 import com.sms.system.entity.vo.UserReadRecordVO;
-import com.sms.system.service.ISysAdminService;
+import com.sms.system.service.ISysUserRoleService;
 import com.sms.system.service.notification.IFailedNotificationService;
 import com.sms.system.service.notification.INotificationCcService;
 import com.sms.system.service.notification.INotificationExportService;
@@ -76,7 +76,7 @@ public class NotificationController extends BaseController {
     private IFailedNotificationService failedNotificationService;
 
     @Autowired
-    private ISysAdminService sysAdminService;
+    private ISysUserRoleService sysUserRoleService;
 
     @Log(title = "查詢通知列表", businessType = BusinessType.SELECT)
     @GetMapping("/list")
@@ -128,7 +128,8 @@ public class NotificationController extends BaseController {
     @Transactional(rollbackFor = Exception.class)
     public AjaxResult add(@RequestBody NotificationSaveDTO notificationSaveDTO) {
         notificationSaveDTO.setSenderId(getUserId());
-        notificationSaveDTO.setSenderName(getUsername());
+        notificationSaveDTO.setSenderName(
+                sysUserRoleService.resolveSenderDisplayName(getOpenUserId(), getUsername()));
 
         try {
             if (notificationService.save(notificationSaveDTO, getUsername())) {
@@ -223,7 +224,7 @@ public class NotificationController extends BaseController {
     @GetMapping("/failedList")
     public TableDataInfo failedList() {
         String userId = getOpenUserId();
-        if (sysAdminService.isNotAdmin(userId)) {
+        if (sysUserRoleService.isNotUserRole(userId)) {
             return getDataTable(new ArrayList<>());
         }
 
@@ -236,7 +237,7 @@ public class NotificationController extends BaseController {
     @GetMapping("/failedDetail/{sendRecordId}")
     public AjaxResult failedDetail(@PathVariable Long sendRecordId) {
         String userId = getOpenUserId();
-        if (sysAdminService.isNotAdmin(userId)) {
+        if (sysUserRoleService.isNotUserRole(userId)) {
             return AjaxResult.error("無權限訪問");
         }
 
@@ -253,7 +254,7 @@ public class NotificationController extends BaseController {
     @GetMapping("/failedReadRecords/{sendRecordId}")
     public TableDataInfo failedReadRecords(@PathVariable Long sendRecordId) {
         String userId = getOpenUserId();
-        if (sysAdminService.isNotAdmin(userId)) {
+        if (sysUserRoleService.isNotUserRole(userId)) {
             return getDataTable(new ArrayList<>());
         }
 
@@ -266,7 +267,7 @@ public class NotificationController extends BaseController {
     @GetMapping("/resendFailRecords/{sendRecordId}")
     public TableDataInfo resendFailRecords(@PathVariable Long sendRecordId) {
         String userId = getOpenUserId();
-        if (sysAdminService.isNotAdmin(userId)) {
+        if (sysUserRoleService.isNotUserRole(userId)) {
             return getDataTable(new ArrayList<>());
         }
 

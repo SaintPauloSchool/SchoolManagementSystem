@@ -1,7 +1,7 @@
 package com.sms.web.controller.system;
 
 import com.sms.common.annotation.Log;
-import com.sms.web.controller.base.AdminBaseController;
+import com.sms.web.controller.base.SysUserRoleBaseController;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.core.page.TableDataInfo;
 import com.sms.common.enums.BusinessType;
@@ -35,7 +35,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/system/student/match")
-public class SysStudentMatchController extends AdminBaseController {
+public class SysStudentMatchController extends SysUserRoleBaseController {
 
     @Autowired
     private ISysStudentMatchService sysStudentMatchService;
@@ -46,7 +46,7 @@ public class SysStudentMatchController extends AdminBaseController {
     @Log(title = "查詢學生匹配列表", businessType = BusinessType.SELECT)
     @GetMapping("/list")
     public TableDataInfo list(SysStudentMatchDTO studentMatchDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return getDataTable(new ArrayList<>());
         }
         startPage();
@@ -57,7 +57,7 @@ public class SysStudentMatchController extends AdminBaseController {
     @Log(title = "查詢未匹配學生列表", businessType = BusinessType.SELECT)
     @GetMapping("/unmatchedList")
     public TableDataInfo unmatchedList(SysStudentMatchDTO studentMatchDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return getDataTable(new ArrayList<>());
         }
         startPage();
@@ -68,7 +68,7 @@ public class SysStudentMatchController extends AdminBaseController {
     @Log(title = "查詢企微學生候選列表", businessType = BusinessType.SELECT)
     @GetMapping("/wecomCandidates")
     public TableDataInfo wecomCandidates(SysWecomStudentDTO wecomStudentDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return getDataTable(new ArrayList<>());
         }
         startPage();
@@ -80,7 +80,7 @@ public class SysStudentMatchController extends AdminBaseController {
     @GetMapping("/photo/{studentProfileNumber}")
     public void photo(@PathVariable("studentProfileNumber") String studentProfileNumber, HttpServletResponse response)
             throws IOException {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
@@ -97,7 +97,7 @@ public class SysStudentMatchController extends AdminBaseController {
     @Log(title = "手動綁定學生匹配", businessType = BusinessType.UPDATE)
     @PostMapping("/bindBatch")
     public AjaxResult bindBatch(@RequestBody SysStudentMatchBatchBindDTO batchBindDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         SysStudentMatchOperationResultVO resultVO = sysStudentMatchService.bindStudents(batchBindDTO);
@@ -107,7 +107,7 @@ public class SysStudentMatchController extends AdminBaseController {
     @Log(title = "更正學生匹配家長資訊", businessType = BusinessType.UPDATE)
     @PutMapping("/update")
     public AjaxResult update(@RequestBody SysStudentMatchUpdateDTO updateDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         SysStudentMatchOperationResultVO resultVO = sysStudentMatchService.updateStudentMatch(updateDTO);
@@ -117,7 +117,7 @@ public class SysStudentMatchController extends AdminBaseController {
     @Log(title = "同步對照數據", businessType = BusinessType.UPDATE)
     @PostMapping("/syncData")
     public AjaxResult syncData() {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         try {

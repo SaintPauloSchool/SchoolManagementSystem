@@ -1,7 +1,7 @@
 package com.sms.web.controller.system;
 
 import com.sms.common.annotation.Log;
-import com.sms.web.controller.base.AdminBaseController;
+import com.sms.web.controller.base.SysUserRoleBaseController;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.core.page.TableDataInfo;
 import com.sms.common.enums.BusinessType;
@@ -20,7 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/system/calendarEvent")
-public class CalendarEventController extends AdminBaseController {
+public class CalendarEventController extends SysUserRoleBaseController {
 
     @Autowired
     private ICalendarEventService calendarEventService;
@@ -28,7 +28,7 @@ public class CalendarEventController extends AdminBaseController {
     @Log(title = "查詢行事曆事件列表", businessType = BusinessType.SELECT)
     @GetMapping("/list")
     public TableDataInfo list(CalendarEventQueryDTO calendarEventQueryDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return getDataTable(new ArrayList<>());
         }
         startPage();
@@ -39,7 +39,7 @@ public class CalendarEventController extends AdminBaseController {
     @Log(title = "查詢行事曆事件詳情", businessType = BusinessType.SELECT)
     @GetMapping(value = "/{eventId}")
     public AjaxResult getInfo(@PathVariable("eventId") Long eventId) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         return AjaxResult.success(calendarEventService.selectCalendarEventByEventId(eventId));
@@ -48,7 +48,7 @@ public class CalendarEventController extends AdminBaseController {
     @Log(title = "新增行事曆事件", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody CalendarEventSaveDTO calendarEventSaveDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         return toAjax(calendarEventService.insertCalendarEvent(calendarEventSaveDTO, getUsername()));
@@ -57,7 +57,7 @@ public class CalendarEventController extends AdminBaseController {
     @Log(title = "行事曆事件-批量新增", businessType = BusinessType.INSERT)
     @PostMapping("/batch")
     public AjaxResult addBatch(@RequestBody List<CalendarEventSaveDTO> calendarEventSaveDTOList) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         return toAjax(calendarEventService.insertCalendarEventBatch(calendarEventSaveDTOList, getUsername()));
@@ -66,7 +66,7 @@ public class CalendarEventController extends AdminBaseController {
     @Log(title = "修改行事曆事件", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody CalendarEventSaveDTO calendarEventSaveDTO) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         return toAjax(calendarEventService.updateCalendarEvent(calendarEventSaveDTO, getUsername()));
@@ -75,7 +75,7 @@ public class CalendarEventController extends AdminBaseController {
     @Log(title = "刪除行事曆事件", businessType = BusinessType.DELETE)
     @DeleteMapping("/{eventIds}")
     public AjaxResult remove(@PathVariable Long[] eventIds) {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         CalendarEventDeleteDTO calendarEventDeleteDTO = new CalendarEventDeleteDTO();
@@ -86,7 +86,7 @@ public class CalendarEventController extends AdminBaseController {
     @Log(title = "導入行事曆事件", businessType = BusinessType.IMPORT)
     @PostMapping("/importData")
     public AjaxResult importData(MultipartFile file) throws Exception {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             return AjaxResult.error("無權限訪問");
         }
         String message = calendarEventService.importCalendarEvent(file, getUsername());
@@ -96,7 +96,7 @@ public class CalendarEventController extends AdminBaseController {
     @Log(title = "下載行事曆導入模板", businessType = BusinessType.EXPORT)
     @GetMapping("/importTemplate")
     public void downloadTemplate(HttpServletResponse response) throws Exception {
-        if (isNotAdmin()) {
+        if (isNotUserRole()) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return;
         }

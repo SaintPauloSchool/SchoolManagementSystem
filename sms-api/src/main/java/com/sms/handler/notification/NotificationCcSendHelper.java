@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.sms.framework.wechat.WechatWorkHttpClient;
 import com.sms.system.entity.notification.Notification;
 import com.sms.system.entity.notification.NotificationCc;
-import com.sms.system.mapper.SysAdminMapper;
+import com.sms.system.mapper.SysUserRoleMapper;
 import com.sms.system.service.notification.INotificationCcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,7 @@ public class NotificationCcSendHelper {
     private INotificationCcService notificationCcService;
 
     @Autowired
-    private SysAdminMapper sysAdminMapper;
+    private SysUserRoleMapper sysUserRoleMapper;
 
     @Autowired
     private NotificationMessageContentHelper messageContentHelper;
@@ -51,9 +51,9 @@ public class NotificationCcSendHelper {
         if (ccs != null && !ccs.isEmpty()) {
             allUserIds.addAll(notificationCcService.resolveCcUserIds(ccs));
         }
-        List<String> adminUserIds = sysAdminMapper.selectAdminUserIds();
-        if (adminUserIds != null && !adminUserIds.isEmpty()) {
-            allUserIds.addAll(adminUserIds);
+        List<String> userRoleUserIds = sysUserRoleMapper.selectActiveUserIds();
+        if (userRoleUserIds != null && !userRoleUserIds.isEmpty()) {
+            allUserIds.addAll(userRoleUserIds);
         }
         return allUserIds;
     }

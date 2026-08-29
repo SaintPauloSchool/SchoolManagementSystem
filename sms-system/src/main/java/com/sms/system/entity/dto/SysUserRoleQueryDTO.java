@@ -1,28 +1,22 @@
 package com.sms.system.entity.dto;
 
 /**
- * 系統管理員查詢條件
+ * 系統用戶角色查詢條件
  */
-public class SysAdminQueryDTO {
+public class SysUserRoleQueryDTO {
 
-    /** 管理員姓名（模糊） */
-    private String adminName;
-
-    /** 用戶ID（模糊） */
+    private String userName;
     private String userId;
-
-    /** 類型（0超級管理員 1管理員） */
+    /** 類型（0超級管理員 1管理員 2其他） */
     private String type;
-
-    /** 狀態（0正常 1停用） */
     private String status;
 
-    public String getAdminName() {
-        return adminName;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setAdminName(String adminName) {
-        this.adminName = adminName;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public String getUserId() {

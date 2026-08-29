@@ -6,16 +6,16 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 系統管理員列表/詳情 VO
+ * 用戶角色列表/詳情 VO
  */
-public class SysAdminVO implements Serializable {
+public class SysUserRoleVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long id;
-    private String adminName;
-    /** 類型（0超級管理員 1管理員） */
+    private String userName;
+    private String senderDisplayName;
+    /** 類型（0超級管理員 1管理員 2其他） */
     private String type;
-    /** 狀態（0正常 1停用） */
     private String status;
     private String remark;
 
@@ -33,12 +33,20 @@ public class SysAdminVO implements Serializable {
         this.id = id;
     }
 
-    public String getAdminName() {
-        return adminName;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setAdminName(String adminName) {
-        this.adminName = adminName;
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getSenderDisplayName() {
+        return senderDisplayName;
+    }
+
+    public void setSenderDisplayName(String senderDisplayName) {
+        this.senderDisplayName = senderDisplayName;
     }
 
     public String getType() {
