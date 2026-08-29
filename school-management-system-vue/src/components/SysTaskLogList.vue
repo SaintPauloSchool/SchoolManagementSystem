@@ -620,17 +620,17 @@ export default {
 
           if (response.code === 200 || response.code === 0) {
             ElNotification({
-              title: '觸發成功',
-              message: response.msg || '任務已手動觸發執行',
+              title: '提交成功',
+              message: response.msg || '任務已在後台執行，請稍後刷新日誌查看結果',
               type: 'success',
-              duration: 3000
+              duration: 4000
             })
             setTimeout(async () => {
-              await this.refreshListAfterExecute(previousTotal)
+              await this.refreshListAfterExecute(previousTotal, 8, 2000)
               if (this.taskManageVisible) {
                 this.loadScheduledTasks()
               }
-            }, 800)
+            }, 1500)
           } else {
             ElNotification({
               title: '觸發失敗',
