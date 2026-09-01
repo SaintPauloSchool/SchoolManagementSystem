@@ -36,6 +36,10 @@ export default defineConfig(({ mode }) => {
         [env.VITE_API_BASE_PATH || '/sms-api']: {
           target: 'http://localhost:8006',
           changeOrigin: true
+        },
+        '/profile': {
+          target: 'http://localhost:8006/sms-api',
+          changeOrigin: true
         }
       }
     },

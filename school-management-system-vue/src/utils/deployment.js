@@ -22,3 +22,21 @@ export function normalizeProfileUrl(url) {
 
   return result
 }
+
+/** 圖片預覽用：走 Nginx /profile/ 靜態資源（img 標籤無法帶 JWT） */
+export function toPublicProfileUrl(url) {
+  if (!url || typeof url !== 'string') {
+    return url
+  }
+
+  if (url.startsWith('/profile/')) {
+    return url.replace(/([^:])\/\/+/g, '$1/')
+  }
+
+  const normalized = normalizeProfileUrl(url)
+  if (normalized.startsWith(`${PROFILE_BASE_PATH}/`)) {
+    return normalized.replace(PROFILE_BASE_PATH, '/profile').replace(/([^:])\/\/+/g, '$1/')
+  }
+
+  return normalized
+}
