@@ -19,6 +19,9 @@ public interface ISysUserRoleService {
 
     boolean isNotSuperUserRole(String userId);
 
+    /** 是否為管理員（type 0/1，不含 type 2） */
+    boolean hasAdminUserRole(String userId);
+
     SysUserRole selectByUserId(String userId);
 
     SysUserRoleCurrentUserVO selectCurrentUserInfo(String userId, String loginName);
