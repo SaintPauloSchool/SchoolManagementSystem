@@ -154,7 +154,7 @@ public class AttendanceNotifyHandler {
         String studentInfo = StringUtils.hasText(classSection)
                 ? classSection + " " + studentName
                 : studentName;
-        return "貴子弟 " + studentInfo + " 在 " + accessDatetime + " " + directionText + " 聖保祿學校";
+        return "貴子弟 " + studentInfo + " 在 " + accessDatetime + " " + directionText + " 聖保祿學校飯堂";
     }
 
     /**
