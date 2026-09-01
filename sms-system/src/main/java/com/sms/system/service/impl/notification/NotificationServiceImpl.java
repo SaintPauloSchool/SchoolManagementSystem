@@ -1,7 +1,6 @@
 package com.sms.system.service.impl.notification;
 
 import com.sms.common.utils.bean.BeanCopyUtils;
-import com.sms.system.entity.SysUserRole;
 import com.sms.system.entity.dto.NotificationCcSaveDTO;
 import com.sms.system.entity.dto.NotificationQueryDTO;
 import com.sms.system.entity.dto.NotificationQuestionSaveDTO;
@@ -10,8 +9,8 @@ import com.sms.system.entity.dto.NotificationSaveDTO;
 import com.sms.system.entity.notification.Notification;
 import com.sms.system.entity.notification.NotificationReceiver;
 import com.sms.system.entity.vo.NotificationVO;
-import com.sms.system.mapper.SysUserRoleMapper;
 import com.sms.system.mapper.notification.NotificationMapper;
+import com.sms.system.service.ISysUserRoleService;
 import com.sms.system.service.notification.INotificationCcService;
 import com.sms.system.service.notification.INotificationQuestionService;
 import com.sms.system.service.notification.INotificationReceiverService;
@@ -47,7 +46,7 @@ public class NotificationServiceImpl implements INotificationService {
     private INotificationQuestionService notificationQuestionService;
 
     @Autowired
-    private SysUserRoleMapper sysUserRoleMapper;
+    private ISysUserRoleService sysUserRoleService;
 
     /**
      * 查詢通知列表
@@ -76,17 +75,12 @@ public class NotificationServiceImpl implements INotificationService {
         Long userId = notificationQueryDTO.getUserId();
         String openUserId = notificationQueryDTO.getOpenUserId();
 
-        // 判斷當前用戶是否為管理員
-        boolean hasUserRole = false;
-        if (openUserId != null && !openUserId.trim().isEmpty()) {
-            SysUserRole userRole = sysUserRoleMapper.selectByUserId(openUserId);
-            if (userRole != null && "0".equals(userRole.getStatus())) {
-                hasUserRole = true;
-            }
-        }
+        // 判斷當前用戶是否為管理員（type 0/1；type 2 僅看實際抄送給自己的通知）
+        boolean isAdmin = openUserId != null
+                && sysUserRoleService.hasAdminUserRole(openUserId.trim());
 
         Set<Long> notificationIds;
-        if (hasUserRole) {
+        if (isAdmin) {
             // 管理員：返回所有已發佈通知
             Notification adminQuery = new Notification();
             adminQuery.setStatus("1");

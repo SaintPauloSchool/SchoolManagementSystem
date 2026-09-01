@@ -35,6 +35,7 @@
         SELECT user_id
         FROM sys_user_role
         WHERE status = '0'
+          AND type IN ('0', '1')
     </select>
 
     <select id="selectList" parameterType="com.sms.system.entity.dto.SysUserRoleQueryDTO" resultMap="SysUserRoleResult">
