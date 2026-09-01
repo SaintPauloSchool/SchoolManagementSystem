@@ -69,10 +69,37 @@
         <h3 class="section-label">附件列表</h3>
         <span class="section-count">{{ attachmentUrls.length }}</span>
       </div>
-      <div class="chip-list">
+      <div v-if="imageAttachments.length > 0" class="attachment-image-list">
         <div
-            v-for="(item, index) in attachmentUrls"
-            :key="index"
+          v-for="(item, index) in imageAttachments"
+          :key="'img-' + index"
+          class="attachment-image-item"
+        >
+          <el-image
+            :src="getAttachmentUrl(item)"
+            :preview-src-list="imagePreviewList"
+            :initial-index="index"
+            fit="contain"
+            class="attachment-image"
+            :alt="getAttachmentName(item, index)"
+          />
+          <div class="attachment-image-footer">
+            <span class="attachment-image-name">{{ getAttachmentName(item, index) }}</span>
+            <el-button
+              link
+              type="primary"
+              :icon="Download"
+              @click.stop="handleDownloadAttachment(item)"
+            >
+              下載
+            </el-button>
+          </div>
+        </div>
+      </div>
+      <div v-if="fileAttachments.length > 0" class="chip-list">
+        <div
+            v-for="(item, index) in fileAttachments"
+            :key="'file-' + index"
             class="chip attachment-chip clickable-chip"
             @click="handleDownloadAttachment(item)"
         >
@@ -492,6 +519,15 @@ export default {
         return []
       }
       return this.notification.ccs.filter(cc => cc.ccType === '1' || cc.ccType === '2')
+    },
+    imageAttachments() {
+      return this.attachmentUrls.filter(item => this.isImageAttachment(item))
+    },
+    fileAttachments() {
+      return this.attachmentUrls.filter(item => !this.isImageAttachment(item))
+    },
+    imagePreviewList() {
+      return this.imageAttachments.map(item => this.getAttachmentUrl(item))
     }
   },
   methods: {
@@ -542,6 +578,13 @@ export default {
 
     getAttachmentUrl(item) {
       return typeof item === 'string' ? normalizeProfileUrl(item) : normalizeProfileUrl(item.url)
+    },
+
+    isImageAttachment(item) {
+      const name = this.getAttachmentName(item, 0).toLowerCase()
+      const url = (this.getAttachmentUrl(item) || '').toLowerCase()
+      const source = `${name} ${url}`
+      return /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(source)
     },
 
     getRootQuestions(parsed) {
@@ -1258,6 +1301,47 @@ export default {
   background: #eff6ff;
   color: #1e40af;
   border: 1px solid #bfdbfe;
+}
+
+.attachment-image-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.attachment-image-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.attachment-image {
+  width: 100%;
+  height: 220px;
+  display: block;
+  background: #f3f4f6;
+}
+
+.attachment-image-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.attachment-image-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .clickable-chip {

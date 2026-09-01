@@ -58,6 +58,18 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
     }
 
     @Override
+    public boolean hasAdminUserRole(String userId) {
+        if (StringUtils.isEmpty(userId)) {
+            return false;
+        }
+        SysUserRole userRole = sysUserRoleMapper.selectByUserId(userId);
+        if (userRole == null || !STATUS_NORMAL.equals(userRole.getStatus())) {
+            return false;
+        }
+        return TYPE_SUPER.equals(userRole.getType()) || TYPE_ADMIN.equals(userRole.getType());
+    }
+
+    @Override
     public SysUserRole selectByUserId(String userId) {
         return sysUserRoleMapper.selectByUserId(userId);
     }
