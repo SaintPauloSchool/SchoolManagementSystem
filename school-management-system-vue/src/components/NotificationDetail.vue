@@ -76,7 +76,7 @@
           class="attachment-image-item"
         >
           <el-image
-            :src="getAttachmentUrl(item)"
+            :src="getAttachmentImageUrl(item)"
             :preview-src-list="imagePreviewList"
             :initial-index="index"
             fit="contain"
@@ -448,7 +448,7 @@ import {
   RefreshRight
 } from '@element-plus/icons-vue'
 import LogicQuestionItem from './LogicQuestionItem.vue'
-import { normalizeProfileUrl, API_BASE_PATH } from '../utils/deployment'
+import { normalizeProfileUrl, toPublicProfileUrl, API_BASE_PATH } from '../utils/deployment'
 import request from '@/utils/request'
 
 export default {
@@ -527,7 +527,7 @@ export default {
       return this.attachmentUrls.filter(item => !this.isImageAttachment(item))
     },
     imagePreviewList() {
-      return this.imageAttachments.map(item => this.getAttachmentUrl(item))
+      return this.imageAttachments.map(item => this.getAttachmentImageUrl(item))
     }
   },
   methods: {
@@ -578,6 +578,24 @@ export default {
 
     getAttachmentUrl(item) {
       return typeof item === 'string' ? normalizeProfileUrl(item) : normalizeProfileUrl(item.url)
+    },
+
+    getAttachmentImageUrl(item) {
+      const raw = typeof item === 'string' ? item : item?.url
+      return toPublicProfileUrl(raw)
+    },
+
+    getAttachmentStorageUrl(item) {
+      const raw = typeof item === 'string' ? item : item?.url
+      if (!raw) return ''
+      if (raw.startsWith('/profile/')) {
+        return raw
+      }
+      const normalized = normalizeProfileUrl(raw)
+      if (normalized.startsWith(`${API_BASE_PATH}/profile`)) {
+        return normalized.replace(`${API_BASE_PATH}/profile`, '/profile')
+      }
+      return raw
     },
 
     isImageAttachment(item) {
@@ -1046,7 +1064,7 @@ export default {
 
     handleDownloadAttachment(item) {
       if (!item) return
-      const url = typeof item === 'object' ? item.url : item
+      const url = this.getAttachmentStorageUrl(item)
       const fileName = this.getAttachmentName(item, 0)
 
       const downloadUrl = `${window.location.origin}${API_BASE_PATH}/common/download/resource?resource=${encodeURIComponent(url)}`
