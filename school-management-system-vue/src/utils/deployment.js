@@ -23,20 +23,68 @@ export function normalizeProfileUrl(url) {
   return result
 }
 
-/** 圖片預覽用：走 Nginx /profile/ 靜態資源（img 標籤無法帶 JWT） */
-export function toPublicProfileUrl(url) {
+/** 將路徑各段編碼，避免中文檔名導致 img 載入失敗 */
+export function encodeProfileUrlPath(url) {
   if (!url || typeof url !== 'string') {
     return url
   }
 
-  if (url.startsWith('/profile/')) {
+  const queryIndex = url.indexOf('?')
+  const path = queryIndex >= 0 ? url.slice(0, queryIndex) : url
+  const query = queryIndex >= 0 ? url.slice(queryIndex) : ''
+
+  const encodedPath = path.split('/').map((segment) => {
+    if (!segment) {
+      return segment
+    }
+    try {
+      return encodeURIComponent(decodeURIComponent(segment))
+    } catch {
+      return encodeURIComponent(segment)
+    }
+  }).join('/')
+
+  return encodedPath + query
+}
+
+function resolveApiProfilePath(url) {
+  if (!url || typeof url !== 'string') {
+    return url
+  }
+
+  if (/^https?:\/\//i.test(url)) {
+    try {
+      const { pathname } = new URL(url)
+      const profileIndex = pathname.indexOf('/profile/')
+      if (profileIndex >= 0) {
+        return `${API_BASE_PATH}${pathname.slice(profileIndex)}`.replace(/([^:])\/\/+/g, '$1/')
+      }
+    } catch {
+      // ignore invalid URL
+    }
+    return url
+  }
+
+  if (url.startsWith(`${PROFILE_BASE_PATH}/`)) {
     return url.replace(/([^:])\/\/+/g, '$1/')
+  }
+
+  if (url.startsWith('/profile/')) {
+    return `${API_BASE_PATH}${url}`.replace(/([^:])\/\/+/g, '$1/')
   }
 
   const normalized = normalizeProfileUrl(url)
   if (normalized.startsWith(`${PROFILE_BASE_PATH}/`)) {
-    return normalized.replace(PROFILE_BASE_PATH, '/profile').replace(/([^:])\/\/+/g, '$1/')
+    return normalized
   }
 
   return normalized
+}
+
+/**
+ * 圖片預覽用：走 /sms-api/profile（後端 SecurityConfig 已放行，無需 JWT）。
+ * 不依賴 Nginx 根路徑 /profile/ 靜態配置。
+ */
+export function toPublicProfileUrl(url) {
+  return encodeProfileUrlPath(resolveApiProfilePath(url))
 }
