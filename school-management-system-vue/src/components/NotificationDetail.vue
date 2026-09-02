@@ -581,8 +581,7 @@ export default {
     },
 
     getAttachmentImageUrl(item) {
-      const raw = typeof item === 'string' ? item : item?.url
-      return toPublicProfileUrl(raw)
+      return toPublicProfileUrl(this.getAttachmentUrl(item))
     },
 
     getAttachmentStorageUrl(item) {
