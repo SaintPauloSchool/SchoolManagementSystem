@@ -344,9 +344,9 @@ export default {
     getInitialActiveMenu() {
       const savedMenu = sessionStorage.getItem('activeMenu')
       if (savedMenu === '3-5') {
-        return '1-1'
+        return '1-2'
       }
-      return savedMenu || '1-1'
+      return savedMenu || '1-2'
     },
     
     saveActiveMenu(menu) {
@@ -424,10 +424,10 @@ export default {
           }
           const userRoleMenus = ['3-1', '3-2', '3-3', '3-4', '3-5', '3-6', '3-7', '3-8']
           if (!this.hasUserRole && userRoleMenus.includes(this.activeMenu)) {
-            this.handleMenuSelect('1-1')
+            this.handleMenuSelect('1-2')
           }
           if (this.activeMenu === '3-8' && !this.hasSuperUserRole) {
-            this.handleMenuSelect('1-1')
+            this.handleMenuSelect('1-2')
           }
         }
       } catch (e) {
