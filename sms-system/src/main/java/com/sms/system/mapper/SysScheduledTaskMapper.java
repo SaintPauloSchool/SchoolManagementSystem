@@ -20,4 +20,12 @@ public interface SysScheduledTaskMapper {
     int updateEnabled(@Param("taskKey") String taskKey, @Param("enabled") String enabled);
 
     int updateCronExpression(@Param("taskKey") String taskKey, @Param("cronExpression") String cronExpression);
+
+    String selectTaskKeyByTaskBean(@Param("taskBean") String taskBean);
+
+    int tryAcquireLock(@Param("taskKey") String taskKey,
+                       @Param("lockOwner") String lockOwner,
+                       @Param("leaseSeconds") int leaseSeconds);
+
+    int releaseLock(@Param("taskKey") String taskKey, @Param("lockOwner") String lockOwner);
 }

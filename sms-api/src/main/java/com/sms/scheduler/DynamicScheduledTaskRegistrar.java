@@ -4,8 +4,6 @@ import com.sms.system.entity.SysScheduledTask;
 import com.sms.system.mapper.SysScheduledTaskMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.CronExpression;
@@ -15,7 +13,6 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,16 +28,16 @@ public class DynamicScheduledTaskRegistrar {
 
     private static final String DEFAULT_METHOD_NAME = "executeTask";
 
-    private final ApplicationContext applicationContext;
     private final SysScheduledTaskMapper sysScheduledTaskMapper;
+    private final ScheduledTaskInvoker scheduledTaskInvoker;
 
     private final ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
     private final Map<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
-    public DynamicScheduledTaskRegistrar(ApplicationContext applicationContext,
-                                         SysScheduledTaskMapper sysScheduledTaskMapper) {
-        this.applicationContext = applicationContext;
+    public DynamicScheduledTaskRegistrar(SysScheduledTaskMapper sysScheduledTaskMapper,
+                                         ScheduledTaskInvoker scheduledTaskInvoker) {
         this.sysScheduledTaskMapper = sysScheduledTaskMapper;
+        this.scheduledTaskInvoker = scheduledTaskInvoker;
     }
 
     @PostConstruct
@@ -100,9 +97,10 @@ public class DynamicScheduledTaskRegistrar {
             return;
         }
         String taskKey = task.getTaskKey();
+        cancel(taskKey);
         String beanName = task.getTaskBean();
         String methodName = StringUtils.hasText(task.getMethodName()) ? task.getMethodName() : DEFAULT_METHOD_NAME;
-        Runnable runnable = () -> invokeTask(beanName, methodName, taskKey);
+        Runnable runnable = () -> scheduledTaskInvoker.invoke(beanName, methodName, taskKey, false);
         Trigger trigger = triggerContext -> {
             SysScheduledTask current = sysScheduledTaskMapper.selectByTaskKey(taskKey);
             if (current == null) {
@@ -125,21 +123,6 @@ public class DynamicScheduledTaskRegistrar {
             log.info("已註冊定時任務 {}，Cron={}", taskKey, cron.trim());
         } catch (Exception e) {
             log.error("註冊定時任務 {} 失敗，Cron={}", taskKey, cron, e);
-        }
-    }
-
-    private void invokeTask(String beanName, String methodName, String taskKey) {
-        try {
-            Object bean = applicationContext.getBean(beanName);
-            Method method = bean.getClass().getDeclaredMethod(methodName);
-            method.setAccessible(true);
-            method.invoke(bean);
-        } catch (NoSuchBeanDefinitionException e) {
-            log.error("執行定時任務 {} 失敗，找不到 Bean: {}", taskKey, beanName, e);
-        } catch (NoSuchMethodException e) {
-            log.error("執行定時任務 {} 失敗，找不到方法: {}", taskKey, methodName, e);
-        } catch (Exception e) {
-            log.error("執行定時任務 {} 異常", taskKey, e);
         }
     }
 
