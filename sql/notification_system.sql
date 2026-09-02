@@ -441,6 +441,8 @@ CREATE TABLE `sys_scheduled_task` (
                                       `cron_expression` varchar(64)  NOT NULL                COMMENT 'Cron 表達式',
                                       `enabled`         char(1)      NOT NULL DEFAULT '0'    COMMENT '是否啟用（0停用 1啟用）',
                                       `sort_order`      int(11)      NOT NULL DEFAULT 0      COMMENT '排序',
+                                      `lock_until`      datetime     DEFAULT NULL            COMMENT '執行鎖過期時間',
+                                      `lock_owner`      varchar(128) DEFAULT NULL            COMMENT '當前持有鎖的實例標識',
                                       `create_time`     datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
                                       `update_time`     datetime     DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
                                       PRIMARY KEY (`id`),

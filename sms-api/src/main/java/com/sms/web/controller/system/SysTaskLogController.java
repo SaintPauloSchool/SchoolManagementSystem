@@ -5,11 +5,13 @@ import com.sms.common.core.controller.BaseController;
 import com.sms.common.core.domain.AjaxResult;
 import com.sms.common.core.page.TableDataInfo;
 import com.sms.common.enums.BusinessType;
-import com.sms.scheduler.ScheduledTaskSupport;
+import com.sms.scheduler.ScheduledTaskInvoker;
+import com.sms.system.service.IScheduledTaskExecutionLockService;
 import com.sms.system.entity.dto.SysTaskExecuteDTO;
 import com.sms.system.entity.dto.SysTaskLogQueryDTO;
 import com.sms.system.entity.dto.SysTaskLogUpdateDTO;
 import com.sms.system.entity.vo.SysTaskLogVO;
+import com.sms.system.mapper.SysScheduledTaskMapper;
 import com.sms.system.service.ISysTaskLogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +22,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.*;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -36,10 +37,16 @@ public class SysTaskLogController extends BaseController {
     private ISysTaskLogService sysTaskLogService;
 
     @Autowired
+    private SysScheduledTaskMapper sysScheduledTaskMapper;
+
+    @Autowired
     private ApplicationContext applicationContext;
 
     @Autowired
-    private ScheduledTaskSupport scheduledTaskSupport;
+    private ScheduledTaskInvoker scheduledTaskInvoker;
+
+    @Autowired
+    private IScheduledTaskExecutionLockService executionLockService;
 
     @Autowired
     @Qualifier("threadPoolTaskExecutor")
@@ -64,37 +71,33 @@ public class SysTaskLogController extends BaseController {
         }
 
         try {
-            Object bean = applicationContext.getBean(beanName);
-
-            Method method = bean.getClass().getDeclaredMethod(methodName);
-            method.setAccessible(true);
-
-            log.info("手動執行任務已提交 - Bean: {}, Method: {}", beanName, methodName);
-
-            threadPoolTaskExecutor.execute(() -> {
-                scheduledTaskSupport.markManualTrigger();
-                try {
-                    log.info("手動執行任務開始 - Bean: {}, Method: {}", beanName, methodName);
-                    method.invoke(bean);
-                    log.info("手動執行任務完成 - Bean: {}, Method: {}", beanName, methodName);
-                } catch (Exception e) {
-                    log.error("手動執行任務異常 - Bean: {}, Method: {}", beanName, methodName, e);
-                } finally {
-                    scheduledTaskSupport.clearManualTrigger();
-                }
-            });
-
-            return AjaxResult.success("任務已提交執行，請稍後查看日誌");
+            applicationContext.getBean(beanName);
         } catch (NoSuchBeanDefinitionException e) {
             log.error("手動執行任務失敗，找不到 Bean: {}", beanName, e);
             return AjaxResult.error("找不到對應的處理器: " + beanName);
-        } catch (NoSuchMethodException e) {
-            log.error("手動執行任務失敗，找不到方法", e);
-            return AjaxResult.error("找不到對應的方法: " + methodName);
-        } catch (Exception e) {
-            log.error("手動執行任務異常", e);
-            return AjaxResult.error("任務執行異常: " + e.getMessage());
         }
+
+        String taskKey = sysScheduledTaskMapper.selectTaskKeyByTaskBean(beanName);
+        if (taskKey == null) {
+            return AjaxResult.error("找不到對應的定時任務配置: " + beanName);
+        }
+
+        if (!executionLockService.tryAcquire(taskKey)) {
+            return AjaxResult.error("任務正在執行中，請稍後再試");
+        }
+
+        log.info("手動執行任務已提交 - Bean: {}, Method: {}, taskKey: {}", beanName, methodName, taskKey);
+
+        try {
+            threadPoolTaskExecutor.execute(() ->
+                    scheduledTaskInvoker.invoke(beanName, methodName, taskKey, true, true));
+        } catch (Exception e) {
+            executionLockService.release(taskKey);
+            log.error("手動執行任務提交失敗 - Bean: {}, Method: {}", beanName, methodName, e);
+            return AjaxResult.error("任務提交失敗，請稍後再試");
+        }
+
+        return AjaxResult.success("任務已提交執行，請稍後查看日誌");
     }
 
     @Log(title = "修改定時任務日誌", businessType = BusinessType.UPDATE)
