@@ -72,4 +72,29 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where task_key = #{taskKey}
     </update>
 
+    <select id="selectTaskKeyByTaskBean" resultType="java.lang.String">
+        select task_key
+        from sys_scheduled_task
+        where task_bean = #{taskBean}
+        limit 1
+    </select>
+
+    <update id="tryAcquireLock">
+        update sys_scheduled_task
+        set lock_until = date_add(now(), interval #{leaseSeconds} second),
+            lock_owner = #{lockOwner},
+            update_time = now()
+        where task_key = #{taskKey}
+          and (lock_until is null or lock_until &lt; now())
+    </update>
+
+    <update id="releaseLock">
+        update sys_scheduled_task
+        set lock_until = null,
+            lock_owner = null,
+            update_time = now()
+        where task_key = #{taskKey}
+          and lock_owner = #{lockOwner}
+    </update>
+
 </mapper>

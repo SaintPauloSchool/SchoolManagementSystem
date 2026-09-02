@@ -21,6 +21,10 @@ public class SysScheduledTask implements Serializable {
     /** 是否啟用（0停用 1啟用） */
     private String enabled;
     private Integer sortOrder;
+    /** 執行鎖過期時間 */
+    private Date lockUntil;
+    /** 當前持有鎖的實例標識 */
+    private String lockOwner;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createTime;
@@ -90,6 +94,22 @@ public class SysScheduledTask implements Serializable {
 
     public void setSortOrder(Integer sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public Date getLockUntil() {
+        return lockUntil;
+    }
+
+    public void setLockUntil(Date lockUntil) {
+        this.lockUntil = lockUntil;
+    }
+
+    public String getLockOwner() {
+        return lockOwner;
+    }
+
+    public void setLockOwner(String lockOwner) {
+        this.lockOwner = lockOwner;
     }
 
     public Date getCreateTime() {
