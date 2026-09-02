@@ -148,7 +148,7 @@ public class NotificationCcSendHelper {
         }
         textcard.put("description", description);
 
-        String state = "campus_notice_" + notification.getNotificationId();
+        String state = "wecom_campus_notice_" + notification.getNotificationId();
         String noticeUrl = wechatWorkHttpClient.buildOauthUrl(
                 ccNoticeBaseUrl + notification.getNotificationId(), state);
         textcard.put("url", noticeUrl);
