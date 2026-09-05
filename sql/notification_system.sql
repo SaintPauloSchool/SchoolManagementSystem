@@ -537,3 +537,32 @@ CREATE TABLE `attendance_record` (
                                      `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '記錄寫入時間',
                                      PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='考勤記錄表'
+-- ----------------------------
+-- 學生搭食名單（學期固定名單）
+-- ----------------------------
+DROP TABLE IF EXISTS student_dining_list;
+CREATE TABLE `student_dining_list` (
+                                       `id`            BIGINT(20)      NOT NULL AUTO_INCREMENT COMMENT '主鍵 ID',
+                                       `school_year`   VARCHAR(32)     NOT NULL                COMMENT '學年（如 2026-2027學年）',
+                                       `class_section` VARCHAR(32)     NOT NULL                COMMENT '班別',
+                                       `student_name`  VARCHAR(64)     NOT NULL                COMMENT '姓名',
+                                       `student_id`    VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '學生 ID（關聯 attendance_record.employee_id）',
+                                       `create_time`   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+                                       PRIMARY KEY (`id`),
+                                       KEY `idx_dining_year_class` (`school_year`, `class_section`),
+                                       KEY `idx_dining_student_id` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生搭食名單表';
+
+-- ----------------------------
+-- 學生搭食補記（按日）
+-- ----------------------------
+DROP TABLE IF EXISTS student_dining_supplement;
+CREATE TABLE `student_dining_supplement` (
+                                             `id`            BIGINT(20)      NOT NULL AUTO_INCREMENT COMMENT '主鍵 ID',
+                                             `student_id`    VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '學生 ID',
+                                             `dining_date`   DATE            NOT NULL                COMMENT '搭食日期',
+                                             `supplemented`  TINYINT(1)      NOT NULL DEFAULT 1       COMMENT '是否補記（1是 0否）',
+                                             `update_time`   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+                                             PRIMARY KEY (`id`),
+                                             UNIQUE KEY `uk_student_dining_date` (`student_id`, `dining_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='學生搭食補記表';

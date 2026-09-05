@@ -224,7 +224,7 @@ public class NotificationController extends BaseController {
     @GetMapping("/failedList")
     public TableDataInfo failedList() {
         String userId = getOpenUserId();
-        if (sysUserRoleService.isNotUserRole(userId)) {
+        if (!sysUserRoleService.hasAdminUserRole(userId)) {
             return getDataTable(new ArrayList<>());
         }
 
@@ -237,7 +237,7 @@ public class NotificationController extends BaseController {
     @GetMapping("/failedDetail/{sendRecordId}")
     public AjaxResult failedDetail(@PathVariable Long sendRecordId) {
         String userId = getOpenUserId();
-        if (sysUserRoleService.isNotUserRole(userId)) {
+        if (!sysUserRoleService.hasAdminUserRole(userId)) {
             return AjaxResult.error("無權限訪問");
         }
 
@@ -254,7 +254,7 @@ public class NotificationController extends BaseController {
     @GetMapping("/failedReadRecords/{sendRecordId}")
     public TableDataInfo failedReadRecords(@PathVariable Long sendRecordId) {
         String userId = getOpenUserId();
-        if (sysUserRoleService.isNotUserRole(userId)) {
+        if (!sysUserRoleService.hasAdminUserRole(userId)) {
             return getDataTable(new ArrayList<>());
         }
 
@@ -267,7 +267,7 @@ public class NotificationController extends BaseController {
     @GetMapping("/resendFailRecords/{sendRecordId}")
     public TableDataInfo resendFailRecords(@PathVariable Long sendRecordId) {
         String userId = getOpenUserId();
-        if (sysUserRoleService.isNotUserRole(userId)) {
+        if (!sysUserRoleService.hasAdminUserRole(userId)) {
             return getDataTable(new ArrayList<>());
         }
 
