@@ -77,7 +77,8 @@ public class SysUserRoleServiceImpl implements ISysUserRoleService {
     @Override
     public SysUserRoleCurrentUserVO selectCurrentUserInfo(String userId, String loginName) {
         SysUserRoleCurrentUserVO vo = new SysUserRoleCurrentUserVO();
-        vo.setHasUserRole(!isNotUserRole(userId));
+        // 學生相關 / 系統管理選單：僅超級管理員、管理員可見（不含 type=2 其他）
+        vo.setHasUserRole(hasAdminUserRole(userId));
         vo.setHasSuperUserRole(!isNotSuperUserRole(userId));
         SysUserRole current = sysUserRoleMapper.selectByUserId(userId);
         if (current != null) {

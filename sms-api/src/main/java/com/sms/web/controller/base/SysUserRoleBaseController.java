@@ -12,12 +12,15 @@ public abstract class SysUserRoleBaseController extends BaseController {
     @Autowired
     private ISysUserRoleService sysUserRoleService;
 
+    /**
+     * 是否無權限訪問學生相關 / 系統管理功能（僅 type 0/1 可訪問，type 2 其他不可見）
+     */
     protected boolean isNotUserRole() {
-        return sysUserRoleService.isNotUserRole(getOpenUserId());
+        return !sysUserRoleService.hasAdminUserRole(getOpenUserId());
     }
 
     protected boolean hasUserRole() {
-        return !isNotUserRole();
+        return sysUserRoleService.hasAdminUserRole(getOpenUserId());
     }
 
     protected boolean isNotSuperUserRole() {
