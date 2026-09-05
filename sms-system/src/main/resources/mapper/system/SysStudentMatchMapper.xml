@@ -183,4 +183,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{id}
     </update>
 
+    <!-- 通訊錄中已無對應 (parent_user_id, student_user_id) 的匹配直接刪除 -->
+    <delete id="deleteOrphanedMatches">
+        delete from sys_student_match
+        where not exists (
+            select 1
+            from sys_school_family_contact c
+            where c.parent_user_id = sys_student_match.user_id
+              and c.student_user_id = sys_student_match.student_user_id
+        )
+    </delete>
+
 </mapper>

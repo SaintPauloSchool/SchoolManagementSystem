@@ -47,4 +47,9 @@ public interface SysStudentMatchMapper {
 
     int updateStudentMatchContact(SysStudentMatch studentMatch);
 
+    /**
+     * 刪除家校通訊錄中已不存在的匹配（按 user_id + student_user_id 對帳）
+     */
+    int deleteOrphanedMatches();
+
 }
