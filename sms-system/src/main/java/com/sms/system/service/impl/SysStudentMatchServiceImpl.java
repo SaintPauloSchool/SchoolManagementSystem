@@ -212,6 +212,9 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
             return SysStudentMatchOperationResultVO.success("本地家校通訊錄中未找到企微學生數據，無法執行自動比對！");
         }
 
+        // 先清理：user_id + student_user_id 在通訊錄已不存在的匹配直接刪除
+        int cleanedCount = sysStudentMatchMapper.deleteOrphanedMatches();
+
         // 已存在的 (student_id, parent_user_id, student_user_id) 組合，避免重複寫入
         Set<String> existingPairKeys = new HashSet<>();
         List<SysStudentMatchVO> existingMatches = sysStudentMatchMapper.selectSysStudentMatchList(
@@ -285,7 +288,7 @@ public class SysStudentMatchServiceImpl implements ISysStudentMatchService {
         int matchedCount = batchSaveStudentMatches(toInsert);
 
         return SysStudentMatchOperationResultVO.success(
-                String.format("同步數據對照完成！共成功自動匹配 %d 筆數據", matchedCount),
+                String.format("同步數據對照完成！新增自動匹配 %d 筆，清理失效匹配 %d 筆", matchedCount, cleanedCount),
                 matchedCount);
     }
 
