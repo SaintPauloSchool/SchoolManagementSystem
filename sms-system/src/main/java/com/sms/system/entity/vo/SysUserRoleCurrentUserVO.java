@@ -8,6 +8,7 @@ import java.io.Serializable;
 public class SysUserRoleCurrentUserVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    /** 是否具備管理選單權限（type 0/1；不含 type 2 其他） */
     private Boolean hasUserRole;
     private Boolean hasSuperUserRole;
     /** 類型（0超級管理員 1管理員 2其他） */
