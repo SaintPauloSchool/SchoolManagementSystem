@@ -36,6 +36,14 @@
           </span>
         </div>
       </div>
+      <button
+        type="button"
+        class="hero-close-x"
+        aria-label="關閉"
+        @click="$emit('close')"
+      >
+        <el-icon :size="16"><Close /></el-icon>
+      </button>
     </div>
 
     <!-- 通知正文 -->
@@ -445,7 +453,8 @@ import {
   TrendCharts,
   Operation,
   BellFilled,
-  RefreshRight
+  RefreshRight,
+  Close
 } from '@element-plus/icons-vue'
 import LogicQuestionItem from './LogicQuestionItem.vue'
 import { normalizeProfileUrl, toPublicProfileUrl, API_BASE_PATH } from '../utils/deployment'
@@ -473,8 +482,10 @@ export default {
     Operation,
     BellFilled,
     RefreshRight,
+    Close,
     LogicQuestionItem
   },
+  emits: ['close'],
   props: {
     notification: {
       type: Object,
@@ -1092,9 +1103,33 @@ export default {
   padding: 24px 28px;
   background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
   border-radius: 14px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   position: relative;
   overflow: hidden;
+}
+
+.hero-close-x {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+  transition: background 0.2s, transform 0.15s;
+}
+
+.hero-close-x:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.05);
 }
 
 .detail-hero::before {
@@ -1124,6 +1159,7 @@ export default {
 .hero-text {
   flex: 1;
   min-width: 0;
+  padding-right: 40px;
 }
 
 .hero-title {
@@ -1200,9 +1236,13 @@ export default {
   background: #ffffff;
   border: 1px solid #e8ecf1;
   border-radius: 12px;
-  padding: 20px 24px;
-  margin-bottom: 16px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
   transition: all 0.25s ease;
+}
+
+.section-card:last-child {
+  margin-bottom: 0;
 }
 
 .section-card:hover {
@@ -2132,7 +2172,7 @@ export default {
   display: flex;
   gap: 16px;
   justify-content: space-between;
-  padding: 12px 0;
+  padding: 0;
 }
 
 .action-buttons .el-button {

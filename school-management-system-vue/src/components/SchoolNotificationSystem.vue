@@ -5,7 +5,7 @@
       <div class="sidebar-header">
         <div class="logo-wrapper">
           <img src="@/logo/sp.jpg" alt="School Logo" class="logo-icon" />
-          <span class="logo-text" v-show="!isCollapsed">校園管理系統</span>
+          <span class="logo-text" v-show="!isCollapsed">保祿家校通</span>
         </div>
       </div>
 
@@ -183,6 +183,14 @@
 
     <!-- 主內容區 -->
     <main class="main-content">
+      <!-- 手機端頂欄：打開側邊導航 -->
+      <header v-if="isMobile" class="mobile-topbar">
+        <button type="button" class="mobile-menu-btn" aria-label="打開選單" @click="toggleMobileMenu">
+          <el-icon :size="22"><Menu /></el-icon>
+        </button>
+        <img src="@/logo/sp.jpg" alt="School Logo" class="mobile-topbar-logo" />
+        <span class="mobile-topbar-title">保祿家校通</span>
+      </header>
       <!-- 內容區域 -->
       <div class="content-wrapper">
         <transition name="fade" mode="out-in">
@@ -269,7 +277,7 @@
 
 <script>
 import { ElNotification } from 'element-plus'
-import { Bell, Promotion, Edit, Message, Fold, Setting, Document, ArrowRight, ArrowDown, User, UserFilled, OfficeBuilding, Warning, Calendar, Tools, Collection, Clock } from '@element-plus/icons-vue'
+import { Bell, Promotion, Edit, Message, Fold, Menu, Setting, Document, ArrowRight, ArrowDown, User, UserFilled, OfficeBuilding, Warning, Calendar, Tools, Collection, Clock } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
 import PublishNotification from './PublishNotification.vue'
 import SchoolDepartment from './SchoolDepartment.vue'
@@ -299,7 +307,8 @@ export default {
     ClassSectionList,
     AttendanceRecordList,
     UserRoleSettings,
-    UserFilled
+    UserFilled,
+    Menu
   },
   data() {
     return {
@@ -560,104 +569,114 @@ export default {
   overflow: hidden;
 }
 
-/* 側邊欄樣式 */
+/* 側邊欄樣式（對齊 LeaveManagementSystem） */
 .sidebar {
-  width: 260px;
-  background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%);
+  width: 220px;
+  background-color: #3b82f6;
   color: #fff;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.25, 1);
+  height: 100%;
+  transition: width 0.3s ease;
   flex-shrink: 0;
   position: relative;
   z-index: 100;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1), 4px 0 16px rgba(59, 130, 246, 0.15);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
 }
 
 .sidebar.collapsed {
-  width: 72px;
+  width: 64px;
 }
 
 .sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 68px;
+  min-height: 68px;
+  padding: 0 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 16px;
-  background: rgba(30, 64, 175, 0.3);
-  backdrop-filter: blur(12px);
-  min-height: 88px;
+  justify-content: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: transparent;
+  gap: 0;
 }
 
 .sidebar.collapsed .sidebar-header {
-  gap: 12px;
-  padding: 20px 16px;
-  min-height: 80px;
+  height: 64px;
+  min-height: 64px;
+  padding: 0;
+  gap: 0;
 }
 
-/* 側邊欄底部 */
 .sidebar-footer {
-  padding: 20px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  height: 72px;
+  padding: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(30, 64, 175, 0.2);
-  backdrop-filter: blur(8px);
+  background: transparent;
   margin-top: auto;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .logo-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.25, 1);
+  gap: 8px;
+  transition: all 0.3s ease;
   width: 100%;
 }
 
 .collapse-btn {
-  color: rgba(255, 255, 255, 0.75) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
   font-size: 13px !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.25, 1);
-  padding: 8px 12px !important;
-  border-radius: 8px;
+  font-weight: 500 !important;
+  transition: all 0.2s ease;
+  padding: 8px 24px !important;
+  border-radius: 6px !important;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(8px);
-  opacity: 0.9;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  opacity: 1;
+  height: auto !important;
 }
 
 .collapse-btn .el-icon {
-  font-size: 18px;
-  width: 20px;
-  height: 20px;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.25, 1);
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  transition: none;
 }
 
 .collapse-btn:hover {
   color: #fff !important;
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
   opacity: 1;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  transform: none;
+  box-shadow: none;
 }
 
 .sidebar.collapsed .collapse-btn {
-  padding: 10px !important;
-  margin-top: 4px;
+  padding: 0 !important;
+  width: 36px;
+  height: 36px !important;
+  margin-top: 0;
 }
 
 .sidebar.collapsed .collapse-btn:hover {
-  background: rgba(255, 255, 255, 0.15) !important;
-  transform: translateY(-1px) scale(1.05);
+  background: rgba(255, 255, 255, 0.2) !important;
+  transform: none;
 }
 
 .sidebar.collapsed .collapse-btn .collapse-text {
@@ -665,52 +684,56 @@ export default {
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   object-fit: contain;
   flex-shrink: 0;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.25, 1);
-  border-radius: 8px;
+  filter: none;
+  transition: all 0.3s ease;
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.1);
-  padding: 4px;
+  padding: 3px;
+  box-sizing: border-box;
 }
 
 .sidebar.collapsed .logo-icon {
   margin: 0 auto;
-  transform: scale(1.05);
-  filter: drop-shadow(0 4px 16px rgba(255, 255, 255, 0.3));
+  transform: none;
+  filter: none;
 }
 
 .logo-text {
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 650;
   white-space: nowrap;
   color: #fff;
-  text-align: center;
-  letter-spacing: 1px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.25, 1);
+  text-align: left;
+  letter-spacing: 0.3px;
+  text-shadow: none;
+  transition: all 0.3s ease;
   opacity: 1;
+  line-height: 1.2;
 }
 
 .sidebar.collapsed .logo-text {
   opacity: 0;
   width: 0;
   overflow: hidden;
-  transform: translateX(-10px);
+  transform: none;
 }
 
-/* 導航欄樣式 */
+/* 導航欄樣式（對齊 LeaveManagementSystem） */
 .sidebar-nav {
   flex: 1;
-  padding: 16px 12px;
+  padding: 15px 0;
   overflow-y: auto;
   overflow-x: hidden;
   background: transparent;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .sidebar-nav::-webkit-scrollbar {
@@ -719,12 +742,15 @@ export default {
 }
 
 .sidebar-nav {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .nav-section {
-  margin-bottom: 16px;
+  margin-bottom: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .nav-section:last-child {
@@ -734,19 +760,20 @@ export default {
 .nav-section-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.6);
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.25, 1);
+  border-radius: 0;
+  transition: all 0.2s ease;
   user-select: none;
   position: relative;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
 }
 
 .nav-section-title:hover {
@@ -757,8 +784,8 @@ export default {
 .nav-section-title .el-icon {
   font-size: 16px;
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -767,102 +794,86 @@ export default {
 .expand-icon {
   margin-left: auto;
   font-size: 12px;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.25, 1);
-  opacity: 0.6;
+  transition: none;
+  opacity: 0.7;
 }
 
 .nav-section-title:hover .expand-icon {
-  opacity: 1;
-  transform: translateX(2px);
+  opacity: 0.7;
+  transform: none;
 }
 
 .nav-list {
   list-style: none;
-  padding: 0 6px;
+  padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  margin-bottom: 0;
-  border-radius: 8px;
+  gap: 10px;
+  padding: 8px 12px;
+  margin: 2px 6px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.25, 1);
-  color: rgba(255, 255, 255, 0.75);
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.85);
   position: relative;
-  font-size: 14px;
-  border: 1px solid transparent;
+  font-size: 13px;
+  border: none;
   font-weight: 400;
+  box-sizing: border-box;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .nav-item::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%) scaleY(0);
-  width: 4px;
-  height: 60%;
-  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
-  border-radius: 0 4px 4px 0;
-  opacity: 0;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.25, 1);
+  display: none;
 }
 
 .nav-item:hover {
   color: #fff;
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-  padding-left: 16px;
+  border-color: transparent;
+  padding-left: 12px;
 }
 
 .nav-item:hover::before {
-  opacity: 1;
-  transform: translateY(-50%) scaleY(1);
-  height: 70%;
+  display: none;
 }
 
 .nav-item.active {
   color: #fff;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.85) 0%, rgba(37, 99, 235, 0.75) 100%);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  font-weight: 500;
-  border-color: rgba(255, 255, 255, 0.25);
-  padding-left: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: none;
+  font-weight: 600;
+  border-color: transparent;
+  padding-left: 12px;
 }
 
 .nav-item.active::before {
-  opacity: 1;
-  transform: translateY(-50%) scaleY(1);
-  height: 70%;
-  background: linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%);
+  display: none;
 }
 
 .nav-icon {
-  font-size: 18px;
+  font-size: 14px;
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.25, 1);
+  transition: none;
 }
 
-.nav-item:hover .nav-icon {
-  transform: scale(1.1);
-  filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.2));
-}
-
+.nav-item:hover .nav-icon,
 .nav-item.active .nav-icon {
-  transform: scale(1.15);
-  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.35));
+  transform: none;
+  filter: none;
 }
 
 .nav-text {
@@ -870,7 +881,7 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  letter-spacing: 0.3px;
+  letter-spacing: normal;
 }
 
 .nav-badge {
@@ -881,34 +892,33 @@ export default {
 }
 
 .nav-sublist {
-  margin-top: 6px;
-  padding: 8px 8px 8px 10px;
-  background: rgba(255, 255, 255, 0.04);
+  margin: 6px 12px;
+  padding: 6px 0;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 0;
+  max-width: calc(100% - 24px);
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .nav-sublist .nav-item {
-  margin-bottom: 0;
-  padding: 9px 13px;
-  font-size: 13.5px;
+  margin: 2px 6px;
+  padding: 8px 12px;
+  font-size: 13px;
   border-radius: 6px;
 }
 
 .nav-sublist .nav-item::before {
-  width: 3px;
-  height: 40%;
+  display: none;
 }
 
-.nav-sublist .nav-item:hover {
-  padding-left: 15px;
-}
-
+.nav-sublist .nav-item:hover,
 .nav-sublist .nav-item.active {
-  padding-left: 15px;
+  padding-left: 12px;
 }
 
 .nav-item-placeholder {
@@ -918,6 +928,16 @@ export default {
   font-style: italic;
   text-align: center;
   letter-spacing: 0.5px;
+}
+
+.sidebar.collapsed .nav-section-title {
+  justify-content: center;
+  padding: 14px 0;
+}
+
+.sidebar.collapsed .nav-section-title span,
+.sidebar.collapsed .expand-icon {
+  display: none;
 }
 
 /* 主內容區 */
@@ -953,30 +973,95 @@ export default {
 
 
 
+.mobile-topbar {
+  display: none;
+}
+
+.overlay {
+  display: none;
+}
+
 /* 響應式設計 */
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
-    left: -272px;
+    left: 0;
     top: 0;
     bottom: 0;
+    z-index: 300;
+    width: min(220px, 82vw);
+    transform: translateX(-105%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.25, 1);
   }
-  
+
   .sidebar.mobile-visible {
-    transform: translateX(272px);
+    transform: translateX(0);
   }
-  
+
   .sidebar.collapsed {
-    width: 272px;
+    width: min(220px, 82vw);
   }
-  
+
   .main-content {
     margin-left: 0;
   }
-  
+
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    height: 52px;
+    padding: 0 14px;
+    background: #3b82f6;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+    z-index: 50;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .mobile-menu-btn:active {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .mobile-topbar-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  }
+
+  .mobile-topbar-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
   .content-wrapper {
-    padding: 20px 24px;
+    padding: 16px;
+  }
+
+  .overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 250;
   }
 }
 
