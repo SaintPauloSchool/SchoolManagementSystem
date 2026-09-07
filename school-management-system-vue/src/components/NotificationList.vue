@@ -2,19 +2,20 @@
   <div class="notification-list">
     <!-- 列表頭部 -->
     <div class="list-header">
-      <div class="header-left">
+      <div class="header-meta">
         <el-icon class="header-icon"><List /></el-icon>
         <span class="header-title">{{ listTitle }}</span>
         <el-tag type="info" size="small" class="count-tag">
           {{ pagination.total }} 條記錄
         </el-tag>
-        <!-- 搜尋框和發佈時間篩選 -->
+      </div>
+      <div class="header-filters">
         <el-input
             v-model="searchQuery"
             placeholder="搜尋通知標題或發送人..."
             clearable
             prefix-icon="Search"
-            class="search-input"
+            class="filter-control search-input"
             @keyup.enter="handleSearch"
         />
         <el-date-picker
@@ -23,28 +24,28 @@
             placeholder="發佈時間"
             clearable
             value-format="YYYY-MM-DD"
-            class="date-picker"
+            class="filter-control date-picker"
             @change="handleSearch"
         />
+        <el-button plain class="refresh-btn" @click="handleRefresh">
+          <el-icon><Refresh /></el-icon>
+          刷新數據
+        </el-button>
       </div>
-      <el-button plain @click="handleRefresh">
-        <el-icon><Refresh /></el-icon>
-        刷新數據
-      </el-button>
     </div>
 
     <!-- 表格 -->
     <div class="table-container">
       <el-table
           :data="displayData"
-          style="width: 100%"
+          :style="tableStyle"
           v-loading="loading"
           stripe
           empty-text="暫無數據"
-          :row-style="{ height: '56px' }"
-          :cell-style="{ padding: '14px 0' }"
+          :row-style="{ height: '48px' }"
+          :cell-style="{ padding: '10px 0' }"
       >
-        <el-table-column prop="title" label="通知標題" min-width="200" show-overflow-tooltip>
+        <el-table-column prop="title" label="通知標題" min-width="180" show-overflow-tooltip>
           <template #default="scope">
             <el-link
                 type="primary"
@@ -56,8 +57,8 @@
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="senderName" label="發送人" width="120" align="center" />
-        <el-table-column label="狀態" width="100" align="center" class-name="hidden-xs-only">
+        <el-table-column prop="senderName" label="發送人" width="110" align="center" />
+        <el-table-column label="狀態" width="100" align="center">
           <template #default="scope">
             <el-tag
                 :type="getStatusTagType(scope.row.status)"
@@ -68,7 +69,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="replyDeadline" label="回覆截止" width="140" align="center" class-name="hidden-xs-only">
+        <el-table-column prop="replyDeadline" label="回覆截止" width="140" align="center">
           <template #default="scope">
             <div v-if="scope.row.replyDeadline" class="datetime-block is-deadline">
               <span class="date-part">{{ scope.row.replyDeadline.split(' ')[0] }}</span>
@@ -77,7 +78,7 @@
             <span v-else class="no-deadline">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="發佈時間" width="140" align="center" class-name="hidden-xs-only">
+        <el-table-column prop="createTime" label="發佈時間" width="140" align="center">
           <template #default="scope">
             <div v-if="scope.row.createTime" class="datetime-block">
               <span class="date-part">{{ scope.row.createTime.split(' ')[0] }}</span>
@@ -86,7 +87,12 @@
             <span v-else class="no-deadline">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" :width="type === 'mySend' ? 180 : 120" fixed="right" align="center">
+        <el-table-column
+            label="操作"
+            :width="actionColumnWidth"
+            fixed="right"
+            align="center"
+        >
           <template #default="scope">
             <div class="action-buttons">
               <el-button
@@ -130,21 +136,24 @@
     <el-dialog
         v-model="detailDialogVisible"
         title="通知詳情"
-        width="65%"
+        :width="detailDialogWidth"
+        :fullscreen="detailDialogFullscreen"
         :before-close="handleDetailClose"
         class="notification-detail-dialog"
-        top="1vh"
+        :top="detailDialogFullscreen ? '0' : undefined"
+        :align-center="!detailDialogFullscreen"
         :modal="true"
         :lock-scroll="true"
         :close-on-click-modal="true"
         :close-on-press-escape="true"
-        :show-close="true"
+        :show-close="false"
         :append-to-body="true"
     >
       <NotificationDetail
           v-if="selectedNotification"
           :notification="selectedNotification"
           :detail-type="type"
+          @close="handleDetailClose"
       />
     </el-dialog>
   </div>
@@ -186,7 +195,8 @@ export default {
       searchQuery: '',
       publishDate: '',
       detailDialogVisible: false,
-      selectedNotification: null
+      selectedNotification: null,
+      viewportWidth: typeof window !== 'undefined' ? window.innerWidth : 1200
     }
   },
   computed: {
@@ -196,6 +206,25 @@ export default {
         'mySend': '我發送的'
       }
       return titleMap[this.type] || '通知列表'
+    },
+    detailDialogFullscreen() {
+      return this.viewportWidth <= 768
+    },
+    detailDialogWidth() {
+      return this.detailDialogFullscreen ? '100%' : '65%'
+    },
+    isMobileTable() {
+      return this.viewportWidth <= 768
+    },
+    actionColumnWidth() {
+      if (this.isMobileTable) {
+        return this.type === 'mySend' ? 140 : 100
+      }
+      return this.type === 'mySend' ? 180 : 120
+    },
+    /** 手機端加寬表格，操作列 fixed 右側，其餘欄位可橫向滑動查看 */
+    tableStyle() {
+      return { width: '100%' }
     },
     displayData() {
       // 直接使用後端返回的分頁數據，不做前端切片
@@ -213,7 +242,17 @@ export default {
       return result
     }
   },
+  mounted() {
+    window.addEventListener('resize', this.updateViewportWidth)
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.updateViewportWidth)
+  },
   methods: {
+    updateViewportWidth() {
+      this.viewportWidth = window.innerWidth
+    },
+
     getStatusTagType(status) {
       const typeMap = {
         '0': 'info',
@@ -374,31 +413,40 @@ export default {
 /* ===== 列表頭部（含搜尋） ===== */
 .list-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 14px 24px;
   background: #ffffff;
   border-bottom: 1px solid #eef0f4;
   gap: 16px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
-.header-left {
+.header-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.header-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex: 1;
   min-width: 0;
+  justify-content: flex-start;
 }
 
 .header-icon {
   color: #2563eb;
-  font-size: 18px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
 .header-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #1f2937;
   letter-spacing: 0.02em;
@@ -408,109 +456,90 @@ export default {
 
 .count-tag {
   border-radius: 10px;
-  padding: 2px 10px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
   background: #eff6ff !important;
   color: #2563eb !important;
   border-color: #bfdbfe !important;
   flex-shrink: 0;
 }
 
-/* 搜尋框 */
-.search-input {
+/* 搜尋框 / 日期選擇器：統一樣式 */
+.filter-control.search-input {
   flex: 1;
   max-width: 320px;
-  margin-left: 8px;
+  min-width: 180px;
 }
 
-.search-input :deep(.el-input__wrapper) {
-  border-radius: 8px;
-  background: #f5f7fa;
-  border: 1px solid #e4e7ed;
-  box-shadow: none;
-  transition: all 0.25s ease;
-  height: 32px;
-}
-
-.search-input :deep(.el-input__wrapper:hover) {
-  border-color: #c0c4cc;
-}
-
-.search-input :deep(.el-input__wrapper.is-focus) {
-  background: #ffffff;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-}
-
-.search-input :deep(.el-input__inner) {
-  color: #1f2937;
-  font-size: 13px;
-}
-
-.search-input :deep(.el-input__inner::placeholder) {
-  color: #9ca3af;
-}
-
-.search-input :deep(.el-input__prefix .el-icon) {
-  color: #9ca3af;
-}
-
-/* 日期選擇器 */
-.date-picker {
+.filter-control.date-picker {
   width: 160px;
   flex-shrink: 0;
 }
 
-.date-picker :deep(.el-input__wrapper) {
-  border-radius: 8px;
-  background: #f5f7fa;
-  border: 1px solid #e4e7ed;
-  box-shadow: none;
-  transition: all 0.25s ease;
-  height: 32px;
+.filter-control :deep(.el-input__wrapper),
+.filter-control.el-date-editor :deep(.el-input__wrapper),
+.filter-control.el-input :deep(.el-input__wrapper) {
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  height: 32px !important;
+  padding: 0 11px !important;
 }
 
-.date-picker :deep(.el-input__wrapper:hover) {
-  border-color: #c0c4cc;
+.filter-control :deep(.el-input__wrapper:hover),
+.filter-control.el-date-editor :deep(.el-input__wrapper:hover) {
+  border-color: #9ca3af !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
 }
 
-.date-picker :deep(.el-input__wrapper.is-focus) {
-  background: #ffffff;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+.filter-control :deep(.el-input__wrapper.is-focus),
+.filter-control.el-date-editor :deep(.el-input__wrapper.is-focus) {
+  background: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12) !important;
 }
 
-.date-picker :deep(.el-input__inner) {
-  color: #1f2937;
-  font-size: 13px;
+.filter-control :deep(.el-input__inner) {
+  color: #1f2937 !important;
+  font-size: 13px !important;
+  height: 30px !important;
+  line-height: 30px !important;
 }
 
-.date-picker :deep(.el-input__inner::placeholder) {
-  color: #9ca3af;
+.filter-control :deep(.el-input__inner::placeholder) {
+  color: #9ca3af !important;
 }
 
-.date-picker :deep(.el-input__prefix .el-icon) {
-  color: #9ca3af;
+.filter-control :deep(.el-input__prefix .el-icon),
+.filter-control :deep(.el-input__prefix-inner .el-icon) {
+  color: #9ca3af !important;
+}
+
+.filter-control :deep(.el-input__suffix .el-icon) {
+  color: #9ca3af !important;
 }
 
 /* 刷新按鈕 */
-.list-header :deep(.el-button) {
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 7px 16px;
-  border-color: #e0e3eb;
-  color: #6b7280;
+.refresh-btn {
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 7px 16px !important;
+  border-color: #d1d5db !important;
+  color: #6b7280 !important;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  height: 34px;
+  height: 32px !important;
 }
 
-.list-header :deep(.el-button:hover) {
-  color: #2563eb;
-  border-color: #93c5fd;
-  background: #eff6ff;
+.refresh-btn:hover {
+  color: #2563eb !important;
+  border-color: #93c5fd !important;
+  background: #eff6ff !important;
 }
 
 /* ===== 表格區域 ===== */
@@ -525,7 +554,7 @@ export default {
 .table-container :deep(.el-table) {
   border: none;
   --el-table-border-color: #f0f0f4;
-  font-size: 14px;
+  font-size: 13px;
   height: 100% !important;
 }
 
@@ -535,11 +564,11 @@ export default {
 
 .table-container :deep(.el-table__body-wrapper) {
   flex: 1;
-  overflow-y: auto;
+  overflow: auto;
 }
 
 .table-container :deep(.el-table__row) {
-  height: 56px;
+  height: 48px;
   transition: background-color 0.2s ease;
 }
 
@@ -548,7 +577,7 @@ export default {
 }
 
 .table-container :deep(.el-table__row td) {
-  padding: 14px 0;
+  padding: 10px 0;
   border-bottom: 1px solid #f5f5f8;
 }
 
@@ -556,7 +585,7 @@ export default {
   background: #fafbfc !important;
   color: #6b7280;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 0.02em;
   text-align: center;
   height: 46px;
@@ -587,7 +616,7 @@ export default {
   font-weight: 500;
   color: #2563eb;
   transition: all 0.2s ease;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .title-link:hover {
@@ -605,12 +634,12 @@ export default {
 .datetime-block .date-part {
   color: #374151;
   font-weight: 500;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .datetime-block .time-part {
   color: #8c98a9;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   margin-top: 2px;
 }
@@ -676,42 +705,15 @@ export default {
 }
 
 .notification-detail-dialog :deep(.el-dialog__header) {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 10;
-  padding: 16px;
-  background: transparent;
-  border: none;
-  margin-right: 0;
-}
-
-.notification-detail-dialog :deep(.el-dialog__headerbtn) {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
-  transition: all 0.2s ease;
-  top: 0;
-  right: 0;
-}
-
-.notification-detail-dialog :deep(.el-dialog__headerbtn:hover) {
-  background: rgba(255, 255, 255, 0.45);
-  transform: scale(1.05);
-}
-
-.notification-detail-dialog :deep(.el-dialog__headerbtn .el-dialog__close) {
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 600;
+  display: none;
 }
 
 .notification-detail-dialog :deep(.el-dialog__body) {
-  padding: 24px;
-  max-height: 78vh;
+  padding: 8px;
+  max-height: calc(100vh - 48px);
   overflow-y: auto;
+  height: auto;
+  box-sizing: border-box;
 }
 
 .notification-detail-dialog :deep(.el-dialog__body::-webkit-scrollbar) {
@@ -758,11 +760,11 @@ export default {
 @media (max-width: 1200px) {
   .list-header {
     padding: 14px 20px;
-    flex-wrap: wrap;
   }
 
-  .header-left {
+  .header-filters {
     flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .search-input {
@@ -773,24 +775,46 @@ export default {
 
 @media (max-width: 768px) {
   .list-header {
-    padding: 12px 16px;
+    padding: 12px 14px;
     flex-direction: column;
     gap: 10px;
     align-items: stretch;
   }
 
-  .header-left {
-    flex-wrap: wrap;
-  }
-
-  .search-input {
-    flex: 1 1 100%;
-    max-width: 100%;
-    margin-left: 0;
-  }
-
-  .date-picker {
+  .header-meta {
     width: 100%;
+  }
+
+  .header-filters {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    justify-content: stretch;
+  }
+
+  .filter-control.search-input,
+  .filter-control.date-picker,
+  .refresh-btn {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  .filter-control.date-picker.el-date-editor,
+  .filter-control.date-picker :deep(.el-input) {
+    width: 100% !important;
+  }
+
+  .filter-control :deep(.el-input__wrapper),
+  .filter-control.el-date-editor :deep(.el-input__wrapper) {
+    height: 36px !important;
+  }
+
+  .refresh-btn {
+    height: 36px !important;
+    justify-content: center;
   }
 
   .pagination-area {
@@ -799,23 +823,112 @@ export default {
   }
 
   .action-buttons {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: nowrap;
     gap: 4px;
+    justify-content: center;
   }
 
-  /* 隱藏指定表格列 */
-  .table-container :deep(.hidden-xs-only) {
-    display: none !important;
+  /* 操作列 fixed 右側；中間欄位可左右滑動 */
+  .table-container {
+    overflow: hidden;
   }
 
-  /* 將詳情 Dialog 寬度設為 92% */
+  .table-container :deep(.el-table__body-wrapper),
+  .table-container :deep(.el-scrollbar__wrap) {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-container :deep(.el-table .cell) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .table-container :deep(.el-table__fixed-right),
+  .table-container :deep(.el-table-fixed-column--right) {
+    box-shadow: -6px 0 10px rgba(15, 23, 42, 0.08);
+  }
+
+  /* 將詳情 Dialog 在手機改為全屏閱讀 */
   .notification-detail-dialog :deep(.el-dialog) {
-    width: 92% !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    border-radius: 0;
+    overflow: hidden;
   }
 
-  /* 縮小手機端彈窗內容區域內邊距 */
   .notification-detail-dialog :deep(.el-dialog__body) {
-    padding: 12px 14px !important;
+    padding: 8px !important;
+    max-height: none;
+    overflow-x: hidden;
+  }
+}
+
+</style>
+
+<style>
+/* append-to-body：隱藏頂部標題欄 */
+.el-dialog.notification-detail-dialog .el-dialog__header,
+.notification-detail-dialog.el-dialog .el-dialog__header {
+  display: none !important;
+}
+
+.el-dialog.notification-detail-dialog,
+.notification-detail-dialog.el-dialog {
+  height: auto !important;
+  max-height: calc(100vh - 24px) !important;
+}
+
+.el-dialog.notification-detail-dialog .el-dialog__body,
+.notification-detail-dialog.el-dialog .el-dialog__body {
+  padding: 8px !important;
+  max-height: calc(100vh - 48px) !important;
+  height: auto !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+  .el-dialog.notification-detail-dialog,
+  .notification-detail-dialog.el-dialog {
+    width: 100% !important;
+    max-width: 100vw !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .el-dialog.notification-detail-dialog.is-fullscreen,
+  .notification-detail-dialog.el-dialog.is-fullscreen {
+    display: flex;
+    flex-direction: column;
+    height: 100% !important;
+    max-height: 100vh !important;
+  }
+
+  .el-dialog.notification-detail-dialog .el-dialog__body,
+  .notification-detail-dialog.el-dialog .el-dialog__body {
+    padding: 8px !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    /* 手機隱藏滾動條，避免底部出現未鋪滿的灰條 */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .el-dialog.notification-detail-dialog .el-dialog__body::-webkit-scrollbar,
+  .notification-detail-dialog.el-dialog .el-dialog__body::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    display: none !important;
   }
 }
 </style>
