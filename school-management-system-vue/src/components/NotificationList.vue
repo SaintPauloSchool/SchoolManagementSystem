@@ -5,28 +5,76 @@
       <div class="header-meta">
         <el-icon class="header-icon"><List /></el-icon>
         <span class="header-title">{{ listTitle }}</span>
-        <el-tag type="info" size="small" class="count-tag">
-          {{ pagination.total }} 條記錄
-        </el-tag>
+        <span class="count-chip">{{ pagination.total }} 條</span>
       </div>
       <div class="header-filters">
-        <el-input
-            v-model="searchQuery"
-            placeholder="搜尋通知標題或發送人..."
-            clearable
-            prefix-icon="Search"
-            class="filter-control search-input"
-            @keyup.enter="handleSearch"
-        />
-        <el-date-picker
-            v-model="publishDate"
-            type="date"
-            placeholder="發佈時間"
-            clearable
-            value-format="YYYY-MM-DD"
-            class="filter-control date-picker"
-            @change="handleSearch"
-        />
+        <div class="search-block">
+          <div class="search-shell">
+            <el-icon class="search-leading"><Search /></el-icon>
+            <input
+                v-model="searchQuery"
+                class="search-input"
+                type="text"
+                placeholder="搜尋標題或發送人"
+                @keyup.enter="handleSearch"
+            />
+            <button
+                v-if="searchQuery"
+                type="button"
+                class="search-clear"
+                aria-label="清除搜尋"
+                @click="clearSearch"
+            >×</button>
+            <span class="search-divider"></span>
+            <button
+                type="button"
+                class="date-icon-btn"
+                :class="{ active: !!publishDate || datePanelVisible }"
+                aria-label="篩選發佈時間"
+                @click="toggleDatePanel"
+            >
+              <el-icon :size="16"><Calendar /></el-icon>
+            </button>
+          </div>
+
+          <div v-if="datePanelVisible" class="date-panel">
+            <div class="date-panel-head">
+              <button type="button" class="nav-btn" @click="shiftMonth(-1)">‹</button>
+              <span class="month-label">{{ panelMonthLabel }}</span>
+              <button type="button" class="nav-btn" @click="shiftMonth(1)">›</button>
+            </div>
+            <div class="week-row">
+              <span v-for="w in weekLabels" :key="w">{{ w }}</span>
+            </div>
+            <div class="day-grid">
+              <button
+                  v-for="(day, idx) in panelDays"
+                  :key="idx"
+                  type="button"
+                  class="day-cell"
+                  :class="{
+                    muted: !day.currentMonth,
+                    selected: day.value === publishDate,
+                    today: day.value === todayValue
+                  }"
+                  @click="selectPanelDate(day.value)"
+              >
+                {{ day.label }}
+              </button>
+            </div>
+            <div class="date-panel-foot">
+              <button type="button" class="foot-btn" @click="clearPublishDate">清除</button>
+              <button type="button" class="foot-btn primary" @click="selectPanelDate(todayValue)">今天</button>
+            </div>
+          </div>
+
+          <div v-if="publishDate && !datePanelVisible" class="date-chip-row">
+            <button type="button" class="date-chip" @click="clearPublishDate">
+              {{ formatChipDate(publishDate) }}
+              <span>×</span>
+            </button>
+          </div>
+        </div>
         <el-button plain class="refresh-btn" @click="handleRefresh">
           <el-icon><Refresh /></el-icon>
           刷新數據
@@ -174,7 +222,7 @@
 
 <script>
 import { ElNotification } from 'element-plus'
-import { Search, Refresh, View, List, RefreshLeft, Notebook } from '@element-plus/icons-vue'
+import { Search, Refresh, View, List, RefreshLeft, Notebook, Calendar } from '@element-plus/icons-vue'
 import NotificationDetail from './NotificationDetail.vue'
 import request from '@/utils/request'
 
@@ -207,6 +255,9 @@ export default {
       loading: false,
       searchQuery: '',
       publishDate: '',
+      datePanelVisible: false,
+      panelYear: new Date().getFullYear(),
+      panelMonth: new Date().getMonth(),
       detailDialogVisible: false,
       selectedNotification: null,
       viewportWidth: typeof window !== 'undefined' ? window.innerWidth : 1200
@@ -261,6 +312,52 @@ export default {
       }
 
       return result
+    },
+    weekLabels() {
+      return ['日', '一', '二', '三', '四', '五', '六']
+    },
+    todayValue() {
+      return this.formatDateValue(new Date())
+    },
+    panelMonthLabel() {
+      return `${this.panelYear}年${this.panelMonth + 1}月`
+    },
+    panelDays() {
+      const year = this.panelYear
+      const month = this.panelMonth
+      const first = new Date(year, month, 1)
+      const startWeekday = first.getDay()
+      const daysInMonth = new Date(year, month + 1, 0).getDate()
+      const prevDays = new Date(year, month, 0).getDate()
+      const cells = []
+
+      for (let i = startWeekday - 1; i >= 0; i--) {
+        const day = prevDays - i
+        const date = new Date(year, month - 1, day)
+        cells.push({
+          label: day,
+          value: this.formatDateValue(date),
+          currentMonth: false
+        })
+      }
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day)
+        cells.push({
+          label: day,
+          value: this.formatDateValue(date),
+          currentMonth: true
+        })
+      }
+      const remain = 42 - cells.length
+      for (let day = 1; day <= remain; day++) {
+        const date = new Date(year, month + 1, day)
+        cells.push({
+          label: day,
+          value: this.formatDateValue(date),
+          currentMonth: false
+        })
+      }
+      return cells
     }
   },
   mounted() {
@@ -319,7 +416,53 @@ export default {
     handleRefresh() {
       this.searchQuery = ''
       this.publishDate = ''
+      this.datePanelVisible = false
       this.$emit('refresh')
+    },
+
+    clearSearch() {
+      this.searchQuery = ''
+      this.handleSearch()
+    },
+
+    formatDateValue(date) {
+      const y = date.getFullYear()
+      const m = String(date.getMonth() + 1).padStart(2, '0')
+      const d = String(date.getDate()).padStart(2, '0')
+      return `${y}-${m}-${d}`
+    },
+
+    formatChipDate(value) {
+      if (!value) return ''
+      const m = String(value).match(/(\d{4})-(\d{2})-(\d{2})/)
+      return m ? `${m[1]}-${m[2]}-${m[3]}` : value
+    },
+
+    clearPublishDate() {
+      this.publishDate = ''
+      this.datePanelVisible = false
+      this.handleSearch()
+    },
+
+    toggleDatePanel() {
+      this.datePanelVisible = !this.datePanelVisible
+      if (this.datePanelVisible) {
+        const base = this.publishDate ? new Date(this.publishDate) : new Date()
+        this.panelYear = base.getFullYear()
+        this.panelMonth = base.getMonth()
+      }
+    },
+
+    shiftMonth(step) {
+      const date = new Date(this.panelYear, this.panelMonth + step, 1)
+      this.panelYear = date.getFullYear()
+      this.panelMonth = date.getMonth()
+    },
+
+    selectPanelDate(value) {
+      this.publishDate = value
+      this.datePanelVisible = false
+      this.handleSearch()
     },
 
     async viewNotification(notification) {
@@ -442,7 +585,7 @@ export default {
   padding: 14px 24px;
   background: #ffffff;
   border-bottom: 1px solid #eef0f4;
-  gap: 16px;
+  gap: 20px;
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -450,114 +593,288 @@ export default {
 .header-meta {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
+  height: 40px;
+  padding: 0 4px 0 2px;
+}
+
+.header-icon {
+  color: #2563eb;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e3a5f;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.count-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.10);
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  white-space: nowrap;
 }
 
 .header-filters {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   flex: 1;
   min-width: 0;
   justify-content: flex-start;
 }
 
-.header-icon {
-  color: #2563eb;
+.search-block {
+  position: relative;
+  flex: 1;
+  max-width: 420px;
+  min-width: 220px;
+}
+
+.search-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 4px 0 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #cfe0f6;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 16px rgba(37, 99, 235, 0.06);
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.search-leading {
+  color: #64748b;
   font-size: 16px;
   flex-shrink: 0;
+  margin-right: 8px;
 }
 
-.header-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.count-tag {
-  border-radius: 10px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 500;
-  background: #eff6ff !important;
-  color: #2563eb !important;
-  border-color: #bfdbfe !important;
-  flex-shrink: 0;
-}
-
-/* 搜尋框 / 日期選擇器：統一樣式 */
-.filter-control.search-input {
+.search-input {
   flex: 1;
-  max-width: 320px;
-  min-width: 180px;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: #0f172a;
+  height: 100%;
 }
 
-.filter-control.date-picker {
-  width: 160px;
+.search-input::placeholder {
+  color: #94a3b8;
+}
+
+.search-clear {
+  border: none;
+  background: #e2e8f0;
+  color: #64748b;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 18px;
+  padding: 0;
+  cursor: pointer;
   flex-shrink: 0;
 }
 
-.filter-control :deep(.el-input__wrapper),
-.filter-control.el-date-editor :deep(.el-input__wrapper),
-.filter-control.el-input :deep(.el-input__wrapper) {
-  border-radius: 8px !important;
-  background: #ffffff !important;
-  border: 1px solid #d1d5db !important;
-  box-shadow: none !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  height: 32px !important;
-  padding: 0 11px !important;
+.search-divider {
+  width: 1px;
+  height: 18px;
+  background: #e2e8f0;
+  margin: 0 2px 0 8px;
+  flex-shrink: 0;
 }
 
-.filter-control :deep(.el-input__wrapper:hover),
-.filter-control.el-date-editor :deep(.el-input__wrapper:hover) {
-  border-color: #9ca3af !important;
-  background: #ffffff !important;
-  box-shadow: none !important;
+.date-icon-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
-.filter-control :deep(.el-input__wrapper.is-focus),
-.filter-control.el-date-editor :deep(.el-input__wrapper.is-focus) {
-  background: #ffffff !important;
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12) !important;
+.date-icon-btn.active {
+  color: #2563eb;
+  background: #eff6ff;
 }
 
-.filter-control :deep(.el-input__inner) {
-  color: #1f2937 !important;
-  font-size: 13px !important;
-  height: 30px !important;
-  line-height: 30px !important;
+.date-icon-btn:hover {
+  background: #f1f5f9;
 }
 
-.filter-control :deep(.el-input__inner::placeholder) {
-  color: #9ca3af !important;
+.date-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: 300px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #e2eaf8;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
 }
 
-.filter-control :deep(.el-input__prefix .el-icon),
-.filter-control :deep(.el-input__prefix-inner .el-icon) {
-  color: #9ca3af !important;
+.date-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 
-.filter-control :deep(.el-input__suffix .el-icon) {
-  color: #9ca3af !important;
+.month-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nav-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.week-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 6px;
+}
+
+.week-row span {
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 600;
+  padding: 4px 0;
+}
+
+.day-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.day-cell {
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.day-cell.muted {
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.day-cell.today {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.day-cell.selected {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.day-cell:hover:not(.selected) {
+  background: #f1f5f9;
+}
+
+.date-panel-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.foot-btn {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.foot-btn.primary {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.date-chip-row {
+  margin-top: 8px;
+}
+
+.date-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.date-chip span {
+  font-size: 14px;
+  line-height: 1;
 }
 
 /* 刷新按鈕 */
 .refresh-btn {
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   font-size: 13px !important;
   font-weight: 500 !important;
-  padding: 7px 16px !important;
+  padding: 0 16px !important;
   border-color: #d1d5db !important;
   color: #6b7280 !important;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  height: 32px !important;
+  height: 40px !important;
 }
 
 .refresh-btn:hover {
@@ -798,9 +1115,9 @@ export default {
     justify-content: flex-start;
   }
 
-  .search-input {
+  .search-block {
     max-width: 100%;
-    flex: 1 1 200px;
+    flex: 1 1 240px;
   }
 }
 
@@ -824,8 +1141,7 @@ export default {
     justify-content: stretch;
   }
 
-  .filter-control.search-input,
-  .filter-control.date-picker,
+  .search-block,
   .refresh-btn {
     width: 100% !important;
     max-width: 100% !important;
@@ -833,18 +1149,14 @@ export default {
     margin: 0 !important;
   }
 
-  .filter-control.date-picker.el-date-editor,
-  .filter-control.date-picker :deep(.el-input) {
-    width: 100% !important;
-  }
-
-  .filter-control :deep(.el-input__wrapper),
-  .filter-control.el-date-editor :deep(.el-input__wrapper) {
-    height: 36px !important;
+  .date-panel {
+    left: 0;
+    right: 0;
+    width: auto;
   }
 
   .refresh-btn {
-    height: 36px !important;
+    height: 40px !important;
     justify-content: center;
   }
 
