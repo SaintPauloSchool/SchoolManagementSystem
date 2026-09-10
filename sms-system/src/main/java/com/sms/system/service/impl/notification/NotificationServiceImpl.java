@@ -21,10 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.sms.common.utils.PageUtils.clearPage;
 import static com.sms.common.utils.PageUtils.startPage;
 
 /**
@@ -54,7 +57,10 @@ public class NotificationServiceImpl implements INotificationService {
     @Override
     public List<NotificationVO> selectNotificationList(NotificationQueryDTO notificationQueryDTO) {
         Notification notification = toQueryEntity(notificationQueryDTO);
-        return BeanCopyUtils.copyPageList(notificationMapper.selectNotificationList(notification), NotificationVO.class);
+        List<NotificationVO> list = BeanCopyUtils.copyPageList(
+                notificationMapper.selectNotificationList(notification), NotificationVO.class);
+        fillHasQuestions(list);
+        return list;
     }
 
     /**
@@ -102,7 +108,10 @@ public class NotificationServiceImpl implements INotificationService {
 
         startPage();
         // 查詢通知詳細資訊
-        return BeanCopyUtils.copyPageList(notificationMapper.selectCcToMeList(notification), NotificationVO.class);
+        List<NotificationVO> list = BeanCopyUtils.copyPageList(
+                notificationMapper.selectCcToMeList(notification), NotificationVO.class);
+        fillHasQuestions(list);
+        return list;
     }
 
     /**
@@ -111,7 +120,37 @@ public class NotificationServiceImpl implements INotificationService {
     @Override
     public List<NotificationVO> selectMySendList(NotificationQueryDTO notificationQueryDTO) {
         Notification notification = toQueryEntity(notificationQueryDTO);
-        return BeanCopyUtils.copyPageList(notificationMapper.selectMySendList(notification), NotificationVO.class);
+        List<NotificationVO> list = BeanCopyUtils.copyPageList(
+                notificationMapper.selectMySendList(notification), NotificationVO.class);
+        fillHasQuestions(list);
+        return list;
+    }
+
+    /**
+     * 依當前頁通知 ID 批次標記是否含問卷（避免列表 SQL 子查詢拖慢）
+     */
+    private void fillHasQuestions(List<NotificationVO> list) {
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        List<Long> notificationIds = list.stream()
+                .map(NotificationVO::getNotificationId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (notificationIds.isEmpty()) {
+            for (NotificationVO vo : list) {
+                vo.setHasQuestions(Boolean.FALSE);
+            }
+            return;
+        }
+
+        clearPage();
+        Set<Long> withQuestions = new HashSet<>(
+                notificationQuestionService.selectNotificationIdsHavingQuestions(notificationIds));
+        for (NotificationVO vo : list) {
+            vo.setHasQuestions(withQuestions.contains(vo.getNotificationId()));
+        }
     }
 
     /**

@@ -15,6 +15,11 @@ public interface INotificationQuestionService {
     List<NotificationQuestionVO> selectByNotificationId(Long notificationId);
 
     /**
+     * 篩選出含有問卷題目的通知 ID
+     */
+    List<Long> selectNotificationIdsHavingQuestions(List<Long> notificationIds);
+
+    /**
      * 新增問題
      */
     int save(NotificationQuestionSaveDTO notificationQuestionSaveDTO);

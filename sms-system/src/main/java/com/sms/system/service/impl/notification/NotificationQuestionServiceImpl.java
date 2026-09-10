@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,6 +27,15 @@ public class NotificationQuestionServiceImpl implements INotificationQuestionSer
     public List<NotificationQuestionVO> selectByNotificationId(Long notificationId) {
         return BeanCopyUtils.copyList(notificationQuestionMapper.selectByNotificationId(notificationId),
                 NotificationQuestionVO.class);
+    }
+
+    @Override
+    public List<Long> selectNotificationIdsHavingQuestions(List<Long> notificationIds) {
+        if (notificationIds == null || notificationIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Long> ids = notificationQuestionMapper.selectNotificationIdsHavingQuestions(notificationIds);
+        return ids != null ? ids : Collections.emptyList();
     }
 
     @Override
