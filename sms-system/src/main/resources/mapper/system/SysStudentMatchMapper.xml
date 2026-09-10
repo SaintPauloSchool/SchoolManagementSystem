@@ -19,6 +19,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="classSection" column="class_section"/>
         <result property="classNum" column="class_num"/>
         <result property="idName" column="id_name"/>
+        <result property="idEnglishName" column="id_english_name"/>
         <result property="dsejStudentId" column="dsej_student_id"/>
         <result property="contactStudentName" column="contact_student_name"/>
         <result property="relationDesc" column="relation_desc"/>
@@ -61,6 +62,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                si.class_section,
                si.class_num,
                si.id_name,
+               si.id_english_name,
                si.dsej_student_id,
                sfc.student_name as contact_student_name,
                sfc.relation_desc,
@@ -106,6 +108,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                si.class_section,
                si.class_num,
                si.id_name,
+               si.id_english_name,
                si.dsej_student_id,
                sfc.student_name as contact_student_name,
                sfc.relation_desc,
@@ -131,7 +134,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectAllStudentsForMatch" resultMap="SysStudentMatchVOResult">
         select si.student_id, si.in_school, si.school_year, si.student_profile_number,
-               si.adid, si.class_section, si.class_num, si.id_name, si.dsej_student_id
+               si.adid, si.class_section, si.class_num, si.id_name, si.id_english_name, si.dsej_student_id
         from ${studentProfilesDatabase}.student_info si
         where si.student_id is not null
         order by si.class_section, si.class_num, si.id_name, si.student_profile_number
