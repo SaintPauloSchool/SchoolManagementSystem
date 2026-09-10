@@ -45,6 +45,17 @@
           :row-style="{ height: '48px' }"
           :cell-style="{ padding: '10px 0' }"
       >
+        <el-table-column label="" width="44" align="center">
+          <template #default="scope">
+            <el-tooltip
+                v-if="scope.row.hasQuestions"
+                content="含需家長回覆的問卷"
+                placement="top"
+            >
+              <el-icon class="has-questions-icon"><Notebook /></el-icon>
+            </el-tooltip>
+          </template>
+        </el-table-column>
         <el-table-column prop="title" label="通知標題" min-width="180" show-overflow-tooltip>
           <template #default="scope">
             <el-link
@@ -126,8 +137,10 @@
           :current-page="pagination.currentPage"
           :page-sizes="[10, 20, 50]"
           :page-size="pagination.pageSize"
-          layout="total, sizes, prev, pager, next"
+          :layout="paginationLayout"
+          :pager-count="paginationPagerCount"
           :total="pagination.total"
+          :small="isMobileTable"
           background
       />
     </div>
@@ -138,7 +151,6 @@
         title="通知詳情"
         :width="detailDialogWidth"
         :fullscreen="detailDialogFullscreen"
-        :before-close="handleDetailClose"
         class="notification-detail-dialog"
         :top="detailDialogFullscreen ? '0' : undefined"
         :align-center="!detailDialogFullscreen"
@@ -148,6 +160,7 @@
         :close-on-press-escape="true"
         :show-close="false"
         :append-to-body="true"
+        @closed="onDetailClosed"
     >
       <NotificationDetail
           v-if="selectedNotification"
@@ -161,7 +174,7 @@
 
 <script>
 import { ElNotification } from 'element-plus'
-import { Search, Refresh, View, List, RefreshLeft } from '@element-plus/icons-vue'
+import { Search, Refresh, View, List, RefreshLeft, Notebook } from '@element-plus/icons-vue'
 import NotificationDetail from './NotificationDetail.vue'
 import request from '@/utils/request'
 
@@ -215,6 +228,14 @@ export default {
     },
     isMobileTable() {
       return this.viewportWidth <= 768
+    },
+    paginationLayout() {
+      return this.isMobileTable
+          ? 'prev, pager, next'
+          : 'total, sizes, prev, pager, next'
+    },
+    paginationPagerCount() {
+      return this.isMobileTable ? 5 : 7
     },
     actionColumnWidth() {
       if (this.isMobileTable) {
@@ -380,6 +401,9 @@ export default {
 
     handleDetailClose() {
       this.detailDialogVisible = false
+    },
+
+    onDetailClosed() {
       this.selectedNotification = null
     }
   }
@@ -612,6 +636,13 @@ export default {
   background: #fafbfe;
 }
 
+.has-questions-icon {
+  color: #1e40af;
+  font-size: 16px;
+  vertical-align: middle;
+  cursor: default;
+}
+
 .title-link {
   font-weight: 500;
   color: #2563eb;
@@ -818,8 +849,54 @@ export default {
   }
 
   .pagination-area {
-    padding: 12px 16px;
+    padding: 10px 8px;
     justify-content: center;
+    overflow-x: auto;
+  }
+
+  .pagination-area :deep(.el-pagination) {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    column-gap: 2px;
+    width: max-content;
+    max-width: none;
+    margin: 0 auto;
+  }
+
+  .pagination-area :deep(.el-pagination__total),
+  .pagination-area :deep(.el-pagination__jump) {
+    display: none;
+  }
+
+  .pagination-area :deep(.btn-prev),
+  .pagination-area :deep(.btn-next),
+  .pagination-area :deep(.el-pager) {
+    flex-shrink: 0;
+  }
+
+  .pagination-area :deep(.el-pager) {
+    display: inline-flex;
+    flex-wrap: nowrap;
+  }
+
+  .pagination-area :deep(.el-pagination__sizes) {
+    flex: none;
+    margin: 0 0 0 4px !important;
+  }
+
+  .pagination-area :deep(.el-pagination__sizes .el-select) {
+    width: 90px;
+  }
+
+  .pagination-area :deep(.el-pager li),
+  .pagination-area :deep(.btn-prev),
+  .pagination-area :deep(.btn-next) {
+    min-width: 28px !important;
+    height: 28px !important;
+    line-height: 28px !important;
+    margin: 0 1px !important;
   }
 
   .action-buttons {

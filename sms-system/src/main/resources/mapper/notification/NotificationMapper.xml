@@ -24,65 +24,84 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <collection property="ccs" ofType="NotificationCc" select="com.sms.system.mapper.notification.NotificationCcMapper.selectByNotificationId" column="notification_id"/>
         <collection property="questions" ofType="NotificationQuestion" select="com.sms.system.mapper.notification.NotificationQuestionMapper.selectByNotificationId" column="notification_id"/>
     </resultMap>
+
+    <!-- 列表專用：不嵌套加載 receivers/ccs/questions；hasQuestions 由 Service 批次補齊 -->
+    <resultMap type="Notification" id="NotificationListResult">
+        <result property="notificationId"    column="notification_id"    />
+        <result property="title"    column="title"    />
+        <result property="content"    column="content"    />
+        <result property="senderId"    column="sender_id"    />
+        <result property="senderName"    column="sender_name"    />
+        <result property="jumpUrl"    column="jump_url"    />
+        <result property="attachmentUrls"    column="attachment_urls"    />
+        <result property="status"    column="status"    />
+        <result property="replyDeadline"    column="reply_deadline"    />
+        <result property="reminderTime"    column="reminder_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="notificationListColumns">
+        n.notification_id, n.title, n.content, n.sender_id, n.sender_name, n.jump_url,
+        n.attachment_urls, n.status, n.reply_deadline, n.reminder_time,
+        n.create_by, n.create_time, n.update_by, n.update_time, n.remark
+    </sql>
     
     <!-- 查詢通知列表 -->
-    <select id="selectNotificationList" parameterType="Notification" resultMap="NotificationResult">
-        select notification_id, title, content, sender_id, sender_name, jump_url, 
-               attachment_urls, status, reply_deadline, reminder_time,
-               create_by, create_time, update_by, update_time, remark
-        from notification
+    <select id="selectNotificationList" parameterType="Notification" resultMap="NotificationListResult">
+        select <include refid="notificationListColumns"/>
+        from notification n
         <where>  
             <if test="title != null and title != ''">
-                AND title like concat('%', #{title}, '%')
+                AND n.title like concat('%', #{title}, '%')
             </if>
             <if test="status != null and status != ''">
-                AND status = #{status}
+                AND n.status = #{status}
             </if>
             <if test="senderId != null">
-                AND sender_id = #{senderId}
+                AND n.sender_id = #{senderId}
             </if>
             <if test="publishDate != null and publishDate != ''">
-                AND DATE(create_time) = #{publishDate}
+                AND DATE(n.create_time) = #{publishDate}
             </if>
             <if test="reminderTime != null">
-                AND DATE(reminder_time) = DATE(#{reminderTime})
+                AND DATE(n.reminder_time) = DATE(#{reminderTime})
             </if>
         </where>
-        order by create_time desc
+        order by n.create_time desc
     </select>
     
     <!-- 根據用戶 ID 查詢抄送給我的通知列表 -->
-    <select id="selectCcToMeList" resultMap="NotificationResult">
-        select notification_id, title, content, sender_id, sender_name, jump_url, 
-               attachment_urls, status, reply_deadline, reminder_time,
-               create_by, create_time, update_by, update_time, remark
-        from notification 
+    <select id="selectCcToMeList" resultMap="NotificationListResult">
+        select <include refid="notificationListColumns"/>
+        from notification n
         <where>
-            status = '1'
-            AND notification_id IN
+            n.status = '1'
+            AND n.notification_id IN
             <foreach collection="notificationIds" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
             <if test="publishDate != null and publishDate != ''">
-                AND DATE(create_time) = #{publishDate}
+                AND DATE(n.create_time) = #{publishDate}
             </if>
         </where>
-        order by create_time desc
+        order by n.create_time desc
     </select>
     
     <!-- 根據用戶 ID 查詢我發送的通知列表 -->
-    <select id="selectMySendList" resultMap="NotificationResult">
-        select notification_id, title, content, sender_id, sender_name, jump_url, 
-               attachment_urls, status, reply_deadline, reminder_time,
-               create_by, create_time, update_by, update_time, remark
-        from notification 
+    <select id="selectMySendList" resultMap="NotificationListResult">
+        select <include refid="notificationListColumns"/>
+        from notification n
         <where>
-            sender_id = #{senderId}
+            n.sender_id = #{senderId}
             <if test="publishDate != null and publishDate != ''">
-                AND DATE(create_time) = #{publishDate}
+                AND DATE(n.create_time) = #{publishDate}
             </if>
         </where>
-        order by create_time desc
+        order by n.create_time desc
     </select>
     
     <!-- 新增通知 -->
