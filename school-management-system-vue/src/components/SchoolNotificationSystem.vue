@@ -169,14 +169,13 @@
 
       <!-- 收起按鈕 - 放在底部 -->
       <div class="sidebar-footer">
-        <el-button 
-          v-if="!isMobile" 
-          link 
-          class="collapse-btn" 
-          @click="toggleCollapse"
+        <el-button
+          link
+          class="collapse-btn"
+          @click="isMobile ? toggleMobileMenu() : toggleCollapse()"
         >
           <el-icon><Fold /></el-icon>
-          <span class="collapse-text" v-show="!isCollapsed">收起</span>
+          <span class="collapse-text" v-show="isMobile || !isCollapsed">收起</span>
         </el-button>
       </div>
     </aside>
@@ -200,24 +199,49 @@
             @publish-success="handlePublishSuccess" 
           />
           
-          <!-- 抄送我的 -->
+          <!-- 抄送我的（桌面表格） -->
           <NotificationList 
-            v-else-if="activeMenu === '1-2'"
+            v-else-if="activeMenu === '1-2' && !isMobile"
             :notifications="ccToMeNotifications"
             :pagination="ccPagination"
-            @refresh="loadCcToMeNotifications"
+            @refresh="handleCcRefresh"
             @page-change="handleCcPageChange"
             type="ccToMe"
             ref="ccList"
           />
+
+          <!-- 抄送我的（手機卡片） -->
+          <NotificationCardList
+            v-else-if="activeMenu === '1-2' && isMobile"
+            :notifications="ccToMeNotifications"
+            :pagination="ccPagination"
+            :menu-open="isMobileMenuOpen"
+            @refresh="handleCcRefresh"
+            @page-change="handleCcPageChange"
+            @load-more="handleCcLoadMore"
+            type="ccToMe"
+            ref="ccList"
+          />
           
-          <!-- 我發送的 -->
+          <!-- 我發送的（桌面表格） -->
           <NotificationList 
-            v-else-if="activeMenu === '1-3'"
+            v-else-if="activeMenu === '1-3' && !isMobile"
             :notifications="mySendNotifications"
             :pagination="mySendPagination"
-            @refresh="loadMySendNotifications"
+            @refresh="handleMySendRefresh"
             @page-change="handleMySendPageChange"
+            type="mySend"
+          />
+
+          <!-- 我發送的（手機卡片） -->
+          <NotificationCardList
+            v-else-if="activeMenu === '1-3' && isMobile"
+            :notifications="mySendNotifications"
+            :pagination="mySendPagination"
+            :menu-open="isMobileMenuOpen"
+            @refresh="handleMySendRefresh"
+            @page-change="handleMySendPageChange"
+            @load-more="handleMySendLoadMore"
             type="mySend"
           />
           
@@ -279,6 +303,7 @@
 import { ElNotification } from 'element-plus'
 import { Bell, Promotion, Edit, Message, Fold, Menu, Setting, Document, ArrowRight, ArrowDown, User, UserFilled, OfficeBuilding, Warning, Calendar, Tools, Collection, Clock } from '@element-plus/icons-vue'
 import NotificationList from './NotificationList.vue'
+import NotificationCardList from './NotificationCardList.vue'
 import PublishNotification from './PublishNotification.vue'
 import SchoolDepartment from './SchoolDepartment.vue'
 import HomeSchoolContacts from './HomeSchoolContacts.vue'
@@ -296,6 +321,7 @@ export default {
   name: 'SchoolNotificationSystem',
   components: {
     NotificationList,
+    NotificationCardList,
     PublishNotification,
     SchoolDepartment,
     HomeSchoolContacts,
@@ -410,9 +436,9 @@ export default {
     loadInitialData() {
       // 根據當前激活的菜單加載對應的數據
       if (this.activeMenu === '1-2') {
-        this.loadCcToMeNotifications()
+        this.handleCcRefresh()
       } else if (this.activeMenu === '1-3') {
-        this.loadMySendNotifications()
+        this.handleMySendRefresh()
       }
       // 其他菜單無需加載數據
     },
@@ -452,7 +478,17 @@ export default {
     },
     
     handleResize() {
+      const wasMobile = this.isMobile
       this.checkScreenSize()
+      if (wasMobile === this.isMobile) {
+        return
+      }
+      // 桌面/手機切換時重置為第一頁，避免累加數據與表格分頁錯亂
+      if (this.activeMenu === '1-2') {
+        this.handleCcRefresh()
+      } else if (this.activeMenu === '1-3') {
+        this.handleMySendRefresh()
+      }
     },
     
     toggleCollapse() {
@@ -480,10 +516,9 @@ export default {
       if (index === '1-1') {
         // 發佈通知，無需加載數據
       } else if (index === '1-2') {
-        this.loadCcToMeNotifications()
+        this.handleCcRefresh()
       } else if (index === '1-3') {
-        this.mySendPagination.currentPage = 1
-        this.loadMySendNotifications()
+        this.handleMySendRefresh()
       } else if (index === '2-1') {
         // 老師通訊錄，無需加載數據
       } else if (index === '2-2') {
@@ -497,21 +532,39 @@ export default {
       }
     },
 
+    handleCcRefresh() {
+      this.ccPagination.currentPage = 1
+      this.loadCcToMeNotifications({ pageNum: 1, pageSize: this.ccPagination.pageSize })
+    },
+
+    handleMySendRefresh() {
+      this.mySendPagination.currentPage = 1
+      this.loadMySendNotifications({ pageNum: 1, pageSize: this.mySendPagination.pageSize })
+    },
+
     async loadCcToMeNotifications(params = {}) {
+      const append = params.append === true
       try {
+        const pageNum = params.pageNum || this.ccPagination.currentPage
+        const pageSize = params.pageSize || this.ccPagination.pageSize
         const response = await request({
           url: '/system/notification/ccToMe',
           method: 'get',
           params: {
-            pageNum: params.pageNum || this.ccPagination.currentPage,
-            pageSize: params.pageSize || this.ccPagination.pageSize,
+            pageNum,
+            pageSize,
             publishDate: params.publishDate || ''
           }
         })
         
         if (response.code === 200 || response.code === 0) {
-          this.ccToMeNotifications = response.rows || []
+          const rows = response.rows || []
+          this.ccToMeNotifications = append
+              ? [...this.ccToMeNotifications, ...rows]
+              : rows
           this.ccPagination.total = response.total || 0
+          this.ccPagination.currentPage = pageNum
+          this.ccPagination.pageSize = pageSize
         }
       } catch (error) {
         console.error('加載失敗:', error)
@@ -520,20 +573,28 @@ export default {
     },
 
     async loadMySendNotifications(params = {}) {
+      const append = params.append === true
       try {
+        const pageNum = params.pageNum || this.mySendPagination.currentPage
+        const pageSize = params.pageSize || this.mySendPagination.pageSize
         const response = await request({
           url: '/system/notification/mySend',
           method: 'get',
           params: {
-            pageNum: params.pageNum || this.mySendPagination.currentPage,
-            pageSize: params.pageSize || this.mySendPagination.pageSize,
+            pageNum,
+            pageSize,
             publishDate: params.publishDate || ''
           }
         })
         
         if (response.code === 200 || response.code === 0) {
-          this.mySendNotifications = response.rows || []
+          const rows = response.rows || []
+          this.mySendNotifications = append
+              ? [...this.mySendNotifications, ...rows]
+              : rows
           this.mySendPagination.total = response.total || 0
+          this.mySendPagination.currentPage = pageNum
+          this.mySendPagination.pageSize = pageSize
         }
       } catch (error) {
         console.error('加載失敗:', error)
@@ -544,18 +605,38 @@ export default {
     handleCcPageChange({ pageNum, pageSize, publishDate }) {
       this.ccPagination.currentPage = pageNum
       this.ccPagination.pageSize = pageSize
-      this.loadCcToMeNotifications({ pageNum, pageSize, publishDate })
+      this.loadCcToMeNotifications({ pageNum, pageSize, publishDate, append: false })
     },
 
     handleMySendPageChange({ pageNum, pageSize, publishDate }) {
       this.mySendPagination.currentPage = pageNum
       this.mySendPagination.pageSize = pageSize
-      this.loadMySendNotifications({ pageNum, pageSize, publishDate })
+      this.loadMySendNotifications({ pageNum, pageSize, publishDate, append: false })
+    },
+
+    async handleCcLoadMore({ pageNum, pageSize, publishDate, done }) {
+      try {
+        await this.loadCcToMeNotifications({ pageNum, pageSize, publishDate, append: true })
+      } finally {
+        if (typeof done === 'function') {
+          done()
+        }
+      }
+    },
+
+    async handleMySendLoadMore({ pageNum, pageSize, publishDate, done }) {
+      try {
+        await this.loadMySendNotifications({ pageNum, pageSize, publishDate, append: true })
+      } finally {
+        if (typeof done === 'function') {
+          done()
+        }
+      }
     },
 
     handlePublishSuccess() {
       this.activeMenu = '1-3'
-      this.loadMySendNotifications()
+      this.handleMySendRefresh()
     }
   }
 }
