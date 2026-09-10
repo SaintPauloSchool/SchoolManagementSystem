@@ -26,6 +26,7 @@ public class SysStudentMatchVO implements Serializable {
     private String classSection;
     private String classNum;
     private String idName;
+    private String idEnglishName;
     private String dsejStudentId;
 
     // ── sys_school_family_contact ──
@@ -143,6 +144,14 @@ public class SysStudentMatchVO implements Serializable {
 
     public void setIdName(String idName) {
         this.idName = idName;
+    }
+
+    public String getIdEnglishName() {
+        return idEnglishName;
+    }
+
+    public void setIdEnglishName(String idEnglishName) {
+        this.idEnglishName = idEnglishName;
     }
 
     public String getDsejStudentId() {

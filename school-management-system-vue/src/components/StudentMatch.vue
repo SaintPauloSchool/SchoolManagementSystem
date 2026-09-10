@@ -76,6 +76,7 @@
         <el-table-column prop="classSection" label="班級" min-width="90" align="center" />
         <el-table-column prop="classNum" label="班號" min-width="80" align="center" />
         <el-table-column prop="idName" label="姓名" min-width="110" align="center" />
+        <el-table-column prop="idEnglishName" label="英文名" min-width="140" align="center" show-overflow-tooltip />
         <el-table-column prop="dsejStudentId" label="學生證編號" min-width="130" align="center" show-overflow-tooltip />
         <el-table-column prop="matchStatus" label="匹配狀態" min-width="120" align="center">
           <template #default="scope">
@@ -287,6 +288,7 @@
         <el-descriptions-item label="班級">{{ detailForm.classSection || '-' }}</el-descriptions-item>
         <el-descriptions-item label="班號">{{ detailForm.classNum || '-' }}</el-descriptions-item>
         <el-descriptions-item label="姓名">{{ detailForm.idName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="英文名">{{ detailForm.idEnglishName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="學生證編號">{{ detailForm.dsejStudentId || '-' }}</el-descriptions-item>
         <el-descriptions-item label="企微班級">{{ detailForm.classCodeWecom || '-' }}</el-descriptions-item>
         <el-descriptions-item label="匹配聯絡人">{{ formatContactLabel(detailForm) || '-' }}</el-descriptions-item>
