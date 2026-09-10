@@ -20,6 +20,9 @@ public class NotificationVO implements Serializable {
     private String attachmentUrls;
     private String status;
 
+    /** 是否包含問卷題目（需家長回覆） */
+    private Boolean hasQuestions;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime replyDeadline;
 
@@ -100,6 +103,14 @@ public class NotificationVO implements Serializable {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Boolean getHasQuestions() {
+        return hasQuestions;
+    }
+
+    public void setHasQuestions(Boolean hasQuestions) {
+        this.hasQuestions = hasQuestions;
     }
 
     public LocalDateTime getReplyDeadline() {

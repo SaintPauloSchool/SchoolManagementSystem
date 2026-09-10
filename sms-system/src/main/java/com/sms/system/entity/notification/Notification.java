@@ -76,6 +76,10 @@ public class Notification extends BaseEntity {
     @TableField(exist = false)
     private List<NotificationQuestion> questions;
 
+    /** 是否包含問卷題目（非數據庫字段，列表查詢用） */
+    @TableField(exist = false)
+    private Boolean hasQuestions;
+
     /** 發佈時間篩選（非數據庫字段） */
     @TableField(exist = false)
     private String publishDate;
@@ -199,6 +203,14 @@ public class Notification extends BaseEntity {
     
     public void setQuestions(List<NotificationQuestion> questions) {
         this.questions = questions;
+    }
+
+    public Boolean getHasQuestions() {
+        return hasQuestions;
+    }
+
+    public void setHasQuestions(Boolean hasQuestions) {
+        this.hasQuestions = hasQuestions;
     }
 
     public String getPublishDate() {
