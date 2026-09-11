@@ -415,6 +415,26 @@
         <h3 class="section-label">操作選項</h3>
       </div>
       <div class="action-buttons">
+        <el-button
+          v-if="detailType === 'mySend'"
+          type="success"
+          size="large"
+          round
+          @click="handleCopyAsNew"
+        >
+          <el-icon :size="18"><DocumentCopy /></el-icon>
+          <span>複製為新通知</span>
+        </el-button>
+        <el-button
+          v-if="detailType === 'mySend' && notification.status === '1'"
+          type="warning"
+          size="large"
+          round
+          @click="handleRecall"
+        >
+          <el-icon :size="18"><RefreshLeft /></el-icon>
+          <span>撤回</span>
+        </el-button>
         <el-button type="warning" size="large" round @click="handleRemindParents">
           <el-icon :size="18"><BellFilled /></el-icon>
           <span>提示家長回覆</span>
@@ -454,7 +474,9 @@ import {
   Operation,
   BellFilled,
   RefreshRight,
-  Close
+  Close,
+  DocumentCopy,
+  RefreshLeft
 } from '@element-plus/icons-vue'
 import LogicQuestionItem from './LogicQuestionItem.vue'
 import { normalizeProfileUrl, toPublicProfileUrl, API_BASE_PATH } from '../utils/deployment'
@@ -480,12 +502,14 @@ export default {
     Link,
     TrendCharts,
     Operation,
-    BellFilled,
-    RefreshRight,
-    Close,
-    LogicQuestionItem
+  BellFilled,
+  RefreshRight,
+  Close,
+  DocumentCopy,
+  RefreshLeft,
+  LogicQuestionItem
   },
-  emits: ['close'],
+  emits: ['close', 'copy-as-new', 'recall'],
   props: {
     notification: {
       type: Object,
@@ -930,6 +954,20 @@ export default {
         return []
       }
       return receiver.receiveDeptGroups.filter(group => group?.departmentName)
+    },
+
+    handleCopyAsNew() {
+      this.$confirm('以此通知為範本建立新通知，原通知不受影響。是否繼續？', '提示', {
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }).then(() => {
+        this.$emit('copy-as-new', { notificationId: this.notification.notificationId })
+      }).catch(() => {})
+    },
+
+    handleRecall() {
+      this.$emit('recall', { notificationId: this.notification.notificationId })
     },
 
     handleRemindParents() {

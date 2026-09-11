@@ -137,6 +137,14 @@
           >
             撤回
           </button>
+          <button
+              v-if="type === 'mySend'"
+              type="button"
+              class="btn-ghost btn-copy"
+              @click="handleCopyAsNew(item)"
+          >
+            複製
+          </button>
           <button type="button" class="btn-main" @click="viewNotification(item)">
             查看詳情
           </button>
@@ -177,6 +185,8 @@
           :notification="selectedNotification"
           :detail-type="type"
           @close="handleDetailClose"
+          @copy-as-new="handleCopyAsNewFromDetail"
+          @recall="handleRecall"
       />
     </el-dialog>
   </div>
@@ -221,7 +231,7 @@ export default {
       default: false
     }
   },
-  emits: ['refresh', 'page-change', 'load-more'],
+  emits: ['refresh', 'page-change', 'load-more', 'copy-as-new'],
   data() {
     return {
       loading: false,
@@ -454,7 +464,7 @@ export default {
       }
     },
     handleRecall(row) {
-      this.$confirm('確定要撤回該通告嗎？撤回後家長及學生將無法查看。', '提示', {
+      this.$confirm('確定要撤回該通告嗎？撤回後家長及學生將無法查看。若需更正內容，可於撤回後使用「複製為新通知」修改後再發佈。', '提示', {
         confirmButtonText: '確定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -468,10 +478,11 @@ export default {
           if (response.code === 200 || response.code === 0) {
             ElNotification({
               title: '操作成功',
-              message: '通告已成功撤回',
+              message: '通告已成功撤回。如需更正，可使用「複製為新通知」。',
               type: 'success',
               duration: 3000
             })
+            this.detailDialogVisible = false
             this.handleRefresh()
           } else {
             ElNotification({
@@ -493,6 +504,19 @@ export default {
           this.loading = false
         }
       }).catch(() => {})
+    },
+    handleCopyAsNew(row) {
+      this.$confirm('以此通知為範本建立新通知，原通知不受影響。是否繼續？', '提示', {
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }).then(() => {
+        this.$emit('copy-as-new', { notificationId: row.notificationId })
+      }).catch(() => {})
+    },
+    handleCopyAsNewFromDetail(payload) {
+      this.detailDialogVisible = false
+      this.$emit('copy-as-new', payload)
     },
     handleDetailClose() {
       this.detailDialogVisible = false
@@ -983,6 +1007,7 @@ export default {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
 }
@@ -1011,6 +1036,12 @@ export default {
   border: 1px solid #fed7aa;
   background: #fff7ed;
   color: #c2410c;
+}
+
+.btn-copy {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
 }
 
 .load-status {
