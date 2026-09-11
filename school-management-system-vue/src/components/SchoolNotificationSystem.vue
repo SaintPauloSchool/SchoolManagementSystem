@@ -353,7 +353,8 @@ export default {
       },
       isCollapsed: false,
       isMobileMenuOpen: false,
-      isMobile: false,
+      // 必須在首屏前判定，否則手機端會先掛載桌面列表，待打開詳情會在切換時被銷毀
+      isMobile: typeof window !== 'undefined' ? window.innerWidth <= 768 : false,
       hasUserRole: false,
       hasSuperUserRole: false,
       pendingOpenNoticeId: null,
@@ -433,17 +434,24 @@ export default {
         return
       }
       const list = this.$refs.ccList
-      if (list && typeof list.viewNotification === 'function') {
+      const expectedName = this.isMobile ? 'NotificationCardList' : 'NotificationList'
+      const listName = list && list.$options ? list.$options.name : ''
+      // 必須等到正確端的列表元件就緒（避免手機先掛載桌面列表後被切換銷毀）
+      if (list && typeof list.viewNotification === 'function' && listName === expectedName) {
         const noticeId = this.pendingOpenNoticeId
         this.pendingOpenNoticeId = null
         list.viewNotification({ notificationId: noticeId })
         return
       }
-      // 手機端切換卡片列表可能稍慢，最多重試約 3 秒
-      if (attempt < 30) {
+      // 含 transition out-in，最多重試約 5 秒
+      if (attempt < 50) {
         setTimeout(() => this.tryOpenPendingNotice(attempt + 1), 100)
       } else {
-        console.warn('打開待查看通知失敗：列表元件未就緒', this.pendingOpenNoticeId)
+        console.warn('打開待查看通知失敗：列表元件未就緒', {
+          pendingOpenNoticeId: this.pendingOpenNoticeId,
+          isMobile: this.isMobile,
+          listName
+        })
         this.pendingOpenNoticeId = null
       }
     },
