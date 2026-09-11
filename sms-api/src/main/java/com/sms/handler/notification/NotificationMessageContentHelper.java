@@ -48,8 +48,15 @@ public class NotificationMessageContentHelper {
     }
 
     public String buildRemindContent(Notification notification) {
+        return buildRemindContent(notification, null);
+    }
+
+    /**
+     * 構建催覆內容；傳入 studentId 時連結會帶 sid，避免多子女家長錯綁。
+     */
+    public String buildRemindContent(Notification notification, String studentId) {
         String title = notification.getTitle() == null ? "" : notification.getTitle().trim();
-        String noticeUrl = noticeBaseUrl + notification.getNotificationId();
+        String noticeUrl = buildNoticeUrl(notification.getNotificationId(), studentId);
         String replyDeadline = notification.getReplyDeadline() != null
                 ? notification.getReplyDeadline().format(DATE_FORMATTER)
                 : "";
