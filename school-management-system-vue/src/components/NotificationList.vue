@@ -163,6 +163,16 @@
                 查看
               </el-button>
               <el-button
+                  v-if="type === 'mySend'"
+                  size="small"
+                  type="success"
+                  title="複製為新通知"
+                  @click="handleCopyAsNew(scope.row)"
+              >
+                <el-icon><DocumentCopy /></el-icon>
+                複製
+              </el-button>
+              <el-button
                   v-if="type === 'mySend' && scope.row.status === '1'"
                   size="small"
                   type="warning"
@@ -215,6 +225,8 @@
           :notification="selectedNotification"
           :detail-type="type"
           @close="handleDetailClose"
+          @copy-as-new="handleCopyAsNewFromDetail"
+          @recall="handleRecall"
       />
     </el-dialog>
   </div>
@@ -222,14 +234,15 @@
 
 <script>
 import { ElNotification } from 'element-plus'
-import { Search, Refresh, View, List, RefreshLeft, Notebook, Calendar } from '@element-plus/icons-vue'
+import { Search, Refresh, View, List, RefreshLeft, Notebook, Calendar, DocumentCopy } from '@element-plus/icons-vue'
 import NotificationDetail from './NotificationDetail.vue'
 import request from '@/utils/request'
 
 export default {
   name: 'NotificationList',
   components: {
-    NotificationDetail
+    NotificationDetail,
+    DocumentCopy
   },
   props: {
     notifications: {
@@ -249,7 +262,7 @@ export default {
       })
     }
   },
-  emits: ['refresh', 'page-change'],
+  emits: ['refresh', 'page-change', 'copy-as-new'],
   data() {
     return {
       loading: false,
@@ -290,9 +303,9 @@ export default {
     },
     actionColumnWidth() {
       if (this.isMobileTable) {
-        return this.type === 'mySend' ? 140 : 100
+        return this.type === 'mySend' ? 220 : 100
       }
-      return this.type === 'mySend' ? 180 : 120
+      return this.type === 'mySend' ? 280 : 120
     },
     /** 手機端加寬表格，操作列 fixed 右側，其餘欄位可橫向滑動查看 */
     tableStyle() {
@@ -499,7 +512,7 @@ export default {
     },
 
     handleRecall(row) {
-      this.$confirm('確定要撤回該通告嗎？撤回後家長及學生將無法查看。', '提示', {
+      this.$confirm('確定要撤回該通告嗎？撤回後家長及學生將無法查看。若需更正內容，可於撤回後使用「複製為新通知」修改後再發佈。', '提示', {
         confirmButtonText: '確定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -513,10 +526,11 @@ export default {
           if (response.code === 200 || response.code === 0) {
             ElNotification({
               title: '操作成功',
-              message: '通告已成功撤回',
+              message: '通告已成功撤回。如需更正，可使用「複製為新通知」。',
               type: 'success',
               duration: 3000
             })
+            this.detailDialogVisible = false
             this.handleRefresh()
           } else {
             ElNotification({
@@ -540,6 +554,21 @@ export default {
       }).catch(() => {
         // 取消撤回
       })
+    },
+
+    handleCopyAsNew(row) {
+      this.$confirm('以此通知為範本建立新通知，原通知不受影響。是否繼續？', '提示', {
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }).then(() => {
+        this.$emit('copy-as-new', { notificationId: row.notificationId })
+      }).catch(() => {})
+    },
+
+    handleCopyAsNewFromDetail(payload) {
+      this.detailDialogVisible = false
+      this.$emit('copy-as-new', payload)
     },
 
     handleDetailClose() {
@@ -1015,6 +1044,7 @@ export default {
 /* ===== 操作按鈕 ===== */
 .action-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
 }
@@ -1213,7 +1243,7 @@ export default {
 
   .action-buttons {
     flex-direction: row;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 4px;
     justify-content: center;
   }

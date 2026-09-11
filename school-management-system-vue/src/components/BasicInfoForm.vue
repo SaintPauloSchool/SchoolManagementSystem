@@ -434,11 +434,14 @@ export default {
     
     editFormQuestion(index) {
       const questionData = this.localFormData.questions[index]
+      const nestedQuestions = (Array.isArray(questionData.questions) && questionData.questions.length > 0)
+        ? questionData.questions
+        : (questionData.questionnaireData?.questions || [])
       // 傳遞完整的 questionnaireData 和 questions 數據
       this.editingFormQuestion = {
         ...questionData,
         questionnaireData: questionData.questionnaireData || { title: questionData.title || '問卷調查', description: questionData.description || '' },
-        questions: questionData.questions || []
+        questions: nestedQuestions
       }
       this.showFormQuestionDialog = true
     },

@@ -13,10 +13,14 @@
       </div>
     </div>
 
+    <div v-if="isCopyMode" class="copy-banner">
+      目前為複製模式：資料已由原通知帶入，請檢查並修改後再發佈。發佈後將產生新通知，原通知狀態不變。
+    </div>
+
     <!-- 表單內容 -->
-    <div class="form-wrapper">
+    <div class="form-wrapper" v-loading="copyLoading">
       <transition name="slide" mode="out-in">
-        <div class="step-content">
+        <div v-if="formReady" class="step-content">
           <BasicInfoForm 
             v-show="currentStep === 0"
             ref="basicFormRef"
@@ -54,7 +58,44 @@ export default {
     return {
       currentStep: 0,
       submitting: false,
-      formData: {
+      formReady: false,
+      copyLoading: false,
+      isCopyMode: false,
+      formData: this.createEmptyForm()
+    }
+  },
+  async created() {
+    const copyFromId = sessionStorage.getItem('copyFromNoticeId')
+    if (copyFromId) {
+      sessionStorage.removeItem('copyFromNoticeId')
+      this.isCopyMode = true
+      this.copyLoading = true
+      try {
+        await this.loadFromNotification(copyFromId)
+        ElNotification({
+          title: '提示',
+          message: '已帶入原通知內容，請修改後發佈',
+          type: 'success',
+          duration: 3000
+        })
+      } catch (error) {
+        console.error('複製通知失敗:', error)
+        this.isCopyMode = false
+        ElNotification({
+          title: '操作失敗',
+          message: error.message || '無法載入原通知內容，請稍後重試',
+          type: 'error',
+          duration: 4000
+        })
+      } finally {
+        this.copyLoading = false
+      }
+    }
+    this.formReady = true
+  },
+  methods: {
+    createEmptyForm() {
+      return {
         title: '',
         content: '',
         senderId: null,
@@ -68,9 +109,8 @@ export default {
         reminderTime: null,
         questions: []
       }
-    }
-  },
-  methods: {
+    },
+
     scrollToTop() {
       this.$nextTick(() => {
         const wrapper = document.querySelector('.content-wrapper')
@@ -88,6 +128,263 @@ export default {
     handlePrev() {
       this.currentStep = 0
       this.scrollToTop()
+    },
+
+    async loadFromNotification(notificationId) {
+      const response = await request({
+        url: `/system/notification/${notificationId}`,
+        method: 'get'
+      })
+      if (!(response.code === 200 || response.code === 0) || !response.data) {
+        throw new Error(response.msg || '無法載入原通知內容，請稍後重試')
+      }
+      this.formData = this.mapDetailToForm(response.data)
+    },
+
+    mapDetailToForm(vo) {
+      const notification = vo.notification || {}
+      const now = Date.now()
+
+      let attachmentUrls = []
+      if (notification.attachmentUrls) {
+        try {
+          const parsed = typeof notification.attachmentUrls === 'string'
+            ? JSON.parse(notification.attachmentUrls)
+            : notification.attachmentUrls
+          if (Array.isArray(parsed)) {
+            attachmentUrls = parsed.map((item, index) => {
+              if (typeof item === 'string') {
+                return {
+                  name: decodeURIComponent(item.substring(item.lastIndexOf('/') + 1)) || `附件${index + 1}`,
+                  url: item
+                }
+              }
+              return {
+                name: item.name || `附件${index + 1}`,
+                url: item.url || item._originalUrl || ''
+              }
+            }).filter(item => item.url)
+          }
+        } catch (e) {
+          console.warn('解析附件失敗:', e)
+          attachmentUrls = []
+        }
+      }
+
+      let replyDeadline = notification.replyDeadline || null
+      let reminderTime = notification.reminderTime || null
+      if (replyDeadline && new Date(replyDeadline).getTime() < now) {
+        replyDeadline = null
+        reminderTime = null
+      } else if (reminderTime) {
+        const tomorrow = new Date()
+        tomorrow.setHours(0, 0, 0, 0)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        if (new Date(reminderTime).getTime() < tomorrow.getTime()) {
+          reminderTime = null
+        }
+      }
+
+      const receivers = (vo.receivers || []).map(receiver => ({
+        receiveType: receiver.receiveType,
+        receiveData: receiver.receiveData,
+        receiveNames: receiver.receiveNames || [],
+        receiveDeptGroups: receiver.receiveDeptGroups || []
+      }))
+
+      const ccs = (vo.ccs || []).map(cc => ({
+        ccType: cc.ccType,
+        ccData: cc.ccData,
+        ccNames: cc.ccNames || [],
+        ccDeptGroups: cc.ccDeptGroups || []
+      }))
+
+      const questions = (vo.questions || []).map((q, index) => this.mapQuestionToForm(q, index))
+
+      return {
+        title: notification.title || '',
+        content: notification.content || '',
+        senderId: null,
+        senderName: '',
+        jumpUrl: notification.jumpUrl || '',
+        attachmentUrls,
+        status: '0',
+        receivers,
+        ccs,
+        replyDeadline,
+        reminderTime,
+        questions
+      }
+    },
+
+    mapQuestionToForm(question, index) {
+      const questionType = String(question.questionType || question.type || '')
+      if (questionType === '5') {
+        const parsed = this.parseQuestionnaireContent(question.content)
+        return {
+          id: Date.now() + index,
+          questionType: '5',
+          type: '5',
+          title: parsed.title || question.questionTitle || '問卷調查',
+          description: parsed.description || '',
+          questionnaireData: parsed.questionnaireData,
+          questions: parsed.questions
+        }
+      }
+
+      let options = question.options
+      let logicRules = question.logicRules
+      let fillBlanks = question.fillBlanks
+      let correctAnswers = question.correctAnswers
+      try {
+        if (typeof options === 'string') options = JSON.parse(options)
+      } catch (e) { options = null }
+      try {
+        if (typeof logicRules === 'string') logicRules = JSON.parse(logicRules)
+      } catch (e) { logicRules = null }
+      try {
+        if (typeof fillBlanks === 'string') fillBlanks = JSON.parse(fillBlanks)
+      } catch (e) { fillBlanks = null }
+      try {
+        if (typeof correctAnswers === 'string') correctAnswers = JSON.parse(correctAnswers)
+      } catch (e) { correctAnswers = null }
+
+      return {
+        id: Date.now() + index,
+        title: question.questionTitle || '',
+        type: questionType,
+        questionType,
+        options: options || [],
+        required: question.isRequired === '1' || question.isRequired === 1 || question.required === true,
+        content: question.content || null,
+        uploadNote: question.uploadNote || (questionType === '4' ? '此處由用戶端上傳...' : ''),
+        logicRuleList: Array.isArray(logicRules) ? logicRules : [],
+        fillBlanks: Array.isArray(fillBlanks) ? fillBlanks : [],
+        correctAnswers: correctAnswers || null
+      }
+    },
+
+    parseQuestionnaireContent(content) {
+      const fallback = {
+        title: '問卷調查',
+        description: '',
+        questionnaireData: { title: '問卷調查', description: '' },
+        questions: []
+      }
+      if (!content) return fallback
+      try {
+        let parsed = content
+        if (typeof parsed === 'string') parsed = JSON.parse(parsed)
+        if (typeof parsed === 'string') parsed = JSON.parse(parsed)
+        if (!parsed || typeof parsed !== 'object') return fallback
+
+        const title = parsed.questionnaire
+          ? (parsed.questionnaire.title || '問卷調查')
+          : (parsed.title || '問卷調查')
+        const description = parsed.questionnaire
+          ? (parsed.questionnaire.description || '')
+          : (parsed.description || '')
+
+        // 注意：空陣列 [] 在 JS 是 truthy，不能用 || 回退
+        let questionsArray = []
+        if (Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+          questionsArray = parsed.questions
+        } else if (Array.isArray(parsed.questionnaire?.questions) && parsed.questionnaire.questions.length > 0) {
+          questionsArray = parsed.questionnaire.questions
+        }
+
+        const questionnaireData = parsed.questionnaire
+          ? {
+              title: parsed.questionnaire.title || title,
+              description: parsed.questionnaire.description || description
+            }
+          : { title, description }
+
+        return {
+          title,
+          description,
+          questionnaireData,
+          questions: this.ensureUniqueNestedIds(
+            questionsArray.map((q, index) => this.normalizeNestedQuestion(q, index))
+          )
+        }
+      } catch (e) {
+        console.warn('解析問卷內容失敗:', e)
+        return fallback
+      }
+    },
+
+    ensureUniqueNestedIds(questions) {
+      const used = new Set()
+      let next = 1
+      const alloc = () => {
+        while (used.has(String(next))) next += 1
+        const id = next
+        used.add(String(id))
+        next += 1
+        return id
+      }
+      return (questions || []).map(q => {
+        const key = q.id == null || q.id === '' ? null : String(q.id)
+        if (key == null || used.has(key)) {
+          return { ...q, id: alloc() }
+        }
+        used.add(key)
+        const n = Number(q.id)
+        if (!Number.isNaN(n) && n >= next) next = n + 1
+        return q
+      })
+    },
+
+    normalizeNestedQuestion(question, index) {
+      const type = String(question?.type || question?.questionType || '')
+      let options = question?.options
+      let logicRuleList = question?.logicRuleList || question?.logicRules || []
+      let fillBlanks = question?.fillBlanks
+      let correctAnswers = question?.correctAnswers
+
+      if (typeof options === 'string') {
+        try { options = JSON.parse(options) } catch (e) { options = [] }
+      }
+      if (typeof logicRuleList === 'string') {
+        try { logicRuleList = JSON.parse(logicRuleList) } catch (e) { logicRuleList = [] }
+      }
+      if (typeof fillBlanks === 'string') {
+        try { fillBlanks = JSON.parse(fillBlanks) } catch (e) { fillBlanks = [] }
+      }
+      if (typeof correctAnswers === 'string') {
+        try { correctAnswers = JSON.parse(correctAnswers) } catch (e) { correctAnswers = [] }
+      }
+
+      const normalizedId = question?.id != null && question?.id !== ''
+        ? question.id
+        : Date.now() + index
+
+      return {
+        ...question,
+        id: normalizedId,
+        type,
+        questionType: type,
+        title: question?.title || '',
+        description: question?.description || '',
+        required: question?.required === true || question?.required === '1' || question?.isRequired === '1',
+        options: Array.isArray(options) ? options : (type === '1' || type === '2' ? ['', ''] : []),
+        logicRuleList: (Array.isArray(logicRuleList) ? logicRuleList : []).map((rule, ruleIndex) => ({
+          ...rule,
+          id: rule?.id || `rule-${normalizedId}-${ruleIndex}`,
+          optionIndex: rule?.optionIndex ?? ruleIndex,
+          jumpTarget: rule?.jumpTarget === 'next' || rule?.jumpTarget === 'end' || rule?.jumpTarget == null
+            ? (rule?.jumpTarget || 'next')
+            : rule.jumpTarget
+        })),
+        content: question?.content || '',
+        uploadNote: question?.uploadNote || (type === '4' ? '此處由用戶端上傳...' : ''),
+        fillBlanks: Array.isArray(fillBlanks) ? fillBlanks : [],
+        correctAnswers: Array.isArray(correctAnswers) ? correctAnswers : [],
+        placeholder: question?.placeholder || '',
+        minOptions: question?.minOptions || 1,
+        maxOptions: question?.maxOptions ?? null
+      }
     },
 
     async handleSubmit() {
@@ -150,7 +447,12 @@ export default {
         })
         
         if (response.code === 200 || response.code === 0) {
-          ElNotification({ title: "操作成功", message: '已發佈', type: "success", duration: 3000 })
+          ElNotification({
+            title: '操作成功',
+            message: this.isCopyMode ? '新通知已發佈' : '已發佈',
+            type: 'success',
+            duration: 3000
+          })
           this.$emit('publish-success')
           this.resetForm()
         } else {
@@ -165,21 +467,9 @@ export default {
     },
 
     resetForm() {
-      this.formData = {
-        title: '',
-        content: '',
-        senderId: null,
-        senderName: '',
-        jumpUrl: '',
-        attachmentUrls: [],
-        status: '0',
-        receivers: [],
-        ccs: [],
-        replyDeadline: null,
-        reminderTime: null,
-        questions: []
-      }
+      this.formData = this.createEmptyForm()
       this.currentStep = 0
+      this.isCopyMode = false
       this.$nextTick(() => {
         this.$refs.sendFormRef?.resetForm()
         this.$refs.basicFormRef?.loadSenderName()
@@ -214,6 +504,16 @@ export default {
   background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.copy-banner {
+  margin: 0;
+  padding: 12px 36px;
+  background: #ecfdf5;
+  border-bottom: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .simple-steps {
@@ -297,6 +597,10 @@ export default {
   .steps-wrapper {
     padding: 20px 24px;
   }
+
+  .copy-banner {
+    padding: 12px 24px;
+  }
   
   .form-wrapper {
     padding: 20px;
@@ -310,6 +614,11 @@ export default {
 @media (max-width: 576px) {
   .steps-wrapper {
     padding: 16px 20px;
+  }
+
+  .copy-banner {
+    padding: 12px 20px;
+    font-size: 13px;
   }
   
   .step-content {
