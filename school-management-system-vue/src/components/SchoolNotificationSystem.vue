@@ -230,6 +230,7 @@
             :pagination="mySendPagination"
             @refresh="handleMySendRefresh"
             @page-change="handleMySendPageChange"
+            @copy-as-new="handleCopyAsNew"
             type="mySend"
           />
 
@@ -242,6 +243,7 @@
             @refresh="handleMySendRefresh"
             @page-change="handleMySendPageChange"
             @load-more="handleMySendLoadMore"
+            @copy-as-new="handleCopyAsNew"
             type="mySend"
           />
           
@@ -663,6 +665,15 @@ export default {
     handlePublishSuccess() {
       this.activeMenu = '1-3'
       this.handleMySendRefresh()
+    },
+
+    handleCopyAsNew({ notificationId }) {
+      if (!notificationId) {
+        return
+      }
+      sessionStorage.setItem('copyFromNoticeId', String(notificationId))
+      this.expandedSections.homeSchool = true
+      this.handleMenuSelect('1-1')
     }
   }
 }

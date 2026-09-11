@@ -195,7 +195,7 @@
                       </div>
                     </div>
 
-                    <div v-else-if="['3', '4'].includes(selectedQuestion.type)" class="no-logic-hint">
+                    <div v-else-if="['3', '4'].includes(String(selectedQuestion.type))" class="no-logic-hint">
                       <el-icon><InfoFilled /></el-icon>
                       <div class="hint-content">
                         <span class="hint-title">填空/文本/文件上傳類題型</span>
@@ -266,7 +266,7 @@
                               
                 <div 
                   v-for="(node, nodeIndex) in structuredQuestionList" 
-                  :key="node.id"
+                  :key="'logic-node-' + nodeIndex + '-' + node.id"
                   class="preview-structured-item"
                   :class="{ 'active': selectedQuestionId === node.id }"
                   :style="{ marginLeft: (node.level * 40) + 'px' }"
@@ -323,13 +323,13 @@
                     </div>
                   </div>
                                 
-                  <div v-if="['3'].includes(node.type)" class="preview-question-content">
+                  <div v-if="['3'].includes(String(node.type))" class="preview-question-content">
                     <el-icon><Edit /></el-icon>
                     <span class="content-text" v-html="renderFillBlankText(node)"></span>
                   </div>
                   
                   <!-- 文件上傳題目預覽 -->
-                  <div v-else-if="node.type === '4'" class="preview-question-content">
+                  <div v-else-if="String(node.type) === '4'" class="preview-question-content">
                     <el-icon><Upload /></el-icon>
                     <span class="content-text">{{ node.uploadNote || '暫無上傳說明' }}</span>
                   </div>
@@ -344,7 +344,7 @@
               <div v-else>
                 <div
                   v-for="(question, index) in questionList"
-                  :key="question.id"
+                  :key="'edit-q-' + index + '-' + question.id"
                   :id="'question-card-' + question.id"
                   class="question-card"
                   :class="{ 'active': selectedQuestionId === question.id }"
@@ -816,7 +816,7 @@
                     </div>
                   </div>
 
-                  <div v-else-if="['3', '4'].includes(selectedQuestion.type)" class="no-logic-hint">
+                  <div v-else-if="['3', '4'].includes(String(selectedQuestion.type))" class="no-logic-hint">
                     <el-icon><InfoFilled /></el-icon>
                     <div class="hint-content">
                       <span class="hint-title">填空/文本/文件上傳類題型</span>
@@ -889,76 +889,78 @@ export default {
       return this.questionList.find(q => q.id === this.selectedQuestionId) || null
     },
     structuredQuestionList() {
-      const displayList = [];
-      const processedIds = new Set();
-      
-      const targetedMap = new Map();
-      this.questionList.forEach(q => {
-        if (q.logicRuleList) {
-          q.logicRuleList.forEach(rule => {
-            if (rule.jumpTarget && rule.jumpTarget !== 'next' && rule.jumpTarget !== 'end') {
-              let tId = rule.jumpTarget;
-              if (typeof tId === 'object') tId = tId.jumpTarget || tId.id;
-              
-              targetedMap.set(tId, {
-                sourceId: q.id,
-                optionIndex: rule.optionIndex,
-                optionLabel: this.getOptionLabel(rule.optionIndex),
-                optionName: q.options[rule.optionIndex]
-              });
-            }
-          });
-        }
-      });
+      const displayList = []
+      const processed = new Set()
+      const normalizeId = (id) => {
+        if (id === 'next' || id === 'end' || id == null || id === '') return id
+        return String(id)
+      }
+      const findUnprocessedById = (id) => {
+        const key = normalizeId(id)
+        return this.questionList.find(t => normalizeId(t.id) === key && !processed.has(t))
+      }
 
-      let rootIndex = 1;
-      
+      const targetedKeys = new Set()
+      this.questionList.forEach(q => {
+        (q.logicRuleList || []).forEach(rule => {
+          if (rule.jumpTarget && rule.jumpTarget !== 'next' && rule.jumpTarget !== 'end') {
+            let tId = rule.jumpTarget
+            if (typeof tId === 'object') tId = tId.jumpTarget || tId.id
+            targetedKeys.add(normalizeId(tId))
+          }
+        })
+      })
+
+      let rootIndex = 1
+
       const processNode = (nodeQ, parentNum, childIdx, condition) => {
-        const num = parentNum ? `${parentNum}.${childIdx}` : `${rootIndex++}`;
+        const num = parentNum ? `${parentNum}.${childIdx}` : `${rootIndex++}`
         displayList.push({
           ...nodeQ,
+          type: String(nodeQ.type || nodeQ.questionType || ''),
           displayNum: num,
-          condition: condition,
+          condition,
           isChild: !!parentNum,
           level: parentNum ? parentNum.split('.').length : 0
-        });
-        
-        let localChildIdx = 1;
-        if (nodeQ.logicRuleList) {
-          nodeQ.logicRuleList.forEach(rule => {
-            if (rule.jumpTarget && rule.jumpTarget !== 'next' && rule.jumpTarget !== 'end') {
-              let tId = rule.jumpTarget;
-              if (typeof tId === 'object') tId = tId.jumpTarget || tId.id;
-              
-              const targetQ = this.questionList.find(t => t.id === tId);
-              if (targetQ && !processedIds.has(targetQ.id)) {
-                processedIds.add(targetQ.id);
-                processNode(targetQ, num, localChildIdx++, {
-                  optionIndex: rule.optionIndex,
-                  optionLabel: this.getOptionLabel(rule.optionIndex),
-                  optionName: nodeQ.options[rule.optionIndex]
-                });
-              }
+        })
+
+        let localChildIdx = 1
+        ;(nodeQ.logicRuleList || []).forEach(rule => {
+          if (rule.jumpTarget && rule.jumpTarget !== 'next' && rule.jumpTarget !== 'end') {
+            let tId = rule.jumpTarget
+            if (typeof tId === 'object') tId = tId.jumpTarget || tId.id
+            const targetQ = findUnprocessedById(tId)
+            if (targetQ) {
+              processed.add(targetQ)
+              processNode(targetQ, num, localChildIdx++, {
+                optionIndex: rule.optionIndex,
+                optionLabel: this.getOptionLabel(rule.optionIndex),
+                optionName: (nodeQ.options || [])[rule.optionIndex]
+              })
             }
-          });
-        }
-      };
+          }
+        })
+      }
 
       this.questionList.forEach(q => {
-        if (!targetedMap.has(q.id) && !processedIds.has(q.id)) {
-          processedIds.add(q.id);
-          processNode(q, null, 0, null);
+        if (processed.has(q)) return
+        const qKey = normalizeId(q.id)
+        // 被跳轉指向且尚未處理的題，留給父題掛載；其餘作為根題
+        if (!targetedKeys.has(qKey)) {
+          processed.add(q)
+          processNode(q, null, 0, null)
         }
-      });
-      
-      this.questionList.forEach((q) => {
-        if (!processedIds.has(q.id)) {
-          processedIds.add(q.id);
-          processNode(q, null, 0, null);
-        }
-      });
+      })
 
-      return displayList;
+      // 補上尚未掛入畫布的題（含 id 重複導致未被父題找到的填空/上傳題）
+      this.questionList.forEach(q => {
+        if (!processed.has(q)) {
+          processed.add(q)
+          processNode(q, null, 0, null)
+        }
+      })
+
+      return displayList
     }
   },
   watch: {
@@ -1044,12 +1046,12 @@ export default {
   
     isSingleChoice(type) {
       // 單選類：1=單選
-      return ['1'].includes(type)
+      return ['1'].includes(String(type))
     },
   
     hasOptionType(type) {
       // 需要選項的題型：1=單選，2=多選
-      return ['1', '2'].includes(type)
+      return ['1', '2'].includes(String(type))
     },
 
     // 判斷題目是否設置了自定義邏輯（非跳轉至下一題）
@@ -1069,7 +1071,7 @@ export default {
         '4': '文件上傳',
         '5': '邏輯表單'
       }
-      return typeMap[type] || '未知題型'
+      return typeMap[String(type)] || '未知題型'
     },
 
     // 獲取題型標籤顏色
@@ -1081,7 +1083,7 @@ export default {
         '4': 'warning',
         '5': 'danger'
       }
-      return tagMap[type] || 'info'
+      return tagMap[String(type)] || 'info'
     },
 
     // 獲取題目類型標籤顏色（用於題目列表）
@@ -1093,7 +1095,7 @@ export default {
         '4': 'warning',
         '5': 'danger'
       }
-      return tagMap[type] || 'info'
+      return tagMap[String(type)] || 'info'
     },
 
     // 獲取跳轉目標顯示名稱
@@ -1104,10 +1106,11 @@ export default {
       if (target === 'end') {
         return '結束問卷'
       }
-      // 查找對應的題目
-      const question = this.questionList.find(q => q.id === target)
+      // 查找對應的題目（兼容 number/string id）
+      const targetKey = String(target)
+      const question = this.questionList.find(q => String(q.id) === targetKey)
       if (question) {
-        const index = this.questionList.findIndex(q => q.id === target)
+        const index = this.questionList.findIndex(q => String(q.id) === targetKey)
         return `${index + 1}. ${question.title || '未命名題目'}`
       }
       return '未知目標'
@@ -1288,8 +1291,9 @@ export default {
         
         if (this.question.questions && this.question.questions.length > 0) {
           this.questionList = this.question.questions.map((q, index) => {
+            const type = String(q.type || q.questionType || '')
             let rules = q.logicRuleList || []
-            if (this.hasOptionType(q.type)) {
+            if (this.hasOptionType(type)) {
               if (rules.length === 0) {
                 rules = (q.options || []).map((opt, i) => ({
                   id: `rule-${Date.now()}-${index}-${i}`,
@@ -1311,19 +1315,26 @@ export default {
             }
             return {
               ...q,
-              id: q.id || Date.now() + index,
+              id: q.id != null && q.id !== '' ? q.id : Date.now() + index,
+              type,
+              questionType: type,
               description: q.description || '',
               placeholder: q.placeholder || '',
               defaultValue: q.defaultValue || '',
               validation: q.validation || [],
               randomOrder: q.randomOrder || false,
               logicRuleList: rules,
+              options: Array.isArray(q.options) ? q.options : (type === '1' || type === '2' ? ['', ''] : []),
+              content: q.content || '',
+              uploadNote: q.uploadNote || (type === '4' ? '此處由用戶端上傳...' : ''),
+              fillBlanks: Array.isArray(q.fillBlanks) ? q.fillBlanks : [],
               minOptions: q.minOptions || 1,
               maxOptions: q.maxOptions || null
             }
           })
           
-          const firstFillBlank = this.questionList.find(q => q.type === '3')
+          this.ensureUniqueQuestionIds()
+          const firstFillBlank = this.questionList.find(q => String(q.type) === '3')
           this.selectedQuestionId = firstFillBlank ? firstFillBlank.id : this.questionList[0]?.id
         } else {
           let rules = this.question.logicRuleList || []
@@ -1379,7 +1390,47 @@ export default {
       this.activePanels = ['questionType'] // 重置為只展開題型選擇
     },
 
+    /**
+     * 確保每道題 id 唯一。
+     * 歷史資料常因 nextId 未同步而出現重複 id，會導致邏輯畫布漏題。
+     * 只改「後面重複」的題 id；jumpTarget 仍指向保留原 id 的第一題，故不重映射。
+     */
+    ensureUniqueQuestionIds() {
+      const used = new Set()
+      let next = 1
+
+      const alloc = () => {
+        while (used.has(String(next))) next += 1
+        const id = next
+        used.add(String(id))
+        next += 1
+        return id
+      }
+
+      this.questionList.forEach(q => {
+        const key = q.id == null || q.id === '' ? null : String(q.id)
+        if (key == null || used.has(key)) {
+          q.id = alloc()
+        } else {
+          used.add(key)
+          const n = Number(q.id)
+          if (!Number.isNaN(n) && n >= next) next = n + 1
+        }
+      })
+
+      this.nextId = next
+    },
+
     addQuestion(type) {
+      // 避免與既有題目 id 衝突
+      const maxExisting = this.questionList.reduce((max, q) => {
+        const n = Number(q.id)
+        return !Number.isNaN(n) && n > max ? n : max
+      }, 0)
+      if (maxExisting >= this.nextId) {
+        this.nextId = maxExisting + 1
+      }
+
       const defaultOpts = this.getDefaultOptions(type)
       const defaultRules = []
       if (this.hasOptionType(type) && defaultOpts) {
