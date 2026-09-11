@@ -241,10 +241,7 @@ public class NotificationPublishHandler {
         List<NotificationReminderRecord> reminderRecords = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
 
-        // 構建提醒消息內容（只需要構建一次）
-        String remindContent = messageContentHelper.buildRemindContent(notification);
-
-        // 6. 爲每個未回復的學生發送提醒通知
+        // 6. 爲每個未回復的學生發送提醒通知（每位學生獨立 sid 連結）
         for (UnrepliedStudentVO student : unrepliedStudents) {
             String studentId = student.getStudentId();
             List<String> parentUserIdList = student.getParentUserIds();
@@ -255,6 +252,7 @@ public class NotificationPublishHandler {
 
             // 直接使用 List 的 toString() 方法存儲爲字符串
             String parentUserIdsStr = parentUserIdList.toString();
+            String remindContent = messageContentHelper.buildRemindContent(notification, studentId);
 
             try {
                 // 分批發送提醒消息

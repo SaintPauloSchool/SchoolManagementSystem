@@ -356,6 +356,7 @@ export default {
       isMobile: false,
       hasUserRole: false,
       hasSuperUserRole: false,
+      pendingOpenNoticeId: null,
       expandedSections: this.getInitialExpandedSections(),
       menuItems: [
         { index: '1-1', title: '發佈通知', icon: 'Edit' },
@@ -414,22 +415,36 @@ export default {
     },
     
     checkPendingNotice() {
-      const pendingNoticeId = sessionStorage.getItem('pendingNoticeId');
-      if (pendingNoticeId) {
-        sessionStorage.removeItem('pendingNoticeId');
-        
-        // 切換到抄送我的並加載背後列表數據
-        this.handleMenuSelect('1-2');
-        this.expandedSections.homeSchool = true;
-        
-        // 使用 nextTick 確保 NotificationList 元件已渲染
-        this.$nextTick(() => {
-          setTimeout(() => {
-            if (this.$refs.ccList) {
-              this.$refs.ccList.viewNotification({ notificationId: pendingNoticeId });
-            }
-          }, 300); // 稍微延遲確保元件完全掛載
-        });
+      const pendingNoticeId = sessionStorage.getItem('pendingNoticeId')
+      if (!pendingNoticeId) {
+        return
+      }
+      sessionStorage.removeItem('pendingNoticeId')
+
+      // 先記住待打開 ID，等列表元件（桌面 NotificationList / 手機 NotificationCardList）就緒再打開
+      this.pendingOpenNoticeId = String(pendingNoticeId)
+      this.handleMenuSelect('1-2')
+      this.expandedSections.homeSchool = true
+      this.tryOpenPendingNotice()
+    },
+
+    tryOpenPendingNotice(attempt = 0) {
+      if (!this.pendingOpenNoticeId) {
+        return
+      }
+      const list = this.$refs.ccList
+      if (list && typeof list.viewNotification === 'function') {
+        const noticeId = this.pendingOpenNoticeId
+        this.pendingOpenNoticeId = null
+        list.viewNotification({ notificationId: noticeId })
+        return
+      }
+      // 手機端切換卡片列表可能稍慢，最多重試約 3 秒
+      if (attempt < 30) {
+        setTimeout(() => this.tryOpenPendingNotice(attempt + 1), 100)
+      } else {
+        console.warn('打開待查看通知失敗：列表元件未就緒', this.pendingOpenNoticeId)
+        this.pendingOpenNoticeId = null
       }
     },
     
@@ -565,6 +580,9 @@ export default {
           this.ccPagination.total = response.total || 0
           this.ccPagination.currentPage = pageNum
           this.ccPagination.pageSize = pageSize
+          if (!append && this.pendingOpenNoticeId) {
+            this.$nextTick(() => this.tryOpenPendingNotice())
+          }
         }
       } catch (error) {
         console.error('加載失敗:', error)
