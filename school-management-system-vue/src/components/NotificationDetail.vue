@@ -1098,7 +1098,7 @@ export default {
               window.URL.revokeObjectURL(url)
 
               loading.close()
-              ElNotification({ title: "操作成功", message: '導出成功', type: "success", duration: 3000 })
+              ElNotification({ title: "操作成功", message: '導出成功（含統計、詳情、詳情（文字））', type: "success", duration: 3000 })
             })
             .catch(error => {
               loading.close()
