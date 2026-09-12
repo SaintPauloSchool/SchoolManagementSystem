@@ -111,10 +111,13 @@ public class NotificationExportServiceImpl implements INotificationExportService
             // 8. 創建統計Sheet
             createStatisticsSheet(workbook, notification, questions, allAnswers, totalCount, (int) processedCount);
 
-            // 9. 創建詳情Sheet
+            // 9. 創建詳情Sheet（選項欄打勾）
             createDetailSheet(workbook, notification, sendRecord, questions, allAnswers, readRecords);
 
-            // 10. 導出Excel和附件爲Zip
+            // 10. 創建詳情（文字）Sheet（每題一欄，直接顯示答案文字）
+            createDetailTextSheet(workbook, notification, sendRecord, questions, allAnswers, readRecords);
+
+            // 11. 導出Excel和附件爲Zip
             response.setContentType("application/zip");
             response.setCharacterEncoding("utf-8");
             String fileName = URLEncoder.encode(notification.getTitle() + "_回復統計", "UTF-8");
@@ -716,6 +719,340 @@ public class NotificationExportServiceImpl implements INotificationExportService
                 }
             }
         }
+    }
+
+    /**
+     * 創建詳情（文字）Sheet：A–F 與「詳情」相同，答案改為每題一欄直接顯示文字（不打勾）。
+     */
+    private void createDetailTextSheet(Workbook workbook, Notification notification,
+                                       NotificationSendRecord sendRecord,
+                                       List<NotificationQuestion> questions,
+                                       List<NotificationAnswer> allAnswers,
+                                       List<NotificationUserReadRecord> readRecords) {
+        Sheet sheet = workbook.createSheet("詳情（文字）");
+
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        CellStyle dataStyle = createDataStyle(workbook);
+        CellStyle titleStyle = createTitleStyle(workbook);
+
+        List<QuestionItemVO> allQuestionItems = new ArrayList<>();
+        for (NotificationQuestion question : questions) {
+            allQuestionItems.addAll(parseQuestionContentForTextSheet(question));
+        }
+
+        int rowNum = 0;
+        Row headerInfoRow = sheet.createRow(rowNum);
+        headerInfoRow.setHeightInPoints(80);
+        Cell headerInfoCell = headerInfoRow.createCell(0);
+
+        int totalCount = sendRecord != null ? sendRecord.getTotalCount() : 0;
+        long processedCount = allAnswers.stream()
+                .map(NotificationAnswer::getUserId)
+                .distinct()
+                .count();
+
+        String infoBuilder = notification.getTitle() + "\n" +
+                "發送時間：" + formatDate(notification.getCreateTime()) + "\n" +
+                "接收人數：" + totalCount + "\n" +
+                "已處理人數：" + processedCount;
+        headerInfoCell.setCellValue(infoBuilder);
+        headerInfoCell.setCellStyle(titleStyle);
+
+        int totalCols = 6 + allQuestionItems.size();
+        if (totalCols < 6) {
+            totalCols = 6;
+        }
+        sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 1, 0, Math.max(totalCols - 1, 0)));
+        setRegionBorder(sheet, 0, 1, 0, Math.max(totalCols - 1, 0), titleStyle);
+
+        rowNum = 2;
+        Row headerRow = sheet.createRow(rowNum);
+        headerRow.setHeightInPoints(35);
+        Row subHeaderRow = sheet.createRow(rowNum + 1);
+        subHeaderRow.setHeightInPoints(35);
+
+        List<String> fixedHeaders = Arrays.asList("班級", "姓名", "關係", "發送狀態", "閱讀時間", "確認時間");
+        for (int i = 0; i < fixedHeaders.size(); i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(fixedHeaders.get(i));
+            cell.setCellStyle(headerStyle);
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(rowNum, rowNum + 1, i, i));
+            setRegionBorder(sheet, rowNum, rowNum + 1, i, i, headerStyle);
+        }
+
+        // 每題一欄：兩行表頭合併後顯示題目標題
+        int colNum = 6;
+        for (QuestionItemVO item : allQuestionItems) {
+            Cell cell = headerRow.createCell(colNum);
+            cell.setCellValue(item.getTitle() != null ? item.getTitle() : "");
+            cell.setCellStyle(headerStyle);
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(rowNum, rowNum + 1, colNum, colNum));
+            setRegionBorder(sheet, rowNum, rowNum + 1, colNum, colNum, headerStyle);
+            colNum++;
+        }
+
+        rowNum += 2;
+
+        List<String> allParentUserIds = readRecords.stream()
+                .map(NotificationUserReadRecord::getUserId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<String, SysSchoolFamilyContact> relationMap = new HashMap<>();
+        Map<String, SysSchoolDepartmentMember> customMemberMap = new HashMap<>();
+        if (!allParentUserIds.isEmpty()) {
+            List<SysSchoolFamilyContact> relations = schoolFamilyContactMapper.selectByParentUserIds(allParentUserIds);
+            for (SysSchoolFamilyContact relation : relations) {
+                relationMap.put(parentDeptKey(relation.getParentUserId(), relation.getDepartmentId()), relation);
+            }
+            List<SysSchoolDepartmentMember> customMembers =
+                    schoolDepartmentMemberMapper.selectMembersByUserids(allParentUserIds);
+            if (customMembers != null) {
+                for (SysSchoolDepartmentMember member : customMembers) {
+                    if (member.getUserid() == null || member.getDepartmentId() == null) {
+                        continue;
+                    }
+                    customMemberMap.put(parentDeptKey(member.getUserid(), member.getDepartmentId()), member);
+                }
+            }
+        }
+
+        Map<Long, String> deptIdNameMap = new HashMap<>();
+        List<SysDepartment> allDepartments = departmentMapper.selectAll();
+        if (allDepartments != null) {
+            for (SysDepartment department : allDepartments) {
+                if (department.getId() != null) {
+                    deptIdNameMap.put(department.getId(), department.getName());
+                }
+            }
+        }
+        List<SysSchoolDepartment> schoolDepartmentsType1 = schoolDepartmentMapper.selectAll(1, null);
+        if (schoolDepartmentsType1 != null) {
+            for (SysSchoolDepartment department : schoolDepartmentsType1) {
+                if (department.getId() != null) {
+                    deptIdNameMap.putIfAbsent(department.getId(), department.getName());
+                }
+            }
+        }
+        List<SysSchoolDepartment> schoolDepartmentsType2 = schoolDepartmentMapper.selectAll(2, null);
+        if (schoolDepartmentsType2 != null) {
+            for (SysSchoolDepartment department : schoolDepartmentsType2) {
+                if (department.getId() != null) {
+                    deptIdNameMap.putIfAbsent(department.getId(), department.getName());
+                }
+            }
+        }
+
+        Map<String, List<NotificationAnswer>> answersByUser = new HashMap<>();
+        for (NotificationAnswer answer : allAnswers) {
+            String key = answer.getUserId() + "_"
+                    + (answer.getStudentId() != null ? answer.getStudentId() : "");
+            answersByUser.computeIfAbsent(key, k -> new ArrayList<>()).add(answer);
+        }
+
+        int dataStartRow = rowNum;
+        for (NotificationUserReadRecord record : readRecords) {
+            Row dataRow = sheet.createRow(rowNum++);
+            colNum = 0;
+
+            String relationKey = parentDeptKey(record.getUserId(), record.getDepartmentId());
+            SysSchoolFamilyContact relation = relationMap.get(relationKey);
+            String studentName = "";
+            String relationDesc = "";
+            if (relation != null) {
+                studentName = relation.getStudentName() != null ? relation.getStudentName() : "";
+                relationDesc = relation.getRelationDesc() != null ? relation.getRelationDesc() : "";
+            } else {
+                SysSchoolDepartmentMember customMember = customMemberMap.get(relationKey);
+                if (customMember != null && customMember.getName() != null) {
+                    studentName = customMember.getName();
+                }
+            }
+
+            dataRow.createCell(colNum++).setCellValue(resolveClassName(record, deptIdNameMap));
+            dataRow.createCell(colNum++).setCellValue(studentName);
+            dataRow.createCell(colNum++).setCellValue(relationDesc);
+            dataRow.createCell(colNum++).setCellValue(getString(record));
+            dataRow.createCell(colNum++).setCellValue(formatDate(record.getReadTime()));
+            dataRow.createCell(colNum++).setCellValue(formatDate(record.getReplyTime()));
+
+            String answerKey = record.getUserId() + "_"
+                    + (record.getStudentId() != null ? record.getStudentId() : "");
+            List<NotificationAnswer> userAnswers = answersByUser.getOrDefault(answerKey, new ArrayList<>());
+
+            for (QuestionItemVO item : allQuestionItems) {
+                Cell cell = dataRow.createCell(colNum++);
+                cell.setCellValue(formatTextSheetAnswer(userAnswers, item));
+                cell.setCellStyle(dataStyle);
+            }
+        }
+
+        sheet.setColumnWidth(0, 5000);
+        sheet.setColumnWidth(1, 5000);
+        sheet.setColumnWidth(2, 3500);
+        sheet.setColumnWidth(3, 3500);
+        sheet.setColumnWidth(4, 5000);
+        sheet.setColumnWidth(5, 5000);
+        for (int i = 0; i < allQuestionItems.size(); i++) {
+            sheet.setColumnWidth(6 + i, 8000);
+        }
+
+        for (int r = dataStartRow; r < rowNum; r++) {
+            Row dataRow = sheet.getRow(r);
+            if (dataRow == null) {
+                continue;
+            }
+            for (int c = 0; c < totalCols; c++) {
+                Cell cell = dataRow.getCell(c);
+                if (cell == null) {
+                    cell = dataRow.createCell(c);
+                }
+                cell.setCellStyle(dataStyle);
+            }
+        }
+    }
+
+    /**
+     * 文字詳情 Sheet 用的題目解析：包含選擇題、填空題、文件上傳題。
+     */
+    private List<QuestionItemVO> parseQuestionContentForTextSheet(NotificationQuestion question) {
+        List<QuestionItemVO> items = new ArrayList<>();
+        try {
+            if (!"5".equals(question.getQuestionType()) || question.getContent() == null) {
+                return items;
+            }
+            JSONObject contentJson = JSON.parseObject(question.getContent());
+            JSONArray questionsArray = contentJson.getJSONArray("questions");
+            if (questionsArray == null) {
+                return items;
+            }
+            for (int i = 0; i < questionsArray.size(); i++) {
+                JSONObject q = questionsArray.getJSONObject(i);
+                String type = q.getString("type");
+                QuestionItemVO item = new QuestionItemVO();
+                item.setId(q.getLong("id"));
+                item.setTitle(q.getString("title"));
+                item.setType(type);
+
+                if ("1".equals(type) || "2".equals(type)) {
+                    JSONArray optionsArray = q.getJSONArray("options");
+                    List<String> options = new ArrayList<>();
+                    if (optionsArray != null) {
+                        for (int j = 0; j < optionsArray.size(); j++) {
+                            options.add(optionsArray.getString(j));
+                        }
+                    }
+                    item.setOptions(options);
+                    items.add(item);
+                } else if ("3".equals(type)) {
+                    item.setOptions(new ArrayList<>());
+                    items.add(item);
+                } else if ("4".equals(type)) {
+                    item.setOptions(new ArrayList<>());
+                    items.add(item);
+                }
+            }
+        } catch (Exception e) {
+            log.error("解析文字詳情題目失敗，questionId: {}", question.getQuestionId(), e);
+        }
+        return items;
+    }
+
+    /**
+     * 格式化「詳情（文字）」中單題答案。
+     */
+    private String formatTextSheetAnswer(List<NotificationAnswer> userAnswers, QuestionItemVO item) {
+        if (item == null) {
+            return "";
+        }
+        if ("3".equals(item.getType())) {
+            return parseFillBlankAnswer(userAnswers, item.getId());
+        }
+        if ("4".equals(item.getType())) {
+            return parseUploadAnswer(userAnswers, item.getId());
+        }
+
+        List<String> selectedOptions = new ArrayList<>();
+        String targetNodeId = String.valueOf(item.getId());
+        for (NotificationAnswer answer : userAnswers) {
+            if (answer.getAnswerData() == null) {
+                continue;
+            }
+            try {
+                JSONArray answerArray = JSON.parseArray(answer.getAnswerData());
+                for (int i = 0; i < answerArray.size(); i++) {
+                    JSONObject answerObj = answerArray.getJSONObject(i);
+                    if (targetNodeId.equals(answerObj.getString("nodeId"))) {
+                        String answerContent = answerObj.getString("answerContent");
+                        if (answerContent != null && !answerContent.isEmpty()) {
+                            selectedOptions = JSON.parseArray(answerContent, String.class);
+                        }
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                log.error("解析選擇題答案失敗", e);
+            }
+        }
+        if (selectedOptions == null || selectedOptions.isEmpty()) {
+            return "";
+        }
+        return String.join("、", selectedOptions);
+    }
+
+    /**
+     * 解析文件上傳題答案：優先顯示檔名，否則「已上傳」。
+     */
+    private String parseUploadAnswer(List<NotificationAnswer> userAnswers, Long questionId) {
+        String targetNodeId = String.valueOf(questionId);
+        for (NotificationAnswer answer : userAnswers) {
+            if (answer.getAnswerData() == null) {
+                continue;
+            }
+            try {
+                JSONArray answerArray = JSON.parseArray(answer.getAnswerData());
+                for (int i = 0; i < answerArray.size(); i++) {
+                    JSONObject answerObj = answerArray.getJSONObject(i);
+                    if (!targetNodeId.equals(answerObj.getString("nodeId"))) {
+                        continue;
+                    }
+                    List<String> names = new ArrayList<>();
+                    String attachmentUrlsStr = answerObj.getString("attachmentUrls");
+                    if (attachmentUrlsStr != null && !attachmentUrlsStr.isEmpty()) {
+                        try {
+                            JSONArray attachments = JSON.parseArray(attachmentUrlsStr);
+                            if (attachments != null) {
+                                for (int j = 0; j < attachments.size(); j++) {
+                                    JSONObject attachment = attachments.getJSONObject(j);
+                                    String name = attachment.getString("name");
+                                    if (name != null && !name.isEmpty()) {
+                                        names.add(name);
+                                    } else {
+                                        String url = attachment.getString("url");
+                                        if (url != null && !url.isEmpty()) {
+                                            names.add(url.substring(url.lastIndexOf('/') + 1));
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            log.warn("解析上傳附件列表失敗: {}", attachmentUrlsStr);
+                        }
+                    }
+                    if (!names.isEmpty()) {
+                        return String.join("、", names);
+                    }
+                    String answerContent = answerObj.getString("answerContent");
+                    if (answerContent != null && !answerContent.isEmpty()) {
+                        return answerContent;
+                    }
+                    return "已上傳";
+                }
+            } catch (Exception e) {
+                log.error("解析文件上傳答案失敗", e);
+            }
+        }
+        return "";
     }
 
     private String parentDeptKey(String parentUserId, Long departmentId) {
